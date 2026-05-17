@@ -3,7 +3,7 @@
  *
  * 架构位置：只渲染邮箱、密码弹窗和 PocketBase Admin 入口；密码修改流程由 application hook 管理。
  *
- * Caveat: 不要在展示层缓存密码字段，关闭弹窗时必须交给 controller 清理。
+ * 注意： 不要在展示层缓存密码字段，关闭弹窗时必须交给 controller 清理。
  */
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';

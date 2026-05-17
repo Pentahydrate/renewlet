@@ -8,10 +8,10 @@
  * 外部依赖：标准 URL 解析器；字段枚举需与 PocketBase subscriptions schema 和前端 schema 保持一致。
  *
  * 流程：
- *   official price fixture -> demo defaults -> schema/invariant checks -> normalized demo list
+ *   官方价格 fixture -> 演示默认值 -> schema/不变量检查 -> 规范化演示列表
  *
- * Caveat：真实信息只覆盖服务、计划、价格、币种、账期和官方来源；续费日、状态、付款方式是演示分布。
- * Caveat：slug 会在写入层与 extra.seedKey 组合成清理边界，改名会让旧 demo 记录被视为 stale。
+ * 注意：真实信息只覆盖服务、计划、价格、币种、账期和官方来源；续费日、状态、付款方式是演示分布。
+ * 注意：slug 会在写入层与 extra.seedKey 组合成清理边界，改名会让旧演示记录被视为过期数据。
  */
 
 const EXPECTED_DEMO_SUBSCRIPTION_COUNT = 100;

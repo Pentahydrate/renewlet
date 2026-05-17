@@ -1,11 +1,11 @@
 /**
- * Custom Config 领域规范化。
+ * 自定义配置领域规范化。
  *
  * 目标：
  * - 把来自 localStorage/SQLite JSON 的未知输入收敛成稳定的 `CustomConfig`。
  * - 确保内置支付方式、货币支持范围等业务约束不会被 UI 或脏数据绕过。
  *
- * Caveat: 这里是客户端和服务端都应遵循的配置边界。新增配置分组时，
+ * 注意： 这里是客户端和服务端都应遵循的配置边界。新增配置分组时，
  * 需要同步更新 API schema、默认值和 Provider 更新函数。
  */
 import {
@@ -29,6 +29,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function isConfigItem(value: unknown): value is ConfigItem {
   if (!isRecord(value)) return false;
   const { id, value: itemValue, labels: itemLabels, color, icon, enabled } = value;
+  // 配置项要么完整可用，要么丢回默认值；保留半残结构会污染下拉、筛选和保存 payload。
   if (typeof id !== "string" || id.length === 0) return false;
   if (typeof itemValue !== "string" || itemValue.length === 0) return false;
   if (!isLocalizedLabels(itemLabels)) return false;
@@ -42,6 +43,7 @@ export function isConfigItem(value: unknown): value is ConfigItem {
 function asConfigItemArray(value: unknown, fallback: ConfigItem[]): ConfigItem[] {
   if (!Array.isArray(value)) return fallback;
   const items = value.filter(isConfigItem);
+  // 只要数组里混入脏项就整体回退，避免用户配置顺序和默认项合并后出现半可信状态。
   return items.length === value.length ? items : fallback;
 }
 

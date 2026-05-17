@@ -5,7 +5,7 @@ package main
 // 架构位置：统一 notificationMessage 在这里被转换为 Telegram/NotifyX/Webhook/WeCom/Bark 的外部请求。
 // 外部服务失败被收敛为 channelFailure，调度层据此决定 sent/failed 和后续重试范围。
 //
-// Caveat: Webhook、WeCom、Bark 都可能携带用户配置 URL，必须经过 SSRF/公网 HTTPS 防护后才能请求。
+// 注意： Webhook、WeCom、Bark 都可能携带用户配置 URL，必须经过 SSRF/公网 HTTPS 防护后才能请求。
 import (
 	"encoding/json"
 	"fmt"
@@ -36,7 +36,7 @@ func sendToChannels(app core.App, channels []string, settings appSettings, messa
 }
 
 // sendToChannel 将统一消息分发到具体通知渠道。
-// Caveat: 新增渠道时必须同步 knownChannels、settings schema、前端渠道枚举和 history result schema。
+// 注意： 新增渠道时必须同步 knownChannels、settings schema、前端渠道枚举和 history result schema。
 func sendToChannel(app core.App, channel string, settings appSettings, message notificationMessage) error {
 	_ = app
 	locale := normalizeAppLocale(settings.Locale)
@@ -121,7 +121,7 @@ func sendNotifyx(settings appSettings, message notificationMessage) error {
 }
 
 // sendWebhook 发送用户自定义 Webhook。
-// Caveat: URL 必须经过 assertSafeOutboundURL，防止 Webhook 被用作 SSRF 到内网服务。
+// 注意： URL 必须经过 assertSafeOutboundURL，防止 Webhook 被用作 SSRF 到内网服务。
 func sendWebhook(settings appSettings, message notificationMessage) error {
 	locale := normalizeAppLocale(settings.Locale)
 	rawURL, err := requireNonEmptyLocalized(locale, "Webhook URL", settings.WebhookURL)

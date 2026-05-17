@@ -11,12 +11,12 @@
  * 状态链路：
  * ```
  * PocketBase authStore 恢复中 -> 不做跳转
- * session resolved -> 未登录且非公开页 -> /login?next=...
- * session resolved -> 已登录访问 /login -> sanitize(next)
+ * 会话已解析 -> 未登录且非公开页 -> /login?next=...
+ * 会话已解析 -> 已登录访问 /login -> sanitize(next)
  * session id 变化 -> invalidate 用户相关 query
  * ```
  *
- * Caveat: 必须等待 `isPending=false` 再判断未登录，否则刷新首帧可能误判。
+ * 注意： 必须等待 `isPending=false` 再判断未登录，否则刷新首帧可能误判。
  */
 
 import { useEffect } from "react";

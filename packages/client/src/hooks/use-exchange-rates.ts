@@ -11,13 +11,13 @@
  *
  * 状态链路：
  * ```
- * mount -> localStorage cache hit? -> setRates
+ * 挂载 -> 命中 localStorage 缓存？-> setRates
  *       -> fetch preferred provider -> fallback provider -> cache + setRates
  *       -> both remote providers fail -> FALLBACK_RATES + error
  * ```
  *
- * Caveat: 统计页和首页会把所有币种先换算到用户默认货币；修改 base 逻辑会影响全站金额口径。
- * PERF: 当前缓存是浏览器本地 24h 粒度；若多页面频繁刷新，可提升为 Query cache 或后端代理缓存。
+ * 注意： 统计页和首页会把所有币种先换算到用户默认货币；修改 base 逻辑会影响全站金额口径。
+ * PERF： 当前缓存是浏览器本地 24h 粒度；若多页面频繁刷新，可提升为 Query cache 或后端代理缓存。
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -123,6 +123,7 @@ function normalizeExchangeApiUsdResponse(value: unknown): ExchangeRateData | nul
   for (const [key, rate] of Object.entries(parsed.data.usd)) {
     const code = key.toUpperCase();
     if (!isSupportedExchangeRateCurrency(code)) continue;
+    // 同一币种重复出现通常代表上游结构漂移；直接拒绝比静默覆盖更容易发现数据问题。
     if (rates[code] !== undefined && code !== "USD") return null;
     rates[code] = rate;
   }
@@ -146,6 +147,7 @@ function normalizeFloatRatesResponse(value: unknown): ExchangeRateData | null {
   for (const [key, row] of Object.entries(parsed.data)) {
     const keyCode = key.toUpperCase();
     if (!isSupportedExchangeRateCurrency(keyCode) && !isSupportedExchangeRateCurrency(row.alphaCode)) continue;
+    // FloatRates 同时给对象 key 和 alphaCode；二者不一致时宁愿失败，避免把错误汇率挂到合法币种上。
     if (keyCode !== row.alphaCode) return null;
     if (rates[row.alphaCode] !== undefined) return null;
 
@@ -233,6 +235,7 @@ async function fetchExchangeApiRates(signal: AbortSignal): Promise<ExchangeRateD
     } catch (e) {
       if (signal.aborted && !(e instanceof ExchangeRateTimeoutError)) throw e;
       failures.push(e);
+      // exchange-api 的两个 URL 是同一数据源的 CDN 兜底；记录具体端点便于排查区域性 CDN 故障。
       console.warn(`Failed to fetch exchange rates from exchange-api endpoint ${url}:`, e);
     }
   }
@@ -326,10 +329,12 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
       && !currentRequest.controller.signal.aborted
       && currentRequest.requestedProvider === requestedProvider
     ) {
+      // 同一 provider 的并发刷新复用同一个 Promise，避免多个页面组件同时把外部汇率源打爆。
       return currentRequest.promise;
     }
 
     if (currentRequest) {
+      // provider 切换时旧请求即使稍后成功也不能回写，否则 UI 会显示和设置不一致的数据源。
       currentRequest.controller.abort();
       inFlightRef.current = null;
     }
@@ -418,6 +423,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
     return () => {
       mountedRef.current = false;
       clearTimeout(timeoutId);
+      // 组件卸载时主动取消请求，配合 mountedRef 防止 React 严格模式重复挂载时旧响应回写。
       inFlightRef.current?.controller.abort();
       inFlightRef.current = null;
     };

@@ -8,9 +8,9 @@ package main
 //   - route 返回的 response struct 是前端 Zod schema 的运行时契约。
 //
 // 请求流转：
-//   fetch -> PocketBase auth/locale -> strict JSON decode -> Validate -> handler -> response struct
+//   fetch -> PocketBase auth/locale -> 严格 JSON 解码 -> Validate -> handler -> response struct
 //
-// Caveat: 这里拒绝未知字段和多余 JSON token；新增 API 字段时必须同步前端 schema 与测试 fixture。
+// 注意： 这里拒绝未知字段和多余 JSON token；新增 API 字段时必须同步前端 schema 与测试 fixture。
 import (
 	"errors"
 	"net/http"

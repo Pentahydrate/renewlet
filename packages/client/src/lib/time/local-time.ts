@@ -1,5 +1,5 @@
 /**
- * Local wall-clock time 工具。
+ * 本地墙钟时间工具。
  *
  * `HH:mm` 表示用户所在时区墙上时钟的时间，例如“每天 08:00”。
  * 它不能单独转换成 UTC，必须和 IANA timezone + local date 一起解释。

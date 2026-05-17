@@ -5,7 +5,7 @@
  * - Settings/订阅表单中的货币、时区等下拉共用这里的关键词和排序策略。
  * - UI 组件只负责展示和交互，不复制搜索算法。
  *
- * Caveat: 搜索评分需要稳定，改动会直接影响用户输入时的选项排序。
+ * 注意： 搜索评分需要稳定，改动会直接影响用户输入时的选项排序。
  */
 import { formatTimeZoneOffset } from "@/lib/time/time-zone";
 import type { ConfigItem } from "@/types/config";
@@ -39,6 +39,7 @@ export function normalizeSearchText(input: string): string {
 }
 
 function compactSearchText(input: string): string {
+  // 紧凑匹配会移除空白、分隔符和常见货币符号，让 `US D`、`USD`、`$` 类输入尽量落到同一搜索口径。
   return normalizeSearchText(input).replace(/[\s/_().,$￥¥€£₩₹₺₪฿₱]+/g, "");
 }
 
@@ -53,6 +54,7 @@ export function rankSearchText(values: readonly string[], search: string): numbe
 
   const compactSearch = compactSearchText(normalizedSearch);
   const hasCompactSearch = compactSearch.length > 0;
+  // 短 query 使用子序列会误命中太多三字母货币代码，因此只给较长输入兜底。
   const canUseSubsequenceFallback = hasCompactSearch && shouldUseSubsequenceFallback(compactSearch);
   const searchParts = normalizedSearch.split(/\s+/).filter(Boolean);
 
@@ -101,6 +103,7 @@ function uniq(values: readonly (string | undefined | null)[]): string[] {
 }
 
 function extractCurrencySymbol(label: string): string | undefined {
+  // 内置货币 label 采用 `名称 (符号)` 形式；只读取括号内容，避免把多语言名称当作符号。
   return /\(([^)]+)\)/.exec(label)?.[1]?.trim();
 }
 
@@ -151,7 +154,7 @@ export function createCurrencyKeywords(
 /**
  * 创建货币下拉选项。
  *
- * Caveat: 当前值即使被禁用也要保留为 disabled 选项，否则编辑旧订阅时会丢失显示上下文。
+ * 注意： 当前值即使被禁用也要保留为 disabled 选项，否则编辑旧订阅时会丢失显示上下文。
  */
 export function createCurrencySelectOptions(params: {
   currencies: readonly ConfigItem[];
@@ -201,6 +204,7 @@ export function createTimeZoneKeywords(timeZone: string, now = new Date()): stri
   const offsetLower = offset.toLowerCase();
   const offsetGmt = offset.replace(/^UTC/i, "GMT");
   const offsetWithoutColon = offset.replace(":", "");
+  // 同时提供 `UTC+08:00`、`GMT+08:00`、`utc0800`、`+0800` 等变体，覆盖用户搜索时常见的 offset 写法。
   const offsetCompact = offset
     .replace(/^UTC/i, "utc")
     .replace(":", "")

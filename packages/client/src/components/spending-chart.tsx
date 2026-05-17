@@ -5,9 +5,9 @@
  * - 使用 `useExchangeRates()` 做实时汇率换算，统一换算到“统计货币”（Settings → defaultCurrency）
  * - 再按扣费周期折算为“月度支出”，用于分类占比展示
  *
- * Caveat: 该组件仍直接读取 settings/customConfig。若继续推进模块化，应把图表 view model
+ * 注意： 该组件仍直接读取 settings/customConfig。若继续推进模块化，应把图表 view model
  * 从上层传入，避免展示组件隐式依赖全局 Context。
- * PERF: Recharts tooltip payload 来自第三方库，保持 unknown 入口并做窄化，避免为了图表库内部结构扩宽全局类型。
+ * PERF： Recharts tooltip payload 来自第三方库，保持 unknown 入口并做窄化，避免为了图表库内部结构扩宽全局类型。
  */
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';

@@ -1,9 +1,8 @@
 /**
- * Currency data shared by exchange-rate adapters, settings, and subscription forms.
+ * 汇率适配器、设置页和订阅表单共享的货币数据。
  *
- * The supported set is the fixed intersection of fawazahmed0/exchange-api and
- * FloatRates JSON Feeds, verified on 2026-05-17. Labels and symbols are derived
- * from Intl at runtime so the list can stay compact and locale-aware.
+ * 支持集合固定为 fawazahmed0/exchange-api 与 FloatRates JSON Feeds 的交集，
+ * 已在 2026-05-17 核验。标签和符号运行时由 Intl 派生，让列表保持紧凑且支持 locale。
  */
 
 export const SUPPORTED_EXCHANGE_RATE_CURRENCIES = [

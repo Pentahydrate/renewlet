@@ -1,9 +1,9 @@
 /**
- * TimePicker 本地时间选择器。
+ * 本地时间选择器（TimePicker）。
  *
  * 架构位置：用于通知设置中的本地提醒时间，输出 `HH:mm` 字符串给 settings schema。
  *
- * Caveat: 这里不处理时区；调度器会在后端把 `HH:mm + IANA timezone` 转为 UTC instant。
+ * 注意： 这里不处理时区；调度器会在后端把 `HH:mm + IANA timezone` 转为 UTC instant。
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
@@ -150,6 +150,7 @@ function WheelColumn({
 
     const handleScrollEnd = () => {
       if (dragStateRef.current) return;
+      // 原生 scrollend 可用时立即吸附；拖拽中跳过，避免 pointer move 期间被浏览器滚动事件打断。
       clearScrollEndTimer();
       snapToNearest();
     };
@@ -193,6 +194,7 @@ function WheelColumn({
 
     const deltaY = event.clientY - dragState.startY;
     if (!dragState.moved && Math.abs(deltaY) > DRAG_THRESHOLD_PX) {
+      // 小于阈值仍视为点击，超过阈值才屏蔽后续 click，避免拖动结束时误选中某个时间项。
       dragState.moved = true;
       suppressClickRef.current = true;
     }
@@ -218,6 +220,7 @@ function WheelColumn({
     if (dragState.moved) {
       snapToNearest();
       setTimeout(() => {
+        // 延后一轮事件循环再恢复 click，让浏览器合成 click 先被当前拖拽周期吞掉。
         suppressClickRef.current = false;
       }, 0);
       return;
@@ -394,7 +397,7 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
         align="start"
         sideOffset={8}
       >
-        {/* Wheel Picker */}
+        {/* 滚轮选择器 */}
         <div className="flex items-center justify-center gap-2 p-4 pb-2">
           <WheelColumn
             options={HOUR_OPTIONS}
@@ -417,7 +420,7 @@ export function TimePicker({ value, onChange, className }: TimePickerProps) {
           />
         </div>
 
-        {/* Quick Select */}
+        {/* 快捷选择 */}
         <div className="border-t border-border p-3">
           <div className="grid grid-cols-4 gap-2">
             {quickTimes.map(({ label, desc }) => (

@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * theSVG 索引生成脚本。
+ * 图标索引生成脚本（TheSVG）。
  *
  * 架构位置：把上游 registry 收敛成前端搜索和后端 embedded static 共用的窄 JSON，
  * 避免客户端运行时拉取完整上游数据。
  *
  * 流程：
- *   fetch registry -> validate slug/variant/path -> choose preferred variant -> write client/server indexes
+ *   拉取 registry -> 校验 slug/variant/path -> 选择首选变体 -> 写入前后端索引
  *
- * Caveat: 生成结果是仓库内静态数据；上游字段或 CDN 路径变化时必须先保证前后端解析仍兼容。
+ * 注意： 生成结果是仓库内静态数据；上游字段或 CDN 路径变化时必须先保证前后端解析仍兼容。
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -39,6 +39,7 @@ function asStringArray(value) {
 }
 
 function isSafePathPart(value) {
+  // slug/variant 会拼进 CDN 路径，只允许单段安全字符，防止上游数据把 `../` 注入生成索引。
   return /^[a-z0-9][a-z0-9._-]*$/i.test(value);
 }
 
@@ -51,6 +52,7 @@ function parseVariants(slug, value) {
     if (typeof pathValue !== "string") continue;
     const normalizedPath = pathValue.trim();
     if (!normalizedPath.endsWith(".svg")) continue;
+    // 变体路径必须仍落在当前 slug 目录下，避免 registry 中的跨目录引用污染 IconURL。
     if (!normalizedPath.startsWith(`/icons/${slug}/`)) continue;
     variants[variant] = normalizedPath;
   }
@@ -63,6 +65,7 @@ function chooseVariant(variants) {
     if (variants[variant]) return variant;
   }
 
+  // 没有默认/彩色变体时退到第一个安全变体，保证长尾品牌仍可被搜索到。
   return Object.keys(variants).find(isSafePathPart);
 }
 
@@ -83,6 +86,7 @@ function parseRegistry(value) {
     const variant = chooseVariant(variants);
     if (!variant) continue;
 
+    // 只写前后端需要的窄字段，避免上游 registry 新增大字段时无意膨胀 bundle/embedded 数据。
     icons.push({
       slug,
       title,

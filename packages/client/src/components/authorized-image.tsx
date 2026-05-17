@@ -7,11 +7,11 @@
  *
  * 状态链路：
  * ```
- * src -> 判断是否私有资产 -> fetch(blob + auth) -> createObjectURL -> img
- * src/unmount -> abort fetch -> revokeObjectURL
+ * 图片 src -> 判断是否私有资产 -> fetch(blob + auth) -> createObjectURL -> img
+ * src 变化/卸载 -> abort fetch -> revokeObjectURL
  * ```
  *
- * Caveat: object URL 必须在 src 变化或卸载时释放，否则长时间管理图标会造成内存泄漏。
+ * 注意： object URL 必须在 src 变化或卸载时释放，否则长时间管理图标会造成内存泄漏。
  */
 import { useEffect, useMemo, useState, type ImgHTMLAttributes } from "react";
 import { getAuthHeader } from "@/lib/pocketbase";

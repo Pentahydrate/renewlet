@@ -5,7 +5,7 @@
  * 逻辑只调用这里，不直接操作 DOM class。
  *
  * 状态链路：
- *   initial theme -> document class -> favicon
+ *   初始 theme -> document class -> favicon
  *   setTheme -> state -> document class -> favicon
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";

@@ -1,9 +1,9 @@
 /**
- * Calendar 日期选择原语。
+ * 日期选择原语。
  *
  * 架构位置：基于 react-day-picker 封装项目内的日期选择交互，订阅续费日期和筛选日期共用这里。
  *
- * Caveat: Renewlet 的业务日期是 date-only；不要在此组件内引入用户时区换算。
+ * 注意： Renewlet 的业务日期是 date-only；不要在此组件内引入用户时区换算。
  */
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -107,7 +107,7 @@ function CalendarCaption({
       {...divProps}
       className={cn("flex justify-center items-center gap-1 pt-1 relative", className)}
     >
-      {/* Previous Month Button */}
+      {/* 上个月按钮 */}
       <button
         type="button"
         onClick={goToPreviousMonth}
@@ -119,7 +119,7 @@ function CalendarCaption({
         <ChevronLeft className="h-4 w-4" />
       </button>
 
-      {/* Year Picker */}
+      {/* 年份选择器 */}
       <Popover open={yearPickerOpen} onOpenChange={setYearPickerOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -203,7 +203,7 @@ function CalendarCaption({
         </PopoverContent>
       </Popover>
 
-      {/* Month Picker */}
+      {/* 月份选择器 */}
       <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -267,7 +267,7 @@ function CalendarCaption({
         </PopoverContent>
       </Popover>
 
-      {/* Next Month Button */}
+      {/* 下个月按钮 */}
       <button
         type="button"
         onClick={goToNextMonth}

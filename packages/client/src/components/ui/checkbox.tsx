@@ -1,9 +1,9 @@
 /**
- * Checkbox 设计系统原语。
+ * 复选框设计系统原语。
  *
  * 架构位置：封装 Radix Checkbox，统一勾选图标、焦点和禁用状态。
  *
- * Caveat: 业务层需要自行处理三态或批量选择语义，本组件只负责可访问控件外壳。
+ * 注意： 业务层需要自行处理三态或批量选择语义，本组件只负责可访问控件外壳。
  */
 import * as React from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";

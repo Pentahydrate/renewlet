@@ -3,7 +3,7 @@
  *
  * 架构位置：分类、状态、周期、渠道和支付方式的默认 label 由这里提供，自定义 label 由用户配置覆盖。
  *
- * Caveat: 内置 value 不能随意重命名；它们已写入订阅记录和统计逻辑。
+ * 注意： 内置 value 不能随意重命名；它们已写入订阅记录和统计逻辑。
  */
 import type { MessageMap, MessageValue } from "./types";
 

@@ -1,9 +1,9 @@
 /**
- * Tabs 设计系统原语。
+ * 标签页设计系统原语。
  *
  * 架构位置：封装 Radix Tabs，供设置页分区和复杂面板切换复用。
  *
- * Caveat: tab value 是调用方状态契约；重命名 value 会影响深层控制器和测试选择器。
+ * 注意： tab value 是调用方状态契约；重命名 value 会影响深层控制器和测试选择器。
  */
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";

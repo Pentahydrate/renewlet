@@ -14,7 +14,7 @@
  *     -> onUpdate(items) -> CustomConfigProvider -> localStorage + /api/custom-config
  * ```
  *
- * Caveat: 不要在本组件里直接调用 API 或 toast，否则会重新把展示层和应用层耦合。
+ * 注意： 不要在本组件里直接调用 API 或 toast，否则会重新把展示层和应用层耦合。
  */
 
 import { useMemo, useState, type ReactNode } from 'react';

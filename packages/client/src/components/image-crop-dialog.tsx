@@ -6,7 +6,7 @@
  * - 输出为 base64 data URL，调用方会先用于预览，再上传并替换成 `/api/app/assets/...`
  * - canvas/FileReader 阶段支持 AbortSignal，避免关闭弹窗后旧任务回写
  *
- * Caveat: data URL 体积可能很大，不能直接持久化；上传 hook 会负责替换成资产 URL。
+ * 注意： data URL 体积可能很大，不能直接持久化；上传 hook 会负责替换成资产 URL。
  */
 
 import { useState, useRef, useCallback, useEffect, type ComponentType } from 'react';
@@ -184,7 +184,7 @@ async function getCroppedImg(
 /**
  * 渲染图片裁剪弹窗，并把确认结果输出为 data URL。
  *
- * Caveat: 确认过程中可能被关闭/卸载，因此用 AbortController 防止旧 canvas/FileReader 回写。
+ * 注意： 确认过程中可能被关闭/卸载，因此用 AbortController 防止旧 canvas/FileReader 回写。
  */
 export function ImageCropDialog({
   open,
@@ -264,7 +264,7 @@ export function ImageCropDialog({
         </DialogHeader>
 
         <div className="grid gap-4">
-          {/* Crop Area */}
+          {/* 裁剪区域 */}
           <div className="flex justify-center bg-secondary/30 rounded-lg p-4 overflow-hidden">
             <ReactCrop
               {...(crop ? { crop } : {})}
@@ -288,9 +288,9 @@ export function ImageCropDialog({
             </ReactCrop>
           </div>
 
-          {/* Controls */}
+          {/* 控件 */}
           <div className="grid gap-4 px-1">
-            {/* Zoom */}
+            {/* 缩放 */}
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2 text-sm">
@@ -309,7 +309,7 @@ export function ImageCropDialog({
               />
             </div>
 
-            {/* Rotate */}
+            {/* 旋转 */}
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2 text-sm">

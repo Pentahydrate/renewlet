@@ -5,7 +5,7 @@
  * - domain 生成导出内容。
  * - shared/browser 封装下载副作用。
  *
- * Caveat: 这里接收的是“已经筛选后的订阅列表”，因此导出结果跟当前页面视图一致。
+ * 注意： 这里接收的是“已经筛选后的订阅列表”，因此导出结果跟当前页面视图一致。
  */
 import { useMemo } from "react";
 import type { Locale } from "@/i18n/locales";

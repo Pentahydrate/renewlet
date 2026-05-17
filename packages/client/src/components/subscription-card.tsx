@@ -6,7 +6,7 @@
  * - 提供编辑/删除入口
  * - 根据续费/试用到期情况做提示（颜色/动画）
  *
- * Caveat: 卡片直接读取自定义配置来显示分类颜色。若未来支持服务端渲染卡片，
+ * 注意： 卡片直接读取自定义配置来显示分类颜色。若未来支持服务端渲染卡片，
  * 需要把 label/color view model 从上层传入。
  */
 
@@ -130,7 +130,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
           )}
         </div>
 
-        {/* Content */}
+        {/* 内容 */}
         <div className="min-w-0 flex-1 grid gap-3">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-x-3 gap-y-2">
             <TruncatedTooltipText
@@ -189,9 +189,9 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
             </div>
           </div>
 
-          {/* Date info */}
+          {/* 日期信息 */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            {/* Start date */}
+            {/* 开始日期 */}
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5" />
               <span className="text-xs">
@@ -199,7 +199,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
               </span>
             </div>
             
-            {/* Next billing info */}
+            {/* 下次账单信息 */}
             <div className={cn(
               "flex items-center gap-1.5",
               isRenewingSoon ? "text-warning" : "text-muted-foreground"
@@ -214,7 +214,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
               </span>
             </div>
 
-            {/* Payment method with icon */}
+            {/* 带图标的付款方式 */}
             {subscription.paymentMethod && (() => {
               const paymentConfig = config.paymentMethods.find(
                 m => m.value === subscription.paymentMethod
@@ -231,7 +231,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
               );
             })()}
 
-            {/* Reminder setting - only show in list mode */}
+            {/* 提醒设置，仅列表模式展示 */}
             {viewMode === 'list' && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Bell className="h-3.5 w-3.5" />
@@ -242,7 +242,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
             )}
           </div>
 
-          {/* Trial warning */}
+          {/* 试用提醒 */}
           {isTrialEndingSoon && subscription.trialEndDate && (
             <div className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning">
               <span className="font-medium">

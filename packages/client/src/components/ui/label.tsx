@@ -1,9 +1,9 @@
 /**
- * Label 设计系统原语。
+ * 标签设计系统原语。
  *
  * 架构位置：封装 Radix Label，保证表单字段的可访问名称和 disabled 状态样式一致。
  *
- * Caveat: 不要用普通文本替代 Label；否则屏幕阅读器和点击聚焦行为会退化。
+ * 注意： 不要用普通文本替代 Label；否则屏幕阅读器和点击聚焦行为会退化。
  */
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";

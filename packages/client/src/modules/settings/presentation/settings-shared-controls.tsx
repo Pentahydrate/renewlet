@@ -3,7 +3,7 @@
  *
  * 架构位置：收敛 SettingsScreen 中重复的字段外壳、保存状态和勾选项布局，保持 presentation 轻量。
  *
- * Caveat: 这里只处理展示组合，不引入 settings 保存副作用。
+ * 注意： 这里只处理展示组合，不引入 settings 保存副作用。
  */
 import type { ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';

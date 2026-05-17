@@ -11,7 +11,7 @@
  * 首屏默认值 -> localStorage 兜底 -> 已登录远端配置覆盖 -> 用户编辑 -> localStorage + debounce API
  * ```
  *
- * Caveat: PocketBase JSON 字段和 localStorage 都可能携带旧结构；进入状态前必须经过 domain normalize。
+ * 注意： PocketBase JSON 字段和 localStorage 都可能携带旧结构；进入状态前必须经过 domain normalize。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ const LOCAL_STORAGE_KEY = "renewlet_custom_config";
 /**
  * 管理自定义配置的数据来源、缓存和远端防抖保存。
  *
- * Caveat: 该 hook 允许未登录/离线时继续使用 localStorage 兜底。不要把 401 当作致命错误，
+ * 注意： 该 hook 允许未登录/离线时继续使用 localStorage 兜底。不要把 401 当作致命错误，
  * 否则登录页或 setup 前的组件树会被自定义配置查询拖垮。
  */
 export function useCustomConfigState() {
@@ -56,6 +56,7 @@ export function useCustomConfigState() {
         perPage: 1,
       });
       if (rows[0]) {
+        // 每个用户只保留一条配置记录；schema/规则负责唯一性，hook 只做 upsert 编排。
         await pb.collection("custom_configs").update(rows[0].id, { config: nextConfig });
       } else {
         await pb.collection("custom_configs").create({ user: userId, config: nextConfig });
@@ -91,7 +92,7 @@ export function useCustomConfigState() {
   const scheduleRemoteSave = useCallback(
     (nextConfig: CustomConfig) => {
       // 拖拽排序会产生高频更新，防抖能显著减少 SQLite 写入和 API 抖动。
-      // PERF: 配置项大量增长时，可改成“保存按钮”或批量 patch 协议。
+      // PERF： 配置项大量增长时，可改成“保存按钮”或批量 patch 协议。
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
         saveMutation.mutate(nextConfig);

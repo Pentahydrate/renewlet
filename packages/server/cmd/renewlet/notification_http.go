@@ -5,7 +5,7 @@ package main
 // 架构位置：渠道发送层统一通过这里设置超时、TLS 下限、错误文本截断和 SSRF DNS 解析校验。
 // 这些防护必须靠近网络边界，避免新渠道绕过安全策略。
 //
-// Caveat: responseOK 会消费并关闭响应体；调用方读取错误详情时必须在 responseOK 之前完成。
+// 注意： responseOK 会消费并关闭响应体；调用方读取错误详情时必须在 responseOK 之前完成。
 import (
 	"bytes"
 	"context"
@@ -65,6 +65,7 @@ func readResponseText(resp *http.Response) string {
 		return ""
 	}
 	defer resp.Body.Close()
+	// 外部服务错误页可能很大；只取前 8KiB 足够诊断，同时避免历史 lastError 被异常响应撑爆。
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 8192))
 	if err != nil {
 		return ""
@@ -95,6 +96,7 @@ func responseOK(resp *http.Response) bool {
 		return false
 	}
 	if resp.Body != nil {
+		// 成功响应也要 drain/close，保证 Go transport 能复用连接，降低连续渠道发送的握手开销。
 		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
 	}
@@ -157,7 +159,7 @@ func splitList(input string) []string {
 
 // assertSafeOutboundURL 校验外发 URL，防止 SSRF。
 // DNS 解析后再检查 IP，是为了拦截域名解析到内网/本机地址的情况。
-// TODO: 若未来允许高风险内网部署场景，可改成自定义 DialContext 并固定解析后的 IP，进一步降低 DNS rebinding 窗口。
+// TODO： 若未来允许高风险内网部署场景，可改成自定义 DialContext 并固定解析后的 IP，进一步降低 DNS rebinding 窗口。
 func assertSafeOutboundURL(rawURL, label string, locale appLocale) (*url.URL, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil || parsed.Scheme == "" || parsed.Hostname() == "" {
@@ -177,6 +179,7 @@ func assertSafeOutboundURL(rawURL, label string, locale appLocale) (*url.URL, er
 		return nil, fmt.Errorf(tr(locale, "%s DNS 解析失败", "%s DNS lookup failed"), label)
 	}
 	for _, ip := range ips {
+		// 任何一个解析结果落到内网/本机都拒绝，避免服务端在多 A/AAAA 记录中选到危险地址。
 		if isUnsafeOutboundIP(ip.IP) {
 			return nil, fmt.Errorf(tr(locale, "%s 不允许指向内网或本机地址", "%s cannot point to private or localhost addresses"), label)
 		}

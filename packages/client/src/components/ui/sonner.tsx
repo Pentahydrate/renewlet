@@ -1,9 +1,9 @@
 /**
- * Sonner 全局通知外壳。
+ * 全局通知外壳（Sonner）。
  *
  * 架构位置：跟随 ThemeProvider 与 i18n 状态，提供轻量异步反馈；业务页面只触发消息，不控制容器。
  *
- * Caveat: 图标与颜色是全站反馈语义，调整前需要检查成功/警告/错误在深浅主题下的可辨识度。
+ * 注意： 图标与颜色是全站反馈语义，调整前需要检查成功/警告/错误在深浅主题下的可辨识度。
  */
 import { useTheme } from '@/lib/theme-provider';
 import { useI18n } from "@/i18n/I18nProvider";

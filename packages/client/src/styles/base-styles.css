@@ -1,4 +1,4 @@
-/* base-styles.css 定义全局 body 背景、字体和滚动条。
+/* 全局 body 背景、字体和滚动条（base-styles.css）。
  *
  * 架构位置：这些规则作用于文档根和 body，必须在 Tailwind 入口之后加载，
  * 让 @apply 能解析项目 token。
@@ -17,17 +17,19 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* 页面 body 不滚动，所有页面滚动交给 #root；这样 Radix 弹窗锁 body 时不会推动主布局。 */
     overflow: hidden;
   }
 
   #root {
     height: 100vh;
+    /* 100dvh 修正移动端地址栏变化；保留 100vh 作为旧浏览器 fallback。 */
     height: 100dvh;
     overflow-y: auto;
     scrollbar-gutter: stable;
   }
 
-  /* Theme gradient backgrounds */
+  /* 深色主题渐变背景 */
   .dark[data-theme="emerald"] body,
   .dark:not([data-theme]) body {
     background: 
@@ -53,7 +55,7 @@
       hsl(var(--background));
   }
 
-  /* Light theme gradient backgrounds */
+  /* 浅色主题渐变背景 */
   [data-theme="emerald"]:not(.dark) body,
   :not([data-theme]):not(.dark) body {
     background: 
@@ -78,9 +80,10 @@
       hsl(var(--background));
   }
 
-  /* Custom theme gradient - uses CSS custom properties set by JS */
+  /* 自定义主题渐变使用 JS 写入的 CSS 变量。 */
   .dark[data-theme="custom"] body {
     background: 
+      /* 自定义主题只能依赖运行时写入的 --primary/--primary-glow，避免为每个用户生成额外 CSS。 */
       radial-gradient(ellipse 80% 50% at 20% -20%, hsl(var(--primary) / 0.1), transparent),
       radial-gradient(ellipse 60% 40% at 80% 100%, hsl(var(--primary-glow) / 0.07), transparent),
       radial-gradient(ellipse 40% 30% at 50% 50%, hsl(var(--primary) / 0.03), transparent),
@@ -94,7 +97,7 @@
       hsl(var(--background));
   }
 
-  /* Smooth scrollbar */
+  /* 平滑滚动条样式 */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;

@@ -1,9 +1,9 @@
 /**
- * Switch 设计系统原语。
+ * 开关设计系统原语。
  *
  * 架构位置：封装 Radix Switch，用于通知渠道、自动计算、启用状态等二元设置。
  *
- * Caveat: 切换后是否立即保存由调用方决定，本组件不承担远端 mutation。
+ * 注意： 切换后是否立即保存由调用方决定，本组件不承担远端 mutation。
  */
 import * as React from "react";
 import * as SwitchPrimitives from "@radix-ui/react-switch";

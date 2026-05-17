@@ -1,13 +1,13 @@
-/* theme-tokens.css 定义全局主题 token 和 theme variant。
+/* 全局主题 token 和 theme variant（theme-tokens.css）。
  *
  * 架构位置：Tailwind v4 的 CSS-first 主题通过 hsl(var(--token)) 消费这些变量，
- * React 主题切换只需要调整 .dark/data-theme，不直接改组件样式。
+ * 主题切换只需要调整 .dark/data-theme，不直接改组件样式。
  *
- * Caveat: 删除或重命名 token 会影响 src/index.css 里的 @theme 和已有 className。
+ * 注意： 删除或重命名 token 会影响 src/index.css 里的 @theme 和已有 className。
  */
 @layer base {
   :root {
-    /* Light theme - refined and elegant */
+    /* 浅色主题基础 token */
     --background: 210 20% 98%;
     --foreground: 220 25% 12%;
 
@@ -46,17 +46,17 @@
 
     --radius: 0.75rem;
 
-    /* Custom tokens - subtle and refined */
+    /* 自定义 token 被组件直接消费，不能只改 Tailwind @theme 名称。 */
     --app-shadow-card: 0 1px 3px 0 hsla(220, 25%, 10%, 0.04), 0 1px 2px -1px hsla(220, 25%, 10%, 0.04);
 
-    /* Chart colors */
+    /* 图表颜色顺序是统计图默认色板，新增颜色会改变既有分类的视觉映射。 */
     --chart-1: 160 84% 45%;
     --chart-2: 200 80% 50%;
     --chart-3: 280 70% 55%;
     --chart-4: 35 90% 55%;
     --chart-5: 350 75% 55%;
 
-    /* Category colors */
+    /* 分类颜色 */
     --category-productivity: 200 80% 50%;
     --category-entertainment: 280 70% 55%;
     --category-lifestyle: 35 90% 55%;
@@ -74,7 +74,7 @@
 
   .dark,
   .dark[data-theme="emerald"] {
-    /* Dark theme with emerald accent */
+    /* 深色主题搭配 emerald 强调色 */
     --background: 220 20% 6%;
     --foreground: 210 20% 95%;
 
@@ -111,7 +111,7 @@
     --input: 220 13% 16%;
     --ring: 160 84% 39%;
 
-    /* Custom tokens */
+    /* 自定义 token */
     --app-shadow-card: 0 4px 24px -4px hsla(0, 0%, 0%, 0.4);
 
     --sidebar-background: 220 18% 7%;
@@ -124,7 +124,7 @@
     --sidebar-ring: 160 84% 39%;
   }
 
-  /* Ocean Blue Theme */
+  /* 海洋蓝主题 */
   .dark[data-theme="ocean"] {
     --background: 220 25% 6%;
     --foreground: 210 20% 95%;
@@ -174,7 +174,7 @@
     --sidebar-ring: 210 90% 50%;
   }
 
-  /* Sunset Orange Theme */
+  /* 日落橙主题 */
   .dark[data-theme="sunset"] {
     --background: 220 20% 6%;
     --foreground: 210 20% 95%;
@@ -224,7 +224,7 @@
     --sidebar-ring: 25 95% 53%;
   }
 
-  /* Lavender Purple Theme */
+  /* 薰衣草紫主题 */
   .dark[data-theme="lavender"] {
     --background: 220 20% 6%;
     --foreground: 210 20% 95%;
@@ -274,7 +274,7 @@
     --sidebar-ring: 270 70% 60%;
   }
 
-  /* Rose Pink Theme */
+  /* 玫瑰粉主题 */
   .dark[data-theme="rose"] {
     --background: 220 20% 6%;
     --foreground: 210 20% 95%;
@@ -324,7 +324,7 @@
     --sidebar-ring: 340 75% 55%;
   }
 
-  /* Light theme variants */
+  /* 浅色主题变体 */
   [data-theme="ocean"]:not(.dark) {
     --primary: 210 90% 45%;
     --primary-foreground: 0 0% 100%;

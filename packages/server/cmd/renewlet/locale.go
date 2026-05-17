@@ -6,7 +6,7 @@ package main
 //   - 前端会发送 X-Renewlet-Locale，后端 route 和 Validate 使用 requestLocale 输出本地化错误。
 //   - 没有显式 header 时回退到 Accept-Language，最后默认中文。
 //
-// Caveat: 支持语言集合必须与前端 SUPPORTED_LOCALES 同步，否则错误文案和 UI 语言会分叉。
+// 注意： 支持语言集合必须与前端 SUPPORTED_LOCALES 同步，否则错误文案和 UI 语言会分叉。
 import (
 	"net/http"
 	"strconv"

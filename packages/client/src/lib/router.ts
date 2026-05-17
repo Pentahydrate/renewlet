@@ -1,10 +1,10 @@
 /**
- * React Router 兼容适配层。
+ * 路由兼容适配层（React Router）。
  *
  * 架构位置：部分组件保留了 Next.js 风格的 `useRouter/usePathname` 心智模型；
  * 这里把它收敛为薄 shim，避免页面层直接依赖多个路由 API。
  *
- * Caveat: `back()` 使用浏览器 history，不会自动套用登录 next 路径清洗。
+ * 注意： `back()` 使用浏览器 history，不会自动套用登录 next 路径清洗。
  */
 import {
   useLocation,

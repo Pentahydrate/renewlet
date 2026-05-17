@@ -5,7 +5,7 @@ package main
 // 架构位置：这些 struct 是 route、调度器、渠道发送和历史响应之间的唯一共享契约。
 // RawMessage 只用于跨边界保留原始 JSON，真正进入业务逻辑前仍会严格解码到命名 struct。
 //
-// Caveat: 新增渠道、job result 字段或 sent/skipped 响应结构时，必须同步前端 Zod schema 与历史面板测试。
+// 注意： 新增渠道、job result 字段或 sent/skipped 响应结构时，必须同步前端 Zod schema 与历史面板测试。
 import (
 	"encoding/json"
 	"errors"
@@ -37,7 +37,7 @@ var (
 )
 
 // appSettings 是 settings JSON 字段的后端强类型表示。
-// Caveat: 字段必须与前端 DEFAULT_SETTINGS/settings schema 同步，否则临时测试配置和持久化设置会分叉。
+// 注意： 字段必须与前端 DEFAULT_SETTINGS/settings schema 同步，否则临时测试配置和持久化设置会分叉。
 type appSettings struct {
 	AdminUsername           string           `json:"adminUsername"`
 	ThemeMode               string           `json:"themeMode"`

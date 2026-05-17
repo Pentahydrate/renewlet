@@ -4,7 +4,7 @@
  * 架构位置：I18nProvider 调用这里把当前 locale 写入 PocketBase SDK 和自定义 fetch header，
  * 后端据此返回本地化错误文案。
  *
- * Caveat: 这里是模块级状态；只应通过 `setApiLocale` 更新，避免 SDK 语言和 fetch header 分叉。
+ * 注意： 这里是模块级状态；只应通过 `setApiLocale` 更新，避免 SDK 语言和 fetch header 分叉。
  */
 import { getInitialLocale, type Locale } from "@/i18n/locales";
 import { pb } from "@/lib/pocketbase";

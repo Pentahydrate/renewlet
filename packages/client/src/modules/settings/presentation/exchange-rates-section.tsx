@@ -3,7 +3,7 @@
  *
  * 架构位置：展示 provider、刷新状态和币种启用列表；远端拉取、缓存和 fallback 位于 useExchangeRates。
  *
- * Caveat: 默认货币和启用货币会影响全站金额换算，展示层不能绕过 controller 直接修改配置。
+ * 注意： 默认货币和启用货币会影响全站金额换算，展示层不能绕过 controller 直接修改配置。
  */
 import { ExternalLink, RefreshCw, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';

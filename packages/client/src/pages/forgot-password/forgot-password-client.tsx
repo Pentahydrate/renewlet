@@ -3,7 +3,7 @@
  *
  * 架构位置：直接调用 PocketBase password reset API，页面入口只决定该功能是否可见。
  *
- * Caveat: 发送失败可能来自 SMTP 未配置或网络问题，展示层只反馈通用错误，避免泄漏账号存在性。
+ * 注意： 发送失败可能来自 SMTP 未配置或网络问题，展示层只反馈通用错误，避免泄漏账号存在性。
  */
 import { type FormEvent, useRef, useState } from "react";
 import Link from '@/components/router-link';

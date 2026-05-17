@@ -276,6 +276,7 @@ function isAuthWithPasswordResponse(response: Response): boolean {
 }
 
 function isTargetConsoleWarning(text: string): boolean {
+  // 这些 warning 来自第三方/浏览器策略差异，不代表本应用布局或数据流回归。
   return text.includes("Missing `Description`") ||
     (text.includes("frame-ancestors") && text.includes("ignored")) ||
     (text.includes("fonts.googleapis.com") && text.includes("Content Security Policy"));
@@ -311,6 +312,7 @@ async function expectTagInputPopoverLayout(page: Page, dialog: Locator) {
       throw new Error("Tag control is not an input");
     }
 
+    // 布局断言必须在浏览器上下文读真实 DOMRect；Playwright locator 层拿不到 chip/sizer 的相对位置。
     const container = element.closest<HTMLElement>('[data-slot="subscription-tag-field"]');
     const sizer = element.closest<HTMLElement>('[data-slot="subscription-tag-input-sizer"]');
     if (!container || !sizer) {
@@ -455,6 +457,7 @@ async function captureLayoutSnapshot(
         throw new Error("Missing #root scroll container");
       }
 
+      // 应用把滚动放在 #root 而不是 body；这个快照用来防止弹窗/菜单打开时误锁 body 造成横向跳动。
       const rootStyle = window.getComputedStyle(root);
       return {
         rootOverflowY: rootStyle.overflowY,
@@ -478,6 +481,7 @@ function expectRootScrollContainer(snapshot: LayoutSnapshot) {
 }
 
 function expectStableLayout(before: LayoutSnapshot, after: LayoutSnapshot, label: string) {
+  // 小于 1px 的差异视为浏览器子像素舍入，不作为布局回归处理。
   expect(Math.abs(after.header.x - before.header.x), `${label}: header x offset`).toBeLessThan(1);
   expect(Math.abs(after.content.x - before.content.x), `${label}: main content x offset`).toBeLessThan(1);
 

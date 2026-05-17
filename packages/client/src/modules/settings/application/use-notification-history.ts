@@ -2,17 +2,17 @@
  * 通知历史查询 Hook。
  *
  * 架构位置：
- * - Settings presentation 只负责展示，分页、筛选和 schema 校验都集中在这里。
+ * - 设置 presentation 只负责展示，分页、筛选和 schema 校验都集中在这里。
  * - 后端返回 summary/upcoming/history 三段结构；hook 将分页 history 合并成稳定的前端 view model。
  *
  * 状态链路：
  * ```
- * status filter -> queryKey 变化 -> apiFetch(schema parse)
+ * 状态筛选 -> queryKey 变化 -> apiFetch(schema parse)
  * fetchNextPage -> 合并 pages.history.jobs -> presentation 选择详情行
  * ```
  *
- * Caveat: notification job result 已在 schema 层建成联合类型；展示层不要再用动态 Record 读取任意字段。
- * PERF: 历史量继续增长后，可把 summary/upcoming 与 history page 拆成两个 query，减少翻页时重复传输。
+ * 注意： notification job result 已在 schema 层建成联合类型；展示层不要再用动态 Record 读取任意字段。
+ * PERF： 历史量继续增长后，可把 summary/upcoming 与 history page 拆成两个 query，减少翻页时重复传输。
  */
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";

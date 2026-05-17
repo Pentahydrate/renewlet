@@ -6,9 +6,9 @@
  * 保留已有配置，并在缺少 Docker 时给出可预测行为。
  *
  * 流程：
- *   temp dir -> fake docker -> copy deploy template -> run script -> inspect .env/compose
+ *   临时目录 -> 假 docker -> 复制部署模板 -> 运行脚本 -> 检查 .env/compose
  *
- * Caveat: 这里会创建临时文件但不改仓库；新增部署环境变量时要同步 env.example 和这些断言。
+ * 注意： 这里会创建临时文件但不改仓库；新增部署环境变量时要同步 env.example 和这些断言。
  */
 import { spawnSync } from "node:child_process";
 import {
@@ -65,6 +65,7 @@ function parseEnvValue(path, key) {
   if (!line) {
     throw new Error(`Missing ${key} in ${path}`);
   }
+  // 部署脚本允许双引号/单引号包裹值；测试只关心真实 secret 长度，不关心引用形式。
   return line.slice(key.length + 1).replace(/^['"]|['"]$/g, "");
 }
 
@@ -73,6 +74,7 @@ function prepareFakeDocker(tempDir) {
   mkdirSync(binDir, { recursive: true });
 
   const dockerPath = join(binDir, "docker");
+  // 假 docker 只实现脚本启动所需的 `docker compose version`，任何额外调用都会让测试失败。
   writeFileSync(
     dockerPath,
     [
@@ -147,6 +149,7 @@ function checkInvalidExistingPBKeyIsRejected() {
     if (!result.stderr.includes("PB_ENCRYPTION_KEY must be exactly 32 characters; got 44")) {
       throw new Error(`Expected clear PB_ENCRYPTION_KEY length error, got:\n${result.stderr}`);
     }
+    // 错误 key 不能被脚本自动替换；已有部署一旦丢失原 key，历史加密数据将无法解密。
     if (readFileSync(envPath, "utf8") !== invalidEnv) {
       throw new Error("Invalid existing PB_ENCRYPTION_KEY was modified");
     }

@@ -10,7 +10,7 @@
  * - 统计聚合由 `useStatisticsModel` 完成。
  * - 页面只负责图表/卡片渲染和汇率刷新入口。
  *
- * Caveat: 统计口径依赖订阅 domain 类型、Settings.defaultCurrency 和 USD base 汇率；
+ * 注意： 统计口径依赖订阅 domain 类型、Settings.defaultCurrency 和 USD base 汇率；
  * 修改其中任一处都要同步首页统计、SpendingChart 和导出逻辑。
  */
 

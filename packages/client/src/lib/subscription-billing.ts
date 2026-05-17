@@ -5,7 +5,7 @@
  * - 表单自动计算下次扣费日。
  * - 仪表盘/统计页把不同周期统一折算到月度口径。
  *
- * Caveat: 这里不做汇率换算；金额币种归一化由统计模型处理。
+ * 注意： 这里不做汇率换算；金额币种归一化由统计模型处理。
  */
 import type { BillingCycle } from "@/types/subscription";
 import { addDateOnly, compareDateOnly, type DateOnly } from "@/lib/time/date-only";
@@ -72,7 +72,7 @@ function addBillingCycles(
  * - 该函数只做周期折算，不关心货币；如果需要统一口径，请先做汇率换算再折算（月度是线性变换，顺序无关）
  * - 目前项目里多个页面（仪表盘/统计/饼图）都需要这套折算规则，集中到这里便于统一维护
  *
- * Caveat: weekly 使用 4.33 是产品口径近似值，不等同于精确自然月账单。
+ * 注意： weekly 使用 4.33 是产品口径近似值，不等同于精确自然月账单。
  */
 export function toMonthlyAmount(amount: number, cycle: BillingCycle, customDays?: number): number {
   switch (cycle) {

@@ -4,7 +4,7 @@
  * 架构位置：排序项和新增表单共用这里加载 IconPicker，避免两个 presentation 组件各自引入
  * 图标搜索、上传和裁剪相关依赖。
  *
- * PERF: 保持懒加载可以降低 Settings 首屏 bundle；不要在父组件静态 import IconPicker。
+ * PERF： 保持懒加载可以降低 Settings 首屏 bundle；不要在父组件静态 import IconPicker。
  */
 import { lazy } from "react";
 import { cn } from "@/lib/utils";

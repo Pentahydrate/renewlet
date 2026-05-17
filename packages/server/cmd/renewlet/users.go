@@ -5,7 +5,7 @@ package main
 // 架构位置：PocketBase 提供认证记录，Renewlet 在 users collection 上增加 role/banned/banReason，
 // 并由管理员 API 与登录 hook 统一消费这些字段。
 //
-// Caveat: 这里的自锁保护是最后一道后端防线；前端按钮禁用不能替代这些检查。
+// 注意： 这里的自锁保护是最后一道后端防线；前端按钮禁用不能替代这些检查。
 import (
 	"errors"
 	"net/mail"
@@ -29,7 +29,7 @@ type userDTO struct {
 var errSetupAlreadyInitialized = errors.New("SETUP_ALREADY_INITIALIZED")
 
 // requireAdmin 是管理员 API 的权限中间件。
-// Caveat: 前端禁用按钮只是体验优化；所有管理员写操作都必须经过这里和后续防自锁校验。
+// 注意： 前端禁用按钮只是体验优化；所有管理员写操作都必须经过这里和后续防自锁校验。
 func requireAdmin(e *core.RequestEvent) error {
 	if e.Auth == nil || e.Auth.GetString("role") != "admin" || e.Auth.GetBool("banned") {
 		return e.ForbiddenError(tr(requestLocale(e.Request), "需要管理员权限", "Admin permission is required"), nil)
@@ -95,7 +95,7 @@ func createUser(app core.App, name string, email string, password string, role s
 }
 
 // createInitialSuperuserIfMissing 确保首次部署后 PocketBase 管理入口可恢复。
-// Caveat: 已存在非安装器 superuser 时不覆盖，避免破坏用户已有管理账号。
+// 注意： 已存在非安装器 superuser 时不覆盖，避免破坏用户已有管理账号。
 func createInitialSuperuserIfMissing(app core.App, email string, password string) error {
 	hasSuperuser, err := hasNonInstallerSuperuser(app)
 	if err != nil {
@@ -182,7 +182,7 @@ func localizeAdminMutationError(locale appLocale, err error) string {
 }
 
 // toUserDTO 将 PocketBase 用户记录转换为前端可见 DTO。
-// Caveat: 不要在 DTO 中暴露认证内部字段或密码相关状态。
+// 注意： 不要在 DTO 中暴露认证内部字段或密码相关状态。
 func toUserDTO(user *core.Record) userDTO {
 	var banReason *string
 	if reason := strings.TrimSpace(user.GetString("banReason")); reason != "" {

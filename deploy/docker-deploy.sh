@@ -77,6 +77,7 @@ random_cron_secret() {
 }
 
 env_value_length() {
+  # LC_ALL=C 按字节计数；PB_ENCRYPTION_KEY 是 32 字符 ASCII secret，不能受本地 locale 影响。
   printf '%s' "$1" | LC_ALL=C wc -c | tr -d '[:space:]'
 }
 
@@ -86,6 +87,7 @@ ensure_env_value() {
   local current_value=""
   local escaped_value
 
+  # sed replacement 中 / 和 & 有特殊含义，写入 secret 前必须转义，避免生成的 .env 被截断或重复匹配文本。
   escaped_value=$(printf '%s' "$value" | sed 's/[\/&]/\\&/g')
 
   if grep -Eq "^${key}=" "$ENV_FILE"; then
@@ -97,6 +99,7 @@ ensure_env_value() {
       rm -f "${ENV_FILE}.bak"
       log "Generated ${key}"
     else
+      # 已有非空 secret 永不覆盖，避免重新部署时无意轮换 PB 加密 key 或 Cron token。
       log "Keeping existing ${key}"
     fi
   else
@@ -162,6 +165,7 @@ main() {
   fi
 
   mkdir -p "$DATA_DIR"
+  # 权限调整尽力而为：部分 NAS/Windows 文件系统不支持 chmod，部署不应因此失败。
   chmod 700 "$DATA_DIR" 2>/dev/null || true
   chmod 600 "$ENV_FILE" 2>/dev/null || true
 

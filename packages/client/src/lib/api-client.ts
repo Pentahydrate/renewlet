@@ -19,8 +19,8 @@
  *   H -- 成功 --> J[返回 parse 后的数据]
  * ```
  *
- * Caveat: FormData 请求不能手动设置 content-type，否则浏览器不会自动补 multipart boundary。
- * Caveat: 不要恢复 `apiFetch<T>` 式的纯类型断言；本文件是前端拒绝异常 API 响应的唯一运行时边界。
+ * 注意： FormData 请求不能手动设置 content-type，否则浏览器不会自动补 multipart boundary。
+ * 注意： 不要恢复 `apiFetch<T>` 式的纯类型断言；本文件是前端拒绝异常 API 响应的唯一运行时边界。
  */
 import { getAuthHeader } from "@/lib/pocketbase";
 import { getApiLocale, getLocaleHeaders } from "@/i18n/api-locale";

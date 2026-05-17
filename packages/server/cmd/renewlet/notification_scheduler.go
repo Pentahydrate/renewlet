@@ -6,12 +6,12 @@ package main
 // 保证“下一次检查”“今日是否发送”和 notification_jobs 唯一键含义一致。
 //
 // 状态机：
-//   not_due -> skipped
-//   due + no channels/no payload -> skipped job
-//   due + sending -> sent/failed
-//   failed + retries -> only retry failed channels
+//   未到期 -> 跳过
+//   到期 + 无渠道/无 payload -> 跳过 job
+//   到期 + sending -> sent/failed
+//   失败状态（failed）+ 可重试 -> 只重试失败渠道
 //
-// Caveat: 这里按用户时区检查 today/yesterday，是为了覆盖 UTC tick 与用户本地跨日的边界窗口。
+// 注意： 这里按用户时区检查 today/yesterday，是为了覆盖 UTC tick 与用户本地跨日的边界窗口。
 import (
 	"fmt"
 	"log"
@@ -206,7 +206,7 @@ func getNextLocalScheduleOccurrence(now time.Time, timezone string, localTime st
 }
 
 // buildNotificationOverview 构建设置页展示的下一次检查、阻塞原因和未来提醒批次。
-// PERF: 当前按未来 N 天逐日扫描订阅；订阅量明显增长后可改为按 nextBillingDate/trialEndDate 建索引查询。
+// PERF： 当前按未来 N 天逐日扫描订阅；订阅量明显增长后可改为按 nextBillingDate/trialEndDate 建索引查询。
 func buildNotificationOverview(now time.Time, settings appSettings, subscriptions []notificationSubscription, days int) notificationOverview {
 	days = maxInt(days, 1)
 	dailyNextCheck := getNextLocalScheduleOccurrence(now, settings.Timezone, settings.NotificationTimeLocal)
@@ -236,6 +236,7 @@ func buildNotificationOverview(now time.Time, settings appSettings, subscription
 		appendUpcomingBatch(batchesByKey, occurrence, items)
 	}
 	for _, batch := range collectUpcomingRepeatBatches(now, settings, subscriptions, days) {
+		// 日常提醒和重复提醒可能落在同一分钟；统一走 appendUpcomingBatch 保持预览去重。
 		appendUpcomingBatch(batchesByKey, batch.localScheduleOccurrence, batch.Items)
 	}
 	upcoming := make([]upcomingNotificationBatch, 0, len(batchesByKey))
@@ -265,10 +266,10 @@ func buildNotificationOverview(now time.Time, settings appSettings, subscription
 // runNotificationCron 执行一次全用户通知调度。
 // 状态机：
 //
-//	not_due -> skipped
-//	due + no channels/no payload -> skipped job
-//	due + sending -> sent/failed
-//	failed + retries -> only retry failed channels
+//	未到期 -> 跳过
+//	到期 + 无渠道/无 payload -> 跳过 job
+//	到期 + sending -> sent/failed
+//	失败状态（failed）+ 可重试 -> 只重试失败渠道
 func runNotificationCron(app core.App, options notificationCronOptions) (notificationCronResult, error) {
 	options = resolveCronOptions(options)
 	settingsRows, err := app.FindAllRecords("settings")
@@ -285,6 +286,7 @@ func runNotificationCron(app core.App, options notificationCronOptions) (notific
 		if userID == "" {
 			continue
 		}
+		// 先按 user 分组，避免每个 settings 用户都全表扫描 subscriptions。
 		subsByUser[userID] = append(subsByUser[userID], notificationSubscriptionFromRecord(row))
 	}
 
@@ -349,6 +351,7 @@ func runNotificationCron(app core.App, options notificationCronOptions) (notific
 			previousChannels = readJobChannels(existingJob)
 		}
 		channelsToSend := channelsToSend(existingJob, previousChannels, settings.EnabledChannels)
+		// 失败渠道被禁用后没有可重试对象，此时把任务收敛为 sent，避免历史永远停在 failed。
 		noRetryableChannels := existingJob != nil && existingJob.GetString("status") == notificationStatusFailed && len(channelsToSend) == 0
 
 		if !options.DryRun && !noRetryableChannels {
@@ -376,6 +379,7 @@ func runNotificationCron(app core.App, options notificationCronOptions) (notific
 				action = "skipped"
 				reason = finalReason
 			}
+			// dry-run 只返回决策，不创建/更新 job，便于外部 Cron 调试时不污染幂等历史。
 			results = append(results, notificationCronUserResult{UserID: userID, Action: action, Reason: reason})
 			continue
 		}

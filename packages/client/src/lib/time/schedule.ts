@@ -2,7 +2,7 @@
  * 用户本地时间调度工具。
  *
  * Cron 可以按 UTC 高频触发，但是否真正发送通知必须按用户的：
- * local date + local wall-clock time + IANA timezone 判断。
+ * 本地日期 + 本地墙钟时间 + IANA 时区判断。
  */
 import { Temporal } from "@js-temporal/polyfill";
 import { assertDateOnly, fromPlainDate, type DateOnly } from "@/lib/time/date-only";

@@ -4,7 +4,7 @@
  * 架构位置：Settings/CustomConfigContext/presentation 共享这些类型，远端 JSON 和 localStorage
  * 必须先经过 normalize-custom-config 再进入这里定义的稳定结构。
  *
- * Caveat: ConfigItem.value 会写入订阅记录；重命名或删除时要考虑已有 subscriptions 的引用。
+ * 注意： ConfigItem.value 会写入订阅记录；重命名或删除时要考虑已有 subscriptions 的引用。
  */
 import { 
   BuiltInCategory,
@@ -266,7 +266,7 @@ export function normalizePaymentMethods(items: ConfigItem[]): ConfigItem[] {
   const normalized: ConfigItem[] = [];
 
   for (const item of items) {
-    // value 作为订阅数据的持久化字段，必须唯一；重复项直接忽略后出现的。
+    // 持久化字段 value 会写入订阅数据，必须唯一；重复项直接忽略后出现的。
     if (seen.has(item.value)) continue;
     seen.add(item.value);
 

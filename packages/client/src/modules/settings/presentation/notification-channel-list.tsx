@@ -3,7 +3,7 @@
  *
  * 架构位置：负责展示渠道开关和配置完整性提示；是否可发送由 settings controller 与后端共同判定。
  *
- * Caveat: 禁用渠道不等于删除配置，后续重新启用时应保留用户已填写的凭据。
+ * 注意： 禁用渠道不等于删除配置，后续重新启用时应保留用户已填写的凭据。
  */
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

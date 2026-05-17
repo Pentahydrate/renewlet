@@ -5,7 +5,7 @@
  * - 持有用户当前筛选条件。
  * - 调用 domain 纯函数得到标签集合和筛选结果。
  *
- * PERF: 订阅量很大时，可把搜索字段预先标准化成索引，避免每次输入都遍历原始字符串。
+ * PERF： 订阅量很大时，可把搜索字段预先标准化成索引，避免每次输入都遍历原始字符串。
  */
 import { useMemo, useState } from "react";
 import type { Locale } from "@/i18n/locales";

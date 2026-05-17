@@ -11,7 +11,7 @@ package main
 //   request.Body -> 限制 1MiB -> DisallowUnknownFields -> 拒绝多余 JSON token
 //     -> 若实现 localizedValidator 则调用 Validate(locale)
 //
-// Caveat: 不要把 decoder 放宽成 map 或忽略未知字段；未知字段通常代表前后端契约漂移，应在边界失败。
+// 注意： 不要把 decoder 放宽成 map 或忽略未知字段；未知字段通常代表前后端契约漂移，应在边界失败。
 import (
 	"bytes"
 	"encoding/json"
@@ -36,7 +36,7 @@ type localizedValidator interface {
 }
 
 // okResponse 是“无额外数据”的成功响应。
-// Caveat: 需要携带业务字段时应新增专用 response struct，不要扩宽这个公共契约。
+// 注意： 需要携带业务字段时应新增专用 response struct，不要扩宽这个公共契约。
 type okResponse struct {
 	OK bool `json:"ok"`
 }
@@ -96,7 +96,7 @@ type adminCreateUserRequest struct {
 }
 
 // Validate 校验管理员创建用户的请求体。
-// Caveat: role 是权限边界，新增角色时必须同步前端 schema 和所有防自锁逻辑。
+// 注意： role 是权限边界，新增角色时必须同步前端 schema 和所有防自锁逻辑。
 func (r *adminCreateUserRequest) Validate(locale appLocale) error {
 	r.Name = strings.TrimSpace(r.Name)
 	r.Email = strings.TrimSpace(r.Email)
@@ -218,7 +218,7 @@ func decodeStrictJSONFromBytes[T interface{}](data []byte, locale appLocale, all
 }
 
 // decodeStrictJSONBytesInto 是严格 JSON 解码的核心实现。
-// Caveat: `decoder.Decode(&extra)` 用于拒绝第二个 JSON token，防止 `{} {}` 这类拼接 body 被部分接受。
+// 注意： `decoder.Decode(&extra)` 用于拒绝第二个 JSON token，防止 `{} {}` 这类拼接 body 被部分接受。
 func decodeStrictJSONBytesInto(data []byte, target interface{}, locale appLocale, allowEmpty bool) error {
 	trimmed := bytes.TrimSpace(data)
 	if len(trimmed) == 0 {
@@ -290,7 +290,7 @@ func rawJSONIsNull(value json.RawMessage) bool {
 }
 
 // jsonBytesFromValue 将 PocketBase JSON 字段的多种运行时形态统一成 bytes。
-// Caveat: 这里只做格式桥接，真正的 schema 校验必须在调用方继续完成。
+// 注意： 这里只做格式桥接，真正的 schema 校验必须在调用方继续完成。
 func jsonBytesFromValue(value interface{}) ([]byte, error) {
 	if value == nil {
 		return nil, nil

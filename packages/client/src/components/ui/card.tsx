@@ -1,9 +1,9 @@
 /**
- * Card 设计系统原语。
+ * 卡片设计系统原语。
  *
  * 架构位置：只承载独立信息块或列表项的基础外壳；页面级布局不应嵌套卡片来制造层级。
  *
- * Caveat: 调整边框/阴影会影响 dashboard、settings 和 subscription grid 的整体密度。
+ * 注意： 调整边框/阴影会影响 dashboard、settings 和 subscription grid 的整体密度。
  */
 import * as React from "react";
 

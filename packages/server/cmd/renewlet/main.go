@@ -7,7 +7,7 @@ package main
 //   - 静态前端由 embedded FS 提供，自定义 API 复用 PocketBase auth/session。
 //   - 具体请求/响应 DTO 在 api_contracts.go，通知任务在 notifications.go，文件资产在 assets.go。
 //
-// Caveat: 这里的 route 是前端 API schema 的后端真相来源；新增字段时必须同步 Zod schema 和 route 测试。
+// 注意： 这里的 route 是前端 API schema 的后端真相来源；新增字段时必须同步 Zod schema 和 route 测试。
 import (
 	"errors"
 	"fmt"
@@ -113,7 +113,7 @@ func runHealthcheck() {
 }
 
 // staticWithSecurityHeaders 为嵌入式前端静态资源补安全响应头。
-// Caveat: CSP connect-src 需要覆盖前端直接访问的第三方 API；新增外部 fetch 时要同步这里。
+// 注意： CSP connect-src 需要覆盖前端直接访问的第三方 API；新增外部 fetch 时要同步这里。
 func staticWithSecurityHeaders(staticFS fs.FS) func(*core.RequestEvent) error {
 	handler := apis.Static(staticFS, true)
 	return func(e *core.RequestEvent) error {

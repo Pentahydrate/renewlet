@@ -1,9 +1,9 @@
 /**
- * Slider 设计系统原语。
+ * 滑块设计系统原语。
  *
  * 架构位置：封装 Radix Slider，供提醒天数、阈值等连续数值控件复用统一视觉。
  *
- * Caveat: 这里只处理交互外壳；离散步长和合法范围应由业务字段显式传入。
+ * 注意： 这里只处理交互外壳；离散步长和合法范围应由业务字段显式传入。
  */
 import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";

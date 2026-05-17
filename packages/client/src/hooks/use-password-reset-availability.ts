@@ -5,7 +5,7 @@
  * - 登录页只根据该 Hook 的布尔值展示/隐藏“忘记密码”入口。
  * - 服务端状态来自 SMTP 环境配置，客户端不直接读取任何敏感信息。
  *
- * Caveat: 失败时按不可用处理，是为了避免网络抖动时展示一个实际无法完成的找回入口。
+ * 注意： 失败时按不可用处理，是为了避免网络抖动时展示一个实际无法完成的找回入口。
  */
 import { useEffect, useState } from "react";
 import { passwordResetStatusResponseSchema } from "@/lib/api/schemas/app";

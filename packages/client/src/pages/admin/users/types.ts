@@ -4,7 +4,7 @@
  * 架构位置：页面 controller 持有状态，row/dialog presentation 只消费这些显式 interface，
  * 避免在 UI 组件之间传递宽松对象。
  *
- * Caveat: AdminPatchUserPayload 必须与后端 adminPatchUserRequest、Zod schema 同步。
+ * 注意： AdminPatchUserPayload 必须与后端 adminPatchUserRequest、Zod schema 同步。
  */
 import type { AdminUser, UserRole } from "@/lib/api/schemas/admin";
 

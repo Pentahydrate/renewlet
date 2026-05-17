@@ -6,7 +6,7 @@
  * - 主题切换（dark/light）
  * - 可选：在支持的页面提供“新增订阅”入口
  *
- * Caveat: Header 的主题切换只写本地 pending 状态。跨设备同步必须由 Settings 页保存完成。
+ * 注意： Header 的主题切换只写本地 pending 状态。跨设备同步必须由 Settings 页保存完成。
  */
 
 import Link, { NavLink } from '@/components/router-link';
@@ -194,7 +194,7 @@ export function Header({ onAddSubscription, availableTags }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile nav */}
+      {/* 移动端导航 */}
       <nav className="flex border-t border-border md:hidden">
         {navItems.map((item) => (
           <NavLink

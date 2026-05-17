@@ -1,10 +1,10 @@
 /**
- * Dialog 设计系统原语。
+ * 弹窗设计系统原语。
  *
  * 架构位置：封装 Radix Dialog，并提供 portal container context，让弹窗内的 Popover/Select
  * 能挂到同一层级，避免 z-index 与滚动锁互相踩踏。
  *
- * Caveat: 修改 portal container 逻辑会影响裁剪、配置管理和订阅表单中的嵌套浮层。
+ * 注意： 修改 portal container 逻辑会影响裁剪、配置管理和订阅表单中的嵌套浮层。
  */
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";

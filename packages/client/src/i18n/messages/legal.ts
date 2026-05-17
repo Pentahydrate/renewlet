@@ -3,7 +3,7 @@
  *
  * 架构位置：隐私政策和服务条款页面只渲染这些静态文本，不参与业务数据流。
  *
- * Caveat: 日期和承诺性表述属于产品/法律内容，更新时应同步 README 或部署说明。
+ * 注意： 日期和承诺性表述属于产品/法律内容，更新时应同步 README 或部署说明。
  */
 import type { MessageMap, MessageValue } from "./types";
 

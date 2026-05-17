@@ -2,16 +2,16 @@
  * 通知历史与调度预览面板。
  *
  * 架构位置：
- * - SettingsScreen 传入由 `useNotificationHistory` 产出的严格类型数据。
+ * - `SettingsScreen` 传入由 `useNotificationHistory` 产出的严格类型数据。
  * - 本组件只做展示、筛选交互和任务详情选择，不直接读取动态 JSON。
  *
  * 状态链路：
  * ```
- * summary card -> 打开 Dialog -> upcoming/history tabs
- * history filter -> hook 重新请求 -> selectedJobId 清空 -> 首条任务作为详情兜底
+ * 汇总卡片 -> 打开 Dialog -> upcoming/history tabs
+ * 历史筛选 -> hook 重新请求 -> selectedJobId 清空 -> 首条任务作为详情兜底
  * ```
  *
- * Caveat: `NotificationJobResult` 是 cron result | empty object。访问 message/channels 前必须用 `hasCronResult` 收窄。
+ * 注意： `NotificationJobResult` 是 cron result | empty object。访问 message/channels 前必须用 `hasCronResult` 收窄。
  */
 import { useCallback, useMemo, useRef, useState, type RefObject } from "react";
 import { AlertTriangle, BellRing, CheckCircle2, Clock, History, RefreshCw, XCircle } from "lucide-react";

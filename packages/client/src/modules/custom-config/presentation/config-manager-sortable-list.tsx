@@ -3,7 +3,7 @@
  *
  * 架构位置：封装 dnd-kit 的传感器和排序上下文，具体增删改禁用状态由 controller 持有。
  *
- * Caveat: 拖拽会高频触发顺序更新；不要在列表项内部直接持久化远端配置。
+ * 注意： 拖拽会高频触发顺序更新；不要在列表项内部直接持久化远端配置。
  */
 import { memo } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";

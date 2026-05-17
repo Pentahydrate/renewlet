@@ -5,7 +5,7 @@
  * - ImageCropDialog 输出 data URL，SVG 上传保留原始 File。
  * - 本模块把 data URL 或原始 File 写入 PocketBase `assets` collection。
  *
- * Caveat: 客户端校验只是体验优化；PocketBase collection 规则仍是最终安全边界。
+ * 注意： 客户端校验只是体验优化；PocketBase collection 规则仍是最终安全边界。
  */
 import { MAX_IMAGE_BYTES, imageExtensionForMime, isAllowedImageMime, uploadMimeTypeForFile } from "@/lib/upload-constraints";
 import type { ApiUploadImageResponse, UploadKind } from "@/lib/api/schemas/media";
@@ -29,6 +29,7 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   const header = dataUrl.slice(0, commaIndex);
   const base64 = dataUrl.slice(commaIndex + 1);
 
+  // 只接受标准 base64 data URL；不支持 percent-encoded data URL，避免两套解码路径造成 MIME 校验差异。
   const mimeMatch = /^data:(.+);base64$/i.exec(header);
   const mimeType = (mimeMatch?.[1] ?? "application/octet-stream").trim().toLowerCase();
   if (!isAllowedImageMime(mimeType)) {
@@ -46,6 +47,7 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   }
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) {
+    // 浏览器 atob 返回 Latin-1 字符串；逐字节写入 Uint8Array 才能保持图片二进制不被 UTF-16 转码破坏。
     bytes[i] = binary.charCodeAt(i);
   }
 
@@ -99,6 +101,7 @@ async function createAssetFromFile(file: Blob, kind: UploadKind, filename: strin
 
   const record = await pb.collection("assets").create<RecordModel>(form);
   const storedFile = typeof record["file"] === "string" ? record["file"] : "";
+  // 返回受控读取 API，而不是 PocketBase 直链；这样私有资产继续走统一鉴权和缓存策略。
   if (!storedFile) throw new Error(translate(getApiLocale(), "media.uploadFailed"));
   return { url: `/api/app/assets/${record.id}` };
 }

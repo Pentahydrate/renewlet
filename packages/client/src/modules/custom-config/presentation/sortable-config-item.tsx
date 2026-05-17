@@ -3,7 +3,7 @@
  *
  * 架构位置：展示单个 ConfigItem 的编辑、启用、删除和拖拽手柄；业务约束由上层 controller 注入。
  *
- * Caveat: 内置项和被订阅引用的分类可能不能删除，按钮禁用原因必须跟 controller 保持一致。
+ * 注意： 内置项和被订阅引用的分类可能不能删除，按钮禁用原因必须跟 controller 保持一致。
  */
 import { memo, Suspense } from "react";
 import { useSortable } from "@dnd-kit/sortable";

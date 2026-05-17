@@ -1,11 +1,11 @@
 /**
- * Custom Config React Context。
+ * 自定义配置 React Context。
  *
  * 架构位置：
  * - Provider 只负责把 application hook 的结果暴露给组件树。
  * - API/localStorage/防抖保存都在 `useCustomConfigState` 内，不在 Context 中实现。
  *
- * Caveat: 不要在这里重新加入持久化逻辑，否则 Context 会再次变成“状态 + IO + 规范化”的混合层。
+ * 注意： 不要在这里重新加入持久化逻辑，否则 Context 会再次变成“状态 + IO + 规范化”的混合层。
  */
 import { createContext, useContext, type ReactNode } from "react";
 import { useCustomConfigState } from "@/modules/custom-config/application/use-custom-config-state";

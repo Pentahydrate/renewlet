@@ -5,7 +5,7 @@ package main
 // 架构位置：用户可在 Settings 中覆盖 SMTP；缺省时回退到部署环境变量，
 // 因而这里必须同时支持请求级设置和全局配置，且在发送前完成地址/端口校验。
 //
-// Caveat: NotifyMultipleAddresses 只影响收件人截断，不应改变配置校验；否则会让测试发送和定时发送表现不一致。
+// 注意： NotifyMultipleAddresses 只影响收件人截断，不应改变配置校验；否则会让测试发送和定时发送表现不一致。
 import (
 	"errors"
 	"fmt"

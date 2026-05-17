@@ -5,7 +5,7 @@
  * - SubscriptionFormFields 负责表单布局，本组件只管理标签数组的输入体验。
  * - 标签最终契约仍由 subscription-form / 后端 hook 校验，避免 UI 成为唯一防线。
  *
- * Caveat: 标签按精确文本去重，不做大小写折叠；这与后端 normalizeTags 保持一致。
+ * 注意： 标签按精确文本去重，不做大小写折叠；这与后端 normalizeTags 保持一致。
  */
 import * as React from "react";
 import { Plus, Tag, X } from "lucide-react";

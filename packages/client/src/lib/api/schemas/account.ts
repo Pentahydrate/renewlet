@@ -5,7 +5,7 @@
  * - PocketBase 负责认证内部规则。
  * - 本层先做产品侧输入边界控制，避免把明显非法数据传入认证适配器。
  *
- * Caveat: 密码字段属于敏感数据，新增调试日志时不要输出 schema parse 的原始 body。
+ * 注意： 密码字段属于敏感数据，新增调试日志时不要输出 schema parse 的原始 body。
  */
 import { z } from "zod";
 

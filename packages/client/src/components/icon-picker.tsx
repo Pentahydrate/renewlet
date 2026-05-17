@@ -9,7 +9,7 @@
  * 注意：
  * - 图标自动搜索依赖外部资源（网站 favicon / 第三方 favicon 服务），网络不通时可能加载失败（UI 有降级处理）
  *
- * Caveat: 该组件被 Custom Config 弹窗用于支付方式图标。上传中/失败状态必须传回 controller，
+ * 注意： 该组件被 Custom Config 弹窗用于支付方式图标。上传中/失败状态必须传回 controller，
  * 否则配置可能保存临时 data URL 或失效图片。
  */
 
@@ -146,7 +146,7 @@ export function IconPicker({
   return (
     <>
       <div className="flex items-center gap-2">
-        {/* Icon Preview */}
+        {/* 图标预览 */}
         <div 
           className={cn(
             "relative rounded-lg border border-border",
@@ -197,7 +197,7 @@ export function IconPicker({
           />
         </div>
 
-        {/* Action Buttons */}
+        {/* 操作按钮 */}
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex gap-1">
             <Button

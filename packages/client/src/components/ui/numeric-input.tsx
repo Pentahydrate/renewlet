@@ -1,9 +1,9 @@
 /**
- * NumericInput 数值输入原语。
+ * 数值输入原语。
  *
  * 架构位置：把 react-number-format 的格式化能力限制在输入层，业务层仍接收可控字符串/数值。
  *
- * Caveat: 不要在这里写订阅价格或预算的业务上限；字段级约束属于表单 schema。
+ * 注意： 不要在这里写订阅价格或预算的业务上限；字段级约束属于表单 schema。
  */
 import * as React from "react";
 import { NumericFormat } from "react-number-format";

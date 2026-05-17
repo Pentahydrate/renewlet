@@ -6,11 +6,11 @@
  * - 前端负责表单体验、乐观禁用和基础校验；后端负责授权、schema 和最后管理员保护。
  *
  * 状态链路：
- *   mount/loadUsers -> users
- *   create/reset/delete/patch -> updating ids / dialogs -> reload users
- *   role/status/delete controls -> current user + last enabled admin 双重保护
+ *   挂载/loadUsers -> users
+ *   创建/重置/删除/patch -> updating ids/dialogs -> 重新加载 users
+ *   角色/状态/删除控件 -> 当前用户 + 最后一个启用管理员的双重保护
  *
- * Caveat: 不要只依赖前端禁用来保护管理员账号；这里的保护是 UX，安全边界仍在 Go route。
+ * 注意： 不要只依赖前端禁用来保护管理员账号；这里的保护是 UX，安全边界仍在 Go route。
  */
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Shield, UserPlus } from "lucide-react";

@@ -5,7 +5,7 @@
  * - Settings 页提交的表单最终会通过该 schema 进入 `user_settings.settings` JSON 字段。
  * - 通知测试/手动运行也复用 partial schema，允许“未保存设置临时生效”。
  *
- * Caveat: 这里的字段必须与 `DEFAULT_SETTINGS` 保持同步；新增设置时若只改 UI，会在保存时被丢弃。
+ * 注意： 这里的字段必须与 `DEFAULT_SETTINGS` 保持同步；新增设置时若只改 UI，会在保存时被丢弃。
  */
 import { z } from "zod";
 import { NOTIFICATION_CHANNELS, type AppSettings } from "@/types/subscription";

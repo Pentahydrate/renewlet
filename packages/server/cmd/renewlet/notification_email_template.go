@@ -5,7 +5,7 @@ package main
 // 架构位置：HTML 放在 embedded .gohtml 模板，文案放在 embedded locale JSON catalog，
 // Go 只负责准备 view model。这样既能保持严格邮件客户端兼容，也避免把布局写成巨大字符串。
 //
-// Caveat: 不要把预渲染 HTML 传进模板；用户可控值必须继续交给 html/template 做上下文转义。
+// 注意： 不要把预渲染 HTML 传进模板；用户可控值必须继续交给 html/template 做上下文转义。
 import (
 	"bytes"
 	"embed"
@@ -26,6 +26,7 @@ const (
 )
 
 // 模板与文案一起 embed，保证 Docker 单 binary 部署不依赖运行时文件路径。
+//
 //go:embed templates/email/*.gohtml i18n/email.*.json
 var emailTemplateFS embed.FS
 
@@ -134,6 +135,7 @@ func buildEmailHTMLMessage(settings appSettings, message notificationMessage) (s
 		return body, nil
 	}
 
+	// 超限时降级为紧凑正文而不是直接失败，避免大量提醒项导致邮件渠道整批不可用。
 	compactData, err := buildEmailTemplateData(settings, message, true)
 	if err != nil {
 		return "", err
@@ -235,11 +237,13 @@ func buildEmailTemplateGroups(items []notificationContentItem, locale appLocale,
 	for _, item := range items {
 		itemType := item.Type
 		if _, ok := grouped[itemType]; !ok {
+			// 未知类型按续费处理，保证历史旧数据仍能渲染，而不是让整封邮件失败。
 			itemType = "renewal"
 		}
 		grouped[itemType] = append(grouped[itemType], item)
 	}
 
+	// 邮件分组顺序固定，避免 map iteration 导致同一批提醒在不同运行中顺序抖动。
 	order := []string{"renewal", "trial", "expired"}
 	groups := make([]emailTemplateGroup, 0, len(order))
 	for _, itemType := range order {
@@ -309,6 +313,7 @@ func emailCTAFromAppURL(rawAppURL string, hasReminderItems bool, copy emailCatal
 	if basePath == "" {
 		parsed.Path = targetPath
 	} else {
+		// 支持应用挂在子路径下的反代部署，例如 https://example.com/renewlet。
 		parsed.Path = basePath + targetPath
 	}
 	parsed.RawPath = ""
@@ -469,6 +474,7 @@ func hslToHex(h, s, l float64) string {
 	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
 	m := l - c/2
 
+	// 这里手写 HSL->RGB 是为了邮件模板不依赖浏览器 CSS 颜色函数，老邮件客户端也能渲染 hex。
 	r, g, b := 0.0, 0.0, 0.0
 	switch {
 	case h < 60:
@@ -490,6 +496,7 @@ func hslToHex(h, s, l float64) string {
 func contrastTextForHSL(h, s, l float64) string {
 	r, g, b := hslToRGB(h, s, l)
 	luminance := relativeLuminance(r, g, b)
+	// 使用相对亮度选择黑/白文字，保证自定义主题色在邮件 CTA 上仍有基本可读性。
 	if luminance > 0.52 {
 		return "#111827"
 	}

@@ -82,7 +82,7 @@ export default function Index() {
       <Header onAddSubscription={handleAddSubscription} availableTags={availableTags} />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Stats Grid */}
+        {/* 统计网格 */}
         <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title={t("dashboard.monthlySpend")}
@@ -117,9 +117,9 @@ export default function Index() {
           />
         </div>
 
-        {/* Main Content Grid */}
+        {/* 主内容网格 */}
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Subscriptions List */}
+          {/* 订阅列表 */}
           <div className="lg:col-span-2">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">{t("dashboard.recentSubscriptions")}</h2>
@@ -152,15 +152,15 @@ export default function Index() {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* 侧边栏 */}
           <div className="grid gap-6">
-            {/* Spending Chart */}
+            {/* 支出图表 */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-card">
               <h3 className="mb-3 text-lg font-semibold text-foreground">{t("dashboard.spendingDistribution")}</h3>
               <SpendingChart subscriptions={subscriptions} />
             </div>
 
-            {/* Upcoming Renewals */}
+            {/* 即将续费 */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-card">
               <h3 className="mb-4 text-lg font-semibold text-foreground">{t("dashboard.upcomingRenewals")}</h3>
                 <UpcomingRenewals subscriptions={subscriptions} timeZone={timeZone} />

@@ -5,7 +5,7 @@
  * - 配置项驱动分类、状态、支付方式、货币下拉与统计筛选。
  * - route 校验通过后仍会调用 normalize，保证内置项和货币范围不能被绕过。
  *
- * Caveat: 这里只描述结构；“哪些项不可删除/必须启用”属于 domain normalize 规则。
+ * 注意： 这里只描述结构；“哪些项不可删除/必须启用”属于 domain normalize 规则。
  */
 import { z } from "zod";
 import type { CustomConfig } from "@/types/config";

@@ -1,9 +1,9 @@
 /**
- * SearchableSelect 可搜索选择器。
+ * 可搜索选择器。
  *
  * 架构位置：组合 Popover + cmdk + Tooltip，服务自定义配置、货币、分类等长选项列表。
  *
- * Caveat: 选项 label 可能来自用户自定义配置；渲染层只展示文本，不在这里修复配置结构。
+ * 注意： 选项 label 可能来自用户自定义配置；渲染层只展示文本，不在这里修复配置结构。
  */
 import * as React from "react";
 import { Command } from "cmdk";
@@ -70,6 +70,7 @@ export function SearchableSelect({
 
     const limited = options.slice(0, initialRenderLimit);
     if (selectedOption && !limited.some((option) => option.value === selectedOption.value)) {
+      // 初始只渲染前 N 项以降低大列表开销，但当前值必须保留，否则触发器和列表选中态会脱节。
       return [selectedOption, ...limited];
     }
     return limited;

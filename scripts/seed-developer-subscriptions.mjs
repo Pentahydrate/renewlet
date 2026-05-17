@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * @file 本地开发库订阅 Demo Seed 脚本。
+ * @file 本地开发库订阅演示 seed 脚本。
  *
  * 职责：作为 seed 编排器读取环境变量、完成 PocketBase 鉴权、合并 settings，并把
- * 100 条开发者订阅 demo 以幂等 upsert 的方式写入当前用户。
+ * 100 条开发者订阅演示数据以幂等 upsert 的方式写入当前用户。
  *
  * 架构：本地 Go server/PocketBase 提供 API；前端 Dashboard、Subscriptions、Statistics
  * 读取 settings/subscriptions。settings 影响主题、币种和预算，subscriptions 影响统计、续费提醒和筛选。
@@ -22,11 +22,11 @@
  *
  * 外部依赖：PocketBase REST API、Node.js fetch/URLSearchParams/Intl、TheSVG CDN。
  *
- * 流程：env -> validate fixtures -> auth -> settings merge -> list subscriptions -> seedKey/slug index
- *      -> create|patch demo records -> delete stale demo records -> summary。
+ * 流程：env -> 校验 fixtures -> auth -> 合并 settings -> 读取 subscriptions -> seedKey/slug 索引
+ *      -> create|patch 演示记录 -> 删除过期演示记录 -> 汇总。
  *
- * Caveat：不要把 seedKey 改成通用字段名；删除逻辑依赖它隔离真实用户数据。
- * Caveat：新增订阅字段时，需要同步 PocketBase schema、前端 Zod schema、toSubscriptionPayload。
+ * 注意：不要把 seedKey 改成通用字段名；删除逻辑依赖它隔离真实用户数据。
+ * 注意：新增订阅字段时，需要同步 PocketBase schema、前端 Zod schema、toSubscriptionPayload。
  */
 
 import { DEVELOPER_SUBSCRIPTION_FIXTURES, PRICE_CHECKED_AT } from "./data/developer-subscriptions.mjs";
@@ -41,7 +41,7 @@ let api = createSeedApi({ writeDelayMs: DEFAULT_SEED_WRITE_DELAY_MS });
 
 /**
  * 新用户没有 settings 记录时才使用完整默认值；已有记录只合并展示字段。
- * settings JSON 同时承载通知密钥、SMTP 等敏感信息，脚本不能为了截图重置真实通知配置。
+ * `settings` JSON 同时承载通知密钥、SMTP 等敏感信息，脚本不能为了截图重置真实通知配置。
  */
 const DEFAULT_SETTINGS = {
   adminUsername: "Renewlet Demo",
@@ -84,7 +84,7 @@ const DEFAULT_SETTINGS = {
 };
 
 /**
- * Demo 数据以“稳定 slug + 官方价格快照”作为维护单元。价格/来源放在 data 文件；
+ * 演示数据以“稳定 slug + 官方价格快照”作为维护单元。价格/来源放在 data 文件；
  * 续费日、付款方式、状态只负责截图和本地验收的分布，不伪装成真实个人账单。
  */
 const DEMO_SUBSCRIPTIONS = buildDemoSubscriptions(DEVELOPER_SUBSCRIPTION_FIXTURES);
@@ -173,7 +173,7 @@ async function authenticate(pbUrl, email, password) {
  * 边界控制：RENEWLET_LOCALE 未提供时不覆盖已有语言；已有 settings 只浅合并主题、币种、预算；
  * 不写空字符串到通知密钥字段，避免清掉用户已有 webhook/SMTP/Bark 配置。
  *
- * Caveat：这里的字段必须与 DEFAULT_SETTINGS、前端 settings schema 保持兼容；
+ * 注意：这里的字段必须与 DEFAULT_SETTINGS、前端 settings schema 保持兼容；
  * 如果前端把 settings 改成更细粒度的 collection，脚本也要跟着拆分写入。
  */
 async function upsertSettings(pbUrl, token, userId, locale) {
@@ -398,7 +398,7 @@ function localTimeZone() {
  * 使用 UTC date-only 生成 YYYY-MM-DD。
  *
  * 为什么不用本地 midnight：
- * Renewlet 的账单日期是 date-only 业务语义，不能让 Node 运行机的时区把日期推前/推后一天。
+ * 本应用的账单日期是 date-only 业务语义，不能让 Node 运行机的时区把日期推前/推后一天。
  */
 function dateFromToday(offsetDays) {
   const now = new Date();

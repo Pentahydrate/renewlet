@@ -3,7 +3,7 @@
  *
  * 架构位置：只维护 auth/setup/password reset 领域 key，聚合与运行时 translate 由 `messages.ts` 负责。
  *
- * Caveat: 密码重置错误文案应保持账号枚举安全，不要暗示邮箱是否存在。
+ * 注意： 密码重置错误文案应保持账号枚举安全，不要暗示邮箱是否存在。
  */
 import type { MessageMap, MessageValue } from "./types";
 

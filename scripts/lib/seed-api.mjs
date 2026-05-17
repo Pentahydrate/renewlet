@@ -7,11 +7,11 @@
  * 外部依赖：Node.js 全局 fetch、PocketBase REST API、HTTP Retry-After 约定。
  *
  * 流程：
- *   api() -> pace collection write -> fetch JSON -> ok return
- *         -> 429 retry/backoff -> retry exhausted -> throw readable error
+ *   调用 api() -> 节流 collection 写入 -> fetch JSON -> 成功返回
+ *         -> 429 重试/backoff -> 重试耗尽 -> 抛出可读错误
  *
- * Caveat：节流时钟保存在单个 Node 进程的闭包里，不能协调两个终端同时运行 seed。
- * Caveat：`RENEWLET_SEED_WRITE_DELAY_MS=0` 是显式绕过保护，可能重新触发 PocketBase create 限流。
+ * 注意：节流时钟保存在单个 Node 进程的闭包里，不能协调两个终端同时运行 seed。
+ * 注意：`RENEWLET_SEED_WRITE_DELAY_MS=0` 是显式绕过保护，可能重新触发 PocketBase create 限流。
  * PERF：如果未来 PocketBase 提供稳定批量写接口，可以用批量 mutation 替代逐条 pacing。
  */
 
@@ -92,7 +92,7 @@ async function sendJsonRequest(pbUrl, path, method, options) {
 function retryAfterDelayMs(value) {
   if (!value) return null;
   const numericSeconds = Number.parseFloat(value);
-  // Retry-After 允许秒数或 HTTP-date；统一封顶，避免异常服务端头让本地脚本长时间“假死”。
+  // 解析 Retry-After 时允许秒数或 HTTP-date；统一封顶，避免异常服务端头让本地脚本长时间“假死”。
   const delayMs = Number.isFinite(numericSeconds) ? numericSeconds * 1000 : Date.parse(value) - Date.now();
   if (!Number.isFinite(delayMs)) return null;
   return Math.min(Math.max(0, Math.ceil(delayMs)), MAX_RETRY_DELAY_MS);

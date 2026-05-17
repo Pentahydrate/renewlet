@@ -11,8 +11,8 @@
  * - ConfigManagerDialog：自定义配置的模块化 presentation。
  * - ThemeSelector：外观即时预览控件。
  *
- * Caveat: 如果这里直接引入 API client、auth client 或 localStorage，就会破坏
- * presentation -> application -> domain 的依赖方向。
+ * 注意： 如果这里直接引入 API client、auth client 或 localStorage，就会破坏
+ * 依赖方向保持为 presentation -> application -> domain。
  */
 
 import { useEffect, useState } from 'react';

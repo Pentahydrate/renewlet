@@ -241,7 +241,7 @@ const Subscriptions = () => {
       <Header onAddSubscription={handleAddSubscription} availableTags={allTags} />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Page Title */}
+        {/* 页面标题 */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t("subscriptions.title")}</h1>
@@ -277,7 +277,7 @@ const Subscriptions = () => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* 筛选器 */}
         <div className={cn("mb-6 rounded-xl border border-border bg-card p-5", isMobileTagFilter ? "grid gap-3" : "grid gap-4")}>
           {isMobileTagFilter ? (
             <>
@@ -449,7 +449,7 @@ const Subscriptions = () => {
           )}
         </div>
 
-        {/* Subscription Grid/List */}
+        {/* 订阅网格/列表 */}
         {filteredSubscriptions.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-16">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">

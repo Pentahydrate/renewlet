@@ -2,9 +2,9 @@
  * SPA 路由表。
  *
  * 架构位置：只声明 URL 到页面组件的映射；认证跳转、setup 可见性和缓存刷新由
- * AuthSync / page-level hook 处理，避免路由表承载业务副作用。
+ * AuthSync / 页面级 hook 处理，避免路由表承载业务副作用。
  *
- * Caveat: 新增公开页面时必须同步 `public-routes.ts`，否则刷新后会被客户端守卫带回登录页。
+ * 注意： 新增公开页面时必须同步 `public-routes.ts`，否则刷新后会被客户端守卫带回登录页。
  */
 import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "@/pages/dashboard";

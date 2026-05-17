@@ -3,7 +3,7 @@
  *
  * 架构位置：display-error 和各 application hook 使用这些 key 把后端错误转为用户可读文本。
  *
- * Caveat: 新增后端错误码时应优先在这里补翻译，而不是在调用点写硬编码 fallback。
+ * 注意： 新增后端错误码时应优先在这里补翻译，而不是在调用点写硬编码 fallback。
  */
 import type { MessageMap, MessageValue } from "./types";
 

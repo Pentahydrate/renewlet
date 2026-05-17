@@ -1,9 +1,9 @@
 /**
- * DropdownMenu 设计系统原语。
+ * 下拉菜单设计系统原语。
  *
  * 架构位置：封装 Radix DropdownMenu，用于 Header、表格行操作和更多菜单的统一交互。
  *
- * Caveat: 子菜单偏移和勾选图标是全站菜单约定，调整时要检查管理员用户表和订阅卡片操作。
+ * 注意： 子菜单偏移和勾选图标是全站菜单约定，调整时要检查管理员用户表和订阅卡片操作。
  */
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";

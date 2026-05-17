@@ -30,7 +30,7 @@ export function FaviconResultImage({
 }) {
   const [loaded, setLoaded] = useState(false);
 
-  // src 变化时重置：避免复用旧状态导致新图直接显示/不显示骨架屏。
+  // 图片 src 变化时重置：避免复用旧状态导致新图直接显示/不显示骨架屏。
   useEffect(() => {
     setLoaded(false);
   }, [src]);

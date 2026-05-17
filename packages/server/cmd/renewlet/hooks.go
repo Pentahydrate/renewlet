@@ -9,7 +9,7 @@ package main
 // 校验流转：
 //   OnRecordValidate -> collection switch -> normalize/validate -> record.Set(规范化结果) -> e.Next()
 //
-// Caveat: 新增 collection JSON 字段时要在这里接入同一套验证规则，否则绕过 HTTP API 的写入会产生脏数据。
+// 注意： 新增 collection JSON 字段时要在这里接入同一套验证规则，否则绕过 HTTP API 的写入会产生脏数据。
 import (
 	"bytes"
 	"encoding/json"
@@ -30,9 +30,11 @@ import (
 const maxImageBytes = 2 * 1024 * 1024
 
 var (
-	currencyCodeRe     = regexp.MustCompile(`^[A-Z]{3}$`)
-	dateOnlyRe         = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
-	localTimeRe        = regexp.MustCompile(`^\d{2}:\d{2}$`)
+	// 正则只做形态门禁；真实日期/时间仍交给 time.Parse/isValidLocalTime 防止 2026-99-99 之类伪值。
+	currencyCodeRe = regexp.MustCompile(`^[A-Z]{3}$`)
+	dateOnlyRe     = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	localTimeRe    = regexp.MustCompile(`^\d{2}:\d{2}$`)
+	// 私有资产路径只允许 record id 字符集，避免把任意 /api 路径伪装成 logo 引用。
 	privateAssetPathRe = regexp.MustCompile(`^/api/app/assets/[A-Za-z0-9_-]+$`)
 )
 
@@ -88,7 +90,7 @@ func registerRecordHooks(app core.App) {
 }
 
 // normalizeSubscriptionRecord 校验并规范化订阅记录。
-// Caveat: billingCycle/customDays 的关系必须与前端 discriminated union 保持一致。
+// 注意： billingCycle/customDays 的关系必须与前端 discriminated union 保持一致。
 func normalizeSubscriptionRecord(record *core.Record) error {
 	name := strings.TrimSpace(record.GetString("name"))
 	if name == "" {
@@ -194,7 +196,7 @@ func normalizeSettingsRecord(record *core.Record) error {
 }
 
 // normalizeCustomConfigRecord 校验用户自定义配置 JSON。
-// Caveat: 前端依赖这些配置驱动下拉选项，脏值会进一步污染 subscriptions.category/paymentMethod。
+// 注意： 前端依赖这些配置驱动下拉选项，脏值会进一步污染 subscriptions.category/paymentMethod。
 func normalizeCustomConfigRecord(record *core.Record) error {
 	config, err := customConfigFromValue(record.Get("config"))
 	if err != nil {
@@ -239,7 +241,7 @@ func normalizeAssetRecord(record *core.Record) error {
 }
 
 // normalizeNotificationJobRecord 校验通知任务记录和 result payload。
-// Caveat: notification history 前端直接解析 result union；这里不能允许任意 JSON 混入。
+// 注意： notification history 前端直接解析 result union；这里不能允许任意 JSON 混入。
 func normalizeNotificationJobRecord(record *core.Record) error {
 	if err := requireDateOnly(record.GetString("scheduledLocalDate"), "NOTIFICATION_LOCAL_DATE"); err != nil {
 		return err
@@ -345,7 +347,7 @@ func normalizeTags(value interface{}) ([]string, error) {
 		if _, exists := seen[tag]; exists {
 			continue
 		}
-		// 标签去重发生在持久层，确保搜索/筛选逻辑不需要处理重复标签。
+		// 标签去重发生在持久层，且保持大小写敏感，避免把用户刻意区分的缩写合并掉。
 		seen[tag] = struct{}{}
 		tags = append(tags, tag)
 	}
@@ -353,7 +355,7 @@ func normalizeTags(value interface{}) ([]string, error) {
 }
 
 // stringSliceFromJSONValue 兼容 PocketBase JSON 字段在不同入口下的运行时形态。
-// Caveat: 该函数只接受字符串数组语义；不要为了兼容旧数据而把非字符串静默转成字符串。
+// 注意： 该函数只接受字符串数组语义；不要为了兼容旧数据而把非字符串静默转成字符串。
 func stringSliceFromJSONValue(value interface{}) ([]string, error) {
 	if value == nil {
 		return []string{}, nil
@@ -429,7 +431,7 @@ func customConfigFromValue(value interface{}) (customConfigPayload, error) {
 }
 
 // normalizeCustomConfigPayload 校验所有配置分组。
-// TODO: 如果后续允许更多配置分组，应在前端 schema、后端 payload 和默认配置中一起新增。
+// TODO： 如果后续允许更多配置分组，应在前端 schema、后端 payload 和默认配置中一起新增。
 func normalizeCustomConfigPayload(config *customConfigPayload) error {
 	groups := []struct {
 		name  string
@@ -474,7 +476,7 @@ func normalizeCustomConfigItem(item *customConfigItem) error {
 }
 
 // detectUploadMimeType 读取文件头判断真实 MIME。
-// Caveat: 调用方传入的是 PocketBase 文件 reader，需要在这里打开并关闭，避免泄漏文件句柄。
+// 注意： 调用方传入的是 PocketBase 文件 reader，需要在这里打开并关闭，避免泄漏文件句柄。
 func detectUploadMimeType(reader interface {
 	Open() (io.ReadSeekCloser, error)
 }) (string, error) {
@@ -508,6 +510,7 @@ func isSVGDocument(data []byte) bool {
 			return false
 		}
 		if start, ok := token.(xml.StartElement); ok {
+			// 只看第一个 XML start element，允许 XML 声明/注释，同时拒绝伪装成 SVG 的其他 XML。
 			return strings.EqualFold(start.Name.Local, "svg") &&
 				(start.Name.Space == "" || start.Name.Space == "http://www.w3.org/2000/svg")
 		}
@@ -518,6 +521,7 @@ func isICODocument(data []byte) bool {
 	if len(data) < 6 {
 		return false
 	}
+	// ICO 头：reserved=0、type=1、imageCount>0；比扩展名可靠，且无需解析完整图片目录。
 	return data[0] == 0x00 &&
 		data[1] == 0x00 &&
 		data[2] == 0x01 &&

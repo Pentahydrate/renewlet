@@ -5,7 +5,7 @@
  * - LogoPicker/IconPicker 通过 favicon、The SVG 和上传接口获得可持久化的图片 URL。
  * - schema 只接收后端已经清洗过的 URL/索引字段，组件层不再直接信任外部搜索结果。
  *
- * Caveat: 上传响应里的 `url` 必须是后端资产地址或受控远端 URL；不要允许 data URL 通过本契约进入表单持久化链路。
+ * 注意： 上传响应里的 `url` 必须是后端资产地址或受控远端 URL；不要允许 data URL 通过本契约进入表单持久化链路。
  */
 import { z } from "zod";
 

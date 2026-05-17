@@ -1,10 +1,10 @@
 /**
- * Button 设计系统原语。
+ * 按钮设计系统原语。
  *
  * 架构位置：集中封装 shadcn/cva 的按钮 variant，业务组件只能组合语义和图标，
  * 不应在页面内重新发明按钮尺寸与状态样式。
  *
- * Caveat: 修改 variant 名称会影响大量表单、弹窗和测试中依赖的可达控件。
+ * 注意： 修改 variant 名称会影响大量表单、弹窗和测试中依赖的可达控件。
  */
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";

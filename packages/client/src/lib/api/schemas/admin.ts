@@ -5,7 +5,7 @@
  * - `/admin/users` 页面通过这些 schema 读取用户列表并执行创建、封禁、角色调整、密码重置。
  * - 后端负责最终授权和“最后一个可用管理员”保护，前端 schema 负责拒绝响应漂移。
  *
- * Caveat: `role` 是权限边界，不要把它扩成普通字符串；新增角色必须同步后端枚举、UI 权限判断和 E2E 断言。
+ * 注意： `role` 是权限边界，不要把它扩成普通字符串；新增角色必须同步后端枚举、UI 权限判断和 E2E 断言。
  */
 import { z } from "zod";
 import { okResponseSchema } from "@/lib/api/schemas/common";

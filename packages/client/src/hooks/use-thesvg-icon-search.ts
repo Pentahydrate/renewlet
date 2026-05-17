@@ -1,5 +1,5 @@
 /**
- * The SVG 图标搜索 Hook。
+ * 图标搜索 hook（The SVG）。
  *
  * 架构位置：
  * - LogoPicker/IconPicker 通过它搜索内置品牌图标索引。
@@ -7,12 +7,12 @@
  *
  * 状态链路：
  * ```
- * search(query) -> abort 旧请求 -> apiFetch(schema parse) -> requestId 命中才写入 icons
- * cancel/reset/unmount -> abort + requestId++ -> 旧响应失效
+ * 执行 search(query) -> abort 旧请求 -> apiFetch(schema parse) -> requestId 命中才写入 icons
+ * 取消/重置/卸载 -> abort + requestId++ -> 旧响应失效
  * ```
  *
- * Caveat: 使用 requestId + AbortController 防止旧搜索结果覆盖新输入。
- * PERF: 若品牌索引继续增长，可在后端增加 query 归一缓存，前端保持本 Hook 的取消语义不变。
+ * 注意： 使用 requestId + AbortController 防止旧搜索结果覆盖新输入。
+ * PERF： 若品牌索引继续增长，可在后端增加 query 归一缓存，前端保持本 Hook 的取消语义不变。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api-client";

@@ -4,7 +4,7 @@
  * 架构位置：SubscriptionCalendar 负责日期网格和事件聚合，本文件只展示选中日期/订阅详情，
  * 并把编辑动作交回上层订阅 CRUD 流程。
  *
- * Caveat: 弹窗中的金额、周期和状态标签必须继续复用 subscription domain 常量，避免日历视图口径分叉。
+ * 注意： 弹窗中的金额、周期和状态标签必须继续复用 subscription domain 常量，避免日历视图口径分叉。
  */
 import type { Subscription } from '@/types/subscription';
 import { STATUS_LABELS, CYCLE_LABELS } from '@/types/subscription';

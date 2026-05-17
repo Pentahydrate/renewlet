@@ -1,9 +1,9 @@
 /**
- * Toast 渲染出口。
+ * 通知渲染出口。
  *
  * 架构位置：读取 `useToast` 队列并渲染 Radix Toast，和 Providers 中的 Sonner 可以并存支持过渡期调用。
  *
- * Caveat: 如果迁移到单一 toast 实现，需要先清点 `useToast` 与 sonner 的调用方，避免消息丢失。
+ * 注意： 如果迁移到单一 toast 实现，需要先清点 `useToast` 与 sonner 的调用方，避免消息丢失。
  */
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";

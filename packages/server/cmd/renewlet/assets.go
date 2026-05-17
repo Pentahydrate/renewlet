@@ -6,7 +6,7 @@ package main
 //   - 图片写入走 PocketBase assets collection。
 //   - 前端 AuthorizedImage 通过 `/api/app/assets/{id}` 携带认证读取私有文件。
 //
-// Caveat: 不要直接暴露 PocketBase 文件公开 URL；Logo/Icon 可能属于用户私有数据，必须校验 record.user。
+// 注意： 不要直接暴露 PocketBase 文件公开 URL；Logo/Icon 可能属于用户私有数据，必须校验 record.user。
 import (
 	"io"
 	"net/http"
@@ -64,6 +64,7 @@ func handleAssetRead(app core.App, e *core.RequestEvent) error {
 	headers.Set("Cache-Control", "private, max-age=31536000, immutable")
 	headers.Set("X-Content-Type-Options", "nosniff")
 	if strings.EqualFold(strings.TrimSpace(strings.Split(contentType, ";")[0]), "image/svg+xml") {
+		// SVG 是可执行载体，单独加沙箱 CSP，允许内联样式但禁止脚本/外部对象。
 		headers.Set("Content-Security-Policy", "default-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; style-src 'unsafe-inline'; sandbox")
 	}
 	if size := reader.Size(); size >= 0 {

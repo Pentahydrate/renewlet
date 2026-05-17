@@ -2,15 +2,15 @@
  * i18n Provider 与格式化能力聚合层。
  *
  * 架构位置：messages 只提供纯文案，settings 保存用户偏好，本文件负责把
- * locale 同步到 DOM、API 错误语言、React Query 缓存和用户设置。
+ * 将 locale 同步到 DOM、API 错误语言、React Query 缓存和用户设置。
  *
  * 状态链路：
- *   initial locale -> document/api/localStorage
- *   remote settings.locale -> state
- *   user preview -> state only
- *   user persist -> query cache + settings API
+ *   初始 locale -> document/api/localStorage
+ *   远端 settings.locale -> state
+ *   用户预览 -> 仅更新 state
+ *   用户保存 -> query cache + settings API
  *
- * Caveat: 外观设置页会用 `persist=false` 做本地预览；不要把预览态提前写入远端。
+ * 注意： 外观设置页会用 `persist=false` 做本地预览；不要把预览态提前写入远端。
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -99,7 +99,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       setLocaleState(nextLocale);
 
       if (!shouldPersist) {
-        // Settings 页需要即时预览语言，同时等用户点击保存后再写 settings。
+        // 设置页需要即时预览语言，同时等用户点击保存后再写 settings。
         hasLocalPreviewRef.current = !options.markAsSaved;
         if (options.markAsSaved) {
           setApiLocale(nextLocale);

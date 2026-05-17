@@ -1,11 +1,11 @@
 /**
- * The SVG 图标索引与搜索工具。
+ * 图标索引与搜索工具（The SVG）。
  *
  * 架构位置：
  * - 脚本侧拉取 registry 后调用 parse/create 生成本地索引。
  * - API route 运行时只加载本地索引并调用 search，避免每次请求访问远端 registry。
  *
- * Caveat: 所有 slug/variant/path 都要做白名单校验，避免远端 registry 被污染后生成危险 URL。
+ * 注意： 所有 slug/variant/path 都要做白名单校验，避免远端 registry 被污染后生成危险 URL。
  */
 import { rankSearchText } from "@/lib/searchable-options";
 import type { ApiTheSvgIcon } from "@/lib/api/schemas/media";

@@ -1,5 +1,5 @@
 /**
- * Settings application controller。
+ * 设置页 application controller。
  *
  * 架构位置：
  * - presentation 只渲染 `SettingsScreen`，所有副作用都在这里收敛。
@@ -80,6 +80,7 @@ function isPocketBaseUpdateRecord400(error: unknown): boolean {
   if (!isObjectRecord(error)) return false;
 
   const response = isObjectRecord(error["response"]) ? error["response"] : null;
+  // PocketBase SDK/自定义 API 对错误对象包装不完全一致，因此这里从顶层和 response 双路径读取状态码。
   const status = numericField(error, ["status", "statusCode"])
     ?? (response ? numericField(response, ["status", "statusCode"]) : null);
   if (status !== 400) return false;
@@ -100,11 +101,13 @@ function getExchangeRateProviderSaveErrorMessage(error: unknown, t: ReturnType<t
 }
 
 function areJsonSnapshotsEqual(left: unknown, right: unknown): boolean {
+  // settings/customConfig 都是由 schema 生成的稳定普通对象；用 JSON 快照比深比较依赖更轻量。
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function createDraftSettingsFromRemote(remoteSettings: AppSettings, themeMode: ThemeMode): AppSettings {
   if (!readAppearancePendingFromStorage()) return remoteSettings;
+  // 外观预览先写 localStorage，远端刷新时要保留未保存预览，避免用户刚调好的主题被服务器旧值闪回。
   const storedVariant = readThemeVariantFromStorage();
   const storedCustomColor = readCustomThemeColorFromStorageOrNull();
   return {
@@ -174,7 +177,7 @@ export interface SettingsFormController {
 /**
  * 集中协调 Settings 页的远端状态、本地编辑态和跨模块用例。
  *
- * Caveat: 这里是 Settings 页的“唯一写入口”。新增设置字段时，要同时检查：
+ * 注意： 这里是 Settings 页的“唯一写入口”。新增设置字段时，要同时检查：
  * settings schema、默认值、API merge 策略，以及是否应该纳入统一保存草稿。
  */
 export function useSettingsFormController(): SettingsFormController {
@@ -263,6 +266,7 @@ export function useSettingsFormController(): SettingsFormController {
     }
 
     setSavedSettings(remoteSettings);
+    // 只有本地草稿未脏时才用远端刷新覆盖，避免 React Query 背景刷新吞掉用户未保存编辑。
     if (!settingsDirtyRef.current) setSettings(nextDraft);
   }, [hasInitializedFromRemote, remoteSettings, theme]);
 
@@ -276,6 +280,7 @@ export function useSettingsFormController(): SettingsFormController {
     }
 
     if (!customConfigDirtyRef.current) {
+      // Provider 的防抖保存会回流远端配置；未脏时同步，脏时让用户继续编辑当前草稿。
       setSavedCustomConfig(normalized);
       setCustomConfig(normalized);
     }
@@ -403,6 +408,7 @@ export function useSettingsFormController(): SettingsFormController {
         ? saveConfig(customConfig)
         : Promise.resolve(null);
       // settings 与 custom config 是两个持久化边界；allSettled 能保留部分成功结果并给出精确失败范围。
+      // 不能用 Promise.all，否则其中一个失败会掩盖另一个已经成功的事实，导致 saved snapshot 与远端不一致。
       const [settingsResult, customConfigResult] = await Promise.allSettled([
         settingsPromise,
         customConfigPromise,

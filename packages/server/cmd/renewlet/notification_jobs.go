@@ -5,7 +5,7 @@ package main
 // 架构位置：notification_jobs 是调度幂等、失败重试和前端历史页面的共同事实来源。
 // result 字段写入强类型 payload，但输出时保留 RawMessage，让前端 union schema 精确区分空结果和 cron 结果。
 //
-// Caveat: 唯一索引冲突被视为并发执行已抢占；修改这里的错误处理会直接影响重复发送保护。
+// 注意： 唯一索引冲突被视为并发执行已抢占；修改这里的错误处理会直接影响重复发送保护。
 import (
 	"bytes"
 	"encoding/json"
@@ -19,6 +19,7 @@ import (
 )
 
 func getNotificationJob(app core.App, userID, localDate, localTime, timezone string) (*core.Record, error) {
+	// 这组字段与 notification_jobs 唯一索引一致，是调度幂等的查找边界。
 	return app.FindFirstRecordByFilter(
 		"notification_jobs",
 		"user = {:user} && scheduledLocalDate = {:date} && scheduledLocalTime = {:time} && timeZone = {:tz}",
@@ -27,7 +28,7 @@ func getNotificationJob(app core.App, userID, localDate, localTime, timezone str
 }
 
 // createNotificationJob 创建通知任务并返回是否由本次调用创建。
-// Caveat: 唯一索引冲突被视为“其他并发执行已创建”，调用方应跳过本用户。
+// 注意： 唯一索引冲突被视为“其他并发执行已创建”，调用方应跳过本用户。
 func createNotificationJob(app core.App, userID string, schedule localScheduleDecision, status string, attempts int) (*core.Record, bool, error) {
 	if existing, err := getNotificationJob(app, userID, schedule.ScheduledLocalDate, schedule.ScheduledLocalTime, schedule.TimeZone); err == nil && existing != nil {
 		return existing, false, nil
@@ -85,7 +86,7 @@ func finalizeNotificationJob(app core.App, record *core.Record, userID string, s
 }
 
 // createJobResult 构造历史面板可解析的 cron result。
-// Caveat: 新增字段时必须同步前端 cronJobResultResponseSchema。
+// 注意： 新增字段时必须同步前端 cronJobResultResponseSchema。
 func createJobResult(reason string, schedule localScheduleOccurrence, settings appSettings, due notificationMessage, options notificationCronOptions, channels jobChannels) notificationJobResult {
 	var reasonValue *string
 	if reason != "" {
@@ -136,6 +137,7 @@ func normalizeJobChannels(channels jobChannels) jobChannels {
 		if _, ok := knownChannels[channel]; !ok {
 			continue
 		}
+		// 同一渠道只保留最后一次错误，防止历史 result 因多次重试无限膨胀。
 		failedByChannel[channel] = failure.Error
 	}
 	failed := make([]channelFailure, 0, len(failedByChannel))
@@ -240,6 +242,7 @@ func decodeJSONRecordField(record *core.Record, field string, target interface{}
 		}
 		return json.Unmarshal(v, target)
 	default:
+		// PocketBase JSON 字段在 hooks/routes/tests 中可能是 map、struct 或 RawMessage；统一 marshal 后再解码到目标类型。
 		data, err := json.Marshal(v)
 		if err != nil {
 			return err

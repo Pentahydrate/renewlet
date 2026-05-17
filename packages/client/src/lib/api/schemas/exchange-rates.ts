@@ -7,7 +7,7 @@
  *   进入业务前都会被 adapter 压成内部缓存结构。
  * - 本地缓存只保存本项目 canonical `USD base + 正数汇率表` 结构，并记录用户请求的主来源。
  *
- * Caveat: 如果未来切换 base currency，必须同步换算公式、缓存 key 和统计页文案，否则历史缓存会按错误口径使用。
+ * 注意： 如果未来切换 base currency，必须同步换算公式、缓存 key 和统计页文案，否则历史缓存会按错误口径使用。
  */
 import { z } from "zod";
 

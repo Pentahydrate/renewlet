@@ -8,13 +8,13 @@
  *
  * 状态链路：
  * ```
- * file input -> FileReader(dataURL) -> crop dialog or direct SVG upload
- * crop complete/direct SVG -> preview(dataURL) -> upload -> /api/assets URL -> onChange
- * select remote/clear -> token++ -> ignore stale upload
+ * 文件输入 -> FileReader(dataURL) -> 裁剪弹窗或直接上传 SVG
+ * 裁剪完成/直接 SVG -> 预览(dataURL) -> 上传 -> /api/assets URL -> onChange
+ * 选择远端/清空 -> token++ -> 忽略过期上传
  * ```
  *
- * Caveat: dataURL 只允许作为临时预览，不能写入上层表单或数据库。
- * Caveat: token 计数是本 Hook 的轻量状态机；不要替换成单个 boolean，否则无法区分“旧上传完成”和“当前上传完成”。
+ * 注意： dataURL 只允许作为临时预览，不能写入上层表单或数据库。
+ * 注意： token 计数是本 Hook 的轻量状态机；不要替换成单个 boolean，否则无法区分“旧上传完成”和“当前上传完成”。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, RefObject } from "react";
@@ -114,6 +114,7 @@ export function useCroppedImageUpload(options: UseCroppedImageUploadOptions): Us
         const result = await uploadImageFile({
           file,
           kind,
+          // 扩展名按 MIME 重新生成，避免 `.png` 文件名包着 SVG/ICO 时误导后端或下载端。
           filename: filename.replace(/\.[^.]*$/, `.${imageExtensionForMime(mimeType) ?? "png"}`),
         });
 
@@ -149,6 +150,7 @@ export function useCroppedImageUpload(options: UseCroppedImageUploadOptions): Us
 
       const mimeType = uploadMimeTypeForFile(file);
       fileReaderRef.current?.abort();
+      // 先递增读取 token，再创建 FileReader；这样旧 reader 的 onload 即便排队完成也不会打开裁剪框。
       const token = fileReadTokenRef.current + 1;
       fileReadTokenRef.current = token;
       const reader = new FileReader();
@@ -159,6 +161,7 @@ export function useCroppedImageUpload(options: UseCroppedImageUploadOptions): Us
         const result = event.target?.result;
         if (typeof result === "string") {
           if (isSvgImageMime(mimeType) || isIcoImageMime(mimeType)) {
+            // SVG/ICO 保留原始文件上传，避免裁剪 canvas 把矢量图或多尺寸 ICO 退化成单张位图。
             void uploadOriginalFile(file, result, mimeType);
             return;
           }

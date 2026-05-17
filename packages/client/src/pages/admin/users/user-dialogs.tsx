@@ -3,7 +3,7 @@
  *
  * 架构位置：创建、重置密码、删除确认都由 AdminUsersPage 持有状态，本文件只负责表单可访问性和展示。
  *
- * Caveat: 删除弹窗文案必须继续提示关联数据会被清理；后端实际级联逻辑变化时要同步这里。
+ * 注意： 删除弹窗文案必须继续提示关联数据会被清理；后端实际级联逻辑变化时要同步这里。
  */
 import type { FormEvent, RefObject } from "react";
 import { KeyRound, UserPlus } from "lucide-react";

@@ -6,7 +6,7 @@
  * 避免入口文件成为隐式全局状态容器。
  *
  * 启动链路：
- *   DOM root -> StrictMode -> BrowserRouter -> Providers -> App routes
+ *   DOM 根节点 -> StrictMode -> BrowserRouter -> Providers -> App 路由
  */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

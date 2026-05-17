@@ -1,9 +1,9 @@
 /**
- * Toast 兼容原语。
+ * 通知兼容原语。
  *
  * 架构位置：保留 shadcn 风格的 toast 类型与样式，供旧调用点和测试继续使用。
  *
- * Caveat: 不要在这里加入业务错误翻译，错误文本应在调用方靠近失败边界生成。
+ * 注意： 不要在这里加入业务错误翻译，错误文本应在调用方靠近失败边界生成。
  */
 import * as React from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";

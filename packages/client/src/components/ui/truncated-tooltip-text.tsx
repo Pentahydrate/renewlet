@@ -3,7 +3,7 @@
  *
  * 架构位置：用于服务名、URL、通知结果等不可控长度文本，保持表格/卡片不被长词撑开。
  *
- * Caveat: 只在实际溢出时展示 tooltip，避免密集列表里制造大量无效浮层。
+ * 注意： 只在实际溢出时展示 tooltip，避免密集列表里制造大量无效浮层。
  */
 import * as React from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

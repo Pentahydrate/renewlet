@@ -89,6 +89,7 @@ func getRepeatScheduleDecision(now time.Time, settings appSettings, subscription
 			Interval: normalizeRepeatReminderInterval(sub.RepeatReminderInterval),
 			Window:   normalizeRepeatReminderWindow(sub.RepeatReminderWindow),
 		}
+		// 先检查续费，再检查试用；同一个 tick 只需要命中一次，真正的 items 收集会再聚合所有订阅。
 		if occurrence, ok := repeatReminderDueOccurrence(now, settings, sub.ReminderDays, sub.NextBillingDate, repeat, windowMinutes); ok {
 			return localScheduleDecision{localScheduleOccurrence: occurrence, Due: true, Reason: "repeat_reminder_due"}
 		}
@@ -121,6 +122,7 @@ func repeatReminderDueOccurrence(now time.Time, settings appSettings, reminderDa
 	if elapsedNow <= 0 {
 		return localScheduleOccurrence{}, false
 	}
+	// 用整除定位“最近一个已到达的重复提醒点”，避免从 firstInstant 开始逐个 interval 扫描。
 	steps := int(elapsedNow / interval)
 	if steps < 1 {
 		return localScheduleOccurrence{}, false
@@ -133,6 +135,7 @@ func repeatReminderDueOccurrence(now time.Time, settings appSettings, reminderDa
 	if duration, full := repeatReminderWindowDuration(repeat.Window); !full {
 		limited := targetInstant.Add(-duration)
 		if limited.After(windowStart) {
+			// 有限窗口只保留目标日期前 N 小时的重复提醒，避免早期提醒周期太密。
 			windowStart = limited
 		}
 	}
@@ -221,11 +224,13 @@ func nextRepeatOccurrenceAfter(now time.Time, settings appSettings, reminderDays
 	}
 	start := now.UTC()
 	if windowStart.After(start) {
+		// 下一次预览从有效窗口起点算起，否则“24h 窗口”会显示窗口外的重复提醒。
 		start = windowStart
 	}
 	elapsed := start.Sub(firstInstant)
 	steps := int(elapsed / interval)
 	if firstInstant.Add(time.Duration(steps)*interval).Before(start) || firstInstant.Add(time.Duration(steps)*interval).Equal(firstInstant) {
+		// 若刚好落在 firstInstant，仍要推进到第一个重复点；首提醒由日常提醒负责，不重复显示。
 		steps++
 	}
 	if steps < 1 {
@@ -265,6 +270,7 @@ func collectUpcomingRepeatBatches(now time.Time, settings appSettings, subscript
 				}
 				items := collectRepeatNotificationItems(occurrence, settings, subscriptions)
 				appendUpcomingBatch(batchesByKey, occurrence, items)
+				// 下一轮从当前 occurrence 后一分钟开始，避免 nextRepeatOccurrenceAfter 返回同一个时间点造成死循环。
 				occurrence, ok = nextRepeatOccurrenceAfter(instant.Add(time.Minute), settings, sub.ReminderDays, targetDate, repeat)
 			}
 		}
@@ -283,6 +289,7 @@ func appendUpcomingBatch(batches map[string]*upcomingNotificationBatch, occurren
 	key := occurrence.ScheduledLocalDate + "|" + occurrence.ScheduledLocalTime + "|" + occurrence.TimeZone
 	batch, ok := batches[key]
 	if !ok {
+		// 同一用户同一分钟可能有多个订阅命中，按调度 key 合并成一个历史/预览批次。
 		batches[key] = &upcomingNotificationBatch{
 			localScheduleOccurrence: occurrence,
 			Items:                   uniqueNotificationItems(items),

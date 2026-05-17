@@ -1,9 +1,9 @@
 /**
- * Badge 设计系统原语。
+ * 徽标设计系统原语。
  *
  * 架构位置：用于状态、分类、标签等低层级信息标记，保持业务页面的信息密度一致。
  *
- * Caveat: 颜色语义会被订阅状态、通知状态复用；新增 variant 时需要同时检查深浅主题对比度。
+ * 注意： 颜色语义会被订阅状态、通知状态复用；新增 variant 时需要同时检查深浅主题对比度。
  */
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";

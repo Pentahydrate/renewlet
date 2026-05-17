@@ -5,8 +5,8 @@ package main
 // 架构位置：前端只提交搜索词，后端负责限流、短缓存、外部 HTML 拉取和候选 URL 归一。
 // 外部搜索结果不稳定，因此所有网络失败都降级为空结果而不是破坏订阅编辑流程。
 //
-// Caveat: 该模块会访问第三方站点；修改抓取源时必须同步 CSP connect-src、限流和缓存策略。
-// PERF: 多实例部署时可将缓存和限流迁移到共享存储，减少外部网络波动带来的重复请求。
+// 注意： 该模块会访问第三方站点；修改抓取源时必须同步 CSP connect-src、限流和缓存策略。
+// PERF： 多实例部署时可将缓存和限流迁移到共享存储，减少外部网络波动带来的重复请求。
 import (
 	"fmt"
 	"io"
@@ -103,7 +103,7 @@ var knownFaviconDomains = map[string]string{
 }
 
 // faviconSearch 处理 favicon/logo 远端增强搜索。
-// Caveat: 该接口会访问外部站点，必须保留限流、短缓存和结果数量上限。
+// 注意： 该接口会访问外部站点，必须保留限流、短缓存和结果数量上限。
 func faviconSearch(e *core.RequestEvent) error {
 	locale := requestLocale(e.Request)
 	if e.Auth == nil {
@@ -135,6 +135,7 @@ func faviconSearch(e *core.RequestEvent) error {
 	bypassCache := values.Get("nocache") == "1" || values.Get("noCache") == "1" || values.Get("force") == "1" || values.Get("refresh") == "1"
 	if !bypassCache {
 		if imageURLs, ok := getFaviconCache(cacheKey); ok {
+			// 搜索结果是用户私有响应但不含敏感 token，短缓存能降低同一关键词反复外部抓取。
 			setPrivateShortCache(e)
 			return e.JSON(http.StatusOK, faviconSearchResponse{ImageURLs: imageURLs, Kind: kind})
 		}
@@ -159,7 +160,7 @@ func firstNonEmpty(values ...string) string {
 }
 
 // checkFaviconRateLimit 对 favicon 搜索做内存级限流。
-// Caveat: 这是单进程保护；多实例部署时需要在网关或共享存储层补全限流。
+// 注意： 这是单进程保护；多实例部署时需要在网关或共享存储层补全限流。
 func checkFaviconRateLimit(e *core.RequestEvent) int {
 	maxRequests := envInt("FAVICON_SEARCH_RATE_LIMIT_MAX", 30)
 	windowMs := envInt("FAVICON_SEARCH_RATE_LIMIT_WINDOW_MS", 60000)
@@ -230,7 +231,7 @@ func setPrivateShortCache(e *core.RequestEvent) {
 }
 
 // searchFaviconImages 聚合搜索引擎、站点元信息和确定性 favicon URL。
-// PERF: 当前按请求实时抓取外部页面；未来可把解析结果落入后端缓存或队列，降低外部网络抖动。
+// PERF： 当前按请求实时抓取外部页面；未来可把解析结果落入后端缓存或队列，降低外部网络抖动。
 func searchFaviconImages(query string, kind string) []string {
 	searchTerm := url.QueryEscape(strings.TrimSpace(query + " " + kind))
 	timeout := 5 * time.Second
@@ -296,6 +297,7 @@ func fetchHTML(endpoint string, timeout time.Duration) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// HTML 只用于正则提取图片 URL，1MiB 上限足够覆盖搜索结果页并避免外部页面拖垮内存。
 	return string(body), nil
 }
 
@@ -372,6 +374,7 @@ func extractDomainFromQuery(input string) string {
 		return parsed.Hostname()
 	}
 	host := strings.ToLower(strings.Split(input, "/")[0])
+	// 只接受普通域名形态，不解析裸 IP/端口；这里是 favicon 候选生成，不应扩大成通用 URL 解析器。
 	if matched, _ := regexp.MatchString(`^[a-z0-9.-]+\.[a-z]{2,}$`, host); matched {
 		return host
 	}
@@ -422,6 +425,7 @@ func extractSiteAssetURLs(html string, baseURL string, kind string) []string {
 }
 
 func htmlAttribute(tag string, attr string) string {
+	// 轻量解析单个 HTML tag 属性；完整 HTML parser 成本更高，而这里的抓取结果本来就是尽力增强。
 	pattern := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(attr) + `\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>` + "`" + `]+))`)
 	match := pattern.FindStringSubmatch(tag)
 	if len(match) == 0 {
@@ -462,6 +466,7 @@ func resolveAssetURL(raw string, baseURL string) string {
 }
 
 func decodeURLEscapes(input string) string {
+	// 搜索页常把 URL 中的 `=`/`&` 写成 JSON unicode escape；先解开再跑图片 URL 正则。
 	return strings.NewReplacer(`\u003d`, "=", `\u003D`, "=", `\u0026`, "&", `\u0026`, "&").Replace(input)
 }
 

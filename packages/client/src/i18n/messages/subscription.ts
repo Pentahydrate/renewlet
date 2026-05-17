@@ -3,7 +3,7 @@
  *
  * 架构位置：订阅 CRUD、筛选、导出、日历和统计页面共享这些 key。
  *
- * Caveat: 周期/状态/统计文案变化会影响用户对金额口径的理解，需与 domain 计算保持一致。
+ * 注意： 周期/状态/统计文案变化会影响用户对金额口径的理解，需与 domain 计算保持一致。
  */
 import type { MessageMap, MessageValue } from "./types";
 

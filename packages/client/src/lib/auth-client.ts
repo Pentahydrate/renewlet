@@ -1,13 +1,13 @@
 /**
- * PocketBase 认证适配层。
+ * 认证适配层（PocketBase）。
  *
  * 架构位置：UI 层使用轻量 `authClient`，底层仍由 PocketBase authStore 负责 token
  * 持久化和恢复。这样可以把会话 shape 固定在应用内部，避免组件直接依赖 SDK record。
  *
  * 状态链路：
- *   authStore restore/login/logout -> toSessionData -> useSession state -> AuthSync route/query refresh
+ *   authStore 的 restore/login/logout -> toSessionData -> useSession state -> AuthSync 路由/query 刷新
  *
- * Caveat: `SessionData.session.id` 使用 token 作为变化标识，只用于前端缓存失效；
+ * 注意： `SessionData.session.id` 使用 token 作为变化标识，只用于前端缓存失效；
  * 不要把它当成可展示或可持久化的业务 session id。
  */
 import { useEffect, useState } from "react";

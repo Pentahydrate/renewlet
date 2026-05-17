@@ -3,7 +3,7 @@
  *
  * 架构位置：dashboard/statistics 共用的紧凑指标展示层，负责一致的信息密度和趋势排版。
  *
- * Caveat: 不在这里计算指标含义；金额换算和日期窗口属于 subscriptions domain。
+ * 注意： 不在这里计算指标含义；金额换算和日期窗口属于 subscriptions domain。
  */
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";

@@ -1,9 +1,9 @@
 /**
- * Renewlet 品牌符号组件。
+ * 品牌符号组件（Renewlet）。
  *
  * 架构位置：所有登录/setup/空状态入口共用同一个 SVG，避免品牌图形在页面中复制分叉。
  *
- * Caveat: SVG 使用 currentColor 继承外层主题色；不要在组件内写死颜色。
+ * 注意： SVG 使用 currentColor 继承外层主题色；不要在组件内写死颜色。
  */
 import type { SVGProps } from "react";
 

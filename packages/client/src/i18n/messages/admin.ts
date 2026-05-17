@@ -3,7 +3,7 @@
  *
  * 架构位置：只维护 admin 领域 key，聚合与运行时 translate 由 `messages.ts` 负责。
  *
- * Caveat: 删除/重命名 key 会直接影响管理员页表单、Toast 和测试契约。
+ * 注意： 删除/重命名 key 会直接影响管理员页表单、Toast 和测试契约。
  */
 import type { MessageMap, MessageValue } from "./types";
 

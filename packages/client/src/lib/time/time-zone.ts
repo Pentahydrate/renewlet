@@ -1,5 +1,5 @@
 /**
- * IANA timezone 工具。
+ * IANA 时区工具。
  *
  * 注意：
  * - 不保存固定 UTC offset，因为 DST 和地区政策会变化。
@@ -37,7 +37,7 @@ export function getSystemTimeZone(fallback = "UTC"): string {
 /**
  * 返回当前运行时支持的时区列表。
  *
- * Caveat: 某些 Node/浏览器环境缺少 `Intl.supportedValuesOf`，需保留常用列表兜底。
+ * 注意： 某些 Node/浏览器环境缺少 `Intl.supportedValuesOf`，需保留常用列表兜底。
  */
 export function getSupportedTimeZones(): string[] {
   const supportedValuesOf = (Intl as typeof Intl & {

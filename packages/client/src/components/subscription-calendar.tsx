@@ -1,10 +1,10 @@
 /**
- * subscription-calendar.tsx 是续费日历的月视图入口。
+ * 续费日历月视图入口（subscription-calendar.tsx）。
  *
  * 架构位置：这里持有当前月份、选中订阅和单日列表状态，负责把订阅
- * DateOnly 分组为日历网格；详情弹窗拆到 subscription-calendar-dialogs.tsx。
+ * 将 DateOnly 分组为日历网格；详情弹窗拆到 subscription-calendar-dialogs.tsx。
  *
- * Caveat: nextBillingDate 已经是 DateOnly，分组时不能重新用 Date 解析，
+ * 注意： nextBillingDate 已经是 DateOnly，分组时不能重新用 Date 解析，
  * 否则浏览器时区会导致续费日期跨日。
  */
 
@@ -153,7 +153,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
   return (
     <>
       <div className="rounded-xl border border-border bg-card p-6 shadow-card">
-        {/* Header */}
+        {/* 顶部栏 */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
@@ -178,7 +178,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
-              {/* Year Picker */}
+              {/* 年份选择器 */}
               <Popover open={yearPickerOpen} onOpenChange={setYearPickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -249,7 +249,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
                 </PopoverContent>
               </Popover>
               
-              {/* Month Picker */}
+              {/* 月份选择器 */}
               <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -314,7 +314,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
           </div>
         </div>
 
-        {/* Weekday Headers */}
+        {/* 星期标题 */}
         <div className="grid grid-cols-7 mb-2">
           {weekdayLabels.map((day) => (
             <div
@@ -326,7 +326,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
           ))}
         </div>
 
-        {/* Calendar Grid */}
+        {/* 日历网格 */}
         <div className="grid grid-cols-7 gap-px bg-border/50 rounded-lg overflow-hidden">
           {calendarDays.map((day) => {
             const dateKey = format(day, 'yyyy-MM-dd');
@@ -342,7 +342,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
                   !isCurrentMonth && "bg-muted/30"
                 )}
               >
-                {/* Day Number */}
+                {/* 日期数字 */}
                 <div className="flex justify-end mb-1">
                   <span
                     className={cn(
@@ -356,7 +356,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
                   </span>
                 </div>
 
-                {/* Subscriptions */}
+                {/* 订阅项 */}
                 <div className="grid gap-0.5">
                   <TooltipProvider delayDuration={200}>
                     {daySubs.slice(0, 2).map((sub) => (
@@ -397,7 +397,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
           })}
         </div>
 
-        {/* Monthly Summary */}
+        {/* 月度汇总 */}
         <div className="mt-4 pt-4 border-t border-border">
           <div className="grid grid-cols-2 gap-4">
             <div className="text-sm">

@@ -9,11 +9,11 @@
  * ```
  * props(open/subscription) -> 初始化 formData
  * 用户编辑 -> SubscriptionFormFields
- * submit -> toSubscriptionDraft -> onSubmit(create/update)
+ * 提交 -> toSubscriptionDraft -> onSubmit(create/update)
  * ```
  *
- * Caveat: Logo 上传中的状态由 `logoUploadStatus` 控制，提交时必须阻止 data URL 进入订阅数据。
- * Caveat: 新增模式的默认货币会跟随 Settings/defaultCurrency，但用户手动选择后必须停止自动同步。
+ * 注意： Logo 上传中的状态由 `logoUploadStatus` 控制，提交时必须阻止 data URL 进入订阅数据。
+ * 注意： 新增模式的默认货币会跟随 Settings/defaultCurrency，但用户手动选择后必须停止自动同步。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
@@ -82,7 +82,7 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
   // 新建订阅时默认货币：
   // - 优先使用“统计货币”（Settings.defaultCurrency）
   // - 若该货币被用户在「货币管理」中禁用，则回退到第一个启用的货币
-  // Caveat: 这里和 Settings 的“不能禁用统计货币”策略互相补位，保证新建订阅永远有可用默认货币。
+  // 注意： 这里和 Settings 的“不能禁用统计货币”策略互相补位，保证新建订阅永远有可用默认货币。
   const enabledCurrencyValues = useMemo(
     () => config.currencies.filter((c) => c.enabled !== false).map((c) => c.value),
     [config.currencies],
@@ -198,7 +198,7 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
   }, [editSubscription, props.mode, props.open]);
 
   // 自动推算 nextBillingDate（仅当 autoCalculate=true 且已选择 startDate）。
-  // Caveat: 这里依赖 DateOnly 字符串算法，不应引入 JS Date 时区换算，否则跨时区用户会看到扣费日漂移。
+  // 注意： 这里依赖 DateOnly 字符串算法，不应引入 JS Date 时区换算，否则跨时区用户会看到扣费日漂移。
   useEffect(() => {
     if (formData.autoCalculate && formData.startDate) {
       const customDays = formData.billingCycle === "custom" ? parsePositiveIntegerInput(formData.customDays) ?? 30 : undefined;

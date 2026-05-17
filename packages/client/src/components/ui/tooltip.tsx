@@ -1,9 +1,9 @@
 /**
- * Tooltip 设计系统原语。
+ * 提示浮层设计系统原语。
  *
  * 架构位置：封装 Radix Tooltip，给图标按钮、截断文本和密集表格提供辅助说明。
  *
- * Caveat: 不要把关键业务信息只放进 tooltip；移动端和键盘用户可能不会看到它。
+ * 注意： 不要把关键业务信息只放进 tooltip；移动端和键盘用户可能不会看到它。
  */
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";

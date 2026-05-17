@@ -2,7 +2,7 @@
  * 统计页 application hook。
  *
  * 将 React memo 边界包在 domain 模型外层，页面无需知道金额/预算/图表聚合细节。
- * Caveat: `config` 对象来自 Context，若未来拆分 Context，需要保持引用稳定以避免图表重算过频。
+ * 注意： `config` 对象来自 Context，若未来拆分 Context，需要保持引用稳定以避免图表重算过频。
  */
 import { useMemo } from "react";
 import type { Locale } from "@/i18n/locales";

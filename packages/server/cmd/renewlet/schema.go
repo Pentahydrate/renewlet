@@ -6,7 +6,7 @@ package main
 //   - migration/bootstrap 调用 ensureSchema，让本地开发、首次部署和升级路径复用同一套 schema 收敛。
 //   - record hooks 与前端 Zod schema 依赖这些字段名、枚举值和索引语义。
 //
-// Caveat: 字段重命名、索引唯一性和枚举收窄都会影响既有数据，必须按破坏性迁移处理。
+// 注意： 字段重命名、索引唯一性和枚举收窄都会影响既有数据，必须按破坏性迁移处理。
 import (
 	"fmt"
 	"net/mail"
@@ -28,7 +28,7 @@ const (
 )
 
 // ensureSchema 创建/修正 PocketBase collection schema。
-// Caveat: 修改字段名会影响前端 schema、record hooks 和历史数据迁移，必须作为破坏性迁移处理。
+// 注意： 修改字段名会影响前端 schema、record hooks 和历史数据迁移，必须作为破坏性迁移处理。
 func ensureSchema(app core.App) error {
 	users, err := app.FindCollectionByNameOrId("users")
 	if err != nil {
@@ -123,6 +123,7 @@ func upsertField(collection *core.Collection, field core.Field) error {
 		if existing.Type() != field.Type() {
 			return fmt.Errorf("collection %q field %q type mismatch: existing %q, expected %q", collection.Name, field.GetName(), existing.Type(), field.Type())
 		}
+		// 保留字段 id/system 标记，让 schema 收敛不会被 PocketBase 视为删除后重建字段。
 		field.SetId(existing.GetId())
 		if existing.GetSystem() {
 			field.SetSystem(true)
@@ -171,6 +172,7 @@ func ensureCollectionWithSave(app core.App, name string, configure func(*core.Co
 		return err
 	}
 	if saveWithoutValidation {
+		// 少数兼容迁移需要先保存字段形态，再由 hooks/backfill 修复数据，因此允许跳过 collection validation。
 		return app.SaveNoValidate(collection)
 	}
 	return app.Save(collection)
@@ -179,6 +181,7 @@ func ensureCollectionWithSave(app core.App, name string, configure func(*core.Co
 func backfillAutodates(app core.App, names ...string) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	for _, name := range names {
+		// names 只来自内部常量列表，不接受用户输入；这里用 SQL 是为了一次性补齐旧库的系统时间字段。
 		_, err := app.DB().NewQuery(fmt.Sprintf(
 			"UPDATE `%s` SET `created` = CASE WHEN `created` = '' THEN {:now} ELSE `created` END, `updated` = CASE WHEN `updated` = '' THEN {:now} ELSE `updated` END",
 			name,

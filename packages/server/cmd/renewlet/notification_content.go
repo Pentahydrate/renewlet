@@ -5,7 +5,7 @@ package main
 // 架构位置：调度器、手动运行和测试发送共享同一套内容构建，确保历史记录、渠道文本和前端预览口径一致。
 // 这里刻意按 date-only 计算提醒窗口，因为扣费日是用户本地业务日期，不应被 UTC instant 或 DST 影响。
 //
-// Caveat: 调整 item type 或文案分组会影响所有渠道文本和 notification job result schema。
+// 注意： 调整 item type 或文案分组会影响所有渠道文本和 notification job result schema。
 import (
 	"fmt"
 	"math"

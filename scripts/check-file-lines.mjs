@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * check-file-lines.mjs 检查手写文件是否超过默认 600 行的上限。
+ * 检查手写文件是否超过默认 600 行的上限（check-file-lines.mjs）。
  *
  * 架构位置：根 package script 和 test:all 会调用该守卫，防止拆分后的源码、
  * 测试、样式、脚本与 i18n 文件再次膨胀到难以维护。
  *
- * Caveat: 这里刻意排除锁文件、生成索引、构建产物和 PocketBase 数据目录；
+ * 注意： 这里刻意排除锁文件、生成索引、构建产物和 PocketBase 数据目录；
  * 新增生成物目录时必须同步 EXCLUDED_PATHS，否则守卫会把机器生成内容误报为手写代码。
  */
 import { execFileSync } from "node:child_process";
@@ -41,6 +41,7 @@ const EXCLUDED_PATHS = [
 ];
 
 function trackedAndNewFiles() {
+  // 同时检查已跟踪和未跟踪文件，防止新建大文件在 commit 前绕过守卫。
   const output = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], {
     encoding: "utf8",
   });
@@ -60,6 +61,7 @@ function shouldCheck(file) {
 function lineCount(file) {
   const text = readFileSync(file, "utf8");
   if (text.length === 0) return 0;
+  // 兼容没有尾随换行的文件；直接 split 会把末尾空段多算一行。
   return text.endsWith("\n") ? text.split("\n").length - 1 : text.split("\n").length;
 }
 

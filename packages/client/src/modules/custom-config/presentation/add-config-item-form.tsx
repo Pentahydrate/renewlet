@@ -2,9 +2,9 @@
  * 自定义配置新增项表单。
  *
  * 架构位置：只负责采集 label/color/icon/enabled 等展示输入，新增规则由
- * use-config-manager-controller 与 normalize-custom-config 兜底。
+ * 复杂状态由 use-config-manager-controller 与 normalize-custom-config 兜底。
  *
- * Caveat: 图标上传是异步流程；提交按钮必须尊重上传状态，避免把 dataURL 或半成品写入配置。
+ * 注意： 图标上传是异步流程；提交按钮必须尊重上传状态，避免把 dataURL 或半成品写入配置。
  */
 import { Suspense } from "react";
 import { Check, Loader2, Plus, X } from "lucide-react";

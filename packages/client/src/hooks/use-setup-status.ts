@@ -7,7 +7,7 @@
  * - 登录页和 setup 页通过该 Hook 决定是否展示初始化流程。
  * - 这是认证前接口，不能依赖 PocketBase 会话状态。
  *
- * Caveat: 保守隐藏 setup 入口是安全优先选择；真正的初始化允许性仍由后端校验。
+ * 注意： 保守隐藏 setup 入口是安全优先选择；真正的初始化允许性仍由后端校验。
  */
 import { useEffect, useState } from "react";
 import { setupStatusResponseSchema } from "@/lib/api/schemas/app";
@@ -56,7 +56,7 @@ export function useSetupStatus(): SetupStatus {
         const payload: unknown = await response.json();
         const parsed = setupStatusResponseSchema.safeParse(payload);
         if (!parsed.success) {
-          // setup 状态影响入口可见性；响应不符合契约时按关闭处理，避免误引导用户进入初始化。
+          // 初始化状态影响入口可见性；响应不符合契约时按关闭处理，避免误引导用户进入初始化。
           if (!cancelled) setStatus(hiddenSetupStatus);
           return;
         }

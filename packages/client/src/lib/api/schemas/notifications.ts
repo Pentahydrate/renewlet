@@ -15,8 +15,8 @@
  *   D --> E[前端 history panel 按 discriminated union 展示]
  * ```
  *
- * Caveat: `settings` 是临时覆盖，不应被 route 持久化；保存设置只写 PocketBase settings collection。
- * Caveat: `sent` 是手动运行响应的判别字段，新增返回形态时必须先扩展 union，再改调用方分支。
+ * 注意： `settings` 是临时覆盖，不应被 route 持久化；保存设置只写 PocketBase settings collection。
+ * 注意： `sent` 是手动运行响应的判别字段，新增返回形态时必须先扩展 union，再改调用方分支。
  */
 import { z } from "zod";
 import {

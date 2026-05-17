@@ -1,5 +1,5 @@
 /**
- * Favicon/站点图标候选 URL 生成工具。
+ * 站点图标候选 URL 生成工具（favicon）。
  *
  * 背景：
  * - 项目里有 LogoPicker / IconPicker 两个组件，都需要“根据关键词猜测站点域名，然后生成一组可尝试的图标 URL”

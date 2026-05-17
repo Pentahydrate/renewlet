@@ -5,7 +5,7 @@ package main
 // 架构位置：索引数据来自 embedded static 包，route 只返回前端需要的窄 DTO，
 // 避免客户端 bundle 持有完整索引和第三方 CDN 拼接规则。
 //
-// Caveat: 调整 iconUrl 拼接规则会影响前端 logo 选择器和 CSP 图片来源。
+// 注意： 调整 iconUrl 拼接规则会影响前端 logo 选择器和 CSP 图片来源。
 import (
 	"encoding/json"
 	"fmt"
@@ -48,6 +48,7 @@ var theSvgIcons = loadTheSvgIndex()
 func loadTheSvgIndex() []theSvgIcon {
 	var icons []theSvgIcon
 	if err := json.Unmarshal(appstatic.TheSVGIndex, &icons); err != nil {
+		// embedded 索引损坏时降级为空结果，让服务仍可启动，便于通过健康检查发现问题后修复镜像。
 		return []theSvgIcon{}
 	}
 	return icons
@@ -84,6 +85,7 @@ func theSvgSearch(e *core.RequestEvent) error {
 			Guidelines: icon.Guidelines,
 		})
 		if len(icons) >= limit {
+			// 索引按生成脚本稳定顺序排列；达到 limit 即停止，避免每次搜索都扫描并分配完整结果集。
 			break
 		}
 	}

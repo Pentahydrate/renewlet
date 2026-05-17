@@ -4,7 +4,7 @@
  * 架构位置：业务分片位于 `./messages/*`，本文件只组合 zh/en map 并提供 translate，
  * 避免调用方感知拆分后的文件结构。
  *
- * Caveat: 不要在这里新增具体文案；新增 key 应放入对应领域分片并保持双语对齐。
+ * 注意： 不要在这里新增具体文案；新增 key 应放入对应领域分片并保持双语对齐。
  */
 import type { Locale } from "@/i18n/locales";
 import type { MessageValue } from "./messages/types";

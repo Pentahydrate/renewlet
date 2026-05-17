@@ -5,7 +5,7 @@
  * - domain 负责把订阅转换为稳定的 JSON/CSV 内容。
  * - application hook 负责浏览器下载副作用。
  *
- * Caveat: CSV 面向表格软件，任何新增字段都要继续经过 `escapeCsvCell`，
+ * 注意： CSV 面向表格软件，任何新增字段都要继续经过 `escapeCsvCell`，
  * 避免 `= + - @ tab` 开头的内容被当作公式执行。
  */
 import { localizedLabel, type Locale } from "@/i18n/locales";

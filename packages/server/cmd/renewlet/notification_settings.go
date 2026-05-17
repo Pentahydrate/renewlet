@@ -5,7 +5,7 @@ package main
 // 架构位置：PocketBase JSON 字段、测试请求中的临时 patch 都必须先经过这里，
 // 再进入消息构建或渠道发送，避免动态 JSON 在业务层扩散。
 //
-// Caveat: sanitizeSettings 只做可恢复兜底；route body 的未知字段和非法类型仍应在 strict decoder 阶段失败。
+// 注意： sanitizeSettings 只做可恢复兜底；route body 的未知字段和非法类型仍应在 strict decoder 阶段失败。
 import (
 	"bytes"
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 )
 
 // currentUserSettings 读取当前用户设置，并合并请求级临时 patch。
-// Caveat: 该函数服务于通知测试/手动运行；不要在这里持久化 patch。
+// 注意： 该函数服务于通知测试/手动运行；不要在这里持久化 patch。
 func currentUserSettings(app core.App, user *core.Record, patch json.RawMessage) (appSettings, error) {
 	settings := defaultAppSettings()
 	if user == nil {
@@ -66,7 +66,7 @@ func mergeSettings(base appSettings, patch json.RawMessage) (appSettings, error)
 }
 
 // sanitizeSettings 对可恢复的设置值做保守归一。
-// Caveat: 这里只修复默认值/枚举兜底，不应吞掉 route body 的严格校验职责。
+// 注意： 这里只修复默认值/枚举兜底，不应吞掉 route body 的严格校验职责。
 func sanitizeSettings(settings appSettings) appSettings {
 	if !isSupportedAppLocale(settings.Locale) {
 		settings.Locale = string(normalizeAppLocale(settings.Locale))

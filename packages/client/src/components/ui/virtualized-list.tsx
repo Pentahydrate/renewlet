@@ -1,12 +1,12 @@
 /**
- * Shared virtualized list primitive.
+ * 共享虚拟列表原语。
  *
- * Architecture:
- * - Keeps TanStack Virtual usage in one thin, unstyled wrapper.
- * - Callers keep ownership of item markup, Tailwind classes, and scroll containers.
+ * 架构位置：
+ * - 将 TanStack Virtual 的使用集中在一个轻量、无样式包装中。
+ * - 调用方仍负责 item markup、Tailwind class 和滚动容器。
  *
- * Caveat: callers must pass the actual scroll container via `getScrollElement`;
- * this component computes scrollMargin so lists can live below headers/filters.
+ * 注意：调用方必须通过 `getScrollElement` 传入真实滚动容器；本组件会计算 scrollMargin，
+ * 让列表可以稳定放在 header/filter 下方。
  */
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -49,6 +49,7 @@ function getScrollMargin(container: HTMLElement, scrollElement: HTMLElement) {
   const containerRect = container.getBoundingClientRect();
   const scrollRect = scrollElement.getBoundingClientRect();
   if (containerRect.height === 0 && scrollRect.height === 0) {
+    // 测试环境或隐藏 tab 里 DOMRect 可能全是 0；offsetTop 兜底能保持虚拟项定位可预测。
     return getOffsetTopWithinScrollElement(container, scrollElement);
   }
   return Math.max(0, scrollElement.scrollTop + containerRect.top - scrollRect.top);
@@ -90,6 +91,7 @@ export function VirtualizedList({
       const measuredSize = measureVirtualElement(element, entry, instance);
       if (measuredSize > 0) return measuredSize;
 
+      // jsdom/首帧测量可能返回 0；回退到 estimateSize，避免总高度坍缩导致列表不可滚动。
       const index = Number(element.getAttribute(instance.options.indexAttribute));
       return estimateSize(Number.isFinite(index) ? index : 0);
     },
@@ -102,6 +104,7 @@ export function VirtualizedList({
     ) =>
       observeElementRect(instance, (rect) => {
         callback({
+          // ResizeObserver 在首轮布局前可能给 0 尺寸；初始 viewport 兜底能减少虚拟器抖动。
           width: rect.width > 0 ? rect.width : initialRect.width,
           height: rect.height > 0 ? rect.height : initialRect.height,
         });
@@ -139,7 +142,7 @@ export function VirtualizedList({
     };
   }, [getScrollElement, measureScrollMargin]);
 
-  // TanStack Virtual intentionally returns an imperative virtualizer instance; keep it local to this primitive.
+  // TanStack Virtual 有意返回命令式 virtualizer 实例；把它限制在本原语内，避免调用方扩散不兼容 hook 模式。
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer<HTMLElement, HTMLDivElement>({
     count,

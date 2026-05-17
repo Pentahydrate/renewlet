@@ -5,7 +5,7 @@
  * - 表单组件只维护输入态。
  * - 这里把输入态转换成 domain draft，供新增/编辑弹窗复用。
  *
- * Caveat: 上传中的 logo/icon 状态不在这里判断，调用方需要在提交按钮层面禁用保存。
+ * 注意： 上传中的 logo/icon 状态不在这里判断，调用方需要在提交按钮层面禁用保存。
  */
 import {
   MAX_SUBSCRIPTION_TAG_LENGTH,

@@ -3,7 +3,7 @@
  *
  * 架构位置：设置页通知配置、历史面板、主题选择和上传反馈共用这里的 key。
  *
- * Caveat: 通知历史文案必须与后端 result union 保持一致，避免未知原因码落到空白展示。
+ * 注意： 通知历史文案必须与后端 result union 保持一致，避免未知原因码落到空白展示。
  */
 import type { MessageMap, MessageValue } from "./types";
 

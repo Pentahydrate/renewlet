@@ -28,8 +28,10 @@
   </style>
 </head>
 <body class="email-bg" style="margin:0; padding:0; background-color:{{.Theme.Background}}; color:{{.Theme.Text}}; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  {{/* 隐藏 preheader 用零宽字符填充，防止部分客户端把正文第一行拼进收件箱摘要。 */}}
   <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; mso-hide:all;">{{.Preheader}}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
   <center class="email-bg" style="width:100%; background-color:{{.Theme.Background}};">
+    {{/* 邮件布局继续使用 table，是为了兼容 Outlook/老客户端，不要替换成 flex/grid。 */}}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; background-color:{{.Theme.Background}};">
       <tr>
         <td align="center" style="padding:24px 12px;">

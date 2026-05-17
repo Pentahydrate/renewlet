@@ -4,7 +4,7 @@
  * 架构位置：ThemeProvider 在主题色变化时调用这里，把 CSS token 转成 data URL favicon，
  * 让浏览器标签页与当前主题保持一致。
  *
- * Caveat: 该模块依赖 DOM/CSSOM；服务端或测试环境调用时必须走 fallback。
+ * 注意： 该模块依赖 DOM/CSSOM；服务端或测试环境调用时必须走 fallback。
  */
 const FALLBACK_PRIMARY = "160 84% 39%";
 const FALLBACK_GLOW = "160 84% 45%";

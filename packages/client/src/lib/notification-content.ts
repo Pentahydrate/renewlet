@@ -7,7 +7,7 @@
  *
  * 流程：
  * ```
- * now + settings + subscriptions -> date-only 比较 -> 文本分组 -> NotificationContent
+ * 当前时间 + settings + subscriptions -> date-only 比较 -> 文本分组 -> NotificationContent
  * ```
  */
 import type {
@@ -28,7 +28,7 @@ import { translate } from "@/i18n/messages";
  * - 该文件只做“输入 → 文本消息”的纯逻辑，便于后续写单测/复用到不同触发器（手动/定时）
  * - 金额不做汇率换算：通知更接近“原始扣费信息”（统计口径在页面里处理）
  *
- * Caveat: 这里使用 date-only 天数比较，不使用 Date 本地时区差值，避免服务器时区影响提醒日期。
+ * 注意： 这里使用 date-only 天数比较，不使用 Date 本地时区差值，避免服务器时区影响提醒日期。
  */
 
 export interface SubscriptionForNotification {
@@ -108,6 +108,7 @@ export function formatNotificationDisplayTime(now: Date, timeZone: string, local
     hourCycle: "h23",
   }).formatToParts(now);
 
+  // 用 formatToParts 手工拼 `YYYY-MM-DD HH:mm:ss`，避免不同 locale 的标点/顺序影响通知文案和测试断言。
   const year = getDateTimePart(parts, "year");
   const month = getDateTimePart(parts, "month");
   const day = getDateTimePart(parts, "day");
@@ -150,6 +151,7 @@ function buildNotificationContentFromItems(
   items: NotificationContentItem[],
   locale: Locale,
 ): NotificationContent {
+  // 分组顺序固定为续费、试用、过期，让同一批 items 在邮件、Webhook 和历史快照中都稳定可读。
   const renewals = items.filter((item) => item.type === "renewal").map((item) => formatItemLine(item, locale));
   const trials = items.filter((item) => item.type === "trial").map((item) => formatItemLine(item, locale));
   const expired = items.filter((item) => item.type === "expired").map((item) => formatItemLine(item, locale));
@@ -204,6 +206,7 @@ export function collectNotificationItemsForLocalDate(
 
     if (daysUntilNext < 0) {
       if (settings.showExpired && includeExpired) {
+        // 过期项只在“当前检查/手动运行”里提示；未来预览会关闭 includeExpired，避免每天重复展示同一笔旧账单。
         items.push({
           type: "expired",
           subscriptionId: sub.id,

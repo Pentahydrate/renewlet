@@ -7,8 +7,8 @@ package main
 // 让每个维护入口都保持在 500 行以内。
 //
 // 调度流转：
-//   scheduler tick -> TryLock -> settings/subscriptions -> local schedule decision
-//     -> create/mark job(sending) -> send channels -> finalize(sent/failed/skipped) -> history API
+//   scheduler tick -> TryLock -> settings/subscriptions -> 本地调度决策
+//     -> create/mark job(sending) -> 发送渠道 -> finalize(sent/failed/skipped) -> history API
 //
-// Caveat: notification_jobs 的唯一索引是并发保护的一部分；修改 scheduledLocalDate/time/timeZone
+// 注意： notification_jobs 的唯一索引是并发保护的一部分；修改 scheduledLocalDate/time/timeZone
 // 语义会影响幂等性、重试和前端历史 schema。

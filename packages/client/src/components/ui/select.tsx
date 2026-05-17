@@ -1,9 +1,9 @@
 /**
- * Select 设计系统原语。
+ * 选择器设计系统原语。
  *
  * 架构位置：封装 Radix Select，并对长文本加 Tooltip，保证设置页和订阅表单的紧凑布局可读。
  *
- * Caveat: Portal/positioning 需与 Dialog/Popover 保持兼容；修改后重点检查移动端弹窗内选择器。
+ * 注意： Portal/positioning 需与 Dialog/Popover 保持兼容；修改后重点检查移动端弹窗内选择器。
  */
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";

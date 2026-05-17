@@ -146,13 +146,13 @@ function ColorPicker({
 
   return (
     <div className="grid gap-4 p-1">
-      {/* Color preview */}
+      {/* 颜色预览 */}
       <div 
         className="w-full h-16 rounded-lg border border-border"
         style={{ backgroundColor: `hsl(${color.h}, ${color.s}%, ${color.l}%)` }}
       />
 
-      {/* Hex input */}
+      {/* Hex 输入 */}
       <div className="grid gap-2">
         <Label className="text-xs">{t("theme.hexColor")}</Label>
         <div className="flex gap-2">
@@ -171,7 +171,7 @@ function ColorPicker({
         </div>
       </div>
 
-      {/* HSL sliders */}
+      {/* HSL 滑块 */}
       <div className="grid gap-3">
         <div className="grid gap-2">
           <div className="flex justify-between">
@@ -235,7 +235,7 @@ function ColorPicker({
         </div>
       </div>
 
-      {/* Quick presets */}
+      {/* 快捷预设 */}
       <div className="grid gap-2">
         <Label className="text-xs">{t("theme.quickPick")}</Label>
         <div className="flex flex-wrap gap-2">
@@ -291,7 +291,7 @@ export function ThemeSelector({
 
   return (
     <div className="grid gap-6">
-      {/* Light/Dark Mode Toggle */}
+      {/* 明暗模式切换 */}
       <div className="grid gap-3">
         <label className="text-sm font-medium text-foreground">{t("theme.mode")}</label>
         <div className="flex gap-3">
@@ -334,7 +334,7 @@ export function ThemeSelector({
         </div>
       </div>
 
-      {/* Theme Variant Selection */}
+      {/* 主题变体选择 */}
       <div className="grid gap-3">
         <label className="text-sm font-medium text-foreground">{t("theme.variant")}</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -349,7 +349,7 @@ export function ThemeSelector({
                   : "border-border hover:border-primary/50"
               )}
             >
-              {/* Color Preview */}
+              {/* 颜色预览 */}
               <div
                 className="w-full h-16 rounded-lg mb-3 relative overflow-hidden"
                 style={{ backgroundColor: option.preview.bg }}
@@ -370,13 +370,13 @@ export function ThemeSelector({
                 />
               </div>
 
-              {/* Theme Name */}
+              {/* 主题名称 */}
               <span className="text-sm font-medium text-foreground">{t(option.nameKey)}</span>
               <span className="text-xs text-muted-foreground mt-0.5 text-center">
                 {t(option.descriptionKey)}
               </span>
 
-              {/* Selected Indicator */}
+              {/* 选中指示 */}
               {variant === option.id && (
                 <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                   <Check className="h-3 w-3 text-primary-foreground" />
@@ -385,7 +385,7 @@ export function ThemeSelector({
             </button>
           ))}
 
-          {/* Custom Theme Option */}
+          {/* 自定义主题选项 */}
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -397,7 +397,7 @@ export function ThemeSelector({
                     : "border-border hover:border-primary/50"
                 )}
               >
-                {/* Color Preview */}
+                {/* 颜色预览 */}
                 <div
                   className="w-full h-16 rounded-lg mb-3 relative overflow-hidden"
                   style={{ backgroundColor: 'hsl(220, 20%, 6%)' }}
@@ -415,13 +415,13 @@ export function ThemeSelector({
                   <Pipette className="absolute top-2 right-2 w-4 h-4 text-white/60" />
                 </div>
 
-                {/* Theme Name */}
+                {/* 主题名称 */}
                 <span className="text-sm font-medium text-foreground">{t("theme.custom")}</span>
                 <span className="text-xs text-muted-foreground mt-0.5 text-center">
                   {t("theme.customDescription")}
                 </span>
 
-                {/* Selected Indicator */}
+                {/* 选中指示 */}
                 {variant === 'custom' && (
                   <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                     <Check className="h-3 w-3 text-primary-foreground" />

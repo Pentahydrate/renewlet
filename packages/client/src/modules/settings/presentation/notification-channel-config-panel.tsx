@@ -3,7 +3,7 @@
  *
  * 架构位置：按渠道展示凭据、模板和测试按钮；敏感配置的校验与发送仍由后端通知模块负责。
  *
- * Caveat: Webhook/WeCom/Bark URL 最终会触发后端外连，展示层不能把“看起来像 URL”当作安全保证。
+ * 注意： Webhook/WeCom/Bark URL 最终会触发后端外连，展示层不能把“看起来像 URL”当作安全保证。
  */
 import { ExternalLink, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';

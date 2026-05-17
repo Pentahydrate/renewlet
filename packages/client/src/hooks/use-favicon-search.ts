@@ -1,5 +1,5 @@
 /**
- * Favicon/Logo 搜索 Hook。
+ * 站点图标/Logo 搜索 hook。
  *
  * 架构位置：
  * - LogoPicker 和 IconPicker 复用本 Hook 管理 popover、query、结果列表和远端增强搜索。
@@ -12,8 +12,8 @@
  * 图片加载失败 -> blockedUrls 防止旧响应重新加入
  * ```
  *
- * Caveat: 远端 favicon 搜索只是增强路径，不能替代本地候选；否则外部搜索波动会让 Logo/Icon 选择不可用。
- * TODO: 如果服务端 favicon 搜索增加持久缓存，需要保留 blockedUrls 逻辑；用户本轮已判定失败的图片不应被缓存结果重新注入。
+ * 注意： 远端 favicon 搜索只是增强路径，不能替代本地候选；否则外部搜索波动会让 Logo/Icon 选择不可用。
+ * TODO： 如果服务端 favicon 搜索增加持久缓存，需要保留 blockedUrls 逻辑；用户本轮已判定失败的图片不应被缓存结果重新注入。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -22,7 +22,7 @@ import { faviconSearchResponseSchema, type FaviconSearchKind } from "@/lib/api/s
 /** Favicon 搜索 Hook 的输入参数。 */
 export interface UseFaviconSearchOptions {
   /**
-   * popover 打开时自动带入的提示词：
+   * 弹层打开时自动带入的提示词：
    * - LogoPicker：通常来自订阅名称（serviceName）
    * - IconPicker：通常来自支付方式名称（searchHint）
    */

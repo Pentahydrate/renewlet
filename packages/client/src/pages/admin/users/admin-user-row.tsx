@@ -4,7 +4,7 @@
  * 架构位置：只渲染单个用户的 role/status/action 控件；真正的权限和防自锁检查由页面 controller
  * 与后端 admin route 双重兜底。
  *
- * Caveat: 前端禁用是体验层保护，不可替代后端“至少保留一个管理员”的约束。
+ * 注意： 前端禁用是体验层保护，不可替代后端“至少保留一个管理员”的约束。
  */
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

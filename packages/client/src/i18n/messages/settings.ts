@@ -3,7 +3,7 @@
  *
  * 架构位置：SettingsScreen/presentation 只消费这些 key，保存和校验反馈由 controller 选择。
  *
- * Caveat: 汇率 provider 文案要与 schema 枚举同步；旧枚举迁移提示不能提前删除。
+ * 注意： 汇率 provider 文案要与 schema 枚举同步；旧枚举迁移提示不能提前删除。
  */
 import type { MessageMap, MessageValue } from "./types";
 

@@ -1,5 +1,5 @@
 /**
- * Toast Hook（Sonner 兼容适配器）。
+ * 通知 hook（Sonner 兼容适配器）。
  *
  * 架构位置：
  * - 新 UI 统一由 components/ui/sonner.tsx 渲染。

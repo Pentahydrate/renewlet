@@ -6,9 +6,9 @@ package main
 // 设置合并、消息构建、发送和历史分页分别委托给领域函数，避免 API 层吞掉边界错误。
 //
 // 请求流转：
-//   auth user -> strict body/query -> settings/subscriptions -> send or overview -> typed response
+//   认证用户 -> 严格 body/query -> settings/subscriptions -> 发送或概览 -> 类型化 response
 //
-// Caveat: sent=false 是合法业务结果，不是 HTTP 错误；前端依赖该判别字段展示空提醒状态。
+// 注意： sent=false 是合法业务结果，不是 HTTP 错误；前端依赖该判别字段展示空提醒状态。
 import (
 	"crypto/subtle"
 	"net/http"
@@ -59,7 +59,7 @@ func cronBearerSecretMatches(expected string, authorization string) bool {
 }
 
 // handleNotificationTest 发送单个渠道的测试通知。
-// Caveat: settings patch 只在本次请求内生效，不会写回 settings collection。
+// 注意： settings patch 只在本次请求内生效，不会写回 settings collection。
 func handleNotificationTest(app core.App, e *core.RequestEvent) error {
 	locale := requestLocale(e.Request)
 	body, err := decodeStrictJSON[notificationTestRequest](e.Request, locale)

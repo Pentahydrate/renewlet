@@ -4,7 +4,7 @@
  * 架构位置：集中定义支持语言、浏览器探测、localStorage 兜底和双语 label 读取，
  * Provider 与后端 locale 解析需要保持同一支持集合。
  *
- * Caveat: 新增语言时必须同步 messages 分片、Go locale 支持和 Accept-Language 解析测试。
+ * 注意： 新增语言时必须同步 messages 分片、Go locale 支持和 Accept-Language 解析测试。
  */
 export const SUPPORTED_LOCALES = ["zh-CN", "en-US"] as const;
 
@@ -54,7 +54,7 @@ export function writeStoredLocale(locale: Locale) {
   try {
     localStorage.setItem(STORAGE_KEY, locale);
   } catch {
-    // Ignore storage failures; the in-memory provider state remains authoritative for this session.
+    // 忽略存储失败；本次会话以内存中的 Provider 状态为准。
   }
 }
 

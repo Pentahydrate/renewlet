@@ -7,9 +7,9 @@
  *
  * 状态链路：
  * ```
- * open picker -> getList(kind=logo, -updated) -> /api/app/assets/{id} -> AuthorizedImage
- * load more -> append next page with id de-dupe
- * stale request -> token mismatch -> ignore
+ * 打开选择器 -> getList(kind=logo, -updated) -> /api/app/assets/{id} -> AuthorizedImage
+ * 加载更多 -> 追加下一页并按 id 去重
+ * 过期请求 -> token 不匹配 -> 忽略
  * ```
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -91,7 +91,7 @@ export function useUploadedLogoAssets(): UseUploadedLogoAssetsResult {
 
   useEffect(() => {
     // React StrictMode 会在开发环境额外执行一次 setup -> cleanup -> setup；
-    // setup 必须恢复 mounted 标记，否则后续真实请求结果会被当成卸载后的 stale response 丢弃。
+    // setup 必须恢复 mounted 标记，否则后续真实请求结果会被当成卸载后的过期响应丢弃。
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;

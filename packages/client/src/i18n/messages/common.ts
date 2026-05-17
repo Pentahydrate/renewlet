@@ -3,7 +3,7 @@
  *
  * 架构位置：只收拢跨页面复用的导航、按钮和基础控件 key，领域文案应留在对应分片。
  *
- * Caveat: common key 很容易被滥用；新增前先确认没有更贴近业务的分片。
+ * 注意： common key 很容易被滥用；新增前先确认没有更贴近业务的分片。
  */
 import type { MessageMap, MessageValue } from "./types";
 

@@ -6,7 +6,7 @@
  * - 取未来 14 天内的续费
  * - 最多展示 5 条
  *
- * Caveat: 这是仪表盘提示窗口，不等同于通知 Cron 的 reminderDays 规则。
+ * 注意： 这是仪表盘提示窗口，不等同于通知 Cron 的 reminderDays 规则。
  */
 
 import { Subscription } from '@/types/subscription';

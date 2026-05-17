@@ -1,5 +1,5 @@
 /**
- * Logo 选择器（用于新增/编辑订阅的 logo）。
+ * 订阅 Logo 选择器（用于新增/编辑订阅的 logo）。
  *
  * 支持：
  * - 搜索 theSVG 内置品牌图标（testingcf.jsdelivr.net CDN）
@@ -12,10 +12,10 @@
  * 状态链路：
  * ```
  * serviceName -> useFaviconSearch -> 选择 URL
- * file upload -> crop -> useCroppedImageUpload -> /api/app/assets/{id}
+ * 文件上传 -> 裁剪 -> useCroppedImageUpload -> /api/app/assets/{id}
  * ```
  *
- * Caveat: 外层表单必须关注 uploadStatus，上传中不允许保存订阅，避免 data URL 被持久化。
+ * 注意： 外层表单必须关注 uploadStatus，上传中不允许保存订阅，避免 data URL 被持久化。
  */
 
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
@@ -170,7 +170,7 @@ export function LogoPicker({
     <div className="grid gap-2">
       <Label>{t("media.logo")}</Label>
       <div className="flex items-center gap-3">
-        {/* Logo Preview / Upload Area */}
+        {/* Logo 预览/上传区域 */}
         <div
           className={cn(
             "relative w-16 h-16 rounded-xl border-2 border-dashed border-border",
@@ -219,7 +219,7 @@ export function LogoPicker({
           />
         </div>
 
-        {/* Action Buttons */}
+        {/* 操作按钮 */}
         <div className="grid min-w-0 flex-1 max-w-52 gap-2">
           <Button
             type="button"
@@ -547,7 +547,7 @@ export function LogoPicker({
       </div>
     </div>
 
-    {/* Image Crop Dialog */}
+    {/* 图片裁剪弹窗 */}
     {cropDialogOpen ? (
       <Suspense fallback={null}>
         <LazyImageCropDialog

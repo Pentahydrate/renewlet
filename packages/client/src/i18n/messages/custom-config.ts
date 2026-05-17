@@ -3,7 +3,7 @@
  *
  * 架构位置：服务分类、状态、支付方式和货币配置 UI；配置结构本身由 config domain 约束。
  *
- * Caveat: 删除提示文案要跟 controller 的禁用/引用判断保持一致。
+ * 注意： 删除提示文案要跟 controller 的禁用/引用判断保持一致。
  */
 import type { MessageMap, MessageValue } from "./types";
 

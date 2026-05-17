@@ -8,9 +8,9 @@
  * 外部依赖：各服务官方 pricing/help/docs 页面；TheSVG slug 仅作为 logo 查找键，没有可靠 slug 时保持 null。
  *
  * 流程：
- *   official pricing/help/docs -> sub(...) fixture -> validate/defaults -> PocketBase payload
+ *   官方 pricing/help/docs -> sub(...) fixture -> 校验/默认值 -> PocketBase payload
  *
- * Caveat：价格和官方页面会变；更新任一价格时要同步 `PRICE_CHECKED_AT`、`pricingSource` 与 `priceBasis`。
+ * 注意：价格和官方页面会变；更新任一价格时要同步 `PRICE_CHECKED_AT`、`pricingSource` 与 `priceBasis`。
  * TODO：后续可以为价格复核增加脚本化 URL 可达性检查，但不能把第三方汇总页作为来源。
  */
 
@@ -128,7 +128,7 @@ export const DEVELOPER_SUBSCRIPTION_FIXTURES = [
 /**
  * 用 positional factory 压缩 100 行 fixture 的视觉噪音。
  *
- * Caveat：这里牺牲了一点参数自解释性来换取数据表可扫描性；调整字段顺序时必须同步
+ * 注意：这里牺牲了一点参数自解释性来换取数据表可扫描性；调整字段顺序时必须同步
  * `buildDemoSubscriptions()` 的校验字段和 `toSubscriptionPayload()` 的写入字段。
  */
 function sub(slug, name, iconSlug, price, currency, billingCycle, category, website, pricingSource, tags, planLabel, priceBasis, overrides = {}) {

@@ -1,5 +1,5 @@
 /**
- * Custom Config 弹窗状态机。
+ * 自定义配置弹窗状态机。
  *
  * 架构位置：
  * - presentation 负责 DnD/表单渲染。
@@ -8,13 +8,13 @@
  *
  * 状态流转：
  * ```
- * closed
- *   -> open
- *      -> adding -> save/cancel -> open
- *      -> editing(item) -> save/cancel -> open
- *      -> deleteConfirm(item) -> confirm/cancel -> open
- *      -> dragEnd/toggle -> onUpdate -> open
- *   -> closed(clean transient state)
+ * 关闭
+ *   -> 打开
+ *      -> 新增 -> 保存/取消 -> 打开
+ *      -> 编辑(item) -> 保存/取消 -> 打开
+ *      -> 删除确认(item) -> 确认/取消 -> 打开
+ *      -> 拖拽结束/切换启用 -> onUpdate -> 打开
+ *   -> 关闭(清理临时状态)
  * ```
  */
 import { useCallback, useMemo, useState } from "react";
@@ -31,6 +31,7 @@ type DragEndLikeEvent = {
 function moveArrayItem<T>(items: readonly T[], oldIndex: number, newIndex: number): T[] {
   const next = [...items];
   const [item] = next.splice(oldIndex, 1);
+  // dnd-kit 只告诉 active/over id；数组移动保持同一 item 引用，避免重建导致图标上传状态丢失。
   next.splice(newIndex, 0, item as T);
   return next;
 }
@@ -51,7 +52,7 @@ interface UseConfigManagerControllerOptions {
 /**
  * 管理配置弹窗的编辑、新增、删除、排序和启用状态机。
  *
- * Caveat: `items` 是上层持有的受控数据。这里不要缓存派生副本，否则拖拽排序、
+ * 注意： `items` 是上层持有的受控数据。这里不要缓存派生副本，否则拖拽排序、
  * 远端同步和弹窗编辑态之间会出现顺序不一致。
  */
 export function useConfigManagerController({
@@ -221,6 +222,7 @@ export function useConfigManagerController({
 
   const handleToggle = useCallback(
     (id: string) => {
+      // enabled 采用“缺省即启用”语义，写回 false 才表示禁用，兼容旧配置项缺少 enabled 字段的情况。
       onUpdate(
         items.map((item) =>
           item.id === id ? { ...item, enabled: item.enabled === false ? true : false } : item,

@@ -55,6 +55,7 @@ export function isIcoImageMime(mimeType: string): boolean {
 export function uploadMimeTypeForFile(file: File): string {
   const mimeType = normalizeMimeType(file.type);
   if (mimeType) return mimeType;
+  // Safari/某些桌面环境可能不给 SVG/ICO 填 type；扩展名兜底仅用于前端体验，服务端仍按内容验真。
   if (/\.svg$/i.test(file.name)) return "image/svg+xml";
   if (/\.ico$/i.test(file.name)) return "image/x-icon";
   return "";

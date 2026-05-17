@@ -7,7 +7,7 @@
  *
  * 数据流：
  * ```
- * subscriptions + settings.defaultCurrency + exchangeRates + customConfig
+ * 输入：subscriptions + settings.defaultCurrency + exchangeRates + customConfig
  *   -> buildStatisticsModel
  *   -> StatBox / PieChart view model
  * ```
@@ -126,7 +126,7 @@ export function buildStatisticsModel({
     { name: translate(locale, "statistics.budgetRemaining"), value: Math.max(budgetRemaining, 0), color: "hsl(200 80% 50%)" },
   ];
 
-  // TODO: 若未来支持多预算周期，可把 monthlyBudget 和 budgetChartData 抽成独立 budget domain。
+  // TODO：若未来支持多预算周期，可把 monthlyBudget 和 budgetChartData 抽成独立预算 domain。
   return {
     activeCount: activeSubscriptions.length,
     inactiveCount: inactiveSubscriptions.length,

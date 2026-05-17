@@ -4,7 +4,7 @@
  * 架构位置：API/PocketBase 响应必须先经过 Zod schema 与 hook 边界，页面、统计、日历和通知设置
  * 只消费这里的品牌类型与联合类型。
  *
- * Caveat: date-only、本地时间和 custom 周期是核心不变量；新增字段时要同步 Go schema/hooks 与前端 schema。
+ * 注意： date-only、本地时间和 custom 周期是核心不变量；新增字段时要同步 Go schema/hooks 与前端 schema。
  */
 import type { CustomThemeColor, ThemeMode, ThemeVariant } from './theme';
 import { DEFAULT_CUSTOM_THEME_COLOR } from './theme';

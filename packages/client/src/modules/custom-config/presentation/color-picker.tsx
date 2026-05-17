@@ -3,7 +3,7 @@
  *
  * 架构位置：作为 presentation 控件输出 HSL 字符串，颜色合法性仍由配置 domain 规范化。
  *
- * Caveat: 该控件会出现在 Dialog 内，Popover 必须复用全局浮层容器以避免被裁剪。
+ * 注意： 该控件会出现在 Dialog 内，Popover 必须复用全局浮层容器以避免被裁剪。
  */
 import { useState } from "react";
 import type { ChangeEvent } from "react";

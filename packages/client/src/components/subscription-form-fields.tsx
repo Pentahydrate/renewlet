@@ -5,8 +5,8 @@
  * - SubscriptionDialog 管理表单状态、提交和错误。
  * - 本组件只渲染字段，并把用户输入回传给外层。
  *
- * Caveat: 不在这里调用 API 或做最终保存校验，避免新增/编辑流程出现两个真相来源。
- * Caveat: 字段值保持 UI 输入态（多数是 string），不要在本组件提前转换成 domain 类型。
+ * 注意： 不在这里调用 API 或做最终保存校验，避免新增/编辑流程出现两个真相来源。
+ * 注意： 字段值保持 UI 输入态（多数是 string），不要在本组件提前转换成 domain 类型。
  */
 import { memo, useCallback, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Button } from "@/components/ui/button";

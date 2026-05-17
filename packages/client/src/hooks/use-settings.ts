@@ -1,11 +1,11 @@
 /**
- * Settings React Query 数据层。
+ * 设置页 React Query 数据层。
  *
  * 架构位置：
  * - PocketBase collection 负责持久化，hook 负责当前用户记录的 upsert。
  * - hook 负责缓存键、401 降级和前端类型归一。
  *
- * Caveat: 未登录返回 DEFAULT_SETTINGS 是为了让公共页面/登录前 Provider 能安全渲染；
+ * 注意： 未登录返回 DEFAULT_SETTINGS 是为了让公共页面/登录前 Provider 能安全渲染；
  * 受保护页面仍由 AuthSync 控制访问。
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +29,7 @@ import { translate } from "@/i18n/messages";
  * - 兼容扩展字段：未知字段会被 Zod 自动剔除，避免污染 UI 状态
  * - 兼容浏览器环境：timezone 默认值来自 Intl，避免新用户通知时间落到固定 UTC 口径
  *
- * Caveat: 这是 Settings JSON 进入前端 domain 的唯一入口。新增字段必须同步
+ * 注意： 这是 Settings JSON 进入前端 domain 的唯一入口。新增字段必须同步
  * `DEFAULT_SETTINGS`、`settingsUpdateBodySchema`、后端 `appSettings` 和保存表单。
  */
 function clearLegacyWebhookExample(value: string, legacyExample: string) {
@@ -40,7 +40,7 @@ export function normalizeSettings(value: unknown): AppSettings {
   const parsed = settingsUpdateBodySchema.safeParse(value);
   const defaults = { ...DEFAULT_SETTINGS, timezone: getSystemTimeZone("UTC") };
   if (!parsed.success) return defaults;
-  // partial schema 会保留 undefined，直接 spread 会把默认值覆盖成 undefined；
+  // 部分 schema 会保留 undefined，直接 spread 会把默认值覆盖成 undefined；
   // 先过滤才能保证新增字段和历史半量 JSON 都能得到完整 AppSettings。
   const patch = Object.fromEntries(
     Object.entries(parsed.data).filter(([, item]) => item !== undefined),
