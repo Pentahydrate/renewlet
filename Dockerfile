@@ -32,16 +32,22 @@ COPY --from=client-builder /app/packages/client/dist ./internal/static/public
 RUN mkdir -p /out /pb_data \
   && CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-$(go env GOARCH)} go build -trimpath -ldflags="-s -w" -o /out/renewlet ./cmd/renewlet
 
-FROM gcr.io/distroless/static-debian13:nonroot AS runner
+FROM alpine:3.22 AS runner
 
 ENV GOMEMLIMIT=128MiB
 
-COPY --from=server-builder --chown=nonroot:nonroot /pb_data /pb_data
+RUN apk add --no-cache ca-certificates su-exec tzdata \
+  && addgroup -S -g 1000 renewlet \
+  && adduser -S -D -H -u 1000 -G renewlet renewlet \
+  && mkdir -p /pb_data \
+  && chown -R renewlet:renewlet /pb_data
+
+COPY --from=server-builder --chown=renewlet:renewlet /pb_data /pb_data
 COPY --from=server-builder /out/renewlet /renewlet
+COPY --chmod=755 deploy/docker-entrypoint.sh /docker-entrypoint.sh
 
 VOLUME ["/pb_data"]
 EXPOSE 3000
 
-USER nonroot:nonroot
-ENTRYPOINT ["/renewlet"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["serve", "--http=0.0.0.0:3000", "--dir=/pb_data", "--encryptionEnv=PB_ENCRYPTION_KEY"]
