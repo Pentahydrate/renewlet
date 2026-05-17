@@ -59,7 +59,7 @@ const FALLBACK_RATES: ExchangeRates = {
 
 const FRANKFURTER_API = 'https://api.frankfurter.dev';
 const FLOATRATES_USD_FEED = 'https://www.floatrates.com/daily/usd.json';
-const DEFAULT_EXCHANGE_RATE_PROVIDER: ExchangeRateProvider = "frankfurter";
+const DEFAULT_EXCHANGE_RATE_PROVIDER: ExchangeRateProvider = "floatrates";
 
 type ExchangeRateSource = ExchangeRateProvider | "builtin";
 type ExchangeRateErrorKind = "timeout" | "contract" | "network";

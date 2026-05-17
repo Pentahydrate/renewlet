@@ -40,7 +40,7 @@ vi.mock("@/hooks/use-settings", () => ({
 vi.mock("@/hooks/use-exchange-rates", () => ({
   useExchangeRates: () => ({
     rates: {},
-    activeProvider: "frankfurter",
+    activeProvider: "floatrates",
     loading: false,
     lastUpdated: null,
     refresh: mocks.refreshRates,
@@ -164,10 +164,10 @@ describe("useSettingsFormController", () => {
     expect(result.current.hasUnsavedChanges).toBe(false);
 
     act(() => {
-      result.current.handleExchangeRateProviderChange("floatrates");
+      result.current.handleExchangeRateProviderChange("frankfurter");
     });
 
-    expect(result.current.settings.exchangeRateProvider).toBe("floatrates");
+    expect(result.current.settings.exchangeRateProvider).toBe("frankfurter");
     expect(result.current.hasUnsavedChanges).toBe(true);
     expect(mocks.updateSettingsMutateAsync).not.toHaveBeenCalled();
     expect(mocks.refreshRates).not.toHaveBeenCalled();
@@ -177,7 +177,7 @@ describe("useSettingsFormController", () => {
     const { result } = renderHook(() => useSettingsFormController());
 
     act(() => {
-      result.current.handleExchangeRateProviderChange("floatrates");
+      result.current.handleExchangeRateProviderChange("frankfurter");
     });
 
     await act(async () => {
@@ -185,10 +185,10 @@ describe("useSettingsFormController", () => {
     });
 
     expect(mocks.updateSettingsMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
-      exchangeRateProvider: "floatrates",
+      exchangeRateProvider: "frankfurter",
     }));
-    expect(mocks.refreshRates).toHaveBeenCalledWith("floatrates");
-    expect(result.current.settings.exchangeRateProvider).toBe("floatrates");
+    expect(mocks.refreshRates).toHaveBeenCalledWith("frankfurter");
+    expect(result.current.settings.exchangeRateProvider).toBe("frankfurter");
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(mocks.toast).toHaveBeenCalledWith({
       title: "设置已保存",
@@ -209,7 +209,7 @@ describe("useSettingsFormController", () => {
     const { result } = renderHook(() => useSettingsFormController());
 
     act(() => {
-      result.current.handleExchangeRateProviderChange("floatrates");
+      result.current.handleExchangeRateProviderChange("frankfurter");
     });
 
     await act(async () => {
@@ -217,7 +217,7 @@ describe("useSettingsFormController", () => {
     });
 
     expect(mocks.refreshRates).not.toHaveBeenCalled();
-    expect(result.current.settings.exchangeRateProvider).toBe("floatrates");
+    expect(result.current.settings.exchangeRateProvider).toBe("frankfurter");
     expect(result.current.hasUnsavedChanges).toBe(true);
     expect(mocks.toast).toHaveBeenCalledWith({
       title: "保存失败",

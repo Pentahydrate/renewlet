@@ -16,13 +16,13 @@ describe("normalizeSettings", () => {
     expect(settings.webhookPayload).toBe("");
   });
 
-  it("defaults historical settings to Frankfurter as the exchange-rate provider", () => {
+  it("defaults historical settings to FloatRates as the exchange-rate provider", () => {
     const settings = normalizeSettings({
       defaultCurrency: "USD",
     });
 
     expect(settings.defaultCurrency).toBe("USD");
-    expect(settings.exchangeRateProvider).toBe("frankfurter");
+    expect(settings.exchangeRateProvider).toBe("floatrates");
   });
 
   it("rejects invalid exchange-rate providers and falls back to defaults", () => {
@@ -30,6 +30,6 @@ describe("normalizeSettings", () => {
       exchangeRateProvider: "unknown",
     });
 
-    expect(settings.exchangeRateProvider).toBe("frankfurter");
+    expect(settings.exchangeRateProvider).toBe("floatrates");
   });
 });

@@ -87,7 +87,7 @@ func TestMergeSettingsSanitizesNotificationFields(t *testing.T) {
 	if len(settings.EnabledChannels) != 2 || settings.EnabledChannels[0] != "telegram" || settings.EnabledChannels[1] != "email" {
 		t.Fatalf("unexpected channels %#v", settings.EnabledChannels)
 	}
-	if settings.ExchangeRateProvider != "frankfurter" {
+	if settings.ExchangeRateProvider != "floatrates" {
 		t.Fatalf("expected exchange-rate provider fallback, got %q", settings.ExchangeRateProvider)
 	}
 	if settings.WebhookMethod != "POST" || settings.WechatMessageType != "text" || settings.BarkServerURL != "https://api.day.app" {

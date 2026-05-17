@@ -125,40 +125,35 @@ describe("useExchangeRates", () => {
     expect(result.current.activeProvider).toBe("floatrates");
   });
 
-  it("ignores the old v1 cache key and fetches v2 rates", async () => {
+  it("ignores the old v1 cache key and fetches current default rates", async () => {
     localStorage.setItem("exchange_rates_cache", JSON.stringify({
       base: "USD",
       date: "2026-01-01",
       rates: { EUR: 0.9, CNY: 7 },
       cachedAt: Date.now(),
     }));
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFrankfurterV2Rows()));
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFloatRatesResponse()));
 
     const { result } = renderHook(() => useExchangeRates());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(fetch).toHaveBeenCalledTimes(1);
+    expect(requestPath(0)).toBe("https://www.floatrates.com/daily/usd.json");
     expect(result.current.rates["CNY"]).toBe(6.8);
   });
 
-  it("fetches Frankfurter by default and does not call FloatRates when it succeeds", async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFrankfurterV2Rows()));
+  it("fetches FloatRates by default and does not call Frankfurter when it succeeds", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFloatRatesResponse()));
 
     const { result } = renderHook(() => useExchangeRates());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBeNull();
-    expect(result.current.activeProvider).toBe("frankfurter");
+    expect(result.current.activeProvider).toBe("floatrates");
     expect(result.current.rates["CNY"]).toBe(6.8);
     expect(result.current.rates["USD"]).toBe(1);
     expect(fetch).toHaveBeenCalledTimes(1);
-
-    const [requestUrl] = vi.mocked(fetch).mock.calls[0] ?? [];
-    const url = new URL(String(requestUrl));
-    expect(`${url.origin}${url.pathname}`).toBe("https://api.frankfurter.dev/v2/rates");
-    expect(url.searchParams.get("base")).toBe("USD");
-    expect(url.searchParams.get("quotes")?.split(",")).toContain("CNY");
-    expect(url.searchParams.has("symbols")).toBe(false);
+    expect(requestPath(0)).toBe("https://www.floatrates.com/daily/usd.json");
 
     const cached = JSON.parse(localStorage.getItem("exchange_rates_cache_v2") ?? "{}") as {
       base?: string;
@@ -167,23 +162,29 @@ describe("useExchangeRates", () => {
       rates?: Record<string, number>;
     };
     expect(cached["base"]).toBe("USD");
-    expect(cached["provider"]).toBe("frankfurter");
-    expect(cached["requestedProvider"]).toBe("frankfurter");
+    expect(cached["provider"]).toBe("floatrates");
+    expect(cached["requestedProvider"]).toBe("floatrates");
     expect(cached["rates"]?.["CNY"]).toBe(6.8);
     expect(cached["rates"]?.["USD"]).toBe(1);
   });
 
-  it("uses FloatRates first when selected", async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFloatRatesResponse()));
+  it("uses Frankfurter first when selected", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(makeFrankfurterV2Rows()));
 
-    const { result } = renderHook(() => useExchangeRates("floatrates"));
+    const { result } = renderHook(() => useExchangeRates("frankfurter"));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBeNull();
-    expect(result.current.activeProvider).toBe("floatrates");
+    expect(result.current.activeProvider).toBe("frankfurter");
     expect(result.current.rates["CNY"]).toBe(6.8);
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(requestPath(0)).toBe("https://www.floatrates.com/daily/usd.json");
+
+    const [requestUrl] = vi.mocked(fetch).mock.calls[0] ?? [];
+    const url = new URL(String(requestUrl));
+    expect(`${url.origin}${url.pathname}`).toBe("https://api.frankfurter.dev/v2/rates");
+    expect(url.searchParams.get("base")).toBe("USD");
+    expect(url.searchParams.get("quotes")?.split(",")).toContain("CNY");
+    expect(url.searchParams.has("symbols")).toBe(false);
   });
 
   it("falls back to FloatRates when Frankfurter fails", async () => {
@@ -247,7 +248,7 @@ describe("useExchangeRates", () => {
       })),
     ));
 
-    const { result } = renderHook(() => useExchangeRates());
+    const { result } = renderHook(() => useExchangeRates("frankfurter"));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBeNull();
@@ -260,8 +261,8 @@ describe("useExchangeRates", () => {
       date: "2026-01-01",
       rates: { EUR: "oops" },
       cachedAt: Date.now(),
-      requestedProvider: "frankfurter",
-      provider: "frankfurter",
+      requestedProvider: "floatrates",
+      provider: "floatrates",
     }));
     vi.mocked(fetch).mockRejectedValue(new Error("network down"));
 
@@ -316,7 +317,7 @@ describe("useExchangeRates", () => {
       .mockResolvedValueOnce(jsonResponse(makeRows()))
       .mockRejectedValueOnce(new Error("floatrates down"));
 
-    const { result } = renderHook(() => useExchangeRates());
+    const { result } = renderHook(() => useExchangeRates("frankfurter"));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe("汇率响应格式异常");
@@ -329,7 +330,7 @@ describe("useExchangeRates", () => {
       .mockResolvedValueOnce(jsonResponse({ error: "unavailable" }, { status: 503 }))
       .mockResolvedValueOnce(jsonResponse(makeFloatRatesResponse()));
 
-    const { result } = renderHook(() => useExchangeRates());
+    const { result } = renderHook(() => useExchangeRates("frankfurter"));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBeNull();
@@ -346,7 +347,7 @@ describe("useExchangeRates", () => {
       }))
       .mockResolvedValueOnce(jsonResponse(makeFloatRatesResponse()));
 
-    const { result } = renderHook(() => useExchangeRates());
+    const { result } = renderHook(() => useExchangeRates("frankfurter"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10_000);

@@ -48,7 +48,7 @@ const DEFAULT_SETTINGS = {
   locale: "zh-CN",
   showExpired: true,
   defaultCurrency: "USD",
-  exchangeRateProvider: "frankfurter",
+  exchangeRateProvider: "floatrates",
   monthlyBudget: 450,
   timezone: localTimeZone(),
   notificationTimeLocal: "08:30",
@@ -227,7 +227,7 @@ async function upsertSettings(pbUrl, token, userId, locale) {
     themeCustomColor: { h: 160, s: 84, l: 39 },
     showExpired: true,
     defaultCurrency: "USD",
-    exchangeRateProvider: "frankfurter",
+    exchangeRateProvider: "floatrates",
     monthlyBudget: 450,
   };
   if (locale) displayPatch.locale = locale;

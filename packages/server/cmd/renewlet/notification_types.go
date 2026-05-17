@@ -351,7 +351,7 @@ func defaultAppSettings() appSettings {
 		ShowExpired:           true,
 		Locale:                string(localeZhCN),
 		DefaultCurrency:       "CNY",
-		ExchangeRateProvider:  "frankfurter",
+		ExchangeRateProvider:  "floatrates",
 		MonthlyBudget:         1500,
 		Timezone:              "UTC",
 		NotificationTimeLocal: "08:00",

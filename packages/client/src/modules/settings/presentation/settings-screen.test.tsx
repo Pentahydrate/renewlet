@@ -69,7 +69,7 @@ function createControllerState(overrides: {
     subscriptionsQuery: { data: [] },
     categoryUsageCount: new Map(),
     rates: {},
-    activeRateProvider: "frankfurter",
+    activeRateProvider: "floatrates",
     ratesLoading: false,
     lastUpdated: null,
     ratesError: null,
@@ -193,7 +193,11 @@ describe("SettingsScreen SMTP email settings", () => {
     Element.prototype.setPointerCapture = vi.fn();
     Element.prototype.releasePointerCapture = vi.fn();
     const user = userEvent.setup();
-    const controller = createControllerState();
+    const controller = createControllerState({
+      settings: {
+        exchangeRateProvider: "frankfurter",
+      },
+    });
     mocks.useSettingsFormController.mockReturnValue(controller);
 
     renderSettingsScreen();

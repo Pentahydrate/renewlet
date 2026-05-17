@@ -416,7 +416,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   locale: getInitialLocale(),
   showExpired: true,
   defaultCurrency: 'CNY',
-  exchangeRateProvider: 'frankfurter',
+  exchangeRateProvider: 'floatrates',
   monthlyBudget: 1500,
   timezone: 'UTC',
   notificationTimeLocal: '08:00' as LocalTime,

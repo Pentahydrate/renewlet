@@ -72,7 +72,7 @@ func sanitizeSettings(settings appSettings) appSettings {
 		settings.Locale = string(normalizeAppLocale(settings.Locale))
 	}
 	if settings.ExchangeRateProvider != "floatrates" && settings.ExchangeRateProvider != "frankfurter" {
-		settings.ExchangeRateProvider = "frankfurter"
+		settings.ExchangeRateProvider = "floatrates"
 	}
 	if _, err := time.LoadLocation(settings.Timezone); err != nil {
 		settings.Timezone = "UTC"
