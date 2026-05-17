@@ -145,7 +145,7 @@ export function Header({ onAddSubscription, availableTags }: HeaderProps) {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -195,7 +195,7 @@ export function Header({ onAddSubscription, availableTags }: HeaderProps) {
       </div>
 
       {/* 移动端导航 */}
-      <nav className="flex border-t border-border md:hidden">
+      <nav className="flex border-t border-border lg:hidden">
         {navItems.map((item) => (
           <NavLink
             key={item.path}

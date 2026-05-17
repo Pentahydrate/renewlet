@@ -10,10 +10,12 @@
 
 import { useState, useMemo } from 'react';
 import type { Subscription } from '@/types/subscription';
+import { CYCLE_LABELS } from '@/types/subscription';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useExchangeRates } from '@/hooks/use-exchange-rates';
 import { useSettings } from '@/hooks/use-settings';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   format,
   startOfMonth,
@@ -56,7 +58,8 @@ const WEEKDAY_REFERENCE_DATES = [
 
 /** 续费日历组件。 */
 export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: SubscriptionCalendarProps) => {
-  const { t, formatDateTime, formatCurrency } = useI18n();
+  const { t, label, formatDateTime, formatCurrency } = useI18n();
+  const isMobileCalendar = useMediaQuery("(max-width: 639px)");
   // 默认货币来自 Settings（持久化到 SQLite），用于日历底部“预计支出”的换算口径。
   const { data: settings } = useSettings();
   const defaultCurrency = settings?.defaultCurrency ?? 'CNY';
@@ -130,6 +133,20 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentMonth]);
 
+  const monthlyAgendaGroups = useMemo(() => {
+    return calendarDays
+      .filter((day) => isSameMonth(day, currentMonth))
+      .map((day) => {
+        const dateKey = format(day, 'yyyy-MM-dd');
+        return {
+          date: day,
+          dateKey,
+          subscriptions: subscriptionsByDate.get(dateKey) || [],
+        };
+      })
+      .filter((group) => group.subscriptions.length > 0);
+  }, [calendarDays, currentMonth, subscriptionsByDate]);
+
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToToday = () => setCurrentMonth(new Date());
@@ -152,14 +169,14 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card sm:p-6">
         {/* 顶部栏 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">{t("calendar.title")}</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
             <Button
               variant="ghost"
               size="sm"
@@ -315,90 +332,219 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
         </div>
 
         {/* 星期标题 */}
-        <div className="grid grid-cols-7 mb-2">
+        <div className="mb-2 grid grid-cols-7">
           {weekdayLabels.map((day) => (
             <div
               key={day}
-              className="text-center text-xs font-medium text-muted-foreground py-2"
+              className="py-2 text-center text-[11px] font-medium text-muted-foreground sm:text-xs"
             >
               {day}
             </div>
           ))}
         </div>
 
-        {/* 日历网格 */}
-        <div className="grid grid-cols-7 gap-px bg-border/50 rounded-lg overflow-hidden">
-          {calendarDays.map((day) => {
-            const dateKey = format(day, 'yyyy-MM-dd');
-            const daySubs = subscriptionsByDate.get(dateKey) || [];
-            const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isDayToday = isToday(day);
+        {isMobileCalendar ? (
+          <>
+            {/* 移动端月历概览：只展示续费指示，完整信息放到下方列表。 */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day) => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const daySubs = subscriptionsByDate.get(dateKey) || [];
+                const isCurrentMonth = isSameMonth(day, currentMonth);
+                const isDayToday = isToday(day);
+                const dayLabel = formatDateTime(day, { month: "short", day: "numeric" });
+                const hasRenewals = daySubs.length > 0;
+                const dayContent = (
+                  <>
+                    <span
+                      className={cn(
+                        "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium",
+                        isDayToday && "bg-primary text-primary-foreground font-semibold",
+                        !isDayToday && isCurrentMonth && "text-foreground",
+                        !isDayToday && !isCurrentMonth && "text-muted-foreground/45",
+                      )}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                    <span className="flex h-4 items-center justify-center">
+                      {daySubs.length === 1 && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                      )}
+                      {daySubs.length > 1 && (
+                        <span className="min-w-4 rounded-full bg-primary/15 px-1 text-[10px] font-semibold leading-4 text-primary">
+                          {daySubs.length}
+                        </span>
+                      )}
+                    </span>
+                  </>
+                );
 
-            return (
-              <div
-                key={dateKey}
-                className={cn(
-                  "min-h-[80px] bg-card p-1.5 transition-colors",
-                  !isCurrentMonth && "bg-muted/30"
-                )}
-              >
-                {/* 日期数字 */}
-                <div className="flex justify-end mb-1">
-                  <span
+                if (!hasRenewals) {
+                  return (
+                    <div
+                      key={dateKey}
+                      className={cn(
+                        "flex min-h-11 flex-col items-center justify-center rounded-lg transition-colors",
+                        isCurrentMonth ? "bg-secondary/30" : "bg-muted/20",
+                      )}
+                    >
+                      {dayContent}
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    key={dateKey}
+                    type="button"
+                    aria-label={t("calendar.dayRenewalCount", { date: dayLabel, count: daySubs.length })}
+                    onClick={() => handleShowDayList(day, daySubs)}
                     className={cn(
-                      "text-xs w-6 h-6 flex items-center justify-center rounded-full",
-                      isDayToday && "bg-primary text-primary-foreground font-semibold",
-                      !isDayToday && isCurrentMonth && "text-foreground",
-                      !isDayToday && !isCurrentMonth && "text-muted-foreground/50"
+                      "flex min-h-11 flex-col items-center justify-center rounded-lg border border-border bg-secondary/40 transition-colors hover:border-primary/40 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      !isCurrentMonth && "bg-muted/30",
                     )}
                   >
-                    {format(day, 'd')}
-                  </span>
-                </div>
+                    {dayContent}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* 订阅项 */}
-                <div className="grid gap-0.5">
-                  <TooltipProvider delayDuration={200}>
-                    {daySubs.slice(0, 2).map((sub) => (
-                      <Tooltip key={sub.id}>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={() => handleSubscriptionClick(sub)}
-                            className={cn(
-                              "w-full text-left text-xs px-1.5 py-0.5 rounded border truncate transition-colors",
-                              "bg-background hover:bg-secondary/60 border-border text-foreground",
-                              "cursor-pointer hover:border-border"
-                            )}
-                          >
-                            {sub.name}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          <p className="font-medium">{sub.name}</p>
-                          <p className="text-muted-foreground">
-                            {getCurrencySymbol(sub.currency)}{sub.price}
-                          </p>
-                          <p className="text-muted-foreground/70">{t("calendar.viewDetails")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
-                    {daySubs.length > 2 && (
-                      <button 
-                        onClick={() => handleShowDayList(day, daySubs)}
-                        className="w-full text-xs text-primary hover:text-primary-glow text-center cursor-pointer hover:underline"
-                      >
-                        {t("calendar.more", { count: daySubs.length - 2 })}
-                      </button>
-                    )}
-                  </TooltipProvider>
-                </div>
+            <div className="mt-5 border-t border-border pt-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h4 className="text-sm font-semibold text-foreground">{t("calendar.mobileAgendaTitle")}</h4>
+                <span className="text-xs text-muted-foreground">
+                  {t("calendar.renewalCount", { count: monthlySummary.renewalsCount })}
+                </span>
               </div>
-            );
-          })}
-        </div>
+
+              {monthlyAgendaGroups.length > 0 ? (
+                <div className="grid gap-4">
+                  {monthlyAgendaGroups.map((group) => {
+                    const groupLabel = formatDateTime(group.date, {
+                      month: "short",
+                      day: "numeric",
+                      weekday: "short",
+                    });
+
+                    return (
+                      <section key={group.dateKey} className="grid gap-2">
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="font-medium text-muted-foreground">{groupLabel}</span>
+                          <span className="text-primary">
+                            {t("calendar.dayRenewalCount", {
+                              date: formatDateTime(group.date, { month: "short", day: "numeric" }),
+                              count: group.subscriptions.length,
+                            })}
+                          </span>
+                        </div>
+                        <div className="grid gap-2">
+                          {group.subscriptions.map((sub) => (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => handleSubscriptionClick(sub)}
+                              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-3 text-left transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">{sub.name}</p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  {label(CYCLE_LABELS[sub.billingCycle])}
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-sm font-semibold text-foreground">
+                                {formatCurrency(sub.price, sub.currency)}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border border-dashed border-border bg-secondary/30 px-4 text-center">
+                  <CalendarDays className="mb-3 h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">{t("calendar.mobileAgendaEmpty")}</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          /* 日历网格 */
+          <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-border/50">
+            {calendarDays.map((day) => {
+              const dateKey = format(day, 'yyyy-MM-dd');
+              const daySubs = subscriptionsByDate.get(dateKey) || [];
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+              const isDayToday = isToday(day);
+
+              return (
+                <div
+                  key={dateKey}
+                  className={cn(
+                    "min-h-[80px] bg-card p-1.5 transition-colors",
+                    !isCurrentMonth && "bg-muted/30"
+                  )}
+                >
+                  {/* 日期数字 */}
+                  <div className="mb-1 flex justify-end">
+                    <span
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                        isDayToday && "bg-primary text-primary-foreground font-semibold",
+                        !isDayToday && isCurrentMonth && "text-foreground",
+                        !isDayToday && !isCurrentMonth && "text-muted-foreground/50"
+                      )}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                  </div>
+
+                  {/* 订阅项 */}
+                  <div className="grid gap-0.5">
+                    <TooltipProvider delayDuration={200}>
+                      {daySubs.slice(0, 2).map((sub) => (
+                        <Tooltip key={sub.id}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleSubscriptionClick(sub)}
+                              className={cn(
+                                "w-full truncate rounded border px-1.5 py-0.5 text-left text-xs transition-colors",
+                                "border-border bg-background text-foreground hover:bg-secondary/60",
+                                "cursor-pointer hover:border-border"
+                              )}
+                            >
+                              {sub.name}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-medium">{sub.name}</p>
+                            <p className="text-muted-foreground">
+                              {getCurrencySymbol(sub.currency)}{sub.price}
+                            </p>
+                            <p className="text-muted-foreground/70">{t("calendar.viewDetails")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                      {daySubs.length > 2 && (
+                        <button
+                          onClick={() => handleShowDayList(day, daySubs)}
+                          className="w-full cursor-pointer text-center text-xs text-primary hover:text-primary-glow hover:underline"
+                        >
+                          {t("calendar.more", { count: daySubs.length - 2 })}
+                        </button>
+                      )}
+                    </TooltipProvider>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* 月度汇总 */}
-        <div className="mt-4 pt-4 border-t border-border">
+        <div className="mt-4 border-t border-border pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="text-sm">
               <span className="text-muted-foreground">{t("calendar.monthlyRenewals")}</span>
@@ -429,6 +575,7 @@ export const SubscriptionCalendar = ({ subscriptions, onEditSubscription }: Subs
         onOpenChange={setDayListOpen}
         selectedDaySubs={selectedDaySubs}
         onSelectSubscription={handleSelectFromList}
+        isMobile={isMobileCalendar}
       />
     </>
   );

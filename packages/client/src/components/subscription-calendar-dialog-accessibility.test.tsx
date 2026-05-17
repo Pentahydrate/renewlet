@@ -84,9 +84,27 @@ function renderCalendar(subscriptions: Subscription[]) {
   );
 }
 
+function mockMobileCalendar(matches = true) {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(max-width: 639px)" ? matches : false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
 describe("SubscriptionCalendar dialogs", () => {
   afterEach(() => {
     vi.useRealTimers();
+    Reflect.deleteProperty(window, "matchMedia");
   });
 
   it("describes the subscription detail dialog", async () => {
@@ -195,5 +213,58 @@ describe("SubscriptionCalendar dialogs", () => {
     expect(logo).not.toHaveClass("object-cover");
     expect(logoTile).not.toBeNull();
     expect(logoTile).toHaveClass("subscription-logo-tile");
+  });
+
+  it("renders the mobile agenda with only active and trial subscriptions", async () => {
+    mockMobileCalendar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([
+      subscription({ id: "sub-1", name: "Aws", status: "active", nextBillingDate: assertDateOnly("2026-05-14") }),
+      subscription({ id: "sub-2", name: "Netflix", status: "trial", nextBillingDate: assertDateOnly("2026-05-16"), billingCycle: "annual", price: 120 }),
+      subscription({ id: "sub-3", name: "Paused Cloud", status: "paused", nextBillingDate: assertDateOnly("2026-05-14") }),
+      subscription({ id: "sub-4", name: "Cancelled Tool", status: "cancelled", nextBillingDate: assertDateOnly("2026-05-16") }),
+    ]);
+
+    expect(screen.getByText("本月续费明细")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Aws/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Netflix/ })).toBeInTheDocument();
+    expect(screen.getByText("每月")).toBeInTheDocument();
+    expect(screen.getByText("每年")).toBeInTheDocument();
+    expect(screen.queryByText("Paused Cloud")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cancelled Tool")).not.toBeInTheDocument();
+  });
+
+  it("opens the mobile day drawer from a renewal date marker", async () => {
+    mockMobileCalendar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([
+      subscription({ id: "sub-1", name: "Aws" }),
+      subscription({ id: "sub-2", name: "Netflix" }),
+      subscription({ id: "sub-3", name: "OpenAI" }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "5月14日 3 个续费" }));
+
+    expect(screen.getByRole("dialog", { name: "5月14日 续费" })).toHaveAccessibleDescription(
+      "选择 5月14日 要查看的订阅。",
+    );
+  });
+
+  it("opens subscription details from the mobile agenda list", async () => {
+    mockMobileCalendar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([subscription()]);
+
+    fireEvent.click(screen.getByRole("button", { name: /Aws/ }));
+
+    expect(screen.getByRole("dialog", { name: /Aws/ })).toHaveAccessibleDescription(
+      "查看 Aws 的价格、周期、日期、标签、网站和备注。",
+    );
   });
 });

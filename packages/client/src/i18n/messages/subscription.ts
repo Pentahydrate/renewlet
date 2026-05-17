@@ -173,6 +173,9 @@ export const zhCN = {
   "calendar.reminder": "提前提醒",
   "calendar.visit": "访问",
   "calendar.dayRenewals": ({ date }) => `${date} 续费`,
+  "calendar.dayRenewalCount": ({ date, count }) => `${date} ${count} 个续费`,
+  "calendar.mobileAgendaTitle": "本月续费明细",
+  "calendar.mobileAgendaEmpty": "本月暂无续费",
   "calendar.dayListDescription": ({ date }) => `选择 ${date} 要查看的订阅。`,
   "calendar.dayListFallbackDescription": "选择当天要查看的订阅。",
 } satisfies MessageMap;
@@ -343,6 +346,9 @@ export const enUS = {
   "calendar.reminder": "Reminder",
   "calendar.visit": "Visit",
   "calendar.dayRenewals": ({ date }) => `${date} renewals`,
+  "calendar.dayRenewalCount": ({ date, count }) => `${date}: ${count} ${count === 1 ? "renewal" : "renewals"}`,
+  "calendar.mobileAgendaTitle": "This month's renewals",
+  "calendar.mobileAgendaEmpty": "No renewals this month",
   "calendar.dayListDescription": ({ date }) => `Choose a subscription to view for ${date}.`,
   "calendar.dayListFallbackDescription": "Choose a subscription to view for this day.",
 } satisfies Record<keyof typeof zhCN, MessageValue>;
