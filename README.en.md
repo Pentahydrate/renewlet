@@ -13,11 +13,11 @@ Renewlet is a self-hosted subscription manager. It keeps prices, renewal dates, 
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/renewlet-dashboard-en.png" alt="Renewlet dashboard showing 20 developer subscriptions, monthly spend, upcoming renewals, and spending distribution" width="100%">
+  <img src="./docs/screenshots/renewlet-dashboard-en.png" alt="Renewlet dashboard showing 100 developer subscriptions, monthly spend, upcoming renewals, and spending distribution" width="100%">
 </p>
 
 <p align="center">
-  <sub>Screenshots use 20 real developer-service public-pricing demo subscriptions (price snapshot: 2026-05-17). Actual prices may change by official pricing page, region, tax, and billing term.</sub>
+  <sub>Screenshots use 100 real developer-service public-pricing demo subscriptions (price snapshot: 2026-05-18). Actual prices may change by official pricing page, region, tax, and billing term.</sub>
 </p>
 
 <p align="center"><strong>Subscription grid</strong></p>

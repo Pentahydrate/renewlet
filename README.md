@@ -13,11 +13,11 @@ Renewlet 是一个自托管的订阅管理工具。它把 SaaS、AI 工具、云
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/renewlet-dashboard-zh.png" alt="Renewlet 中文仪表盘，展示 20 条开发者订阅、月度支出、近期续费和支出分布" width="100%">
+  <img src="./docs/screenshots/renewlet-dashboard-zh.png" alt="Renewlet 中文仪表盘，展示 100 条开发者订阅、月度支出、近期续费和支出分布" width="100%">
 </p>
 
 <p align="center">
-  <sub>截图使用 20 条面向开发者的真实服务公开定价演示数据（价格快照：2026-05-17），实际价格可能随官方页面、地区、税费和计费周期调整。</sub>
+  <sub>截图使用 100 条面向开发者的真实服务公开定价演示数据（价格快照：2026-05-18），实际价格可能随官方页面、地区、税费和计费周期调整。</sub>
 </p>
 
 <p align="center"><strong>订阅网格</strong></p>
