@@ -105,6 +105,21 @@ docker compose up -d
   </tr>
 </table>
 
+### H5 移动端
+
+<table>
+  <tr>
+    <td width="50%">
+      <strong>移动端订阅列表</strong><br>
+      <img src="./docs/screenshots/renewlet-subscriptions-h5-zh.png" alt="Renewlet 中文 H5 订阅列表，展示移动端筛选区、订阅卡片、Logo、价格和标签">
+    </td>
+    <td width="50%">
+      <strong>移动端通知方式</strong><br>
+      <img src="./docs/screenshots/renewlet-notifications-h5-zh.png" alt="Renewlet 中文 H5 通知方式，展示邮件通知渠道和 SMTP 邮件配置">
+    </td>
+  </tr>
+</table>
+
 ## 日常运维
 
 查看状态和日志：

@@ -105,6 +105,21 @@ Common settings live in `.env`:
   </tr>
 </table>
 
+### Mobile
+
+<table>
+  <tr>
+    <td width="50%">
+      <strong>Mobile subscriptions</strong><br>
+      <img src="./docs/screenshots/renewlet-subscriptions-h5-en.png" alt="Renewlet mobile subscriptions view with filters, subscription cards, logos, prices, and tags">
+    </td>
+    <td width="50%">
+      <strong>Mobile notification methods</strong><br>
+      <img src="./docs/screenshots/renewlet-notifications-h5-en.png" alt="Renewlet mobile notification methods view showing the email channel and SMTP email configuration">
+    </td>
+  </tr>
+</table>
+
 ## Operations
 
 Check status and logs:
