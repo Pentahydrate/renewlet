@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { assertDateOnly } from "@/lib/time/date-only";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Subscription } from "@/types/subscription";
@@ -85,6 +85,10 @@ function renderCalendar(subscriptions: Subscription[]) {
 }
 
 describe("SubscriptionCalendar dialogs", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("describes the subscription detail dialog", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
@@ -96,6 +100,63 @@ describe("SubscriptionCalendar dialogs", () => {
     expect(screen.getByRole("dialog", { name: /Aws/ })).toHaveAccessibleDescription(
       "查看 Aws 的价格、周期、日期、标签、网站和备注。",
     );
+  });
+
+  it("renders the detail dialog logo on the shared neutral logo tile without cropping", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([
+      subscription({
+        name: "Apple",
+        logo: "https://example.com/apple.svg",
+      }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apple" }));
+
+    const logo = screen.getByAltText("Apple");
+    const logoTile = logo.closest(".subscription-logo-tile");
+
+    expect(logo).toHaveClass("subscription-logo-image", "object-contain");
+    expect(logo).not.toHaveClass("object-cover");
+    expect(logoTile).not.toBeNull();
+    expect(logoTile).toHaveClass("subscription-logo-tile");
+  });
+
+  it("uses the same detail dialog logo path for dark transparent logos", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([
+      subscription({
+        name: "Better Stack Uptime Team",
+        logo: "https://example.com/better-stack-dark-logo.svg",
+      }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Better Stack Uptime Team" }));
+
+    const logo = screen.getByAltText("Better Stack Uptime Team");
+
+    expect(logo).toHaveClass("subscription-logo-image", "object-contain");
+    expect(logo.closest(".subscription-logo-tile")).not.toBeNull();
+  });
+
+  it("keeps the detail dialog initials fallback inside the shared logo tile", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([subscription({ name: "dmit", logo: undefined })]);
+
+    fireEvent.click(screen.getByRole("button", { name: "dmit" }));
+
+    const initials = screen.getByText("DM");
+    const logoTile = initials.closest(".subscription-logo-tile");
+
+    expect(initials).toHaveClass("subscription-logo-fallback");
+    expect(logoTile).not.toBeNull();
+    expect(logoTile).toHaveClass("subscription-logo-tile");
   });
 
   it("describes the day subscription list dialog", async () => {
@@ -113,5 +174,26 @@ describe("SubscriptionCalendar dialogs", () => {
     expect(screen.getByRole("dialog", { name: "5月14日 续费" })).toHaveAccessibleDescription(
       "选择 5月14日 要查看的订阅。",
     );
+  });
+
+  it("renders day list logos on the shared neutral logo tile without cropping", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([
+      subscription({ id: "sub-1", name: "Apple", logo: "https://example.com/apple.svg" }),
+      subscription({ id: "sub-2", name: "Better Stack Uptime Team", logo: "https://example.com/better-stack.svg" }),
+      subscription({ id: "sub-3", name: "OpenAI" }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "+1 更多" }));
+
+    const logo = screen.getByAltText("Better Stack Uptime Team");
+    const logoTile = logo.closest(".subscription-logo-tile");
+
+    expect(logo).toHaveClass("subscription-logo-image", "object-contain");
+    expect(logo).not.toHaveClass("object-cover");
+    expect(logoTile).not.toBeNull();
+    expect(logoTile).toHaveClass("subscription-logo-tile");
   });
 });

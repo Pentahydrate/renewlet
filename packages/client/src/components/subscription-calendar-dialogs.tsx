@@ -6,6 +6,7 @@
  *
  * 注意： 弹窗中的金额、周期和状态标签必须继续复用 subscription domain 常量，避免日历视图口径分叉。
  */
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { Subscription } from '@/types/subscription';
 import { STATUS_LABELS, CYCLE_LABELS } from '@/types/subscription';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,52 @@ import { Badge } from '@/components/ui/badge';
 import { TruncatedTooltipText } from '@/components/ui/truncated-tooltip-text';
 import { useCustomConfig } from '@/contexts/CustomConfigContext';
 import { useI18n } from '@/i18n/I18nProvider';
+import { cn } from '@/lib/utils';
+
+const DEFAULT_LOGO_FALLBACK_COLOR = "hsl(var(--primary))";
+
+type LogoTileStyle = CSSProperties & {
+  "--subscription-logo-fallback": string;
+};
+
+interface CalendarSubscriptionLogoProps {
+  subscription: Subscription;
+  categoryColor: string | undefined;
+  className?: string | undefined;
+}
+
+function CalendarSubscriptionLogo({ subscription, categoryColor, className }: CalendarSubscriptionLogoProps) {
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [subscription.logo]);
+
+  const logoTileStyle: LogoTileStyle = {
+    "--subscription-logo-fallback": categoryColor ?? DEFAULT_LOGO_FALLBACK_COLOR,
+  };
+
+  return (
+    <div
+      className={cn(
+        "subscription-logo-tile flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border text-sm font-bold",
+        className,
+      )}
+      style={logoTileStyle}
+    >
+      {subscription.logo && !logoLoadFailed ? (
+        <AuthorizedImage
+          src={subscription.logo}
+          alt={subscription.name}
+          className="subscription-logo-image h-full w-full object-contain p-1"
+          onError={() => setLogoLoadFailed(true)}
+        />
+      ) : (
+        <span className="subscription-logo-fallback">{subscription.name.slice(0, 2).toUpperCase()}</span>
+      )}
+    </div>
+  );
+}
 
 export interface CalendarDaySubscriptions {
   date: Date;
@@ -40,6 +87,7 @@ export function SubscriptionDetailDialog({
   const category = subscription
     ? config.categories.find((item) => item.value === subscription.category)
     : undefined;
+  const categoryColor = category?.color ?? DEFAULT_LOGO_FALLBACK_COLOR;
 
   const handleEdit = () => {
     if (subscription && onEditSubscription) {
@@ -53,17 +101,9 @@ export function SubscriptionDetailDialog({
       <DialogContent className="border-border bg-card sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold flex items-center gap-3">
-            {subscription?.logo ? (
-              <AuthorizedImage
-                src={subscription.logo}
-                alt={subscription.name}
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground font-bold">
-                {subscription?.name.slice(0, 2).toUpperCase()}
-              </div>
-            )}
+            {subscription ? (
+              <CalendarSubscriptionLogo subscription={subscription} categoryColor={categoryColor} />
+            ) : null}
             {subscription?.name}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -179,6 +219,7 @@ export function DaySubscriptionsDialog({
   selectedDaySubs,
   onSelectSubscription,
 }: DaySubscriptionsDialogProps) {
+  const { config } = useCustomConfig();
   const { t, label, formatDateTime, formatCurrency } = useI18n();
   const selectedDayLabel = selectedDaySubs
     ? formatDateTime(selectedDaySubs.date, { month: "short", day: "numeric" })
@@ -207,17 +248,13 @@ export function DaySubscriptionsDialog({
                 onClick={() => onSelectSubscription(sub)}
                 className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/60 transition-colors text-left group"
               >
-                {sub.logo ? (
-                  <AuthorizedImage
-                    src={sub.logo}
-                    alt={sub.name}
-                    className="w-10 h-10 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground font-bold text-sm">
-                    {sub.name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
+                <CalendarSubscriptionLogo
+                  subscription={sub}
+                  categoryColor={
+                    config.categories.find((item) => item.value === sub.category)?.color ??
+                    DEFAULT_LOGO_FALLBACK_COLOR
+                  }
+                />
                 <div className="flex-1 min-w-0">
                   <TruncatedTooltipText as="p" text={sub.name} className="text-sm font-medium" />
                   <p className="text-xs text-muted-foreground">
