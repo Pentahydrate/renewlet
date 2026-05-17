@@ -46,14 +46,14 @@ export function MediaThumbnailButton({
         className,
       )}
     >
-      <div className="h-full w-full">
+      <div className="relative z-10 h-full w-full">
         <FaviconResultImage src={src} alt={alt} className="media-thumbnail-image" onError={onError} />
       </div>
       {selected && (
         <span
           aria-hidden="true"
           className={cn(
-            "absolute -right-1 -top-1 flex items-center justify-center rounded-full bg-primary",
+            "absolute -right-1 -top-1 z-20 flex items-center justify-center rounded-full bg-primary",
             isSmall ? "h-3.5 w-3.5" : "h-4 w-4",
           )}
         >

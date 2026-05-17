@@ -174,10 +174,10 @@ export function LogoPicker({
         {/* Logo 预览/上传区域 */}
         <div
           className={cn(
-            "relative w-16 h-16 rounded-xl border-2 border-dashed border-border",
+            "relative w-16 h-16 rounded-xl border-2 border-border",
             "flex items-center justify-center cursor-pointer",
             "transition-colors",
-            displayedLogo ? "media-thumbnail-canvas hover:border-primary" : "bg-secondary/50 hover:bg-secondary/80",
+            displayedLogo ? "media-thumbnail-canvas hover:border-primary" : "border-dashed bg-secondary/50 hover:bg-secondary/80",
             "overflow-hidden group"
           )}
           onClick={() => fileInputRef.current?.click()}
@@ -186,7 +186,7 @@ export function LogoPicker({
         >
           {displayedLogo ? (
             <>
-              <div className="h-full w-full p-1">
+              <div className="relative z-10 h-full w-full p-1">
                 <FaviconResultImage
                   src={displayedLogo}
                   alt="Logo"
@@ -200,7 +200,7 @@ export function LogoPicker({
                   e.stopPropagation();
                   applyValue(undefined);
                 }}
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1 -right-1 z-20 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -209,7 +209,7 @@ export function LogoPicker({
             <ImageIcon className="w-6 h-6 text-muted-foreground" />
           )}
           {uploadStatus === "uploading" && (
-            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+            <div className="absolute inset-0 z-30 bg-background/60 flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </div>
           )}

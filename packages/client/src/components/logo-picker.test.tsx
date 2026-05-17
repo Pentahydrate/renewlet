@@ -154,15 +154,20 @@ describe("LogoPicker", () => {
     render(<LogoPicker value="https://example.com/logo.svg" onChange={vi.fn()} />);
 
     const logo = screen.getByAltText("Logo");
+    const logoPreview = logo.closest(".media-thumbnail-canvas");
     expect(logo).toHaveClass("media-thumbnail-image");
-    expect(logo.closest(".media-thumbnail-canvas")).not.toBeNull();
+    expect(logoPreview).not.toBeNull();
+    expect(logoPreview).not.toHaveClass("border-dashed");
   });
 
   it("allows SVG files in the custom Logo file picker", () => {
     const { container } = render(<LogoPicker value={undefined} onChange={vi.fn()} />);
     const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    const emptyPreview = input?.parentElement;
 
     expect(input).toHaveAttribute("accept", IMAGE_UPLOAD_ACCEPT);
+    expect(emptyPreview).toHaveClass("border-dashed");
+    expect(emptyPreview).not.toHaveClass("media-thumbnail-canvas");
   });
 
   it("selects an uploaded custom Logo from the uploaded Logo picker", async () => {

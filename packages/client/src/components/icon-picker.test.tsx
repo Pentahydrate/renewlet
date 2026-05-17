@@ -100,8 +100,10 @@ describe("IconPicker", () => {
     render(<IconPicker value="https://example.com/icon.svg" onChange={vi.fn()} />);
 
     const icon = screen.getByAltText("Icon");
+    const iconPreview = icon.closest(".media-thumbnail-canvas");
     expect(icon).toHaveClass("media-thumbnail-image");
-    expect(icon.closest(".media-thumbnail-canvas")).not.toBeNull();
+    expect(iconPreview).not.toBeNull();
+    expect(iconPreview).toHaveClass("media-thumbnail-canvas");
   });
 
   it("selects a built-in theSVG icon from the unified icon search", async () => {

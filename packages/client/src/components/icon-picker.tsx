@@ -164,7 +164,7 @@ export function IconPicker({
         >
           {displayedIcon ? (
             <>
-              <div className="h-full w-full p-1">
+              <div className="relative z-10 h-full w-full p-1">
                 <FaviconResultImage
                   src={displayedIcon}
                   alt="Icon"
@@ -178,7 +178,7 @@ export function IconPicker({
                   e.stopPropagation();
                   applyValue(undefined);
                 }}
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-1 -right-1 z-20 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-2.5 h-2.5" />
               </button>
@@ -187,7 +187,7 @@ export function IconPicker({
             <ImageIcon className="w-4 h-4 text-muted-foreground/50" />
           )}
           {uploadStatus === "uploading" && (
-            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+            <div className="absolute inset-0 z-30 bg-background/60 flex items-center justify-center">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
             </div>
           )}
