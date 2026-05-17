@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { assertDateOnly } from "@/lib/time/date-only";
-import type { Subscription } from "@/types/subscription";
+import type { FixedCycleSubscription, Subscription } from "@/types/subscription";
 import Dashboard from "./dashboard";
 
 const mocks = vi.hoisted(() => ({
@@ -82,7 +82,7 @@ vi.mock("@/modules/subscriptions/application/use-subscription-crud", () => ({
   }),
 }));
 
-function subscription(overrides: Partial<Subscription> = {}): Subscription {
+function subscription(overrides: Partial<FixedCycleSubscription> = {}): FixedCycleSubscription {
   return {
     id: "codex-pro",
     name: "Codex Pro",
