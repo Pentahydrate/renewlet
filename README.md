@@ -131,14 +131,6 @@ Common settings live in `.env`:
 
 The full Docker environment template is in `.env.example`.
 
-## Releases
-
-Renewlet publishes stable versions from GitHub tags such as `v0.1.0`. Each stable release includes Docker Hub and GHCR images plus a `renewlet-docker-vX.Y.Z.zip` deployment package. Release candidates are published as prereleases with `rc` Docker tags and are meant for validation before a stable release.
-
-Development happens on `dev`; `main` represents the latest stable release. Release and hotfix work use `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches. Pull requests and commits should follow Conventional Commits, for example `feat: add notification channel` or `fix: prevent duplicate reminders`.
-
-See [Release Process](docs/release-process.md) for the full workflow.
-
 ## Screenshots
 
 <table>
@@ -178,44 +170,6 @@ See [Release Process](docs/release-process.md) for the full workflow.
     </td>
   </tr>
 </table>
-
-## Local Development
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Start the backend:
-
-```bash
-pnpm --dir packages/server start
-```
-
-Start the frontend:
-
-```bash
-pnpm --filter @renewlet/client dev
-```
-
-Local Vite runs at `http://localhost:5173` and proxies `/api` and `/_` to `http://127.0.0.1:3000`.
-
-Build:
-
-```bash
-pnpm build
-```
-
-Common checks:
-
-```bash
-pnpm check:file-lines
-pnpm check:deploy
-pnpm --filter @renewlet/client typecheck
-pnpm --dir packages/server test
-pnpm test:all
-```
 
 ## Contributing
 
