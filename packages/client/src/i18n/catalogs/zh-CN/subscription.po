@@ -149,6 +149,56 @@ msgid "import.warning.wallosExternalLogo"
 msgstr "Wallos Logo 是外链，已按原地址保留。"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:213
+msgid "import.warning.renewletLegacyBillingCycleDefaulted"
+msgstr "旧版 Renewlet 扣费周期无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:214
+msgid "import.warning.renewletLegacyCurrencyDefaulted"
+msgstr "旧版 Renewlet 货币无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:215
+msgid "import.warning.renewletLegacyCustomDaysDefaulted"
+msgstr "旧版 Renewlet 自定义周期天数无效，已按 {fallback} 天导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:216
+msgid "import.warning.renewletLegacyLogoDropped"
+msgstr "旧版 Renewlet Logo 形态已不再支持，已清空，可在预览中重新指定。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:217
+msgid "import.warning.renewletLegacyPriceDefaulted"
+msgstr "旧版 Renewlet 价格无效，已按 0 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:218
+msgid "import.warning.renewletLegacyReminderDaysDefaulted"
+msgstr "旧版 Renewlet 提醒提前天数无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:219
+msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
+msgstr "旧版 Renewlet 重复提醒间隔无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:220
+msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
+msgstr "旧版 Renewlet 重复提醒窗口无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:221
+msgid "import.warning.renewletLegacyStatusDefaulted"
+msgstr "旧版 Renewlet 状态无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:222
+msgid "import.warning.renewletLegacyTagsTrimmed"
+msgstr "旧版 Renewlet 标签包含无效或超长值，已清理，可在预览中修改。"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:211
 msgid "import.warning.wallosDisplayLowConfidence"
 msgstr "Wallos UI JSON 不包含原始 ID；再次导入时会按名称、网址、分类和周期查找已有记录。"
@@ -157,6 +207,21 @@ msgstr "Wallos UI JSON 不包含原始 ID；再次导入时会按名称、网址
 #: src/i18n/descriptors/subscription.ts:220
 msgid "import.warning.currencySymbolAmbiguous"
 msgstr "Wallos 价格符号 {symbol} 可对应多个币种，已按 {currency} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:206
+msgid "import.field.renewletDueDate"
+msgstr "Renewlet 下次扣费日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:207
+msgid "import.field.renewletStartDate"
+msgstr "Renewlet 开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:208
+msgid "import.field.renewletTrialEndDate"
+msgstr "Renewlet 试用结束日期"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:206
@@ -1216,7 +1281,7 @@ msgstr "网站地址必须使用 http:// 或 https://"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:213
 msgid "import.warning.invalidWebsite"
-msgstr "网站地址无效，已写入 Wallos 原始信息。"
+msgstr "网站地址无效，已跳过，可在预览中手动修改。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:146

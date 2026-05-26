@@ -1,4 +1,4 @@
-import { renewletExportV1Schema, type RenewletExportV1 } from "@/lib/api/schemas/import-export";
+import { renewletExportV1Schema } from "@/lib/api/schemas/import-export";
 import { IMPORT_MESSAGE_CODES } from "./import-export-model";
 import type { PreparedImport } from "./import-export-model";
 import {
@@ -10,6 +10,7 @@ import {
   type WallosDatabaseModel,
   type WallosTableRow,
 } from "./wallos-import-mapping";
+import { buildPreparedLegacyRenewletImport } from "./renewlet-legacy-import";
 
 type WorkerRequest = {
   id: number;
@@ -60,8 +61,13 @@ async function parseZipBytes(
   const zip = await JSZip.loadAsync(bytes, { checkCRC32: false });
   const dataJson = zip.file("data.json");
   if (dataJson) {
-    const data = renewletExportV1Schema.parse(JSON.parse(await dataJson.async("string"))) as RenewletExportV1;
-    return buildFromRenewletExport(data, context, collectRenewletAssetEntries(zip));
+    const data = JSON.parse(await dataJson.async("string")) as unknown;
+    const assetEntries = collectRenewletAssetEntries(zip);
+    const renewletExport = renewletExportV1Schema.safeParse(data);
+    if (renewletExport.success) return buildFromRenewletExport(renewletExport.data, context, assetEntries);
+    // Worker 里的 legacy data.json 桥接和主线程入口同寿命；迁移窗口结束后两边一起删，避免后台解析永久背双格式。
+    const legacyRenewletPrepared = buildPreparedLegacyRenewletImport(data, context, assetEntries);
+    if (legacyRenewletPrepared) return legacyRenewletPrepared;
   }
   const dbEntry = zip.file(/(^|\/)wallos\.db$/i)[0];
   if (!dbEntry) throw new Error(IMPORT_MESSAGE_CODES.unrecognizedFile);

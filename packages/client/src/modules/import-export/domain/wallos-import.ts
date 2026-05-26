@@ -1,4 +1,4 @@
-import { importPayloadSchema, renewletExportV1Schema, type ImportPayload, type ImportPreviewItem, type RenewletExportV1 } from "@renewlet/shared/schemas/import-export";
+import { importPayloadSchema, renewletExportV1Schema, type ImportPayload, type ImportPreviewItem } from "@renewlet/shared/schemas/import-export";
 import type JSZip from "jszip";
 import type { ImportBuildBaseContext } from "./wallos-import-mapping";
 import {
@@ -18,6 +18,7 @@ import {
   type ImportLogoAutoMatch,
   type PreparedImport,
 } from "./import-export-model";
+import { buildPreparedLegacyRenewletImport } from "./renewlet-legacy-import";
 import { assetService } from "@/services/asset-service";
 
 type ImportSubscription = ImportPayload["subscriptions"][number];
@@ -49,9 +50,14 @@ export async function parseJsonText(
   wallosUserId?: string,
 ): Promise<PreparedImport> {
   const parsed = JSON.parse(text) as unknown;
-  const renewletExport = parseRenewletExport(parsed);
-  if (renewletExport) {
-    return buildFromRenewletExport(renewletExport, context);
+  const renewletExport = renewletExportV1Schema.safeParse(parsed);
+  if (renewletExport.success) {
+    return buildFromRenewletExport(renewletExport.data, context);
+  }
+  // 旧 Renewlet 识别只给存量 Docker 用户做一次性迁移；迁移窗口结束后删掉 legacy 接线，不继续扩格式。
+  const legacyRenewletPrepared = buildPreparedLegacyRenewletImport(parsed, context);
+  if (legacyRenewletPrepared) {
+    return legacyRenewletPrepared;
   }
   if (isWallosApiPayload(parsed)) {
     const users = wallosUsersFromApiPayload(parsed);
@@ -189,11 +195,6 @@ function attachSourceFile(prepared: PreparedImport, sourceFile: File): PreparedI
     ...prepared,
     assets: prepared.assets.map((asset) => asset.zipEntryName ? { ...asset, sourceFile } : asset),
   };
-}
-
-function parseRenewletExport(value: unknown): RenewletExportV1 | null {
-  const result = renewletExportV1Schema.safeParse(value);
-  return result.success ? result.data : null;
 }
 
 function buildPayloadWithLogoOverrides(payload: ImportPayload, logoOverrides: ReadonlyMap<number, string | null>): ImportPayload {

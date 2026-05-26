@@ -149,6 +149,56 @@ msgid "import.warning.wallosExternalLogo"
 msgstr "Wallos Logo is an external URL and was kept as-is."
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:213
+msgid "import.warning.renewletLegacyBillingCycleDefaulted"
+msgstr "The legacy Renewlet billing cycle is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:214
+msgid "import.warning.renewletLegacyCurrencyDefaulted"
+msgstr "The legacy Renewlet currency is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:215
+msgid "import.warning.renewletLegacyCustomDaysDefaulted"
+msgstr "The legacy Renewlet custom cycle length is invalid. Imported as {fallback} day(s); you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:216
+msgid "import.warning.renewletLegacyLogoDropped"
+msgstr "This legacy Renewlet Logo format is no longer supported. It was cleared and can be reassigned in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:217
+msgid "import.warning.renewletLegacyPriceDefaulted"
+msgstr "The legacy Renewlet price is invalid. Imported as 0; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:218
+msgid "import.warning.renewletLegacyReminderDaysDefaulted"
+msgstr "The legacy Renewlet reminder lead time is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:219
+msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
+msgstr "The legacy Renewlet repeat reminder interval is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:220
+msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
+msgstr "The legacy Renewlet repeat reminder window is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:221
+msgid "import.warning.renewletLegacyStatusDefaulted"
+msgstr "The legacy Renewlet status is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:222
+msgid "import.warning.renewletLegacyTagsTrimmed"
+msgstr "The legacy Renewlet tags included invalid or overlong values. They were cleaned and can be changed in preview."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:211
 msgid "import.warning.wallosDisplayLowConfidence"
 msgstr "Wallos UI JSON does not include original IDs. Repeat imports match by name, website, category, and billing cycle."
@@ -157,6 +207,21 @@ msgstr "Wallos UI JSON does not include original IDs. Repeat imports match by na
 #: src/i18n/descriptors/subscription.ts:220
 msgid "import.warning.currencySymbolAmbiguous"
 msgstr "Wallos price symbol {symbol} can mean more than one currency. Imported as {currency}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:206
+msgid "import.field.renewletDueDate"
+msgstr "Renewlet next billing date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:207
+msgid "import.field.renewletStartDate"
+msgstr "Renewlet start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:208
+msgid "import.field.renewletTrialEndDate"
+msgstr "Renewlet trial end date"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:206
@@ -1216,7 +1281,7 @@ msgstr "Website URL must use http:// or https://."
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:213
 msgid "import.warning.invalidWebsite"
-msgstr "Website URL is invalid. The original Wallos value was kept in metadata."
+msgstr "Website URL is invalid and was skipped. You can change it in preview."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:146
