@@ -18,13 +18,14 @@ Manual Cloudflare resources and GitHub Secrets. Push to `dev` or run the workflo
 
 Workflow:
 
-- Generates `wrangler.generated.jsonc` from Secrets
 - Checks Cloudflare Worker and frontend types
 - Builds the Cloudflare frontend
-- Applies remote D1 migrations
-- Deploys the Worker
+- If all 5 GitHub Secrets are configured, generates `wrangler.generated.jsonc` from Secrets
+- If all 5 GitHub Secrets are configured, applies remote D1 migrations and deploys the Worker
 
-Add these 5 values to GitHub Secrets.
+If any required secret is missing, the workflow still runs the Cloudflare checks and build, then skips the remote D1 migration and Worker deployment with a GitHub Actions notice.
+
+Add these 5 values to GitHub Secrets to enable remote deployment.
 
 ### 1. Fork The Repository
 
@@ -155,6 +156,8 @@ In your fork repository, open `Settings` -> `Secrets and variables` -> `Actions`
 The workflow file is `.github/workflows/cloudflare-worker.yml`.
 
 It runs automatically when you push to `dev`, and you can also run it manually from GitHub Actions:
+
+The workflow needs all 5 repository secrets to deploy to Cloudflare. Without them, it only verifies the Cloudflare build path and does not change any remote D1 database or Worker.
 
 1. Open your fork repository.
 2. Go to `Actions`.

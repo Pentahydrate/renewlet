@@ -4,6 +4,8 @@ import { StrictMode, type ReactNode } from "react";
 import { useExchangeRates } from "./use-exchange-rates";
 import { SUPPORTED_EXCHANGE_RATE_CURRENCIES } from "@/lib/currency-data";
 
+const EXCHANGE_RATE_LOG_PREFIX = "Failed to fetch exchange rates";
+
 const supportedRates = Object.fromEntries(
   SUPPORTED_EXCHANGE_RATE_CURRENCIES.map((code, index) => [
     code,
@@ -59,14 +61,56 @@ function requestPath(callIndex: number) {
   return `${url.origin}${url.pathname}`;
 }
 
+function firstLogArg(args: unknown[]) {
+  return typeof args[0] === "string" ? args[0] : "";
+}
+
+function createExchangeRateLogCapture() {
+  const warnings: unknown[][] = [];
+  const errors: unknown[][] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+
+  // 这些测试主动制造远端故障来覆盖降级路径；只吞掉汇率 Hook 的预期日志，其他 console 仍透出。
+  vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
+    if (firstLogArg(args).startsWith(EXCHANGE_RATE_LOG_PREFIX)) {
+      warnings.push(args);
+      return;
+    }
+    originalWarn(...args);
+  });
+  vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+    if (firstLogArg(args).startsWith(EXCHANGE_RATE_LOG_PREFIX)) {
+      errors.push(args);
+      return;
+    }
+    originalError(...args);
+  });
+
+  return {
+    warnings,
+    errors,
+    expectWarning(message: string) {
+      expect(warnings.some((args) => firstLogArg(args).includes(message))).toBe(true);
+    },
+    expectError(message: string) {
+      expect(errors.some((args) => firstLogArg(args).includes(message))).toBe(true);
+    },
+  };
+}
+
 describe("useExchangeRates", () => {
+  let exchangeRateLogs: ReturnType<typeof createExchangeRateLogCapture>;
+
   beforeEach(() => {
     localStorage.clear();
     vi.stubGlobal("fetch", vi.fn());
+    exchangeRateLogs = createExchangeRateLogCapture();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
   });
@@ -161,6 +205,7 @@ describe("useExchangeRates", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(requestPath(0)).toBe("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json");
     expect(requestPath(1)).toBe("https://latest.currency-api.pages.dev/v1/currencies/usd.min.json");
+    exchangeRateLogs.expectWarning("exchange-api endpoint https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json");
   });
 
   it("falls back to FloatRates when exchange-api fails", async () => {
@@ -177,6 +222,9 @@ describe("useExchangeRates", () => {
     expect(result.current.rates["CNY"]).toBe(supportedRates["CNY"]);
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(requestPath(2)).toBe("https://www.floatrates.com/daily/usd.json");
+    exchangeRateLogs.expectWarning("exchange-api endpoint https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json");
+    exchangeRateLogs.expectWarning("exchange-api endpoint https://latest.currency-api.pages.dev/v1/currencies/usd.min.json");
+    exchangeRateLogs.expectWarning("exchange rates from exchange-api");
 
     const cached = JSON.parse(localStorage.getItem("exchange_rates_cache_v3") ?? "{}") as {
       provider?: string;
@@ -323,6 +371,9 @@ describe("useExchangeRates", () => {
     expect(result.current.error).toBe("请求超时，请稍后重试");
     expect(result.current.activeProvider).toBe("builtin");
     expect(result.current.rates["USD"]).toBe(1);
+    exchangeRateLogs.expectWarning("exchange rates from floatrates");
+    exchangeRateLogs.expectWarning("exchange rates from exchange-api");
+    exchangeRateLogs.expectError("Failed to fetch exchange rates");
   });
 
   it("refresh skips cache and can use the new requested provider immediately", async () => {

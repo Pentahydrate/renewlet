@@ -18,13 +18,14 @@ https://<worker-name>.<workers-dev-subdomain>.workers.dev/setup
 
 流程：
 
-- 根据 Secrets 生成 `wrangler.generated.jsonc`
 - 检查 Cloudflare Worker 和前端类型
 - 构建 Cloudflare 前端
-- 应用远端 D1 migrations
-- 部署 Worker
+- 如果 5 个 GitHub Secrets 都已配置，根据 Secrets 生成 `wrangler.generated.jsonc`
+- 如果 5 个 GitHub Secrets 都已配置，应用远端 D1 migrations 并部署 Worker
 
-把下面 5 个值填进 GitHub Secrets。
+如果缺少任意必需 secret，workflow 仍会运行 Cloudflare 检查和构建，然后通过 GitHub Actions notice 明确跳过远端 D1 migration 和 Worker 部署。
+
+把下面 5 个值填进 GitHub Secrets 后才会启用远端部署。
 
 ### 1. Fork 仓库
 
@@ -155,6 +156,8 @@ Renewlet 的 Worker binding 名固定如下：
 工作流文件在 `.github/workflows/cloudflare-worker.yml`。
 
 它会在 push 到 `dev` 时自动运行，也可以从 GitHub Actions 手动运行：
+
+workflow 需要下面 5 个 repository secrets 才会部署到 Cloudflare。没有配齐时，它只验证 Cloudflare 构建路径，不会修改任何远端 D1 数据库或 Worker。
 
 1. 打开你的 fork 仓库。
 2. 进入 `Actions`。

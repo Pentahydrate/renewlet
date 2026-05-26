@@ -42,17 +42,41 @@ jobs:
       - name: Resolve build time
         run: echo "RENEWLET_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
-      - name: Generate Cloudflare config
-        run: pnpm cloudflare:config:ci
-
       - name: Check Cloudflare build
         run: pnpm check:cloudflare
 
       - name: Build Cloudflare assets
         run: pnpm build:cloudflare
 
+      - name: Check deployment secrets
+        id: deployment-secrets
+        shell: bash
+        run: |
+          missing=()
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID WORKER_NAME D1_DATABASE_ID R2_BUCKET_NAME; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            printf -v missing_list '%s, ' "${missing[@]}"
+            missing_list="${missing_list%, }"
+            echo "::notice title=Cloudflare deploy skipped::Missing GitHub Actions secrets: ${missing_list}. Build checks passed; add all required secrets to enable remote D1 migration and Worker deploy."
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Cloudflare config
+        if: steps.deployment-secrets.outputs.ready == 'true'
+        run: pnpm cloudflare:config:ci
+
       - name: Apply D1 migrations
+        if: steps.deployment-secrets.outputs.ready == 'true'
         run: pnpm exec wrangler d1 migrations apply DB --remote --config "$CI_WRANGLER_CONFIG"
 
       - name: Deploy Worker
+        if: steps.deployment-secrets.outputs.ready == 'true'
         run: pnpm exec wrangler deploy --config "$CI_WRANGLER_CONFIG"
