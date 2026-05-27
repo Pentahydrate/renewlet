@@ -7,11 +7,15 @@ RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/client/package.json packages/client/package.json
+COPY packages/shared/package.json packages/shared/package.json
 COPY packages/server/package.json packages/server/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM client-deps AS client-builder
+# Client typecheck resolves workspace exports from @renewlet/shared and runs the root CSP guard after Vite build.
 COPY packages/client packages/client
+COPY packages/shared packages/shared
+COPY scripts/check-client-csp.mjs scripts/check-client-csp.mjs
 RUN pnpm --filter @renewlet/client build
 
 FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine AS server-builder
