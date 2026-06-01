@@ -34,6 +34,7 @@ Idle memory usage is around 20-30MiB in local testing, making it comfortable for
 - Track each subscription clearly: name, logo, price, currency, billing cycle, renewal date, status, category, payment method, tags, website, and notes.
 - Understand spending: normalize costs by month and year, then review budget usage, category breakdowns, payment-method charts, and inactive-subscription savings.
 - Get renewal reminders: jobs are generated from each user's IANA time zone and local notification time, with reminder days, repeat reminders, delivery history, and failed-send retries.
+- Subscribe from calendar apps: generate a global private ICS feed URL in settings, or create an independent per-subscription feed from a subscription card or calendar detail dialog to open the system calendar subscription flow.
 - Send notifications through six channels: Telegram, Notifyx, Webhook, WeCom Bot, SMTP email, and Bark.
 - Handle multiple currencies: choose Exchange API or FloatRates JSON Feeds, with fallback rates when remote providers are unavailable.
 - Customize your lists: categories, payment methods, and currencies can be adjusted in settings, with built-in icons for common payment methods.
@@ -103,7 +104,7 @@ docker compose logs -f
 
 Admins can also open the version menu in Renewlet and click **Update now**.
 
-Cloudflare deployments update from your fork: click `Sync fork` / `Update branch`, wait for redeploy, and run `Cloudflare Worker` manually only if it does not start automatically.
+Cloudflare deployments update from your fork: click `Sync fork` / `Update branch`, wait for redeploy, and run `Cloudflare Worker` manually only if it does not start automatically. The deploy path must keep D1 migrations before Worker deploy.
 
 ### Common commands
 

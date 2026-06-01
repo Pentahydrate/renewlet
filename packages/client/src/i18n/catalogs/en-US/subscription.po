@@ -1179,6 +1179,209 @@ msgid "subscription.add"
 msgstr "Add subscription"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:5
+msgid "subscription.addToCalendar"
+msgstr "Add to calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:6
+msgid "subscription.addToCalendarTitle"
+msgstr "Add to calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:7
+msgid "subscription.addToCalendarDescription"
+msgstr "Create a separate calendar subscription for “{name}” that only syncs this renewal."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:8
+msgid "subscription.addToCalendarEventDate"
+msgstr "Event date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:9
+msgid "subscription.addToCalendarEventType"
+msgstr "Event type"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:10
+msgid "subscription.addToCalendarSingleEvent"
+msgstr "Single event"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSubscriptionFeed"
+msgstr "Subscription feed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSyncStatus"
+msgstr "Sync status"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:12
+msgid "subscription.addToCalendarNoSync"
+msgstr "Will not stay in sync"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSubscriptionSync"
+msgstr "Syncs this subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSingleEventNotice"
+msgstr "System subscription uses a private URL. ICS download and online calendar links add a one-time event."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarSubscribeSystem"
+msgstr "Subscribe in system calendar"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarGenerateFeed"
+msgstr "Generate subscription link"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarSubscribeLoading"
+msgstr "Generating..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarDownloadIcs"
+msgstr "Download ICS file"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarAndroidSingleEvent"
+msgstr "Add one-time event to Android Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarFeedUrl"
+msgstr "This subscription URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarCopyFeedUrl"
+msgstr "Copy URL"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerate"
+msgstr "Regenerate subscription link"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateTitle"
+msgstr "Regenerate this subscription link?"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateDescription"
+msgstr "The old URL will stop working immediately. Calendar apps that already use this subscription need to be re-added."
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerated"
+msgstr "Subscription link regenerated"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegeneratedDescription"
+msgstr "The old URL is invalid. Use the new subscription link."
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateFailed"
+msgstr "Failed to regenerate subscription link"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendarSubscribed"
+msgstr "Calendar subscription generated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendarSubscribedDescription"
+msgstr "If the system calendar does not open, copy this URL and add the subscription manually."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:23
+msgid "subscription.addToCalendarSubscribeFailed"
+msgstr "Failed to generate calendar subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:24
+msgid "subscription.addToCalendarFeedUrlCopied"
+msgstr "Subscription URL copied"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:25
+msgid "subscription.addToCalendarFeedUrlCopyFailed"
+msgstr "Failed to copy subscription URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarOnlineServices"
+msgstr "Online calendar services"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarGoogle"
+msgstr "Open with Google Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarOutlook"
+msgstr "Open with Outlook.com"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarOffice365"
+msgstr "Open with Office 365"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarYahoo"
+msgstr "Open with Yahoo Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarDownloaded"
+msgstr "ICS file generated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarDownloadFailed"
+msgstr "Failed to generate ICS file"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarCalendarName"
+msgstr "Renewlet - {name}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendar.description.amount"
+msgstr "Amount: {amount}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendar.description.billingCycle"
+msgstr "Billing cycle: {cycle}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendar.description.category"
+msgstr "Category: {category}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendar.description.paymentMethod"
+msgstr "Payment method: {paymentMethod}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendar.description.notes"
+msgstr "Notes: {notes}"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:9
 msgid "subscription.dialogCreateSubmit"
 msgstr "Add subscription"

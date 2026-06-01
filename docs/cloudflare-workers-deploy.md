@@ -13,6 +13,8 @@
 https://<worker-name>.<workers-dev-subdomain>.workers.dev/setup
 ```
 
+Keep the generated deploy command as `pnpm deploy`. Renewlet's deploy script applies D1 migrations before publishing the Worker, so new tables are created before the updated API starts serving traffic.
+
 If you prefer to create D1/R2, the Cloudflare API Token, and GitHub Secrets yourself, use the manual deploy flow below.
 
 ## Manual Deploy (GitHub Actions)
@@ -203,6 +205,8 @@ If your fork has automatic upstream sync enabled, upstream updates sync and rede
 4. Wait for Cloudflare to redeploy.
 5. If deployment does not start automatically, open `Actions` and run `Cloudflare Worker` manually.
 
+Every Cloudflare update must run the same migration-before-deploy path. The GitHub Actions workflow does this automatically when all required secrets are configured.
+
 ## Optional: Wrangler CLI
 
 Most deployments do not need Wrangler CLI. Use these commands only if you want to manage Cloudflare resources from your own machine.
@@ -245,6 +249,15 @@ pnpm exec wrangler deploy --config wrangler.generated.jsonc
 **What if the Worker name already exists?**
 
 Change `WORKER_NAME` in GitHub Secrets, then rerun the workflow.
+
+**Calendar feed says `no such table: calendar_feeds`?**
+
+Your Worker was updated before the remote D1 migrations finished or ran. The calendar feed table now stores scoped tokens for both the global feed and per-subscription feeds, so the D1 migration must run before relying on calendar subscription links. Re-run the `Cloudflare Worker` workflow, or run:
+
+```bash
+pnpm cloudflare:config:ci
+pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.generated.jsonc
+```
 
 **Old `pb_data`?**
 

@@ -13,6 +13,15 @@ import {
   setupStatus,
 } from "./auth";
 import { listUploadedAssets, readAsset, uploadAsset } from "./assets";
+import {
+  calendarFeedIcs,
+  createCalendarFeed,
+  createSubscriptionCalendarFeed,
+  deleteCalendarFeed,
+  deleteSubscriptionCalendarFeed,
+  readCalendarFeed,
+  readSubscriptionCalendarFeed,
+} from "./calendar-feed";
 import { readCustomConfig, readSettings, updateCustomConfig, updateSettings } from "./settings";
 import { createSubscription, deleteSubscription, readSubscriptions, updateSubscription } from "./subscriptions";
 import { applyImport, previewImport } from "./import-export";
@@ -43,6 +52,7 @@ export default worker;
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const locale = requestLocale(request);
+  if (url.pathname === "/calendar/renewals.ics") return routeMethods(request, { GET: () => calendarFeedIcs(request, env) });
   // wrangler assets 只把 /api/* 交给 Worker；这里再次拒绝非 API，避免静态资源请求误进产品 API。
   if (!url.pathname.startsWith("/api/")) return errorResponse(404, serverText(locale, "common.notFound"), "NOT_FOUND");
   if (url.pathname === "/api/app/health") return health();
@@ -100,6 +110,13 @@ async function routeApp(request: Request, env: Env, url: URL): Promise<Response>
     GET: () => readSubscriptions(request, env),
     POST: () => createSubscription(request, env),
   });
+  if (head === "subscriptions" && second && third === "calendar-feed") {
+    return routeMethods(request, {
+      GET: () => readSubscriptionCalendarFeed(request, env, second),
+      POST: () => createSubscriptionCalendarFeed(request, env, second),
+      DELETE: () => deleteSubscriptionCalendarFeed(request, env, second),
+    });
+  }
   if (head === "subscriptions" && second) return routeMethods(request, {
     PATCH: () => updateSubscription(request, env, second),
     DELETE: () => deleteSubscription(request, env, second),
@@ -113,6 +130,12 @@ async function routeApp(request: Request, env: Env, url: URL): Promise<Response>
     POST: () => uploadAsset(request, env),
   });
   if (head === "assets" && second) return routeMethods(request, { GET: () => readAsset(request, env, second) });
+
+  if (head === "calendar-feed" && !second) return routeMethods(request, {
+    GET: () => readCalendarFeed(request, env),
+    POST: () => createCalendarFeed(request, env),
+    DELETE: () => deleteCalendarFeed(request, env),
+  });
 
   if (head === "notifications" && second === "history") return routeMethods(request, { GET: () => notificationHistory(request, env) });
   if (head === "notifications" && second === "test") return routeMethods(request, { POST: () => notificationTest(request, env) });

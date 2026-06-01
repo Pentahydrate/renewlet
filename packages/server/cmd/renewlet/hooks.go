@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
@@ -35,7 +36,8 @@ var (
 	dateOnlyRe     = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 	localTimeRe    = regexp.MustCompile(`^\d{2}:\d{2}$`)
 	// 私有资产路径只允许 record id 字符集，避免把任意 /api 路径伪装成 logo 引用。
-	privateAssetPathRe = regexp.MustCompile(`^/api/app/assets/[A-Za-z0-9_-]+$`)
+	privateAssetPathRe  = regexp.MustCompile(`^/api/app/assets/[A-Za-z0-9_-]+$`)
+	calendarFeedTokenRe = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
 )
 
 type customConfigLabels struct {
@@ -82,6 +84,10 @@ func registerRecordHooks(app core.App) {
 			}
 		case "notification_jobs":
 			if err := normalizeNotificationJobRecord(e.Record); err != nil {
+				return err
+			}
+		case "calendar_feeds":
+			if err := normalizeCalendarFeedRecord(app, e.Record); err != nil {
 				return err
 			}
 		}
@@ -289,6 +295,38 @@ func normalizeNotificationJobRecord(record *core.Record) error {
 			return errors.New("NOTIFICATION_RESULT_SOURCE_INVALID")
 		}
 		record.Set("result", result)
+	}
+	return nil
+}
+
+// normalizeCalendarFeedRecord 保护日历 feed 的可恢复 URL 和 scoped owner 契约。
+// 系统日历只能靠 URL 拉取 ICS；token 可展示给本人复制，但必须始终绑定到当前用户/订阅。
+func normalizeCalendarFeedRecord(app core.App, record *core.Record) error {
+	token := strings.TrimSpace(record.GetString("token"))
+	if !calendarFeedTokenRe.MatchString(token) {
+		return errors.New("CALENDAR_FEED_TOKEN_INVALID")
+	}
+	record.Set("token", token)
+
+	scope := strings.TrimSpace(record.GetString("scope"))
+	switch scope {
+	case "all":
+		record.Set("subscriptionId", "")
+	case "subscription":
+		subscriptionID := strings.TrimSpace(record.GetString("subscriptionId"))
+		if subscriptionID == "" {
+			return errors.New("CALENDAR_FEED_SUBSCRIPTION_REQUIRED")
+		}
+		userID := strings.TrimSpace(record.GetString("user"))
+		if userID == "" {
+			return errors.New("CALENDAR_FEED_USER_REQUIRED")
+		}
+		if _, err := app.FindFirstRecordByFilter("subscriptions", "id = {:id} && user = {:user}", dbx.Params{"id": subscriptionID, "user": userID}); err != nil {
+			return errors.New("CALENDAR_FEED_SUBSCRIPTION_OWNER_INVALID")
+		}
+		record.Set("subscriptionId", subscriptionID)
+	default:
+		return errors.New("CALENDAR_FEED_SCOPE_INVALID")
 	}
 	return nil
 }

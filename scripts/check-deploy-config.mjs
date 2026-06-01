@@ -208,10 +208,25 @@ function checkDockerSelfUpdateLayout() {
   }
 }
 
+function checkCloudflareDeployMigrationScript() {
+  const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+  const deployScript = packageJson.scripts?.deploy;
+  const migrationScript = packageJson.scripts?.["cloudflare:migrations:apply"];
+
+  // Deploy Button 和自管 Wrangler 部署都依赖这个顺序，避免 Worker 已更新但 D1 表结构仍停在旧版本。
+  if (deployScript !== "pnpm cloudflare:migrations:apply && wrangler deploy") {
+    throw new Error("package.json deploy script must apply Cloudflare D1 migrations before wrangler deploy.");
+  }
+  if (migrationScript !== "wrangler d1 migrations apply DB --remote") {
+    throw new Error("package.json cloudflare:migrations:apply must target the DB binding with remote D1 migrations.");
+  }
+}
+
 run("bash", ["-n", deployScript]);
 checkGeneratedSecrets();
 checkInvalidExistingPBKeyIsRejected();
 checkDockerSelfUpdateLayout();
+checkCloudflareDeployMigrationScript();
 checkComposeConfig();
 
 console.log("Deployment configuration checks passed.");

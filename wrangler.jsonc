@@ -7,8 +7,8 @@
   "assets": {
     "directory": "./packages/client/dist",
     "not_found_handling": "single-page-application",
-    // 静态资源先走 Workers Assets；产品 API 和 Wrangler scheduled 测试入口必须优先交给 Worker。
-    "run_worker_first": ["/api/*", "/__scheduled"]
+    // 只让精确 ICS feed 路径进 Worker；React 的 /calendar 页面继续走静态资源 SPA fallback。
+    "run_worker_first": ["/api/*", "/calendar/renewals.ics", "/__scheduled"]
   },
   "triggers": {
     "crons": ["* * * * *"]

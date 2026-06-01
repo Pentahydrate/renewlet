@@ -93,11 +93,22 @@ func TestEnsureSchemaCreatesContractFieldsAndIndexes(t *testing.T) {
 		"created":             core.FieldTypeAutodate,
 		"updated":             core.FieldTypeAutodate,
 	})
+	assertFields(t, app, "calendar_feeds", map[string]string{
+		"user":           core.FieldTypeRelation,
+		"scope":          core.FieldTypeSelect,
+		"subscriptionId": core.FieldTypeText,
+		"token":          core.FieldTypeText,
+		"created":        core.FieldTypeAutodate,
+		"updated":        core.FieldTypeAutodate,
+	})
 
 	assertIndex(t, app, "subscriptions", "idx_subscriptions_user")
 	assertIndex(t, app, "settings", "idx_settings_user_unique")
 	assertIndex(t, app, "custom_configs", "idx_custom_configs_user_unique")
 	assertIndex(t, app, "notification_jobs", "idx_notification_jobs_user_local_time_unique")
+	assertIndex(t, app, "calendar_feeds", "idx_calendar_feeds_user_all_unique")
+	assertIndex(t, app, "calendar_feeds", "idx_calendar_feeds_token_unique")
+	assertIndex(t, app, "calendar_feeds", "idx_calendar_feeds_user_subscription_unique")
 }
 
 func TestEnsureSchemaSelfHealsExistingCollectionsWithoutAutodates(t *testing.T) {

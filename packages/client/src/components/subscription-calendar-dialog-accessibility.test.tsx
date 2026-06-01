@@ -36,6 +36,21 @@ vi.mock("@/hooks/use-settings", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-calendar-feed", () => ({
+  useCreateSubscriptionCalendarFeed: () => ({
+    isPending: false,
+    mutateAsync: vi.fn(),
+  }),
+  useDeleteSubscriptionCalendarFeed: () => ({
+    isPending: false,
+    mutateAsync: vi.fn(),
+  }),
+  useSubscriptionCalendarFeedStatus: () => ({
+    data: { enabled: false, feedUrl: undefined },
+    isLoading: false,
+  }),
+}));
+
 function subscription(overrides: SubscriptionOverrides = {}): Subscription {
   const base: SubscriptionBaseFixture = {
     id: "sub-1",
@@ -186,6 +201,29 @@ describe("SubscriptionCalendar dialogs", () => {
     fireEvent.click(screen.getByRole("button", { name: "Aws" }));
 
     expect(screen.getByText("默认提醒：提前 5 天")).toBeInTheDocument();
+  });
+
+  it("opens add-to-calendar actions from the detail dialog", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-14T12:00:00Z"));
+
+    renderCalendar([subscription({ name: "Fastmail", website: "https://fastmail.example" })]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Fastmail" }));
+    fireEvent.click(screen.getByRole("button", { name: "添加到日历" }));
+
+    expect(screen.getByRole("dialog", { name: "添加到日历" })).toBeInTheDocument();
+    expect(screen.getByText("为「Fastmail」创建单独日历订阅，只同步这一条续费。")).toBeInTheDocument();
+    const generateButton = screen.getByRole("button", { name: "生成订阅链接" });
+    expect(generateButton).toHaveClass("bg-primary");
+    expect(screen.queryByRole("link", { name: "打开系统日历" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "下载 ICS 文件" })).toHaveClass("border");
+    expect(screen.getByText("在线日历服务")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "用 Google Calendar 打开" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("calendar.google.com"),
+    );
+    expect(screen.queryByRole("button", { name: "用 Google Calendar 打开" })).not.toBeInTheDocument();
   });
 
   it("describes the day subscription list dialog", async () => {

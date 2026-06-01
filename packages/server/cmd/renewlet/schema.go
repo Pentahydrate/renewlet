@@ -72,7 +72,13 @@ func ensureSchema(app core.App) error {
 	if err := ensureNotificationJobsCollection(app, users); err != nil {
 		return err
 	}
-	if err := backfillAutodates(app, "subscriptions", "settings", "custom_configs", "assets", "notification_jobs"); err != nil {
+	if err := ensureCalendarFeedsCollection(app, users); err != nil {
+		return err
+	}
+	if err := backfillAutodates(app, "subscriptions", "settings", "custom_configs", "assets", "notification_jobs", "calendar_feeds"); err != nil {
+		return err
+	}
+	if err := deleteLegacyHashOnlyCalendarFeeds(app); err != nil {
 		return err
 	}
 	return cleanupInvalidSubscriptionLogos(app)
@@ -377,4 +383,65 @@ func ensureNotificationJobsCollection(app core.App, users *core.Collection) erro
 		c.AddIndex("idx_notification_jobs_user_local_time_unique", true, "user, scheduledLocalDate, scheduledLocalTime, timeZone", "")
 		return nil
 	})
+}
+
+func ensureCalendarFeedsCollection(app core.App, users *core.Collection) error {
+	return ensureCollection(app, "calendar_feeds", func(c *core.Collection) error {
+		ownerRules(c)
+		if err := upsertField(c, userRelation(users)); err != nil {
+			return err
+		}
+		if err := upsertField(c, &core.SelectField{Name: "scope", Required: true, Values: []string{"all", "subscription"}}); err != nil {
+			return err
+		}
+		if err := upsertField(c, &core.TextField{Name: "subscriptionId", Max: 128}); err != nil {
+			return err
+		}
+		// ICS 客户端无法携带 Renewlet 登录态；保存可恢复 token，换取刷新后仍可复制订阅 URL 的体验。
+		if err := upsertField(c, &core.TextField{Name: "token", Required: true, Max: 128, Pattern: `^[A-Za-z0-9_-]{43}$`}); err != nil {
+			return err
+		}
+		c.Fields.RemoveByName("tokenHash")
+		if err := ensureAutodates(c); err != nil {
+			return err
+		}
+		removeIndex(c, "idx_calendar_feeds_user_unique")
+		removeIndex(c, "idx_calendar_feeds_token_hash_unique")
+		removeIndex(c, "idx_calendar_feeds_user_subscription")
+		c.AddIndex("idx_calendar_feeds_user_all_unique", true, "user", "scope = 'all'")
+		c.AddIndex("idx_calendar_feeds_token_unique", true, "token", "")
+		c.AddIndex("idx_calendar_feeds_user_subscription_unique", true, "user, subscriptionId", "scope = 'subscription'")
+		return nil
+	})
+}
+
+func removeIndex(collection *core.Collection, name string) {
+	needle := "`" + name + "`"
+	indexes := collection.Indexes[:0]
+	for _, index := range collection.Indexes {
+		if !strings.Contains(index, needle) {
+			indexes = append(indexes, index)
+		}
+	}
+	collection.Indexes = indexes
+}
+
+func deleteLegacyHashOnlyCalendarFeeds(app core.App) error {
+	records, err := app.FindAllRecords("calendar_feeds")
+	if err != nil {
+		if strings.Contains(err.Error(), "no such table") {
+			return nil
+		}
+		return err
+	}
+	for _, record := range records {
+		if strings.TrimSpace(record.GetString("token")) != "" {
+			continue
+		}
+		// hash-only 旧 feed 无法反推 URL；便利优先的新模型选择删除旧记录，让用户登录后重新生成。
+		if err := app.Delete(record); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -33,6 +33,7 @@ func registerRoutes(app core.App, router *router.Router[*core.RequestEvent]) {
 			SetupEnabled:  envBool("SETUP_ENABLED", true),
 		})
 	})
+	router.GET("/calendar/renewals.ics", func(e *core.RequestEvent) error { return handleCalendarFeedICS(app, e) })
 	router.GET("/api/cron/notifications", func(e *core.RequestEvent) error { return handleNotificationCron(app, e) })
 	router.POST("/api/app/setup", func(e *core.RequestEvent) error {
 		locale := requestLocale(e.Request)
@@ -188,6 +189,12 @@ func registerRoutes(app core.App, router *router.Router[*core.RequestEvent]) {
 	auth.POST("/import/preview", func(e *core.RequestEvent) error { return handleImportPreview(app, e) })
 	auth.POST("/import/apply", func(e *core.RequestEvent) error { return handleImportApply(app, e) })
 	auth.GET("/assets/{id}", func(e *core.RequestEvent) error { return handleAssetRead(app, e) })
+	auth.GET("/calendar-feed", func(e *core.RequestEvent) error { return handleCalendarFeedStatus(app, e) })
+	auth.POST("/calendar-feed", func(e *core.RequestEvent) error { return handleCalendarFeedCreate(app, e) })
+	auth.DELETE("/calendar-feed", func(e *core.RequestEvent) error { return handleCalendarFeedDelete(app, e) })
+	auth.GET("/subscriptions/{id}/calendar-feed", func(e *core.RequestEvent) error { return handleSubscriptionCalendarFeedStatus(app, e) })
+	auth.POST("/subscriptions/{id}/calendar-feed", func(e *core.RequestEvent) error { return handleSubscriptionCalendarFeedCreate(app, e) })
+	auth.DELETE("/subscriptions/{id}/calendar-feed", func(e *core.RequestEvent) error { return handleSubscriptionCalendarFeedDelete(app, e) })
 	auth.POST("/media/candidates", mediaCandidates)
 
 	router.GET("/api/app/account/password-reset/status", func(e *core.RequestEvent) error {

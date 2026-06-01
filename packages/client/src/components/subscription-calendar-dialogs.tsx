@@ -10,7 +10,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import type { Subscription, SubscriptionStatus } from '@/types/subscription';
 import { DEFAULT_NOTIFICATION_REMINDER_DAYS, INHERIT_REMINDER_DAYS, STATUS_LABELS, CYCLE_LABELS } from '@/types/subscription';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, ExternalLink, Edit2, X } from 'lucide-react';
+import { CalendarDays, CalendarPlus, ExternalLink, Edit2, X } from 'lucide-react';
 import { Drawer } from 'vaul';
 import { AuthorizedImage } from '@/components/authorized-image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import type { DateOnly } from '@/lib/time/date-only';
 import { getEffectiveSubscriptionStatus } from '@/modules/subscriptions/domain/subscription-status';
 import { useSettings } from '@/hooks/use-settings';
+import { AddToCalendarDialog } from '@/components/add-to-calendar-dialog';
 
 const DEFAULT_LOGO_FALLBACK_COLOR = "hsl(var(--primary))";
 
@@ -99,6 +100,7 @@ export function SubscriptionDetailDialog({
   const { config } = useCustomConfig();
   const { data: settings } = useSettings();
   const { t, label, formatDateOnly, formatCurrency } = useI18n();
+  const [showAddToCalendarDialog, setShowAddToCalendarDialog] = useState(false);
   const category = subscription
     ? config.categories.find((item) => item.value === subscription.category)
     : undefined;
@@ -115,119 +117,139 @@ export function SubscriptionDetailDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-border bg-card sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold flex items-center gap-3">
-            {subscription ? (
-              <CalendarSubscriptionLogo subscription={subscription} categoryColor={categoryColor} />
-            ) : null}
-            {subscription?.name}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            {subscription
-              ? t("calendar.detailDescription", { name: subscription.name })
-              : t("calendar.detailFallbackDescription")}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="border-border bg-card sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold flex items-center gap-3">
+              {subscription ? (
+                <CalendarSubscriptionLogo subscription={subscription} categoryColor={categoryColor} />
+              ) : null}
+              {subscription?.name}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {subscription
+                ? t("calendar.detailDescription", { name: subscription.name })
+                : t("calendar.detailFallbackDescription")}
+            </DialogDescription>
+          </DialogHeader>
 
-        {subscription && (
-          <div className="grid gap-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(subscription.price, subscription.currency)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {label(CYCLE_LABELS[subscription.billingCycle])}
-                </p>
-              </div>
-              <div className="text-right">
-                <Badge
-                  variant="outline"
-                  className={effectiveStatus ? statusBadgeClassNames[effectiveStatus] : undefined}
-                >
-                  {effectiveStatus ? label(STATUS_LABELS[effectiveStatus]) : null}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="grid gap-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t("calendar.category")}</span>
-                <span>{category ? label(category.labels) : subscription.category}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t("calendar.nextBilling")}</span>
-                <span>{formatDateOnly(subscription.nextBillingDate, "full")}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t("calendar.startDate")}</span>
-                <span>{formatDateOnly(subscription.startDate, "full")}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t("calendar.reminder")}</span>
-                <span>
-                  {subscription.reminderDays === INHERIT_REMINDER_DAYS
-                    ? t("subscription.card.reminderInherit", { days: inheritedReminderDays })
-                    : t("reminder.days", { days: subscription.reminderDays })}
-                </span>
-              </div>
-              {subscription.tags && subscription.tags.length > 0 && (
-                <div className="flex justify-between text-sm items-start">
-                  <span className="text-muted-foreground">{t("subscription.field.tags")}</span>
-                  <div className="flex flex-wrap gap-1 justify-end">
-                    {subscription.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+          {subscription && (
+            <div className="grid gap-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {formatCurrency(subscription.price, subscription.currency)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {label(CYCLE_LABELS[subscription.billingCycle])}
+                  </p>
                 </div>
-              )}
-              {subscription.website && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("subscription.field.website")}</span>
-                  <a
-                    href={subscription.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1"
+                <div className="text-right">
+                  <Badge
+                    variant="outline"
+                    className={effectiveStatus ? statusBadgeClassNames[effectiveStatus] : undefined}
                   >
-                    {t("calendar.visit")} <ExternalLink className="h-3 w-3" />
-                  </a>
+                    {effectiveStatus ? label(STATUS_LABELS[effectiveStatus]) : null}
+                  </Badge>
                 </div>
-              )}
-              {subscription.notes && (
-                <div className="pt-2 border-t border-border">
-                  <p className="text-sm text-muted-foreground mb-1">{t("subscription.field.notes")}</p>
-                  <p className="text-sm">{subscription.notes}</p>
-                </div>
-              )}
-            </div>
+              </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                className="flex-1 border-border"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common.close")}
-              </Button>
-              {onEditSubscription && (
+              <div className="grid gap-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("calendar.category")}</span>
+                  <span>{category ? label(category.labels) : subscription.category}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("calendar.nextBilling")}</span>
+                  <span>{formatDateOnly(subscription.nextBillingDate, "full")}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("calendar.startDate")}</span>
+                  <span>{formatDateOnly(subscription.startDate, "full")}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("calendar.reminder")}</span>
+                  <span>
+                    {subscription.reminderDays === INHERIT_REMINDER_DAYS
+                      ? t("subscription.card.reminderInherit", { days: inheritedReminderDays })
+                      : t("reminder.days", { days: subscription.reminderDays })}
+                  </span>
+                </div>
+                {subscription.tags && subscription.tags.length > 0 && (
+                  <div className="flex justify-between text-sm items-start">
+                    <span className="text-muted-foreground">{t("subscription.field.tags")}</span>
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      {subscription.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {subscription.website && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t("subscription.field.website")}</span>
+                    <a
+                      href={subscription.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline flex items-center gap-1"
+                    >
+                      {t("calendar.visit")} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                {subscription.notes && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-sm text-muted-foreground mb-1">{t("subscription.field.notes")}</p>
+                    <p className="text-sm">{subscription.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className={cn("grid gap-2 pt-4", onEditSubscription ? "sm:grid-cols-[1fr_1.35fr_1fr]" : "sm:grid-cols-2")}>
                 <Button
-                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary-glow"
-                  onClick={handleEdit}
+                  variant="outline"
+                  className="border-border"
+                  onClick={() => onOpenChange(false)}
                 >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  {t("common.edit")}
+                  {t("common.close")}
                 </Button>
-              )}
+                <Button
+                  variant="outline"
+                  className="border-border"
+                  onClick={() => {
+                    setShowAddToCalendarDialog(true);
+                    onOpenChange(false);
+                  }}
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  {t("subscription.addToCalendar")}
+                </Button>
+                {onEditSubscription && (
+                  <Button
+                    className="bg-primary text-primary-foreground hover:bg-primary-glow"
+                    onClick={handleEdit}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    {t("common.edit")}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+      {showAddToCalendarDialog && (
+        <AddToCalendarDialog
+          open={showAddToCalendarDialog}
+          onOpenChange={setShowAddToCalendarDialog}
+          subscription={subscription}
+        />
+      )}
+    </>
   );
 }
 

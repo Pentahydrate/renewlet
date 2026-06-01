@@ -99,6 +99,16 @@ export interface NotificationJobRow {
   updated_at: string;
 }
 
+export interface CalendarFeedRow {
+  id: string;
+  user_id: string;
+  scope: "all" | "subscription";
+  subscription_id: string | null;
+  token: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthContext {
   token: string;
   session: SessionRow;

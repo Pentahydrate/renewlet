@@ -1179,6 +1179,209 @@ msgid "subscription.add"
 msgstr "添加订阅"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:5
+msgid "subscription.addToCalendar"
+msgstr "添加到日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:6
+msgid "subscription.addToCalendarTitle"
+msgstr "添加到日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:7
+msgid "subscription.addToCalendarDescription"
+msgstr "为「{name}」创建单独日历订阅，只同步这一条续费。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:8
+msgid "subscription.addToCalendarEventDate"
+msgstr "事件日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:9
+msgid "subscription.addToCalendarEventType"
+msgstr "事件类型"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:10
+msgid "subscription.addToCalendarSingleEvent"
+msgstr "单次事件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSubscriptionFeed"
+msgstr "订阅 Feed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSyncStatus"
+msgstr "同步状态"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:12
+msgid "subscription.addToCalendarNoSync"
+msgstr "不会持续同步"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSubscriptionSync"
+msgstr "持续同步此订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSingleEventNotice"
+msgstr "系统订阅使用私有 URL；下载 ICS 和在线日历入口都是一次性添加。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarSubscribeSystem"
+msgstr "在系统日历中订阅"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarGenerateFeed"
+msgstr "生成订阅链接"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarSubscribeLoading"
+msgstr "正在生成..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarDownloadIcs"
+msgstr "下载 ICS 文件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarAndroidSingleEvent"
+msgstr "添加单次事件到 Android 日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarFeedUrl"
+msgstr "本次订阅 URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarCopyFeedUrl"
+msgstr "复制 URL"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerate"
+msgstr "重新生成订阅链接"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateTitle"
+msgstr "重新生成这个订阅链接？"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateDescription"
+msgstr "旧 URL 会立即失效，已经添加到日历 App 的这个订阅需要重新添加。"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerated"
+msgstr "订阅链接已重新生成"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegeneratedDescription"
+msgstr "旧 URL 已失效，请使用新的订阅链接。"
+
+#. js-lingui-explicit-id
+msgid "subscription.addToCalendarRegenerateFailed"
+msgstr "订阅链接重新生成失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendarSubscribed"
+msgstr "日历订阅已生成"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendarSubscribedDescription"
+msgstr "如果系统日历没有弹出，请复制本次 URL 后手动添加订阅。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:23
+msgid "subscription.addToCalendarSubscribeFailed"
+msgstr "日历订阅生成失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:24
+msgid "subscription.addToCalendarFeedUrlCopied"
+msgstr "订阅 URL 已复制"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:25
+msgid "subscription.addToCalendarFeedUrlCopyFailed"
+msgstr "订阅 URL 复制失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarOnlineServices"
+msgstr "在线日历服务"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarGoogle"
+msgstr "用 Google Calendar 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarOutlook"
+msgstr "用 Outlook.com 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarOffice365"
+msgstr "用 Office 365 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarYahoo"
+msgstr "用 Yahoo Calendar 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarDownloaded"
+msgstr "ICS 文件已生成"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarDownloadFailed"
+msgstr "ICS 文件生成失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarCalendarName"
+msgstr "Renewlet - {name}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendar.description.amount"
+msgstr "金额：{amount}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendar.description.billingCycle"
+msgstr "扣费周期：{cycle}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendar.description.category"
+msgstr "分类：{category}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendar.description.paymentMethod"
+msgstr "支付方式：{paymentMethod}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendar.description.notes"
+msgstr "备注：{notes}"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:9
 msgid "subscription.dialogCreateSubmit"
 msgstr "添加订阅"

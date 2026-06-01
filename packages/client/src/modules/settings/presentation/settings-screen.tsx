@@ -43,6 +43,7 @@ import { NotificationChannelConfigPanel } from './notification-channel-config-pa
 import { NotificationChannelList } from './notification-channel-list';
 import { ExchangeRatesSection } from './exchange-rates-section';
 import { BuiltInIconSourcesSection } from './built-in-icon-sources-section';
+import { CalendarFeedSection } from './calendar-feed-section';
 import { CheckboxSettingRow, LoadingButtonContent } from './settings-shared-controls';
 
 function useUnsavedChangesGuard(enabled: boolean, message: string, onConfirmLeave: () => void) {
@@ -137,6 +138,7 @@ export function SettingsScreen() {
     handleTestConnection,
     isSavingSettings,
     notificationHistory,
+    calendarFeed,
     password,
     passwordResetEnabled,
   } = useSettingsFormController();
@@ -386,6 +388,18 @@ export function SettingsScreen() {
             handleDefaultCurrencyChange={handleDefaultCurrencyChange}
             handleExchangeRateProviderChange={handleExchangeRateProviderChange}
             getCurrencySymbol={getCurrencySymbol}
+          />
+
+          <CalendarFeedSection
+            enabled={calendarFeed.data?.enabled ?? false}
+            feedUrl={calendarFeed.feedUrl}
+            isLoading={calendarFeed.isLoading}
+            isCreating={calendarFeed.isCreating}
+            isDeleting={calendarFeed.isDeleting}
+            onCreate={calendarFeed.createOrRotate}
+            onCopy={calendarFeed.copyUrl}
+            onDelete={calendarFeed.revoke}
+            onRegenerate={calendarFeed.regenerate}
           />
 
           {/* 时区设置 */}

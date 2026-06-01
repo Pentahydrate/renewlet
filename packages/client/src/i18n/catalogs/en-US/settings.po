@@ -14,6 +14,114 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
+msgid "settings.calendarFeed"
+msgstr "Calendar subscription"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedHelp"
+msgstr "Generate a private ICS URL and sync future renewal dates to calendar apps that support subscriptions."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedEnabled"
+msgstr "Enabled"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedDisabled"
+msgstr "Not enabled"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedUrl"
+msgstr "Calendar subscription URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedOneTimeHelp"
+msgstr "This is your private subscription link. If it gets shared by mistake, regenerate it to invalidate the old link."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedDisabledHelp"
+msgstr "After generating a URL, subscribe to it from iOS, macOS, Android, Outlook, Thunderbird, or another calendar app."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedOpenSystem"
+msgstr "Subscribe in system calendar"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopy"
+msgstr "Copy URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGenerate"
+msgstr "Generate URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerate"
+msgstr "Regenerate"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerateTitle"
+msgstr "Regenerate calendar subscription URL?"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerateDescription"
+msgstr "The old URL will stop working immediately. Calendar apps that already use it need to be re-added."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevoke"
+msgstr "Revoke subscription"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGenerated"
+msgstr "Calendar subscription generated"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGeneratedDescription"
+msgstr "You can return here anytime to copy the URL or open the system calendar subscription flow."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerated"
+msgstr "Calendar subscription regenerated"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegeneratedDescription"
+msgstr "The old URL is invalid. Add the new URL to your calendar app."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopied"
+msgstr "URL copied"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopiedDescription"
+msgstr "You can now add it as a subscribed calendar."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopyFailed"
+msgstr "Copy failed"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopyFailedDescription"
+msgstr "The browser blocked clipboard access. Select and copy the URL manually."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedFailed"
+msgstr "Calendar subscription failed"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedFailedDescription"
+msgstr "Could not generate the calendar subscription. Try again later."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevoked"
+msgstr "Calendar subscription revoked"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevokedDescription"
+msgstr "The old URL is now invalid; calendar clients will not be able to refresh it."
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevokeFailedDescription"
+msgstr "Could not revoke the calendar subscription. Try again later."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:105
 msgid "settings.channelConfig"
 msgstr "{channel} configuration"

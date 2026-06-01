@@ -9,6 +9,7 @@
     "./schemas/admin": "./src/schemas/admin.ts",
     "./schemas/app": "./src/schemas/app.ts",
     "./schemas/auth": "./src/schemas/auth.ts",
+    "./schemas/calendar-feed": "./src/schemas/calendar-feed.ts",
     "./schemas/common": "./src/schemas/common.ts",
     "./schemas/custom-config": "./src/schemas/custom-config.ts",
     "./schemas/exchange-rates": "./src/schemas/exchange-rates.ts",
@@ -24,6 +25,7 @@
     "./media-resolver-config": "./src/media-resolver-config.ts",
     "./media-resolver-fixtures": "./src/media-resolver-fixtures.ts",
     "./email-template": "./src/email-template.ts",
+    "./ics": "./src/ics.ts",
     "./settings-defaults": "./src/settings-defaults.ts",
     "./runtime": "./src/runtime.ts"
   },
@@ -32,6 +34,7 @@
     "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
+    "ical-generator": "10.2.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

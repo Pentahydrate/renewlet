@@ -3,6 +3,7 @@ module github.com/zhiyingzzhou/renewlet/packages/server
 go 1.26.2
 
 require (
+	github.com/arran4/golang-ical v0.3.5
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.38.1
 )

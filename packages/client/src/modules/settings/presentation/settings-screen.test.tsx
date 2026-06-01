@@ -47,6 +47,10 @@ function createControllerState(overrides: {
   testingChannel?: NotificationChannel | null;
   isSavingSettings?: boolean;
   hasUnsavedChanges?: boolean;
+  calendarFeed?: {
+    enabled?: boolean;
+    feedUrl?: string | null;
+  };
 } = {}) {
   const fn = vi.fn();
   return {
@@ -103,6 +107,17 @@ function createControllerState(overrides: {
       setStatus: fn,
       loadMore: fn,
       refetch: fn,
+    },
+    calendarFeed: {
+      data: { enabled: overrides.calendarFeed?.enabled ?? false },
+      feedUrl: overrides.calendarFeed?.feedUrl ?? null,
+      isLoading: false,
+      isCreating: false,
+      isDeleting: false,
+      createOrRotate: fn,
+      copyUrl: fn,
+      regenerate: fn,
+      revoke: fn,
     },
     password: {
       passwordDialogOpen: false,
@@ -250,6 +265,59 @@ describe("SettingsScreen SMTP email settings", () => {
     await user.type(input, "14");
 
     expect(controller.updateSetting).toHaveBeenLastCalledWith("notificationReminderDays", 14);
+  });
+
+  it("renders calendar subscription controls and exposes the permanent URL actions", async () => {
+    const user = userEvent.setup();
+    const controller = createControllerState({
+      calendarFeed: {
+        enabled: true,
+        feedUrl: "https://example.com/calendar/renewals.ics?token=secret",
+      },
+    });
+    mocks.useSettingsFormController.mockReturnValue(controller);
+
+    renderSettingsScreen();
+
+    expect(screen.getByRole("heading", { name: "日历订阅" })).toBeInTheDocument();
+    expect(screen.getAllByText("已启用").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("日历订阅 URL")).toHaveValue("https://example.com/calendar/renewals.ics?token=secret");
+    expect(screen.getByText("这是你的私有订阅链接；如果误分享，可以重新生成让旧链接失效。")).toBeInTheDocument();
+    const copyButton = screen.getByRole("button", { name: "复制 URL" });
+    const systemCalendarLink = screen.getByRole("link", { name: "在系统日历中订阅" });
+    expect(copyButton).toHaveClass("bg-primary");
+    expect(systemCalendarLink).not.toHaveClass("bg-primary");
+    expect(systemCalendarLink).toHaveAttribute(
+      "href",
+      "webcal://example.com/calendar/renewals.ics?token=secret",
+    );
+
+    await user.click(copyButton);
+    expect(controller.calendarFeed.copyUrl).toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "重新生成" }));
+    const regenerateDialog = await screen.findByRole("alertdialog", { name: "重新生成日历订阅 URL？" });
+    expect(within(regenerateDialog).getByText("旧 URL 会立即失效，已经添加到日历 App 的订阅需要重新添加。")).toBeInTheDocument();
+    await user.click(within(regenerateDialog).getByRole("button", { name: "重新生成" }));
+    expect(controller.calendarFeed.regenerate).toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "撤销订阅" }));
+    expect(controller.calendarFeed.revoke).toHaveBeenCalled();
+  });
+
+  it("shows the disabled calendar feed state before URL generation", () => {
+    mocks.useSettingsFormController.mockReturnValue(createControllerState({
+      calendarFeed: { enabled: false, feedUrl: null },
+    }));
+
+    renderSettingsScreen();
+
+    expect(screen.getByRole("heading", { name: "日历订阅" })).toBeInTheDocument();
+    expect(screen.getByText("生成后可在 iOS、macOS、Android、Outlook、Thunderbird 等日历应用中通过 URL 订阅。")).toBeInTheDocument();
+    expect(screen.queryByLabelText("日历订阅 URL")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "复制 URL" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "在系统日历中订阅" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "生成订阅 URL" })).toBeInTheDocument();
   });
 
   it("uses H5 layout classes and native phone metadata for settings", () => {

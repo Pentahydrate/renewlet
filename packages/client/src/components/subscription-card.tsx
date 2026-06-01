@@ -23,7 +23,7 @@ import { useCustomConfig } from '@/contexts/CustomConfigContext';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { colorWithAlpha } from '@/lib/color';
-import { Calendar, MoreHorizontal, CalendarClock, Bell, CreditCard } from 'lucide-react';
+import { Calendar, MoreHorizontal, CalendarClock, Bell, CreditCard, CalendarPlus, Pencil, Trash2 } from 'lucide-react';
 import {
   daysBetweenDateOnly,
   todayDateOnlyInTimeZone,
@@ -33,6 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ import {
 import { useI18n } from '@/i18n/I18nProvider';
 import { localizedLabel } from '@/i18n/locales';
 import { useSettings } from '@/hooks/use-settings';
+import { AddToCalendarDialog } from '@/components/add-to-calendar-dialog';
 
 interface SubscriptionCardProps {
   /** 订阅数据（前端 domain 类型）。 */
@@ -98,6 +100,7 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
   };
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAddToCalendarDialog, setShowAddToCalendarDialog] = useState(false);
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
   const today = todayDateOnlyInTimeZone(new Date(), timeZone);
   const daysUntilRenewal = daysBetweenDateOnly(today, subscription.nextBillingDate);
@@ -180,14 +183,21 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit?.(subscription.id)}>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => onEdit?.(subscription.id)}>
+                  <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
                   {t("common.edit")}
                 </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => setShowAddToCalendarDialog(true)}>
+                  <CalendarPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  {t("subscription.addToCalendar")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive"
+                  className="gap-2.5 px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 focus:text-destructive"
                 >
+                  <Trash2 className="h-4 w-4 shrink-0" />
                   {t("common.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -304,6 +314,13 @@ export function SubscriptionCard({ subscription, viewMode = 'grid', onEdit, onDe
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    {showAddToCalendarDialog && (
+      <AddToCalendarDialog
+        open={showAddToCalendarDialog}
+        onOpenChange={setShowAddToCalendarDialog}
+        subscription={subscription}
+      />
+    )}
     </>
   );
 }

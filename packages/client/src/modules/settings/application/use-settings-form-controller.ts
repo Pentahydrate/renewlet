@@ -25,6 +25,7 @@ import { useExchangeRates } from "@/hooks/use-exchange-rates";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { usePasswordResetAvailability } from "@/hooks/use-password-reset-availability";
+import { useCalendarFeedStatus, useCreateCalendarFeed, useDeleteCalendarFeed } from "@/hooks/use-calendar-feed";
 import { useToast } from "@/hooks/use-toast";
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { applyThemeVariant } from "@/lib/theme-variant";
@@ -37,6 +38,7 @@ import {
   writeThemeVariantToStorage,
 } from "@/lib/theme-storage";
 import type { ExchangeRateProvider, ExchangeRates } from "@/lib/api/schemas/exchange-rates";
+import type { CalendarFeedStatus } from "@/lib/api/schemas/calendar-feed";
 import { DEFAULT_SETTINGS, type AppSettings, type NotificationChannel, type Subscription } from "@/types/subscription";
 import { normalizePaymentMethods, type ConfigItem, type CustomConfig } from "@/types/config";
 import type { CustomThemeColor, ThemeMode, ThemeVariant } from "@/types/theme";
@@ -148,6 +150,18 @@ interface SettingsNotificationHistoryController {
   refetch: () => void | Promise<unknown>;
 }
 
+interface SettingsCalendarFeedController {
+  data: CalendarFeedStatus | undefined;
+  feedUrl: string | null;
+  isLoading: boolean;
+  isCreating: boolean;
+  isDeleting: boolean;
+  createOrRotate: () => Promise<void>;
+  copyUrl: () => Promise<void>;
+  regenerate: () => Promise<void>;
+  revoke: () => Promise<void>;
+}
+
 export interface SettingsFormController {
   settings: AppSettings;
   accountEmail: string | null;
@@ -183,6 +197,7 @@ export interface SettingsFormController {
   testingChannel: NotificationChannel | null;
   handleTestConnection: (channel: NotificationChannel) => void | Promise<void>;
   notificationHistory: SettingsNotificationHistoryController;
+  calendarFeed: SettingsCalendarFeedController;
   password: PasswordChangeController;
   passwordResetEnabled: boolean;
 }
@@ -224,6 +239,9 @@ export function useSettingsFormController(): SettingsFormController {
   const passwordResetEnabled = usePasswordResetAvailability();
   const notificationTest = useNotificationTest(settings);
   const notificationHistory = useNotificationHistory();
+  const calendarFeedStatus = useCalendarFeedStatus();
+  const createCalendarFeed = useCreateCalendarFeed();
+  const deleteCalendarFeed = useDeleteCalendarFeed();
   const { refetch: refetchNotificationHistory } = notificationHistory;
   const hasResolvedDefaultRecipientEmailRef = useRef(false);
   const settingsDirtyRef = useRef(false);
@@ -516,6 +534,73 @@ export function useSettingsFormController(): SettingsFormController {
     [updateSetting],
   );
 
+  const handleCreateCalendarFeed = useCallback(async () => {
+    try {
+      await createCalendarFeed.mutateAsync();
+      toast({
+        title: t("settings.calendarFeedGenerated"),
+        description: t("settings.calendarFeedGeneratedDescription"),
+      });
+    } catch (error) {
+      toast({
+        title: t("settings.calendarFeedFailed"),
+        description: getDisplayErrorMessage(error, t("settings.calendarFeedFailedDescription")),
+        variant: "destructive",
+      });
+    }
+  }, [createCalendarFeed, t, toast]);
+
+  const handleCopyCalendarFeedUrl = useCallback(async () => {
+    const feedUrl = calendarFeedStatus.data?.feedUrl;
+    if (!feedUrl) return;
+    try {
+      await navigator.clipboard.writeText(feedUrl);
+      toast({
+        title: t("settings.calendarFeedCopied"),
+        description: t("settings.calendarFeedCopiedDescription"),
+      });
+    } catch (error) {
+      toast({
+        title: t("settings.calendarFeedCopyFailed"),
+        description: getDisplayErrorMessage(error, t("settings.calendarFeedCopyFailedDescription")),
+        variant: "destructive",
+      });
+    }
+  }, [calendarFeedStatus.data?.feedUrl, t, toast]);
+
+  const handleRevokeCalendarFeed = useCallback(async () => {
+    try {
+      await deleteCalendarFeed.mutateAsync();
+      toast({
+        title: t("settings.calendarFeedRevoked"),
+        description: t("settings.calendarFeedRevokedDescription"),
+      });
+    } catch (error) {
+      toast({
+        title: t("settings.calendarFeedFailed"),
+        description: getDisplayErrorMessage(error, t("settings.calendarFeedRevokeFailedDescription")),
+        variant: "destructive",
+      });
+    }
+  }, [deleteCalendarFeed, t, toast]);
+
+  const handleRegenerateCalendarFeed = useCallback(async () => {
+    try {
+      await deleteCalendarFeed.mutateAsync();
+      await createCalendarFeed.mutateAsync();
+      toast({
+        title: t("settings.calendarFeedRegenerated"),
+        description: t("settings.calendarFeedRegeneratedDescription"),
+      });
+    } catch (error) {
+      toast({
+        title: t("settings.calendarFeedFailed"),
+        description: getDisplayErrorMessage(error, t("settings.calendarFeedFailedDescription")),
+        variant: "destructive",
+      });
+    }
+  }, [createCalendarFeed, deleteCalendarFeed, t, toast]);
+
   const handleThemeModeChange = useCallback(
     (value: ThemeMode) => {
       updateSetting("themeMode", value);
@@ -585,6 +670,17 @@ export function useSettingsFormController(): SettingsFormController {
     testingChannel: notificationTest.testingChannel,
     handleTestConnection: notificationTest.testConnection,
     notificationHistory,
+    calendarFeed: {
+      data: calendarFeedStatus.data,
+      feedUrl: calendarFeedStatus.data?.feedUrl ?? null,
+      isLoading: calendarFeedStatus.isLoading,
+      isCreating: createCalendarFeed.isPending,
+      isDeleting: deleteCalendarFeed.isPending,
+      createOrRotate: handleCreateCalendarFeed,
+      copyUrl: handleCopyCalendarFeedUrl,
+      regenerate: handleRegenerateCalendarFeed,
+      revoke: handleRevokeCalendarFeed,
+    },
     password,
     passwordResetEnabled,
   };

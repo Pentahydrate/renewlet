@@ -14,6 +14,114 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
+msgid "settings.calendarFeed"
+msgstr "日历订阅"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedHelp"
+msgstr "生成私有 ICS URL，把未来续费日期同步到支持订阅的系统日历。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedEnabled"
+msgstr "已启用"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedDisabled"
+msgstr "未启用"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedUrl"
+msgstr "日历订阅 URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedOneTimeHelp"
+msgstr "这是你的私有订阅链接；如果误分享，可以重新生成让旧链接失效。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedDisabledHelp"
+msgstr "生成后可在 iOS、macOS、Android、Outlook、Thunderbird 等日历应用中通过 URL 订阅。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedOpenSystem"
+msgstr "在系统日历中订阅"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopy"
+msgstr "复制 URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGenerate"
+msgstr "生成订阅 URL"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerate"
+msgstr "重新生成"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerateTitle"
+msgstr "重新生成日历订阅 URL？"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerateDescription"
+msgstr "旧 URL 会立即失效，已经添加到日历 App 的订阅需要重新添加。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevoke"
+msgstr "撤销订阅"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGenerated"
+msgstr "日历订阅已生成"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedGeneratedDescription"
+msgstr "你可以随时回到这里复制 URL 或唤起系统日历订阅。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegenerated"
+msgstr "日历订阅已重新生成"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRegeneratedDescription"
+msgstr "旧 URL 已失效，请把新 URL 添加到你的日历应用。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopied"
+msgstr "URL 已复制"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopiedDescription"
+msgstr "现在可以在日历应用中添加订阅日历。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopyFailed"
+msgstr "复制失败"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedCopyFailedDescription"
+msgstr "浏览器拒绝了剪贴板访问，请手动选择并复制 URL。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedFailed"
+msgstr "日历订阅操作失败"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedFailedDescription"
+msgstr "无法生成日历订阅，请稍后重试。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevoked"
+msgstr "日历订阅已撤销"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevokedDescription"
+msgstr "旧 URL 已失效，日历客户端后续刷新将无法再读取。"
+
+#. js-lingui-explicit-id
+msgid "settings.calendarFeedRevokeFailedDescription"
+msgstr "无法撤销日历订阅，请稍后重试。"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:105
 msgid "settings.channelConfig"
 msgstr "{channel} 配置"

@@ -20,6 +20,10 @@ const mocks = vi.hoisted(() => ({
   setLocale: vi.fn(),
   testConnection: vi.fn(),
   refetchNotificationHistory: vi.fn(),
+  calendarFeedStatus: { data: { enabled: false, feedUrl: undefined as string | undefined }, isLoading: false },
+  createCalendarFeedMutateAsync: vi.fn(),
+  deleteCalendarFeedMutateAsync: vi.fn(),
+  writeClipboard: vi.fn(),
   isCloudflareRuntime: false,
   accountIdentity: { email: "alice@example.com" as string | null, role: "admin" },
 }));
@@ -63,6 +67,18 @@ vi.mock("@/hooks/use-password-reset-availability", () => ({
   usePasswordResetAvailability: () => true,
 }));
 
+vi.mock("@/hooks/use-calendar-feed", () => ({
+  useCalendarFeedStatus: () => mocks.calendarFeedStatus,
+  useCreateCalendarFeed: () => ({
+    mutateAsync: mocks.createCalendarFeedMutateAsync,
+    isPending: false,
+  }),
+  useDeleteCalendarFeed: () => ({
+    mutateAsync: mocks.deleteCalendarFeedMutateAsync,
+    isPending: false,
+  }),
+}));
+
 vi.mock("@/lib/theme-provider", () => ({
   useTheme: () => ({
     theme: "dark",
@@ -94,6 +110,19 @@ vi.mock("@/i18n/I18nProvider", () => {
     "settings.exchangeRateProviderSaveFailed": "无法保存汇率来源，请稍后重试",
     "settings.exchangeRateProviderServerOutdated": "无法保存汇率来源。服务端可能还没更新或重启，请重启后端服务后再试。",
     "settings.partialSaveFailedDescription": ({ scope }) => `以下内容未保存：${scope}。请检查后重试。`,
+    "settings.calendarFeedGenerated": "日历订阅已生成",
+    "settings.calendarFeedGeneratedDescription": "你可以随时回到这里复制 URL 或唤起系统日历订阅。",
+    "settings.calendarFeedRegenerated": "日历订阅已重新生成",
+    "settings.calendarFeedRegeneratedDescription": "旧 URL 已失效，请把新 URL 添加到你的日历应用。",
+    "settings.calendarFeedCopied": "URL 已复制",
+    "settings.calendarFeedCopiedDescription": "现在可以在日历应用中添加订阅日历。",
+    "settings.calendarFeedCopyFailed": "复制失败",
+    "settings.calendarFeedCopyFailedDescription": "浏览器拒绝了剪贴板访问，请手动选择并复制 URL。",
+    "settings.calendarFeedFailed": "日历订阅操作失败",
+    "settings.calendarFeedFailedDescription": "无法生成日历订阅，请稍后重试。",
+    "settings.calendarFeedRevoked": "日历订阅已撤销",
+    "settings.calendarFeedRevokedDescription": "旧 URL 已失效，日历客户端后续刷新将无法再读取。",
+    "settings.calendarFeedRevokeFailedDescription": "无法撤销日历订阅，请稍后重试。",
     "error.code.BUILT_IN_ICON_SOURCE_REQUIRED": "请至少启用一个内置图标来源",
   };
 
@@ -157,6 +186,10 @@ describe("useSettingsFormController", () => {
     mocks.setTheme.mockReset();
     mocks.setLocale.mockReset();
     mocks.refetchNotificationHistory.mockReset();
+    mocks.createCalendarFeedMutateAsync.mockReset();
+    mocks.deleteCalendarFeedMutateAsync.mockReset();
+    mocks.writeClipboard.mockReset();
+    mocks.calendarFeedStatus = { data: { enabled: false, feedUrl: undefined }, isLoading: false };
     mocks.remoteSettings = BASE_SETTINGS;
     mocks.customConfig = DEFAULT_CUSTOM_CONFIG;
     mocks.isCloudflareRuntime = false;
@@ -164,6 +197,18 @@ describe("useSettingsFormController", () => {
     mocks.updateSettingsMutateAsync.mockImplementation(async (settings: AppSettings) => settings);
     mocks.saveConfig.mockImplementation(async (config: CustomConfig) => config);
     mocks.refreshRates.mockResolvedValue(undefined);
+    mocks.createCalendarFeedMutateAsync.mockResolvedValue({
+      enabled: true,
+      createdAt: "2026-05-29T00:00:00Z",
+      updatedAt: "2026-05-29T00:00:00Z",
+      feedUrl: "https://example.com/calendar/renewals.ics?token=secret",
+    });
+    mocks.deleteCalendarFeedMutateAsync.mockResolvedValue({ ok: true });
+    mocks.writeClipboard.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: mocks.writeClipboard },
+      configurable: true,
+    });
   });
 
   it("starts clean and does not save or refresh when the exchange-rate source only changes draft", () => {
@@ -395,6 +440,64 @@ describe("useSettingsFormController", () => {
       title: "保存失败",
       description: "请至少启用一个内置图标来源",
       variant: "destructive",
+    });
+  });
+
+  it("creates the calendar feed and keeps an existing URL available for copy, regenerate, and revoke", async () => {
+    const { result } = renderHook(() => useSettingsFormController());
+
+    expect(result.current.calendarFeed.data).toEqual({ enabled: false });
+    expect(result.current.calendarFeed.feedUrl).toBeNull();
+
+    await act(async () => {
+      await result.current.calendarFeed.createOrRotate();
+    });
+
+    expect(mocks.createCalendarFeedMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: "日历订阅已生成",
+      description: "你可以随时回到这里复制 URL 或唤起系统日历订阅。",
+    });
+
+    mocks.calendarFeedStatus = {
+      data: {
+        enabled: true,
+        feedUrl: "https://example.com/calendar/renewals.ics?token=secret",
+      },
+      isLoading: false,
+    };
+    const { result: enabledResult } = renderHook(() => useSettingsFormController());
+    expect(enabledResult.current.calendarFeed.feedUrl).toBe("https://example.com/calendar/renewals.ics?token=secret");
+
+    await act(async () => {
+      await enabledResult.current.calendarFeed.copyUrl();
+    });
+
+    expect(mocks.writeClipboard).toHaveBeenCalledWith("https://example.com/calendar/renewals.ics?token=secret");
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: "URL 已复制",
+      description: "现在可以在日历应用中添加订阅日历。",
+    });
+
+    await act(async () => {
+      await enabledResult.current.calendarFeed.regenerate();
+    });
+
+    expect(mocks.deleteCalendarFeedMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mocks.createCalendarFeedMutateAsync).toHaveBeenCalledTimes(2);
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: "日历订阅已重新生成",
+      description: "旧 URL 已失效，请把新 URL 添加到你的日历应用。",
+    });
+
+    await act(async () => {
+      await enabledResult.current.calendarFeed.revoke();
+    });
+
+    expect(mocks.deleteCalendarFeedMutateAsync).toHaveBeenCalledTimes(2);
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: "日历订阅已撤销",
+      description: "旧 URL 已失效，日历客户端后续刷新将无法再读取。",
     });
   });
 });

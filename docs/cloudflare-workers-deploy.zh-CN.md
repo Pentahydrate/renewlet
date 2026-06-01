@@ -13,6 +13,8 @@
 https://<worker-name>.<workers-dev-subdomain>.workers.dev/setup
 ```
 
+保持生成的部署命令为 `pnpm deploy`。Renewlet 的 deploy 脚本会先应用 D1 migrations，再发布 Worker，确保新表先创建好，更新后的 API 再开始对外服务。
+
 如果你想自己创建 D1/R2、Cloudflare API Token 和 GitHub Secrets，可以继续使用下面的手动部署流程。
 
 ## 手动部署（GitHub Actions）
@@ -203,6 +205,8 @@ Cloudflare Workers 部署可以用自动同步或手动同步更新。
 4. 等待 Cloudflare 重新部署。
 5. 如果没有自动部署，进入 `Actions` 手动运行 `Cloudflare Worker`。
 
+每次 Cloudflare 升级都必须走同一条“先 D1 migration、再 deploy”的路径。GitHub Actions 在 5 个必需 secrets 都配置好时会自动执行。
+
 ## 可选：Wrangler CLI
 
 普通部署不需要使用 Wrangler CLI。只有你想在本机直接管理 Cloudflare 资源时，再使用下面的命令。
@@ -245,6 +249,15 @@ pnpm exec wrangler deploy --config wrangler.generated.jsonc
 **Worker 名称已存在怎么办？**
 
 修改 GitHub Secrets 里的 `WORKER_NAME`，重新运行 workflow。
+
+**日历订阅提示 `no such table: calendar_feeds`？**
+
+说明 Worker 已更新，但远端 D1 migrations 没有完成或没有运行。日历订阅表现在同时保存全局 Feed 和单个订阅 Feed 的 scoped token，所以必须先完成 D1 migration 再依赖日历订阅链接。重新运行 `Cloudflare Worker` workflow，或执行：
+
+```bash
+pnpm cloudflare:config:ci
+pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.generated.jsonc
+```
 
 **旧 `pb_data`？**
 
