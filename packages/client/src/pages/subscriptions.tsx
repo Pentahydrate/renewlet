@@ -53,7 +53,6 @@ import {
 
 /** 空订阅数组：用于在数据未加载完成时提供稳定引用，避免 useMemo 依赖抖动。 */
 const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
-const SUBSCRIPTION_VIRTUALIZATION_THRESHOLD = 60;
 // 虚拟列表按“行”估算高度；网格模式一行可能包含 2-3 张卡片，估算值要覆盖最高卡片避免滚动跳动。
 const SUBSCRIPTION_GRID_ROW_GAP = 16;
 const SUBSCRIPTION_GRID_ROW_ESTIMATE = 184;
@@ -104,34 +103,7 @@ function SubscriptionGrid({ subscriptions, viewMode, timeZone, onEdit, onDelete 
   const columnCount = getSubscriptionColumnCount(viewMode, isTwoColumnGrid, isThreeColumnGrid);
   const rows = useMemo(() => chunkSubscriptions(subscriptions, columnCount), [columnCount, subscriptions]);
 
-  if (subscriptions.length <= SUBSCRIPTION_VIRTUALIZATION_THRESHOLD) {
-    return (
-      <div className={cn(
-        "grid items-stretch gap-4",
-        viewMode === 'grid'
-          ? "sm:grid-cols-2 lg:grid-cols-3"
-          : "grid-cols-1"
-      )}>
-        {subscriptions.map((sub, index) => (
-          <div
-            key={sub.id}
-            className="h-full animate-fade-in"
-            style={{ animationDelay: `${index * 30}ms` }}
-          >
-            <SubscriptionCard
-              subscription={sub}
-              viewMode={viewMode}
-              timeZone={timeZone}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // 大列表才启用虚拟化：小列表保留完整 DOM，避免弹层定位、浏览器查找和 E2E 可见性断言变复杂。
+  // 分页列表从首屏起固定使用虚拟化，避免“加载更多”时切换 DOM/Virtualizer 模型导致浏览器滚动锚点漂移。
   return (
     <VirtualizedList
       count={rows.length}
@@ -228,6 +200,9 @@ const Subscriptions = () => {
   const clearSelectedTags = useCallback(() => {
     setSelectedTags([]);
   }, [setSelectedTags]);
+  const handleLoadMore = useCallback(() => {
+    void subscriptionsQuery.fetchNextPage();
+  }, [subscriptionsQuery.fetchNextPage]);
 
   // 首次加载订阅列表时展示骨架屏（筛选条 + 卡片网格占位）。
   if (subscriptionsQuery.isPending) {
@@ -512,11 +487,11 @@ const Subscriptions = () => {
               onDelete={handleDeleteSubscription}
             />
             {subscriptionsQuery.hasNextPage && (
-              <div className="mt-6 flex justify-center">
+              <div className="mt-6 flex justify-center [overflow-anchor:none]" data-testid="subscriptions-load-more-row">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => void subscriptionsQuery.fetchNextPage()}
+                  onClick={handleLoadMore}
                   disabled={subscriptionsQuery.isFetchingNextPage}
                   className="min-w-32 border-border"
                 >

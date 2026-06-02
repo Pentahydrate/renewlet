@@ -534,7 +534,7 @@ describe("Subscriptions page virtualization", () => {
     });
   });
 
-  it("virtualizes large subscription lists while preserving sorting and filtering", async () => {
+  it("uses one virtualized list model while preserving sorting and filtering", async () => {
     const user = userEvent.setup();
     renderSubscriptionsPage();
 
@@ -555,8 +555,49 @@ describe("Subscriptions page virtualization", () => {
     await user.type(screen.getByPlaceholderText("搜索订阅、标签或备注..."), "Service 042");
 
     await waitFor(() => {
-      expect(screen.queryByTestId("virtualized-subscription-list")).not.toBeInTheDocument();
       expect(visibleSubscriptionNames()).toEqual(["Service 042"]);
     });
+    expect(screen.getByTestId("virtualized-subscription-list")).toBeInTheDocument();
+  });
+
+  it("keeps the same virtualized list model when loading more subscriptions", async () => {
+    const user = userEvent.setup();
+    const firstPageSubscriptions = manySubscriptions(50);
+    const nextPageSubscriptions = manySubscriptions(100);
+    const fetchNextPage = vi.fn();
+    let queryState = {
+      subscriptions: firstPageSubscriptions,
+      isPending: false,
+      hasNextPage: true,
+      isFetchingNextPage: false,
+      fetchNextPage,
+    };
+    mocks.useInfiniteSubscriptions.mockImplementation(() => queryState);
+    const { rerender } = renderSubscriptionsPage();
+    const virtualizedList = screen.getByTestId("virtualized-subscription-list");
+    const loadMoreRow = screen.getByTestId("subscriptions-load-more-row");
+
+    expect(virtualizedList).toBeInTheDocument();
+    expect(loadMoreRow.className).toContain("[overflow-anchor:none]");
+    expect(screen.getAllByTestId("subscription-card").length).toBeLessThan(50);
+
+    await user.click(screen.getByRole("button", { name: "加载更多" }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+
+    queryState = {
+      ...queryState,
+      subscriptions: nextPageSubscriptions,
+      isFetchingNextPage: false,
+    };
+    rerender(
+      <div id="root" style={{ height: 800, overflowY: "auto" }}>
+        <TooltipProvider delayDuration={0}>
+          <Subscriptions />
+        </TooltipProvider>
+      </div>,
+    );
+
+    expect(screen.getByTestId("virtualized-subscription-list")).toBe(virtualizedList);
+    expect(screen.getAllByTestId("subscription-card").length).toBeLessThan(100);
   });
 });
