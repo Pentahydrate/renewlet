@@ -1,0 +1,81 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { THEME_MODE_OVERRIDE_STORAGE_KEY } from "@/lib/theme-provider";
+import { AppearanceSync } from "./appearance-sync";
+
+const mocks = vi.hoisted(() => ({
+  settings: {
+    themeMode: "dark",
+    themeVariant: "emerald",
+    themeCustomColor: { h: 160, s: 84, l: 39 },
+  },
+  sessionData: { session: { id: "session-1" } },
+  setTheme: vi.fn(),
+  applyThemeVariant: vi.fn(),
+}));
+
+vi.mock("@/hooks/use-settings", () => ({
+  useSettings: () => ({ data: mocks.settings }),
+}));
+
+vi.mock("@/lib/auth-client", () => ({
+  authClient: {
+    useSession: () => ({ data: mocks.sessionData }),
+  },
+}));
+
+vi.mock("@/lib/theme-provider", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/theme-provider")>();
+  return {
+    ...actual,
+    useTheme: () => ({ theme: "light", setTheme: mocks.setTheme }),
+  };
+});
+
+vi.mock("@/lib/theme-variant", () => ({
+  applyThemeVariant: mocks.applyThemeVariant,
+}));
+
+function renderAppearanceSync() {
+  const client = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  render(
+    <QueryClientProvider client={client}>
+      <AppearanceSync />
+    </QueryClientProvider>,
+  );
+}
+
+describe("AppearanceSync theme mode precedence", () => {
+  beforeEach(() => {
+    mocks.setTheme.mockReset();
+    mocks.applyThemeVariant.mockReset();
+    mocks.settings = {
+      themeMode: "dark",
+      themeVariant: "emerald",
+      themeCustomColor: { h: 160, s: 84, l: 39 },
+    };
+  });
+
+  it("does not let remote theme mode overwrite a local device override", () => {
+    localStorage.setItem(THEME_MODE_OVERRIDE_STORAGE_KEY, "1");
+
+    renderAppearanceSync();
+
+    expect(mocks.setTheme).not.toHaveBeenCalled();
+    expect(mocks.applyThemeVariant).toHaveBeenCalledWith("emerald", { h: 160, s: 84, l: 39 });
+  });
+
+  it("uses remote theme mode when no local device override exists", () => {
+    renderAppearanceSync();
+
+    expect(mocks.setTheme).toHaveBeenCalledWith("dark", { localOverride: false });
+    expect(mocks.applyThemeVariant).toHaveBeenCalledWith("emerald", { h: 160, s: 84, l: 39 });
+  });
+});

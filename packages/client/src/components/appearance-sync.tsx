@@ -4,19 +4,19 @@
  * 目标：
  * - 首屏优先使用本地 localStorage 的外观设置（不点“保存所有设置”也能生效）
  * - 登录后：
- *   - 若本地存在“未保存外观改动”标记：不使用数据库覆盖（避免冲掉本地改动）
+ *   - 若 Settings 页存在“未保存外观草稿”标记：不使用数据库覆盖（避免冲掉设置页预览）
  *   - 否则以数据库为准（用于跨设备同步已保存的外观）
  *
  * 同时兼容：
  * - 未登录：只使用本地 localStorage（避免“退出后主题被重置”的体验）
  * - 已登录：按上述规则同步，并回写 localStorage 作为下次首屏缓存
  *
- * 注意： Settings 页的外观字段可以未保存但即时预览。pending 标记存在时，
+ * 注意： Settings 页的外观字段可以未保存但即时预览。Settings pending 标记存在时，
  * 这里不能用数据库覆盖本地主题，否则用户会看到刚选的主题被同步逻辑回滚。
  */
 
 import { useEffect, useState } from "react";
-import { useTheme } from '@/lib/theme-provider';
+import { hasThemeModeOverride, useTheme } from '@/lib/theme-provider';
 import { useSettings } from "@/hooks/use-settings";
 import { applyThemeVariant } from "@/lib/theme-variant";
 import {
@@ -43,12 +43,14 @@ export function AppearanceSync() {
     applyThemeVariant(storedVariant, storedColor);
   }, []);
 
-  // 2) 登录后：本地有“未保存外观改动”则不覆盖；否则以数据库为准，并回写 localStorage 作为下次首屏缓存。
+  // 2) 登录后：Settings 有未保存外观草稿则不覆盖；否则以数据库为准，并回写 localStorage 作为下次首屏缓存。
   useEffect(() => {
     if (!hasSession || !settings) return;
     if (readAppearancePendingFromStorage()) return;
 
-    setTheme(settings.themeMode);
+    if (!hasThemeModeOverride()) {
+      setTheme(settings.themeMode, { localOverride: false });
+    }
     applyThemeVariant(settings.themeVariant, settings.themeCustomColor);
 
     writeThemeVariantToStorage(settings.themeVariant);

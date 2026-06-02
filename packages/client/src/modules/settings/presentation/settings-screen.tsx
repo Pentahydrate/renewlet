@@ -106,6 +106,7 @@ export function SettingsScreen() {
   const { t, locale, setLocale, label: localizeLabel, formatDateTime } = useI18n();
   const {
     settings,
+    effectiveThemeMode,
     accountEmail,
     canAccessPocketBaseAdmin,
     customConfig,
@@ -224,7 +225,7 @@ export function SettingsScreen() {
               <h2 className="text-lg font-semibold text-foreground">{t("settings.appearance")}</h2>
             </div>
             <ThemeSelector
-              mode={settings.themeMode}
+              mode={effectiveThemeMode}
               variant={settings.themeVariant}
               customColor={settings.themeCustomColor}
               onModeChange={handleThemeModeChange}

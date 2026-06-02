@@ -19,7 +19,7 @@
  * ```
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTheme } from "@/lib/theme-provider";
+import { clearThemeModeOverride, useTheme } from "@/lib/theme-provider";
 import { useCustomConfig } from "@/contexts/CustomConfigContext";
 import { useExchangeRates } from "@/hooks/use-exchange-rates";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
@@ -31,10 +31,11 @@ import { getDisplayErrorMessage } from "@/lib/display-error";
 import { applyThemeVariant } from "@/lib/theme-variant";
 import {
   readAppearancePendingFromStorage,
-  readCustomThemeColorFromStorageOrNull,
-  readThemeVariantFromStorage,
+  readSettingsAppearanceDraftFromStorage,
+  clearSettingsAppearanceDraftFromStorage,
   writeAppearancePendingToStorage,
   writeCustomThemeColorToStorage,
+  writeSettingsThemeModeToStorage,
   writeThemeVariantToStorage,
 } from "@/lib/theme-storage";
 import type { ExchangeRateProvider, ExchangeRates } from "@/lib/api/schemas/exchange-rates";
@@ -113,23 +114,22 @@ function normalizeAccountRecipientEmail(accountEmail: string | null): string {
   return email && email.includes("@") ? email : "";
 }
 
-function createDraftSettingsFromRemote(remoteSettings: AppSettings, themeMode: ThemeMode, accountEmail: string | null): AppSettings {
+function createDraftSettingsFromRemote(remoteSettings: AppSettings, accountEmail: string | null): AppSettings {
   const recipientEmail = remoteSettings.recipientEmail.trim()
     ? remoteSettings.recipientEmail
     : normalizeAccountRecipientEmail(accountEmail);
-  const baseSettings = recipientEmail && recipientEmail !== remoteSettings.recipientEmail
+  const baseSettings: AppSettings = recipientEmail && recipientEmail !== remoteSettings.recipientEmail
     ? { ...remoteSettings, recipientEmail }
     : remoteSettings;
 
   if (!readAppearancePendingFromStorage()) return baseSettings;
-  // 外观预览先写 localStorage，远端刷新时要保留未保存预览，避免用户刚调好的主题被服务器旧值闪回。
-  const storedVariant = readThemeVariantFromStorage();
-  const storedCustomColor = readCustomThemeColorFromStorageOrNull();
+  // Settings 外观草稿用独立 pending 存储恢复；不能读取 Header 的本机主题偏好，否则全局切换会污染表单 dirty。
+  const appearanceDraft = readSettingsAppearanceDraftFromStorage();
   return {
     ...baseSettings,
-    themeMode,
-    themeVariant: storedVariant ?? baseSettings.themeVariant,
-    themeCustomColor: storedCustomColor ?? baseSettings.themeCustomColor,
+    themeMode: appearanceDraft.themeMode ?? baseSettings.themeMode,
+    themeVariant: appearanceDraft.themeVariant ?? baseSettings.themeVariant,
+    themeCustomColor: appearanceDraft.themeCustomColor ?? baseSettings.themeCustomColor,
   };
 }
 
@@ -164,6 +164,7 @@ interface SettingsCalendarFeedController {
 
 export interface SettingsFormController {
   settings: AppSettings;
+  effectiveThemeMode: ThemeMode;
   accountEmail: string | null;
   canAccessPocketBaseAdmin: boolean;
   customConfig: CustomConfig;
@@ -261,6 +262,7 @@ export function useSettingsFormController(): SettingsFormController {
     [customConfig, savedCustomConfig],
   );
   const hasUnsavedChanges = settingsDirty || customConfigDirty;
+  const effectiveThemeMode: ThemeMode = theme;
 
   useEffect(() => {
     // effect 读取 ref 而不是把 draft 放入依赖，是为了在远端刷新时判断“当前是否仍可安全覆盖本地草稿”。
@@ -278,7 +280,6 @@ export function useSettingsFormController(): SettingsFormController {
     const shouldDefaultRecipientEmail = !hasResolvedDefaultRecipientEmailRef.current;
     const nextDraft = createDraftSettingsFromRemote(
       remoteSettings,
-      theme,
       shouldDefaultRecipientEmail ? accountEmail : null,
     );
     const hasResolvedRecipientEmail = Boolean(nextDraft.recipientEmail.trim());
@@ -298,7 +299,7 @@ export function useSettingsFormController(): SettingsFormController {
     } else if (remoteSettings.recipientEmail.trim()) {
       hasResolvedDefaultRecipientEmailRef.current = true;
     }
-  }, [accountEmail, hasInitializedFromRemote, remoteSettings, theme]);
+  }, [accountEmail, hasInitializedFromRemote, remoteSettings]);
 
   useEffect(() => {
     const normalized = normalizeCustomConfig(persistedCustomConfig);
@@ -315,11 +316,6 @@ export function useSettingsFormController(): SettingsFormController {
       setCustomConfig(normalized);
     }
   }, [hasInitializedCustomConfig, persistedCustomConfig]);
-
-  useEffect(() => {
-    if (theme !== "light" && theme !== "dark" && theme !== "system") return;
-    setSettings((prev) => (prev.themeMode === theme ? prev : { ...prev, themeMode: theme }));
-  }, [theme]);
 
   const updateSetting = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -403,12 +399,15 @@ export function useSettingsFormController(): SettingsFormController {
   );
 
   const syncSavedPreviewState = useCallback(
-    (nextSettings: AppSettings) => {
-      setTheme(nextSettings.themeMode);
-      applyThemeVariant(nextSettings.themeVariant, nextSettings.themeCustomColor);
-      writeThemeVariantToStorage(nextSettings.themeVariant);
-      writeCustomThemeColorToStorage(nextSettings.themeCustomColor);
-      writeAppearancePendingToStorage(false);
+    (nextSettings: AppSettings, options: { syncAppearance: boolean }) => {
+      if (options.syncAppearance) {
+        clearThemeModeOverride();
+        setTheme(nextSettings.themeMode, { localOverride: false });
+        applyThemeVariant(nextSettings.themeVariant, nextSettings.themeCustomColor);
+        writeThemeVariantToStorage(nextSettings.themeVariant);
+        writeCustomThemeColorToStorage(nextSettings.themeCustomColor);
+        clearSettingsAppearanceDraftFromStorage();
+      }
       setLocale(nextSettings.locale, { persist: false, markAsSaved: true });
     },
     [setLocale, setTheme],
@@ -429,6 +428,9 @@ export function useSettingsFormController(): SettingsFormController {
     const shouldSaveSettings = settingsDirty;
     const shouldSaveCustomConfig = customConfigDirty;
     const providerChanged = settings.exchangeRateProvider !== savedSettings.exchangeRateProvider;
+    const appearanceChanged = settings.themeMode !== savedSettings.themeMode
+      || settings.themeVariant !== savedSettings.themeVariant
+      || !areJsonSnapshotsEqual(settings.themeCustomColor, savedSettings.themeCustomColor);
 
     try {
       const settingsPromise: Promise<AppSettings | null> = shouldSaveSettings
@@ -451,7 +453,7 @@ export function useSettingsFormController(): SettingsFormController {
         const saved = settingsResult.value;
         setSavedSettings(saved);
         setSettings(saved);
-        syncSavedPreviewState(saved);
+        syncSavedPreviewState(saved, { syncAppearance: appearanceChanged });
         void refetchNotificationHistory();
         if (providerChanged) {
           try {
@@ -505,6 +507,9 @@ export function useSettingsFormController(): SettingsFormController {
     refreshRates,
     saveConfig,
     savedSettings.exchangeRateProvider,
+    savedSettings.themeCustomColor,
+    savedSettings.themeMode,
+    savedSettings.themeVariant,
     settings,
     settingsDirty,
     syncSavedPreviewState,
@@ -517,7 +522,7 @@ export function useSettingsFormController(): SettingsFormController {
     setSettings(savedSettings);
     setCustomConfig(savedCustomConfig);
     setMonthlyBudgetError(null);
-    syncSavedPreviewState(savedSettings);
+    syncSavedPreviewState(savedSettings, { syncAppearance: true });
   }, [savedCustomConfig, savedSettings, syncSavedPreviewState]);
 
   const handleDefaultCurrencyChange = useCallback(
@@ -609,6 +614,7 @@ export function useSettingsFormController(): SettingsFormController {
     (value: ThemeMode) => {
       updateSetting("themeMode", value);
       setTheme(value);
+      writeSettingsThemeModeToStorage(value);
       writeAppearancePendingToStorage(true);
     },
     [setTheme, updateSetting],
@@ -617,18 +623,28 @@ export function useSettingsFormController(): SettingsFormController {
   const handleThemeVariantChange = useCallback(
     (value: ThemeVariant) => {
       // 主题风格先写 DOM 再等待统一保存；这是为了让 Settings 页像控制面板一样即时反馈。
-      updateSetting("themeVariant", value);
+      setSettings((prev) => ({
+        ...prev,
+        themeMode: effectiveThemeMode,
+        themeVariant: value,
+      }));
+      writeSettingsThemeModeToStorage(effectiveThemeMode);
       applyThemeVariant(value, settings.themeCustomColor);
       writeThemeVariantToStorage(value);
       writeAppearancePendingToStorage(true);
     },
-    [settings.themeCustomColor, updateSetting],
+    [effectiveThemeMode, settings.themeCustomColor],
   );
 
   const handleThemeCustomColorChange = useCallback(
     (value: CustomThemeColor) => {
       // 自定义色只有在 custom 主题下才需要立即覆写 CSS 变量，其他主题仅保存候选值。
-      updateSetting("themeCustomColor", value);
+      setSettings((prev) => ({
+        ...prev,
+        themeMode: effectiveThemeMode,
+        themeCustomColor: value,
+      }));
+      writeSettingsThemeModeToStorage(effectiveThemeMode);
       writeCustomThemeColorToStorage(value);
       writeAppearancePendingToStorage(true);
 
@@ -636,11 +652,12 @@ export function useSettingsFormController(): SettingsFormController {
         applyThemeVariant("custom", value);
       }
     },
-    [settings.themeVariant, updateSetting],
+    [effectiveThemeMode, settings.themeVariant],
   );
 
   return {
     settings,
+    effectiveThemeMode,
     accountEmail,
     canAccessPocketBaseAdmin: accountIdentity.role === "admin" && !isCloudflareRuntime,
     customConfig,

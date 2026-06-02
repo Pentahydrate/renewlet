@@ -3,6 +3,11 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_CUSTOM_CONFIG, type CustomConfig } from "@/types/config";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/types/subscription";
+import {
+  APPEARANCE_PENDING_STORAGE_KEY,
+  SETTINGS_APPEARANCE_PENDING_STORAGE_KEY,
+  SETTINGS_THEME_MODE_STORAGE_KEY,
+} from "@/lib/theme-storage";
 import { useSettingsFormController } from "./use-settings-form-controller";
 
 const BASE_SETTINGS: AppSettings = {
@@ -18,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   customConfig: undefined as unknown,
   saveConfig: vi.fn(),
   setTheme: vi.fn(),
+  clearThemeModeOverride: vi.fn(),
+  theme: "dark",
   setLocale: vi.fn(),
   testConnection: vi.fn(),
   refetchNotificationHistory: vi.fn(),
@@ -81,8 +88,9 @@ vi.mock("@/hooks/use-calendar-feed", () => ({
 }));
 
 vi.mock("@/lib/theme-provider", () => ({
+  clearThemeModeOverride: mocks.clearThemeModeOverride,
   useTheme: () => ({
-    theme: "dark",
+    theme: mocks.theme,
     setTheme: mocks.setTheme,
   }),
 }));
@@ -185,11 +193,16 @@ describe("useSettingsFormController", () => {
     mocks.refreshRates.mockReset();
     mocks.saveConfig.mockReset();
     mocks.setTheme.mockReset();
+    mocks.clearThemeModeOverride.mockReset();
+    mocks.theme = "dark";
     mocks.setLocale.mockReset();
     mocks.refetchNotificationHistory.mockReset();
     mocks.createCalendarFeedMutateAsync.mockReset();
     mocks.deleteCalendarFeedMutateAsync.mockReset();
     mocks.writeClipboard.mockReset();
+    localStorage.removeItem(APPEARANCE_PENDING_STORAGE_KEY);
+    localStorage.removeItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY);
+    localStorage.removeItem(SETTINGS_THEME_MODE_STORAGE_KEY);
     mocks.calendarFeedStatus = { data: { enabled: false, feedUrl: undefined }, isLoading: false };
     mocks.remoteSettings = BASE_SETTINGS;
     mocks.customConfig = DEFAULT_CUSTOM_CONFIG;
@@ -261,6 +274,80 @@ describe("useSettingsFormController", () => {
       expect(result.current.settings.recipientEmail).toBe("billing@example.com");
     });
     expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("does not mark settings dirty when the global header theme changes", async () => {
+    localStorage.setItem(APPEARANCE_PENDING_STORAGE_KEY, "1");
+    const { result, rerender } = renderHook(() => useSettingsFormController());
+
+    await waitFor(() => {
+      expect(result.current.settings.themeMode).toBe(BASE_SETTINGS.themeMode);
+    });
+    expect(result.current.effectiveThemeMode).toBe("dark");
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => {
+      mocks.theme = BASE_SETTINGS.themeMode === "dark" ? "light" : "dark";
+      rerender();
+    });
+
+    expect(result.current.settings.themeMode).toBe(BASE_SETTINGS.themeMode);
+    expect(result.current.effectiveThemeMode).toBe(BASE_SETTINGS.themeMode === "dark" ? "light" : "dark");
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("keeps the current header theme when saving non-appearance settings", async () => {
+    mocks.theme = "dark";
+    mocks.remoteSettings = {
+      ...BASE_SETTINGS,
+      themeMode: "light",
+    };
+    const { result } = renderHook(() => useSettingsFormController());
+
+    act(() => {
+      result.current.handleExchangeRateProviderChange("exchange-api");
+    });
+
+    await act(async () => {
+      await result.current.handleSaveChanges();
+    });
+
+    expect(mocks.updateSettingsMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      exchangeRateProvider: "exchange-api",
+    }));
+    expect(mocks.setTheme).not.toHaveBeenCalled();
+  });
+
+  it("includes the current effective theme when editing a theme variant", async () => {
+    mocks.theme = "dark";
+    mocks.remoteSettings = {
+      ...BASE_SETTINGS,
+      themeMode: "light",
+    };
+    const { result } = renderHook(() => useSettingsFormController());
+
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => {
+      result.current.handleThemeVariantChange("ocean");
+    });
+
+    expect(result.current.settings.themeMode).toBe("dark");
+    expect(result.current.settings.themeVariant).toBe("ocean");
+    expect(result.current.hasUnsavedChanges).toBe(true);
+    expect(localStorage.getItem(SETTINGS_THEME_MODE_STORAGE_KEY)).toBe("dark");
+  });
+
+  it("restores unsaved settings appearance from the dedicated pending draft", async () => {
+    localStorage.setItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY, "1");
+    localStorage.setItem(SETTINGS_THEME_MODE_STORAGE_KEY, "light");
+
+    const { result } = renderHook(() => useSettingsFormController());
+
+    await waitFor(() => {
+      expect(result.current.settings.themeMode).toBe("light");
+    });
+    expect(result.current.hasUnsavedChanges).toBe(BASE_SETTINGS.themeMode !== "light");
   });
 
   it("prefills the recipient email when the account email arrives after settings", async () => {
@@ -336,6 +423,31 @@ describe("useSettingsFormController", () => {
     });
   });
 
+  it("saves settings appearance changes and clears the dedicated pending draft", async () => {
+    const { result } = renderHook(() => useSettingsFormController());
+
+    act(() => {
+      result.current.handleThemeModeChange("light");
+    });
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
+    expect(localStorage.getItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY)).toBe("1");
+    expect(localStorage.getItem(SETTINGS_THEME_MODE_STORAGE_KEY)).toBe("light");
+
+    await act(async () => {
+      await result.current.handleSaveChanges();
+    });
+
+    expect(mocks.updateSettingsMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      themeMode: "light",
+    }));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+    expect(localStorage.getItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(SETTINGS_THEME_MODE_STORAGE_KEY)).toBeNull();
+    expect(mocks.clearThemeModeOverride).toHaveBeenCalled();
+    expect(mocks.setTheme).toHaveBeenCalledWith("light", { localOverride: false });
+  });
+
   it("keeps the draft dirty and shows the server restart hint when saving the provider hits PocketBase 400", async () => {
     mocks.updateSettingsMutateAsync.mockRejectedValue({
       status: 400,
@@ -374,6 +486,8 @@ describe("useSettingsFormController", () => {
       result.current.updateSetting("locale", "en-US");
     });
     expect(result.current.hasUnsavedChanges).toBe(true);
+    expect(localStorage.getItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY)).toBe("1");
+    expect(localStorage.getItem(SETTINGS_THEME_MODE_STORAGE_KEY)).toBe("light");
 
     act(() => {
       result.current.handleDiscardChanges();
@@ -382,11 +496,13 @@ describe("useSettingsFormController", () => {
     expect(result.current.settings.themeMode).toBe(BASE_SETTINGS.themeMode);
     expect(result.current.settings.locale).toBe(BASE_SETTINGS.locale);
     expect(result.current.hasUnsavedChanges).toBe(false);
-    expect(mocks.setTheme).toHaveBeenLastCalledWith(BASE_SETTINGS.themeMode);
+    expect(mocks.setTheme).toHaveBeenLastCalledWith(BASE_SETTINGS.themeMode, { localOverride: false });
     expect(mocks.setLocale).toHaveBeenLastCalledWith(BASE_SETTINGS.locale, {
       persist: false,
       markAsSaved: true,
     });
+    expect(localStorage.getItem(SETTINGS_APPEARANCE_PENDING_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(SETTINGS_THEME_MODE_STORAGE_KEY)).toBeNull();
   });
 
   it("saves custom configuration changes through the unified save action", async () => {

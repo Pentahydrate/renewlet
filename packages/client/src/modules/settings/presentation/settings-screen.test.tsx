@@ -12,6 +12,7 @@ import {
   type AppSettings,
   type NotificationChannel,
 } from "@/types/subscription";
+import type { ThemeMode } from "@/types/theme";
 import { SettingsScreen } from "./settings-screen";
 
 const mocks = vi.hoisted(() => ({
@@ -27,7 +28,7 @@ vi.mock("@/modules/custom-config/presentation/config-manager-dialog", () => ({
 }));
 
 vi.mock("@/components/theme-selector", () => ({
-  ThemeSelector: () => null,
+  ThemeSelector: ({ mode }: { mode: ThemeMode }) => <div data-testid="theme-selector-mode">{mode}</div>,
 }));
 
 vi.mock("@/components/ui/searchable-select", () => ({
@@ -44,6 +45,7 @@ vi.mock("../application/use-settings-form-controller", () => ({
 
 function createControllerState(overrides: {
   settings?: Partial<AppSettings>;
+  effectiveThemeMode?: ThemeMode;
   canAccessPocketBaseAdmin?: boolean;
   testingChannel?: NotificationChannel | null;
   isSavingSettings?: boolean;
@@ -68,6 +70,7 @@ function createControllerState(overrides: {
       recipientEmail: "alice@example.com",
       ...overrides.settings,
     },
+    effectiveThemeMode: overrides.effectiveThemeMode ?? overrides.settings?.themeMode ?? DEFAULT_SETTINGS.themeMode,
     accountEmail: "alice@example.com",
     canAccessPocketBaseAdmin: overrides.canAccessPocketBaseAdmin ?? true,
     customConfig: DEFAULT_CUSTOM_CONFIG,
@@ -202,6 +205,17 @@ describe("SettingsScreen SMTP email settings", () => {
     renderSettingsScreen();
 
     expect(screen.queryByRole("link", { name: "PocketBase 后台" })).not.toBeInTheDocument();
+  });
+
+  it("passes the effective theme mode to the appearance selector", () => {
+    mocks.useSettingsFormController.mockReturnValue(createControllerState({
+      settings: { themeMode: "light" },
+      effectiveThemeMode: "dark",
+    }));
+
+    renderSettingsScreen();
+
+    expect(screen.getByTestId("theme-selector-mode")).toHaveTextContent("dark");
   });
 
   it("lets users choose FloatRates as the exchange-rate source", async () => {

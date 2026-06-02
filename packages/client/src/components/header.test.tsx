@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   useSystemRestart: vi.fn(),
   toast: vi.fn(),
   setTheme: vi.fn(),
+  theme: "dark",
   writeAppearancePendingToStorage: vi.fn(),
 }));
 
@@ -39,7 +40,7 @@ vi.mock("@/hooks/use-toast", () => ({
 
 vi.mock("@/lib/theme-provider", () => ({
   useTheme: () => ({
-    theme: "dark",
+    theme: mocks.theme,
     setTheme: mocks.setTheme,
   }),
 }));
@@ -161,6 +162,7 @@ describe("Header system version entry", () => {
     mocks.useSystemRestart.mockReset();
     mocks.toast.mockReset();
     mocks.setTheme.mockReset();
+    mocks.theme = "dark";
     mocks.writeAppearancePendingToStorage.mockReset();
     mocks.useSystemVersion.mockReturnValue({
       data: versionFixture(),
@@ -201,5 +203,17 @@ describe("Header system version entry", () => {
     renderHeader();
 
     expect(screen.queryByRole("button", { name: "打开系统更新" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the header theme toggle as a local-only preference", async () => {
+    mocks.useSession.mockReturnValue(adminSession("user"));
+    const user = userEvent.setup();
+
+    renderHeader();
+
+    await user.click(screen.getByRole("button", { name: "切换主题" }));
+
+    expect(mocks.setTheme).toHaveBeenCalledWith("light");
+    expect(mocks.writeAppearancePendingToStorage).not.toHaveBeenCalled();
   });
 });
