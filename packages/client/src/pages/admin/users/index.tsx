@@ -15,6 +15,7 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Shield, UserPlus } from "lucide-react";
 import { Header } from "@/components/header";
+import { AdminUsersRowsSkeleton } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -429,7 +430,7 @@ export default function AdminUsersPage() {
             <span>{t("admin.actions")}</span>
           </div>
           {isInitialLoading ? (
-            <div className="px-4 py-8 text-sm text-muted-foreground sm:px-5">{t("common.loading")}</div>
+            <AdminUsersRowsSkeleton />
           ) : (
             users.map((item) => (
               <AdminUserRow

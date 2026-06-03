@@ -165,6 +165,20 @@ describe("Statistics page", () => {
     });
   });
 
+  it("renders a page-isomorphic skeleton while statistics inputs are pending", () => {
+    mocks.useSubscriptions.mockReturnValue({
+      data: undefined,
+      isPending: true,
+    });
+
+    renderStatistics();
+
+    const skeleton = screen.getByTestId("statistics-skeleton");
+    expect(skeleton).toHaveAttribute("aria-hidden", "true");
+    expect(skeleton.querySelectorAll(".rounded-xl.border.border-border.bg-card")).toHaveLength(14);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("shows the inactive savings explanation on hover", async () => {
     const user = userEvent.setup();
 

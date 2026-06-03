@@ -460,6 +460,7 @@ describe("SubscriptionCard", () => {
     openMoreActionsMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "添加到日历" }));
 
+    vi.useRealTimers();
     fireEvent.click(screen.getByRole("button", { name: "在系统日历中订阅" }));
     await waitFor(() => expect(open).toHaveBeenCalledWith("webcal://example.com/calendar/renewals.ics?token=existing", "_self"));
     expect(screen.getByLabelText("本次订阅 URL")).toHaveValue("https://example.com/calendar/renewals.ics?token=existing");
@@ -486,6 +487,7 @@ describe("SubscriptionCard", () => {
 
     openMoreActionsMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "添加到日历" }));
+    vi.useRealTimers();
     fireEvent.click(screen.getByRole("button", { name: "在系统日历中订阅" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("http://localhost:5173/calendar/renewals.ics?token=existing", {

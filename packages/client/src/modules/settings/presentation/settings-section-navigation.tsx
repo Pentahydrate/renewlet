@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Drawer } from "vaul";
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,11 @@ import { useI18n } from '@/i18n/I18nProvider';
 
 // H5 锚点定位需要同时避开全局顶部区和设置页局部 sticky 标题；scrollIntoView 会读取目标元素的 scroll-margin。
 export const SETTINGS_SECTION_SCROLL_CLASS = "scroll-mt-[calc(13rem+env(safe-area-inset-top))] lg:scroll-mt-24";
+const SETTINGS_SECTION_OBSERVER_ROOT_MARGIN = "-20% 0px -65% 0px";
+const PROGRAMMATIC_SCROLL_IDLE_MS = 160;
+const DESKTOP_ANCHOR_OFFSET_PX = 96;
+const MOBILE_ANCHOR_OFFSET_PX = 208;
+const BOTTOM_EDGE_TOLERANCE_PX = 4;
 
 const SETTINGS_SECTIONS = [
   { id: "settings-account", labelKey: "settings.sectionNav.account" },
@@ -23,6 +28,10 @@ const SETTINGS_SECTIONS = [
 ] as const;
 
 type SettingsSectionId = typeof SETTINGS_SECTIONS[number]["id"];
+type ProgrammaticNavigation = {
+  targetId: SettingsSectionId;
+  idleTimer: number | null;
+};
 type SettingsSectionNavigationProps = {
   activeSectionId: SettingsSectionId;
   onSectionClick: (id: SettingsSectionId) => void;
@@ -39,28 +48,185 @@ function scrollToSettingsSection(id: SettingsSectionId) {
   section.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
+function getAppScrollRoot() {
+  return typeof document === "undefined" ? null : document.getElementById("root");
+}
+
+function getAnchorOffsetPx() {
+  if (typeof window === "undefined") return DESKTOP_ANCHOR_OFFSET_PX;
+  return window.matchMedia("(min-width: 1024px)").matches ? DESKTOP_ANCHOR_OFFSET_PX : MOBILE_ANCHOR_OFFSET_PX;
+}
+
+function isRootScrolledToBottom(root: HTMLElement) {
+  return root.scrollHeight - root.scrollTop - root.clientHeight <= BOTTOM_EDGE_TOLERANCE_PX;
+}
+
+function resolveActiveSectionFromAnchor(root: HTMLElement): SettingsSectionId {
+  const lastSection = SETTINGS_SECTIONS[SETTINGS_SECTIONS.length - 1];
+  if (isRootScrolledToBottom(root)) return lastSection?.id ?? SETTINGS_SECTIONS[0].id;
+
+  const anchorLine = root.getBoundingClientRect().top + getAnchorOffsetPx();
+  let activeSectionId: SettingsSectionId = SETTINGS_SECTIONS[0].id;
+
+  for (const section of SETTINGS_SECTIONS) {
+    const element = document.getElementById(section.id);
+    if (!element) continue;
+    if (element.getBoundingClientRect().top <= anchorLine) {
+      activeSectionId = section.id;
+      continue;
+    }
+    break;
+  }
+
+  return activeSectionId;
+}
+
+function getNextSectionId(id: SettingsSectionId) {
+  const currentIndex = SETTINGS_SECTIONS.findIndex((section) => section.id === id);
+  const nextSection = SETTINGS_SECTIONS[currentIndex + 1];
+  return nextSection?.id ?? null;
+}
+
+function isAnchorStillWithinSection(root: HTMLElement, id: SettingsSectionId) {
+  if (resolveActiveSectionFromAnchor(root) !== id) return false;
+  const nextSectionId = getNextSectionId(id);
+  if (!nextSectionId) return true;
+  const nextSection = document.getElementById(nextSectionId);
+  if (!nextSection) return true;
+  return nextSection.getBoundingClientRect().top > root.getBoundingClientRect().top + getAnchorOffsetPx();
+}
+
 export function useSettingsSectionNavigation() {
   const [activeSectionId, setActiveSectionId] = useState<SettingsSectionId>(SETTINGS_SECTIONS[0].id);
+  const programmaticNavigationRef = useRef<ProgrammaticNavigation | null>(null);
+
+  const applyAnchorActiveSection = useCallback(() => {
+    const root = getAppScrollRoot();
+    if (root) setActiveSectionId(resolveActiveSectionFromAnchor(root));
+  }, []);
+
+  const endProgrammaticNavigation = useCallback((options: { applyAnchorSection?: boolean } = {}) => {
+    const navigation = programmaticNavigationRef.current;
+    if (navigation && navigation.idleTimer !== null) {
+      window.clearTimeout(navigation.idleTimer);
+    }
+    programmaticNavigationRef.current = null;
+    if (options.applyAnchorSection) applyAnchorActiveSection();
+  }, [applyAnchorActiveSection]);
+
+  const beginProgrammaticNavigation = useCallback((id: SettingsSectionId) => {
+    endProgrammaticNavigation();
+    programmaticNavigationRef.current = { targetId: id, idleTimer: null };
+    setActiveSectionId(id);
+    scrollToSettingsSection(id);
+  }, [endProgrammaticNavigation]);
 
   useEffect(() => {
     const syncActiveSectionFromHash = () => {
       const sectionId = getSectionFromHash(window.location.hash);
       if (!sectionId) return;
-      setActiveSectionId(sectionId);
-      // 目录当前态以用户选择/hash 为准；滚动监听会在平滑滚动和异步布局变化期间反复抢 active。
-      window.requestAnimationFrame(() => scrollToSettingsSection(sectionId));
+      window.requestAnimationFrame(() => beginProgrammaticNavigation(sectionId));
     };
 
     syncActiveSectionFromHash();
     window.addEventListener("hashchange", syncActiveSectionFromHash);
     return () => window.removeEventListener("hashchange", syncActiveSectionFromHash);
-  }, []);
+  }, [beginProgrammaticNavigation]);
+
+  useEffect(() => {
+    const root = getAppScrollRoot();
+    if (!root || typeof IntersectionObserver === "undefined") return;
+
+    // 设置页滚动面是 #root，scrollspy 必须绑定应用滚动容器，不能退回 window/document viewport。
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => getSectionFromHash(entry.target.id))) return;
+
+      if (programmaticNavigationRef.current) {
+        // 点击目录期间 active 表达用户导航意图，释放时也不能被相邻短分区的可见性覆盖。
+        return;
+      }
+      setActiveSectionId(resolveActiveSectionFromAnchor(root));
+    }, {
+      root,
+      rootMargin: SETTINGS_SECTION_OBSERVER_ROOT_MARGIN,
+      threshold: 0,
+    });
+
+    for (const section of SETTINGS_SECTIONS) {
+      const element = document.getElementById(section.id);
+      if (element) observer.observe(element);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [endProgrammaticNavigation]);
+
+  useEffect(() => {
+    const root = getAppScrollRoot();
+    if (!root) return;
+
+    const cancelForUserScroll = () => {
+      if (!programmaticNavigationRef.current) return;
+      endProgrammaticNavigation({ applyAnchorSection: true });
+    };
+    const handleScrollEnd = () => {
+      const navigation = programmaticNavigationRef.current;
+      if (!navigation) return;
+      endProgrammaticNavigation({
+        applyAnchorSection: !isAnchorStillWithinSection(root, navigation.targetId),
+      });
+    };
+    const handleScroll = () => {
+      const navigation = programmaticNavigationRef.current;
+      if (!navigation) return;
+      if (navigation.idleTimer !== null) window.clearTimeout(navigation.idleTimer);
+      navigation.idleTimer = window.setTimeout(
+        () => {
+          const currentNavigation = programmaticNavigationRef.current;
+          endProgrammaticNavigation({
+            applyAnchorSection: currentNavigation ? !isAnchorStillWithinSection(root, currentNavigation.targetId) : false,
+          });
+        },
+        PROGRAMMATIC_SCROLL_IDLE_MS,
+      );
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key === "ArrowDown"
+        || event.key === "ArrowUp"
+        || event.key === "PageDown"
+        || event.key === "PageUp"
+        || event.key === "Home"
+        || event.key === "End"
+        || event.key === " "
+      ) {
+        cancelForUserScroll();
+      }
+    };
+
+    root.addEventListener("wheel", cancelForUserScroll, { passive: true, capture: true });
+    root.addEventListener("touchstart", cancelForUserScroll, { passive: true, capture: true });
+    root.addEventListener("pointerdown", cancelForUserScroll, { passive: true, capture: true });
+    root.addEventListener("scroll", handleScroll, { passive: true });
+    root.addEventListener("scrollend", handleScrollEnd);
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      root.removeEventListener("wheel", cancelForUserScroll, { capture: true });
+      root.removeEventListener("touchstart", cancelForUserScroll, { capture: true });
+      root.removeEventListener("pointerdown", cancelForUserScroll, { capture: true });
+      root.removeEventListener("scroll", handleScroll);
+      root.removeEventListener("scrollend", handleScrollEnd);
+      window.removeEventListener("keydown", handleKeyDown, true);
+      endProgrammaticNavigation();
+    };
+  }, [endProgrammaticNavigation]);
 
   const handleSectionClick = useCallback((id: SettingsSectionId) => {
-    setActiveSectionId(id);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${id}`);
-    scrollToSettingsSection(id);
-  }, []);
+    beginProgrammaticNavigation(id);
+  }, [beginProgrammaticNavigation]);
 
   return { activeSectionId, handleSectionClick };
 }

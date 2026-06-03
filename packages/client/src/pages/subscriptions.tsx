@@ -19,7 +19,7 @@ import { SubscriptionCard, type SubscriptionCardLookup } from '@/components/subs
 import { AddSubscriptionDialog } from '@/components/add-subscription-dialog';
 import { EditSubscriptionDialog } from '@/components/edit-subscription-dialog';
 import { ImportDataDialog } from '@/components/import-data-dialog';
-import { SubscriptionListSkeleton } from '@/components/loading-skeleton';
+import { SubscriptionsPageSkeleton } from '@/components/loading-skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -233,11 +233,7 @@ function SubscriptionGrid({
       <div className="app-page bg-background">
         <Header onAddSubscription={handleAddSubscription} availableTags={allTags} />
         <main className="app-main mx-auto max-w-7xl">
-          <div className="mb-8">
-            <div className="h-8 w-32 bg-muted rounded animate-pulse mb-2" />
-            <div className="h-4 w-48 bg-muted rounded animate-pulse" />
-          </div>
-          <SubscriptionListSkeleton />
+          <SubscriptionsPageSkeleton withPageShell={false} />
         </main>
       </div>
     );

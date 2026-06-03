@@ -7,7 +7,18 @@
  * 注意： 新增公开页面时必须同步 `public-routes.ts`，否则刷新后会被客户端守卫带回登录页。
  */
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AppScrollRestoration } from "@/components/app-scroll-restoration";
+import {
+  AdminUsersPageSkeleton,
+  CalendarPageSkeleton,
+  DashboardPageSkeleton,
+  DocumentRouteSkeleton,
+  LightweightRouteSkeleton,
+  SettingsPageSkeleton,
+  StatisticsPageSkeleton,
+  SubscriptionsPageSkeleton,
+} from "@/components/loading-skeleton";
 import { ProtectedRoute } from "@/components/protected-route";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
@@ -25,41 +36,41 @@ const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function RouteFallback() {
-  return (
-    <div className="app-page bg-background">
-      <div className="h-16 border-b border-border bg-card/60" />
-      <main className="app-main mx-auto max-w-7xl">
-        <div className="mb-8 h-10 w-56 rounded-md bg-muted/60" />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-28 rounded-lg border border-border bg-card/60" />
-          ))}
-        </div>
-        <div className="mt-8 h-[55dvh] rounded-lg border border-border bg-card/50" />
-      </main>
-    </div>
-  );
+  const { pathname } = useLocation();
+
+  // 懒加载 fallback 必须跟随目标路由结构；否则 /settings 会短暂显示仪表盘骨架并造成首屏错位。
+  if (pathname === "/") return <DashboardPageSkeleton />;
+  if (pathname === "/subscriptions") return <SubscriptionsPageSkeleton />;
+  if (pathname === "/calendar") return <CalendarPageSkeleton />;
+  if (pathname === "/statistics") return <StatisticsPageSkeleton />;
+  if (pathname === "/settings") return <SettingsPageSkeleton />;
+  if (pathname === "/admin/users") return <AdminUsersPageSkeleton />;
+  if (pathname === "/privacy" || pathname === "/terms") return <DocumentRouteSkeleton />;
+  return <LightweightRouteSkeleton />;
 }
 
 export default function App() {
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
-        <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-        <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-        <Route path="/setup" element={<Setup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/index.html" element={<Navigate to="/" replace />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <>
+      <AppScrollRestoration />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+          <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+          <Route path="/setup" element={<Setup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/index.html" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 }

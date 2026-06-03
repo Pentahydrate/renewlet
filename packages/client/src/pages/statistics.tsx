@@ -17,7 +17,7 @@
 import { useMemo } from 'react';
 import type { Subscription } from '@/types/subscription';
 import { Header } from '@/components/header';
-import { StatisticsSkeleton } from '@/components/loading-skeleton';
+import { StatisticsPageSkeleton } from '@/components/loading-skeleton';
 import { RechartsFrame } from '@/components/recharts-frame';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip } from 'recharts';
 import { CircleHelp, RefreshCw } from 'lucide-react';
@@ -241,11 +241,7 @@ const Statistics = () => {
       <div className="app-page bg-background">
         <Header onAddSubscription={handleAddSubscription} availableTags={availableTags} />
         <main className="app-main mx-auto max-w-7xl">
-          <div className="mb-6">
-            <div className="h-8 w-32 bg-muted rounded animate-pulse mb-2" />
-            <div className="h-4 w-64 bg-muted rounded animate-pulse" />
-          </div>
-          <StatisticsSkeleton />
+          <StatisticsPageSkeleton withPageShell={false} />
         </main>
       </div>
     );

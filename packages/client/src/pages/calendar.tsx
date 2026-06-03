@@ -12,7 +12,7 @@ import { Header } from '@/components/header';
 import { BackToTopFloatButton } from '@/components/back-to-top-float-button';
 import { SubscriptionCalendar } from '@/components/subscription-calendar';
 import { EditSubscriptionDialog } from '@/components/edit-subscription-dialog';
-import { CalendarSkeleton } from '@/components/loading-skeleton';
+import { CalendarPageSkeleton } from '@/components/loading-skeleton';
 import { useCreateSubscription, useSubscriptions, useUpdateSubscription } from '@/hooks/use-subscriptions';
 import { collectSubscriptionTags } from '@/modules/subscriptions/domain/subscription-filters';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -56,11 +56,7 @@ const Calendar = () => {
       <div className="app-page bg-background">
         <Header onAddSubscription={handleAddSubscription} availableTags={availableTags} />
         <main className="app-main mx-auto max-w-7xl">
-          <div className="mb-6">
-            <div className="h-8 w-32 bg-muted rounded animate-pulse mb-2" />
-            <div className="h-4 w-48 bg-muted rounded animate-pulse" />
-          </div>
-          <CalendarSkeleton />
+          <CalendarPageSkeleton withPageShell={false} />
         </main>
       </div>
     );

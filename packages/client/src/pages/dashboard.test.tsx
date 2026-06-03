@@ -28,7 +28,7 @@ vi.mock("@/components/router-link", () => ({
 }));
 
 vi.mock("@/components/loading-skeleton", () => ({
-  DashboardSkeleton: () => <div data-testid="dashboard-skeleton" />,
+  DashboardPageSkeleton: () => <div data-testid="dashboard-skeleton" />,
 }));
 
 vi.mock("@/components/subscription-card", () => ({

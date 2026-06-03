@@ -79,6 +79,21 @@ describe("Calendar page back-to-top float button", () => {
     });
   });
 
+  it("renders a page-isomorphic skeleton while subscriptions are pending", () => {
+    mocks.useSubscriptions.mockReturnValue({
+      data: undefined,
+      isPending: true,
+    });
+
+    renderCalendarPage({ mobile: false });
+
+    const skeleton = screen.getByTestId("calendar-skeleton");
+    expect(skeleton).toHaveAttribute("aria-hidden", "true");
+    expect(skeleton.querySelectorAll(".grid-cols-7 .animate-pulse")).toHaveLength(49);
+    expect(screen.queryByTestId("subscription-calendar")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("shows the back-to-top float button on H5 calendar pages", async () => {
     const root = renderCalendarPage({ mobile: true });
 

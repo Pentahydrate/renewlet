@@ -20,7 +20,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { SubscriptionCard } from "@/components/subscription-card";
 import { SpendingChart } from "@/components/spending-chart";
 import { UpcomingRenewals } from "@/components/upcoming-renewals";
-import { DashboardSkeleton } from "@/components/loading-skeleton";
+import { DashboardPageSkeleton } from "@/components/loading-skeleton";
 import { EditSubscriptionDialog } from "@/components/edit-subscription-dialog";
 import { CreditCard, TrendingUp, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export default function Index() {
       <div className="app-page bg-background">
         <Header onAddSubscription={handleAddSubscription} availableTags={availableTags} />
         <main className="app-main mx-auto max-w-7xl">
-          <DashboardSkeleton />
+          <DashboardPageSkeleton withPageShell={false} />
         </main>
       </div>
     );

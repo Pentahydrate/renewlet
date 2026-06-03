@@ -256,6 +256,20 @@ describe("Subscriptions page sorting", () => {
     });
   });
 
+  it("renders a page-isomorphic skeleton while the first subscription page is pending", () => {
+    mocks.useInfiniteSubscriptions.mockReturnValue({
+      subscriptions: [],
+      isPending: true,
+    });
+
+    renderSubscriptionsPage();
+
+    expect(screen.getByTestId("subscriptions-skeleton")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByTestId("subscriptions-skeleton-list")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
   it("sorts visible cards and clears sorting without marking the count as filtered", async () => {
     const user = userEvent.setup();
     renderSubscriptionsPage();

@@ -167,13 +167,14 @@ describe("AdminUsersPage", () => {
 
     renderAdminUsersPage();
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-users-skeleton-table")).toBeInTheDocument();
+    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
 
     usersRequest.resolve({ users: [user({ name: "李四", email: "lisi@example.com" })] });
 
     expect(await screen.findByText("李四")).toBeInTheDocument();
     expect(screen.getByText("lisi@example.com")).toBeInTheDocument();
-    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("admin-users-skeleton-table")).not.toBeInTheDocument();
   });
 
   it("does not reload users when the translation function reference changes", async () => {
