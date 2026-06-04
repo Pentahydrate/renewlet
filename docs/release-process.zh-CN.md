@@ -53,7 +53,7 @@ PR 标题和 commit 使用 Conventional Commits。示例：`feat: add notificati
 2. 运行 `Maintainer Release` workflow，`action` 选择 `prepare`。
 3. 输入稳定版 SemVer，例如 `0.1.0`。
 4. workflow 会同步 package 版本，并推送或更新 `release/v0.1.0`。
-5. 编辑 `CHANGELOG.md` 中对应版本的短 release notes。内容保持面向用户、简短可读；GitHub Release 会单独附完整 commit 历史链接。
+5. 编辑 `docs/release-notes/vX.Y.Z-zh.md` 作为 GitHub Release 正文；需要英文入口时再补 `docs/release-notes/vX.Y.Z-en.md`。发布脚本只追加 Docker 镜像标签和 GitHub compare 链接。
 6. 发布期只在 `release/v0.1.0` 上做 release 修复。
 7. 这一步不要创建 `main` PR；先发布并验证至少一个 RC。
 
@@ -105,7 +105,7 @@ git push origin v0.1.0
    - `ghcr.io/zhiyingzzhou/renewlet:0.1.0`
    - `ghcr.io/zhiyingzzhou/renewlet:0.1`
    - `ghcr.io/zhiyingzzhou/renewlet:latest`
-5. 检查 draft Release 的镜像列表和短 changelog 后，手动发布 Release。
+5. 检查 draft Release 的镜像列表和 Full Changelog compare 链接后，手动发布 Release。
 6. 如果本次稳定版需要部署 Cloudflare 生产 Worker，审批 `production-cloudflare` environment。稳定版发布使用 `Release Publish` 内部的生产部署 job，不使用 `Cloudflare Worker` 测试部署 workflow。
 
 ## Docker 页面内更新

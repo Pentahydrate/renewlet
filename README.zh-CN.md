@@ -91,6 +91,8 @@ docker compose up -d
 
 升级前先备份数据和配置：
 
+如果你是在 2026-06-04 之前部署的 Renewlet，升级前请先打开旧版本的订阅页，使用“导出订阅”里的 JSON 导出功能保存 `subscriptions.json`。升级后可通过“导入数据”导入这份旧版 JSON。这个文件只用于订阅数据迁移，仍建议同时保留下面的 `.env`、`docker-compose.yml` 和 `data/` 备份。
+
 ```bash
 tar -czf renewlet-backup-$(date +%F).tgz .env docker-compose.yml data
 ```

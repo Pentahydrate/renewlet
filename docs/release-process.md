@@ -53,7 +53,7 @@ Add these repository settings before running `Maintainer Release`:
 2. Run the `Maintainer Release` workflow with `action=prepare`.
 3. Enter a stable SemVer version such as `0.1.0`.
 4. The workflow syncs package versions and pushes or updates `release/v0.1.0`.
-5. Edit `CHANGELOG.md` for that version. Keep the notes short and user-facing; the GitHub Release links to the full commit history separately.
+5. Edit `docs/release-notes/vX.Y.Z-zh.md` as the GitHub Release body. Add `docs/release-notes/vX.Y.Z-en.md` when an English entry is needed. The release script only appends Docker image tags and the GitHub compare link.
 6. Keep release-only fixes on `release/v0.1.0`.
 7. Do not open the `main` PR yet; publish and validate at least one RC first.
 
@@ -106,7 +106,7 @@ git push origin v0.1.0
    - `ghcr.io/zhiyingzzhou/renewlet:0.1.0`
    - `ghcr.io/zhiyingzzhou/renewlet:0.1`
    - `ghcr.io/zhiyingzzhou/renewlet:latest`
-6. Review the draft Release, verify the Docker image list and short changelog, then publish it manually.
+6. Review the draft Release, verify the Docker image list and Full Changelog compare link, then publish it manually.
 7. Approve the `production-cloudflare` environment if this release should deploy the production Worker. Stable releases use the production deploy job inside `Release Publish`, not the `Cloudflare Worker` test deploy workflow.
 
 ## Docker In-App Updates

@@ -12,8 +12,17 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const dockerHubImage = "zhiyingzzhou/renewlet";
-const ghcrImage = "ghcr.io/zhiyingzzhou/renewlet";
+const repositoryOwner = "zhiyingzzhou";
+const repositoryName = "renewlet";
+const githubRepository = `${repositoryOwner}/${repositoryName}`;
+const githubBaseUrl = `https://github.com/${githubRepository}`;
+const dockerHubImage = `${repositoryOwner}/${repositoryName}`;
+const ghcrImage = `ghcr.io/${githubRepository}`;
+const firstStableVersion = "0.1.0";
+const latestTag = "latest";
+const rcTag = "rc";
+const defaultDockerHubImage = `${dockerHubImage}:${latestTag}`;
+const defaultGhcrImage = `${ghcrImage}:${latestTag}`;
 const versionPattern = /^v?(?<version>\d+\.\d+\.\d+(?:-rc\.(?<rc>\d+))?)$/;
 const stablePattern = /^v?\d+\.\d+\.\d+$/;
 const packagePaths = [
@@ -64,7 +73,7 @@ function parseArgs(argv) {
 function normalizeVersion(rawVersion) {
   const match = versionPattern.exec(rawVersion ?? "");
   if (!match?.groups?.version) {
-    fail(`Invalid version "${rawVersion}". Expected 0.1.0 or v0.1.0, with optional -rc.N.`);
+    fail(`Invalid version "${rawVersion}". Expected ${firstStableVersion} or v${firstStableVersion}, with optional -rc.N.`);
   }
   return match.groups.version;
 }
@@ -95,6 +104,10 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function escapedRegExp(source) {
+  return source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function latestStableTag() {
   const output = runGit(["tag", "--list", "v[0-9]*.[0-9]*.[0-9]*", "--sort=-v:refname"]);
   return output
@@ -120,8 +133,8 @@ function validateNextVersion(rawVersion) {
 
   const latestTag = latestStableTag();
   if (!latestTag) {
-    if (version !== "0.1.0") {
-      fail(`First stable release must be 0.1.0; got ${version}.`);
+    if (version !== firstStableVersion) {
+      fail(`First stable release must be ${firstStableVersion}; got ${version}.`);
     }
     console.log(version);
     return version;
@@ -191,52 +204,52 @@ function commitRange(previous) {
 
 function compareLink(previous, version) {
   if (previous) {
-    return `https://github.com/zhiyingzzhou/renewlet/compare/${previous}...v${version}`;
+    return `${githubBaseUrl}/compare/${previous}...v${version}`;
   }
 
   try {
     // 首个 release 没有上一个 tag，只能退回 tag 页；后续 release 会生成真实 compare 链接。
     const latestTag = runGit(["describe", "--tags", "--abbrev=0", "HEAD^"]);
-    return `https://github.com/zhiyingzzhou/renewlet/compare/${latestTag}...v${version}`;
+    return `${githubBaseUrl}/compare/${latestTag}...v${version}`;
   } catch {
-    return `https://github.com/zhiyingzzhou/renewlet/releases/tag/v${version}`;
+    return `${githubBaseUrl}/releases/tag/v${version}`;
   }
 }
 
-function changelogSection(rawVersion) {
+function releaseNotesSection(rawVersion, locale) {
   const version = normalizeVersion(rawVersion);
-  // RC 复用稳定版短 notes，避免候选版页面因为 0.1.0-rc.N 没有独立 changelog 段而空白。
   const stableVersion = version.replace(/-rc\.\d+$/, "");
-  const changelogPath = join(repoRoot, "CHANGELOG.md");
-  if (!existsSync(changelogPath)) {
+  const notesPath = join(repoRoot, "docs", "release-notes", `v${stableVersion}-${locale}.md`);
+  if (!existsSync(notesPath)) {
     return "";
   }
 
-  const changelog = readFileSync(changelogPath, "utf8");
-  const versionHeader = new RegExp(`^##\\s+${stableVersion}(?:\\s+-\\s+[^\\n]+)?\\s*$`, "m");
-  const match = versionHeader.exec(changelog);
-  if (!match) {
-    return "";
-  }
-
-  const start = match.index + match[0].length;
-  const rest = changelog.slice(start);
-  const nextHeader = rest.search(/^##\s+/m);
-  return (nextHeader === -1 ? rest : rest.slice(0, nextHeader)).trim();
+  const content = readFileSync(notesPath, "utf8").trim();
+  return content
+    .replace(/^# .+\r?\n+/, "")
+    .replace(/^\[(?:English|中文) ->\]\(\.\/v[0-9]+\.[0-9]+\.[0-9]+-(?:en|zh)\.md\)\r?\n+/m, "")
+    .trim();
 }
 
-function markdownNotes(rawVersion, previous) {
+function markdownNotes(rawVersion, previous, options = {}) {
   const version = normalizeVersion(rawVersion);
-  const notes = changelogSection(version);
+  const stableVersion = version.replace(/-rc\.\d+$/, "");
+  const notes = releaseNotesSection(version, "zh");
+  const includeFullChangelog = options.includeFullChangelog ?? true;
   const lines = [];
 
-  if (notes) {
-    lines.push(notes, "");
-  } else {
-    lines.push("### Highlights", "", "- Add concise release highlights before publishing this draft.", "");
+  if (!notes) {
+    fail(`Missing release notes: docs/release-notes/v${stableVersion}-zh.md`);
   }
 
-  lines.push("### Full Changelog", "", `- ${compareLink(previous, version)}`, "");
+  if (releaseNotesSection(version, "en")) {
+    lines.push(`[English ->](${githubBaseUrl}/blob/main/docs/release-notes/v${stableVersion}-en.md)`, "");
+  }
+  lines.push(notes, "");
+
+  if (includeFullChangelog) {
+    lines.push("### Full Changelog", "", `- ${compareLink(previous, version)}`, "");
+  }
   return lines.join("\n");
 }
 
@@ -249,13 +262,13 @@ function dockerTags(rawVersion) {
     tags.push(
       `${dockerHubImage}:${version}`,
       `${dockerHubImage}:${majorMinor(version)}`,
-      `${dockerHubImage}:latest`,
+      `${dockerHubImage}:${latestTag}`,
       `${ghcrImage}:${version}`,
       `${ghcrImage}:${majorMinor(version)}`,
-      `${ghcrImage}:latest`,
+      `${ghcrImage}:${latestTag}`,
     );
   } else {
-    tags.push(`${dockerHubImage}:${version}`, `${dockerHubImage}:rc`, `${ghcrImage}:${version}`, `${ghcrImage}:rc`);
+    tags.push(`${dockerHubImage}:${version}`, `${dockerHubImage}:${rcTag}`, `${ghcrImage}:${version}`, `${ghcrImage}:${rcTag}`);
   }
 
   return tags;
@@ -263,33 +276,24 @@ function dockerTags(rawVersion) {
 
 function releaseBody(rawVersion, previous) {
   const version = normalizeVersion(rawVersion);
-  const stable = isStableVersion(version);
   const tags = dockerTags(version);
   const dockerHubTags = tags.filter((tag) => tag.startsWith(`${dockerHubImage}:`));
   const ghcrTags = tags.filter((tag) => tag.startsWith(`${ghcrImage}:`));
-  const notes = markdownNotes(version, previous).trimEnd();
+  const notes = markdownNotes(version, previous, { includeFullChangelog: false }).trimEnd();
 
   return [
-    "## Docker images",
+    notes,
+    "",
+    "## Docker 镜像",
     "",
     "- Docker Hub",
     ...dockerHubTags.map((tag) => `  - \`${tag}\``),
     "- GitHub Container Registry",
     ...ghcrTags.map((tag) => `  - \`${tag}\``),
     "",
-    "## Upgrade",
+    "## Full Changelog",
     "",
-    "Back up `.env`, `docker-compose.yml`, and `data/` before upgrading. Production deployments should pin a concrete version tag; `latest` only moves on stable releases.",
-    "",
-    stable
-      ? "This is a stable release. The `latest` Docker tag is updated after the image build succeeds. Docker deployments that already run a self-update capable version can use the in-app update button; older deployments must run `docker compose pull && docker compose up -d` once to bridge to the new layout."
-      : "This is a release candidate. It does not update `latest` and is intended for validation before the stable release.",
-    "",
-    "The `/renewlet` path remains the stable Docker entrypoint. In-app updates only replace `/opt/renewlet/current/renewlet` and use the attached Linux binary archives plus `checksums.txt`.",
-    "",
-    "## Changelog",
-    "",
-    notes,
+    `- ${compareLink(previous, version)}`,
     "",
   ].join("\n");
 }
@@ -297,8 +301,8 @@ function releaseBody(rawVersion, previous) {
 function patchDockerImage(content, version) {
   // Release 附件必须 pin 当前版本，避免用户下载旧 Release 后被 latest 带到未来版本。
   return content
-    .replace(/zhiyingzzhou\/renewlet:latest/g, `${dockerHubImage}:${version}`)
-    .replace(/ghcr\.io\/zhiyingzzhou\/renewlet:latest/g, `${ghcrImage}:${version}`);
+    .replace(new RegExp(escapedRegExp(defaultDockerHubImage), "g"), `${dockerHubImage}:${version}`)
+    .replace(new RegExp(escapedRegExp(defaultGhcrImage), "g"), `${ghcrImage}:${version}`);
 }
 
 function packageDocker(rawVersion) {

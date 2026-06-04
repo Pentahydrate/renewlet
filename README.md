@@ -91,6 +91,8 @@ For production, prefer a concrete stable version tag such as `0.1.0`.
 
 Back up data and config before upgrading:
 
+If you deployed Renewlet before 2026-06-04, open the old version before upgrading and use Export subscriptions -> JSON to save `subscriptions.json`. After upgrading, import that old JSON from Import data. This file is for subscription-data migration only; keep the `.env`, `docker-compose.yml`, and `data/` backup below as well.
+
 ```bash
 tar -czf renewlet-backup-$(date +%F).tgz .env docker-compose.yml data
 ```

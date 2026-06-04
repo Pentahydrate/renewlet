@@ -201,7 +201,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build release body
-        # Release 正文来自人工维护的 CHANGELOG 短摘要，不把全量 git log 刷进发布页。
+        # Release 正文优先来自 docs/release-notes/vX.Y.Z-zh.md，并在顶部放英文版入口；不要把全量 git log 刷进发布页。
         run: node scripts/release.mjs release-body --version "${{ needs.metadata.outputs.version }}" > tmp-release-body.md
 
       - name: Build Docker deployment asset
