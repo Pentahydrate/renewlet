@@ -81,6 +81,8 @@ type calendarFeedLabelResolver struct {
 	paymentMethodByValue map[string]string
 }
 
+type calendarFeedBuiltInLabelKeyResolver func(string) (string, bool)
+
 func handleCalendarFeedStatus(app core.App, e *core.RequestEvent) error {
 	record, err := findGlobalCalendarFeedForUser(app, e.Auth.Id)
 	if err != nil {
@@ -450,7 +452,7 @@ func newCalendarFeedLabelResolver(app core.App, userID string, settings appSetti
 	if err != nil {
 		return resolver, err
 	}
-	// 公开 ICS route 没有登录态上下文；一次性把用户配置转成查找表，避免每个事件扫描配置数组。
+	// 公开 ICS route 没有登录态上下文；用户配置只做优先查找，缺失的内置项回 server i18n，未知自定义 value 保留原文。
 	resolver.categoryByValue = calendarFeedLabelMap(config.Categories, resolver.locale)
 	resolver.paymentMethodByValue = calendarFeedLabelMap(config.PaymentMethods, resolver.locale)
 	return resolver, nil
@@ -462,12 +464,14 @@ func calendarFeedLabelMap(items []customConfigItem, locale appLocale) map[string
 		if item.Value == "" {
 			continue
 		}
-		labels[item.Value] = calendarFeedLocalizedConfigLabel(item.Labels, locale, item.Value)
+		if label := calendarFeedLocalizedConfigLabel(item.Labels, locale); label != "" {
+			labels[item.Value] = label
+		}
 	}
 	return labels
 }
 
-func calendarFeedLocalizedConfigLabel(labels customConfigLabels, locale appLocale, fallback string) string {
+func calendarFeedLocalizedConfigLabel(labels customConfigLabels, locale appLocale) string {
 	if locale == localeEnUS {
 		if labels.EnUS != "" {
 			return labels.EnUS
@@ -475,7 +479,7 @@ func calendarFeedLocalizedConfigLabel(labels customConfigLabels, locale appLocal
 		if labels.ZhCN != "" {
 			return labels.ZhCN
 		}
-		return fallback
+		return ""
 	}
 	if labels.ZhCN != "" {
 		return labels.ZhCN
@@ -483,21 +487,35 @@ func calendarFeedLocalizedConfigLabel(labels customConfigLabels, locale appLocal
 	if labels.EnUS != "" {
 		return labels.EnUS
 	}
-	return fallback
+	return ""
 }
 
 func (resolver calendarFeedLabelResolver) categoryLabel(value string) string {
-	if label, ok := resolver.categoryByValue[value]; ok {
+	return resolver.resolvedLabel(resolver.categoryByValue, calendarFeedBuiltInCategoryLabelKey, value)
+}
+
+func (resolver calendarFeedLabelResolver) paymentMethodLabel(value string) string {
+	return resolver.resolvedLabel(resolver.paymentMethodByValue, calendarFeedBuiltInPaymentMethodLabelKey, value)
+}
+
+func (resolver calendarFeedLabelResolver) resolvedLabel(customLabels map[string]string, builtInLabelKey calendarFeedBuiltInLabelKeyResolver, value string) string {
+	if label, ok := customLabels[value]; ok && label != "" {
 		return label
+	}
+	if key, ok := builtInLabelKey(value); ok {
+		return serverText(resolver.locale, key)
 	}
 	return value
 }
 
-func (resolver calendarFeedLabelResolver) paymentMethodLabel(value string) string {
-	if label, ok := resolver.paymentMethodByValue[value]; ok {
-		return label
-	}
-	return value
+func calendarFeedBuiltInCategoryLabelKey(value string) (string, bool) {
+	key, ok := calendarFeedBuiltInCategoryLabelKeys[value]
+	return key, ok
+}
+
+func calendarFeedBuiltInPaymentMethodLabelKey(value string) (string, bool) {
+	key, ok := calendarFeedBuiltInPaymentMethodLabelKeys[value]
+	return key, ok
 }
 
 type calendarFeedBuildOptions struct {

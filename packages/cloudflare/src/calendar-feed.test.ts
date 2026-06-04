@@ -214,8 +214,74 @@ describe("calendar feed worker handlers", () => {
     expect(env.__state.calendarFeedsTableExists).toBe(false);
   });
 
-  it("falls back to subscription values when custom config is missing", async () => {
-    const env = await createCalendarFeedTestEnv({ customConfigJson: null });
+  it("falls back to built-in labels when custom config is missing", async () => {
+    const env = await createCalendarFeedTestEnv({
+      customConfigJson: null,
+      locale: "zh-CN",
+      subscriptions: [
+        subscriptionRow("sub_sentry", "Sentry Team", "active", "monthly", "2099-06-02", {
+          category: "developer_tools",
+          payment_method: "bank_transfer",
+        }),
+      ],
+    });
+    const response = await createCalendarFeed(authorizedRequest("https://renewlet.example/api/app/calendar-feed", {
+      body: "{}",
+      headers: { "accept-language": "zh-CN" },
+      method: "POST",
+    }), env);
+    const created = await response.json() as { calendarFeed: { feedUrl: string } };
+
+    const ics = await (await calendarFeedIcs(new Request(created.calendarFeed.feedUrl), env)).text();
+    const unfoldedIcs = unfoldIcsText(ics);
+
+    expect(unfoldedIcs).toContain("分类：开发工具");
+    expect(unfoldedIcs).toContain("支付方式：银行转账");
+    expect(unfoldedIcs).toContain("CATEGORIES:开发工具");
+    expect(unfoldedIcs).not.toContain("developer_tools");
+    expect(unfoldedIcs).not.toContain("bank_transfer");
+  });
+
+  it("falls back to built-in labels when legacy custom config misses an entry", async () => {
+    const customConfig = createCalendarFeedTestCustomConfig();
+    customConfig.categories = [];
+    customConfig.paymentMethods = [];
+    const env = await createCalendarFeedTestEnv({
+      customConfigJson: JSON.stringify(customConfig),
+      locale: "zh-CN",
+      subscriptions: [
+        subscriptionRow("sub_missing_config", "Missing Config Plan", "active", "monthly", "2099-06-02", {
+          category: "developer_tools",
+          payment_method: "bank_transfer",
+        }),
+      ],
+    });
+    const response = await createCalendarFeed(authorizedRequest("https://renewlet.example/api/app/calendar-feed", {
+      body: "{}",
+      headers: { "accept-language": "zh-CN" },
+      method: "POST",
+    }), env);
+    const created = await response.json() as { calendarFeed: { feedUrl: string } };
+
+    const ics = await (await calendarFeedIcs(new Request(created.calendarFeed.feedUrl), env)).text();
+    const unfoldedIcs = unfoldIcsText(ics);
+
+    expect(unfoldedIcs).toContain("分类：开发工具");
+    expect(unfoldedIcs).toContain("支付方式：银行转账");
+    expect(unfoldedIcs).not.toContain("developer_tools");
+    expect(unfoldedIcs).not.toContain("bank_transfer");
+  });
+
+  it("preserves unknown values when neither custom config nor built-in labels can describe them", async () => {
+    const env = await createCalendarFeedTestEnv({
+      customConfigJson: null,
+      subscriptions: [
+        subscriptionRow("sub_unknown", "Unknown Plan", "active", "monthly", "2099-06-02", {
+          category: "internal_ops",
+          payment_method: "wire_custom",
+        }),
+      ],
+    });
     const response = await createCalendarFeed(authorizedRequest("https://renewlet.example/api/app/calendar-feed", {
       body: "{}",
       headers: { "accept-language": "en-US" },
@@ -226,11 +292,9 @@ describe("calendar feed worker handlers", () => {
     const ics = await (await calendarFeedIcs(new Request(created.calendarFeed.feedUrl), env)).text();
     const unfoldedIcs = unfoldIcsText(ics);
 
-    expect(unfoldedIcs).toContain("Category: developer_tools");
-    expect(unfoldedIcs).toContain("Payment method: credit_card");
-    expect(unfoldedIcs).toContain("CATEGORIES:developer_tools");
-    expect(unfoldedIcs).not.toContain("Developer Tools");
-    expect(unfoldedIcs).not.toContain("Credit Card");
+    expect(unfoldedIcs).toContain("Category: internal_ops");
+    expect(unfoldedIcs).toContain("Payment method: wire_custom");
+    expect(unfoldedIcs).toContain("CATEGORIES:internal_ops");
   });
 });
 
@@ -257,12 +321,14 @@ interface CalendarFeedTestOptions {
   calendarFeedsTableExists?: boolean;
   customConfigJson?: string | null;
   feeds?: CalendarFeedRow[];
+  locale?: "zh-CN" | "en-US";
+  subscriptions?: SubscriptionRow[];
 }
 
 async function createCalendarFeedTestEnv(options: CalendarFeedTestOptions = {}): Promise<CalendarFeedTestEnv> {
   const settings = {
     ...createDefaultAppSettings(),
-    locale: "en-US" as const,
+    locale: options.locale ?? "en-US" as const,
     timezone: "UTC",
     notificationReminderDays: 5,
   };
@@ -290,7 +356,7 @@ async function createCalendarFeedTestEnv(options: CalendarFeedTestOptions = {}):
       ? options.customConfigJson ?? null
       : JSON.stringify(createCalendarFeedTestCustomConfig()),
     settingsJson: JSON.stringify(settings),
-    subscriptions: [
+    subscriptions: options.subscriptions ?? [
       subscriptionRow("sub_active", "Active Plan", "active", "monthly", "2099-06-02"),
       subscriptionRow("sub_paused", "Paused Plan", "paused", "monthly", "2099-06-03"),
       subscriptionRow("sub_cancelled", "Cancelled Plan", "cancelled", "monthly", "2099-06-03"),
@@ -311,7 +377,7 @@ function authorizedRequest(url: string, init: RequestInit = {}): Request {
   return new Request(url, { ...init, headers });
 }
 
-function subscriptionRow(id: string, name: string, status: string, billingCycle: string, nextBillingDate: string): SubscriptionRow {
+function subscriptionRow(id: string, name: string, status: string, billingCycle: string, nextBillingDate: string, overrides: Partial<SubscriptionRow> = {}): SubscriptionRow {
   return {
     id,
     user_id: USER_ID,
@@ -339,6 +405,7 @@ function subscriptionRow(id: string, name: string, status: string, billingCycle:
     extra_json: "{}",
     created_at: `2026-05-29T00:00:0${id.endsWith("active") ? 1 : 2}.000Z`,
     updated_at: "2026-05-29T00:00:00.000Z",
+    ...overrides,
   };
 }
 

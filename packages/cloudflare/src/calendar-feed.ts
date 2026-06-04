@@ -14,6 +14,7 @@ import { randomToken } from "./crypto";
 import { requireAuth } from "./auth";
 import { HttpError, json, ok, readJson, requestLocale } from "./http";
 import { serverFormat, serverText } from "./server-i18n";
+import { calendarFeedBuiltInCategoryLabelKey, calendarFeedBuiltInPaymentMethodLabelKey } from "./calendar-feed-built-in-labels";
 import type { CalendarFeedRow, Env } from "./types";
 
 type CalendarFeedScope = CalendarFeedRow["scope"];
@@ -22,6 +23,8 @@ interface CalendarFeedLabelResolver {
   categoryLabel(value: string): string;
   paymentMethodLabel(value: string | undefined): string | undefined;
 }
+
+type CalendarFeedBuiltInLabelKeyResolver = (value: string) => Parameters<typeof serverText>[1] | undefined;
 
 /** 读取全局续费日历 feed 状态；只返回 URL 展示态，不把 token 拆成独立字段。 */
 export async function readCalendarFeed(request: Request, env: Env): Promise<Response> {
@@ -183,30 +186,45 @@ async function newCalendarFeedLabelResolver(
   userId: string,
   locale: ApiAppSettings["locale"],
 ): Promise<CalendarFeedLabelResolver> {
-  const empty = calendarFeedLabelResolver(new Map<string, string>(), new Map<string, string>());
+  const empty = calendarFeedLabelResolver(new Map<string, string>(), new Map<string, string>(), locale);
   const result = customConfigSchema.safeParse(await getCustomConfig(env, userId));
   if (!result.success) return empty;
-  // 公开 ICS route 没有登录态上下文；每次请求只把用户配置建成一次查找表，事件渲染复用 O(1) label 查询。
+  // 公开 ICS route 没有登录态上下文；用户配置只做优先查找，缺失的内置项回 server i18n，未知自定义 value 保留原文。
   return calendarFeedLabelResolver(
     calendarFeedLabelMap(result.data.categories, locale),
     calendarFeedLabelMap(result.data.paymentMethods, locale),
+    locale,
   );
 }
 
 function calendarFeedLabelResolver(
   categoryByValue: Map<string, string>,
   paymentMethodByValue: Map<string, string>,
+  locale: ApiAppSettings["locale"],
 ): CalendarFeedLabelResolver {
   return {
-    categoryLabel: (value) => categoryByValue.get(value) ?? value,
-    paymentMethodLabel: (value) => value ? paymentMethodByValue.get(value) ?? value : value,
+    categoryLabel: (value) => calendarFeedResolvedLabel(categoryByValue, calendarFeedBuiltInCategoryLabelKey, locale, value),
+    paymentMethodLabel: (value) => value ? calendarFeedResolvedLabel(paymentMethodByValue, calendarFeedBuiltInPaymentMethodLabelKey, locale, value) : value,
   };
+}
+
+function calendarFeedResolvedLabel(
+  customLabels: Map<string, string>,
+  builtInLabelKey: CalendarFeedBuiltInLabelKeyResolver,
+  locale: ApiAppSettings["locale"],
+  value: string,
+): string {
+  const customLabel = customLabels.get(value);
+  if (customLabel) return customLabel;
+  const key = builtInLabelKey(value);
+  return key ? serverText(locale, key) : value;
 }
 
 function calendarFeedLabelMap(items: ApiCustomConfig["categories"], locale: ApiAppSettings["locale"]): Map<string, string> {
   const labels = new Map<string, string>();
   for (const item of items) {
-    labels.set(item.value, calendarFeedLocalizedConfigLabel(item.labels, locale, item.value));
+    const label = calendarFeedLocalizedConfigLabel(item.labels, locale);
+    if (label) labels.set(item.value, label);
   }
   return labels;
 }
@@ -214,10 +232,9 @@ function calendarFeedLabelMap(items: ApiCustomConfig["categories"], locale: ApiA
 function calendarFeedLocalizedConfigLabel(
   labels: ApiCustomConfig["categories"][number]["labels"],
   locale: ApiAppSettings["locale"],
-  fallback: string,
-): string {
-  if (locale === "en-US") return labels["en-US"] || labels["zh-CN"] || fallback;
-  return labels["zh-CN"] || labels["en-US"] || fallback;
+): string | undefined {
+  if (locale === "en-US") return labels["en-US"] || labels["zh-CN"] || undefined;
+  return labels["zh-CN"] || labels["en-US"] || undefined;
 }
 
 async function ensureCalendarFeedSchema(env: Env, locale: ReturnType<typeof requestLocale>): Promise<void> {
