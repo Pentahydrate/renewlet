@@ -251,7 +251,7 @@ msgstr "当前部署不支持一键更新"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/common.ts:69
 msgid "system.noUpdateDescription"
-msgstr "当前部署不需要更新。"
+msgstr "无需操作。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/common.ts:102

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import { withPocketBaseAuthGuard } from "@/lib/auth-session";
 import { settingsResponseSchema, settingsUpdateBodySchema, type ApiAppSettings } from "@/lib/api/schemas/settings";
 import { getApiLocale } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
@@ -51,10 +52,10 @@ export const settingsService = {
       const data = await apiFetch("/api/app/settings", settingsResponseSchema);
       return normalizeSettings(data.settings);
     }
-    const rows = await pb.collection("settings").getFullList<RecordModel>({
+    const rows = await withPocketBaseAuthGuard(pb.collection("settings").getFullList<RecordModel>({
       filter: `user = "${userId}"`,
       perPage: 1,
-    });
+    }));
     return normalizeSettings(rows[0]?.["settings"]);
   },
 
@@ -70,14 +71,14 @@ export const settingsService = {
       });
       return normalizeSettings(data.settings);
     }
-    const rows = await pb.collection("settings").getFullList<RecordModel>({
+    const rows = await withPocketBaseAuthGuard(pb.collection("settings").getFullList<RecordModel>({
       filter: `user = "${userId}"`,
       perPage: 1,
-    });
+    }));
     if (rows[0]) {
-      await pb.collection("settings").update(rows[0].id, { settings: next });
+      await withPocketBaseAuthGuard(pb.collection("settings").update(rows[0].id, { settings: next }));
     } else {
-      await pb.collection("settings").create({ user: userId, settings: next });
+      await withPocketBaseAuthGuard(pb.collection("settings").create({ user: userId, settings: next }));
     }
     return next;
   },

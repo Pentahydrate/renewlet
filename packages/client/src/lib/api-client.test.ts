@@ -3,9 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "./api-client";
 import { okResponseSchema } from "@/lib/api/schemas/common";
 
+const mocks = vi.hoisted(() => ({
+  clearAuthSession: vi.fn(),
+}));
+
+vi.mock("@/lib/auth-session", () => ({
+  clearAuthSession: mocks.clearAuthSession,
+}));
+
 describe("api-client", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    mocks.clearAuthSession.mockReset();
   });
 
   afterEach(() => {
@@ -63,6 +72,7 @@ describe("api-client", () => {
       status: 401,
       code: "UNAUTHORIZED",
     });
+    expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
   });
 
   it("turns legacy Zod field errors into a readable message", async () => {

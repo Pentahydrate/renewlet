@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import { withPocketBaseAuthGuard } from "@/lib/auth-session";
 import { assertDateOnly } from "@/lib/time/date-only";
 import { getApiLocale } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
@@ -181,10 +182,10 @@ export const subscriptionService = {
       };
     }
     const page = Math.max(1, cursor ? Number.parseInt(cursor, 10) : 1);
-    const result = await pb.collection("subscriptions").getList<ApiSubscription>(page, pageSize, {
+    const result = await withPocketBaseAuthGuard(pb.collection("subscriptions").getList<ApiSubscription>(page, pageSize, {
       filter: `user = "${userId}"`,
       sort: "-created",
-    });
+    }));
     return {
       subscriptions: result.items.map(fromApiSubscription),
       nextCursor: page < result.totalPages ? String(page + 1) : null,
@@ -215,7 +216,7 @@ export const subscriptionService = {
       });
       return fromApiSubscription(data.subscription);
     }
-    const row = await pb.collection("subscriptions").create<ApiSubscription>({ ...payload, user: userId });
+    const row = await withPocketBaseAuthGuard(pb.collection("subscriptions").create<ApiSubscription>({ ...payload, user: userId }));
     return fromApiSubscription(row);
   },
 
@@ -228,7 +229,7 @@ export const subscriptionService = {
       });
       return fromApiSubscription(data.subscription);
     }
-    const row = await pb.collection("subscriptions").update<ApiSubscription>(sub.id, payload);
+    const row = await withPocketBaseAuthGuard(pb.collection("subscriptions").update<ApiSubscription>(sub.id, payload));
     return fromApiSubscription(row);
   },
 
@@ -237,6 +238,6 @@ export const subscriptionService = {
       await apiFetch(`/api/app/subscriptions/${id}`, subscriptionDeleteResponseSchema, { method: "DELETE" });
       return;
     }
-    await pb.collection("subscriptions").delete(id);
+    await withPocketBaseAuthGuard(pb.collection("subscriptions").delete(id));
   },
 };

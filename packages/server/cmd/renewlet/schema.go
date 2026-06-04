@@ -39,7 +39,7 @@ func ensureSchema(app core.App) error {
 		return err
 	}
 	users.CreateRule = nil
-	ownerRule := "id = @request.auth.id"
+	ownerRule := "id = @request.auth.id && @request.auth.banned = false"
 	users.ListRule = types.Pointer(ownerRule)
 	users.ViewRule = types.Pointer(ownerRule)
 	users.UpdateRule = types.Pointer(ownerRule)
@@ -227,8 +227,8 @@ func cleanupInvalidSubscriptionLogos(app core.App) error {
 
 func ownerRules(collection *core.Collection) {
 	// 所有业务 collection 都以 user relation 做隔离；route 层管理员能力不能绕过这里的默认 owner 边界。
-	listRule := "user = @request.auth.id"
-	createRule := "@request.auth.id != '' && user = @request.auth.id"
+	listRule := "user = @request.auth.id && @request.auth.banned = false"
+	createRule := "@request.auth.id != '' && @request.auth.banned = false && user = @request.auth.id"
 	collection.ListRule = types.Pointer(listRule)
 	collection.ViewRule = types.Pointer(listRule)
 	collection.CreateRule = types.Pointer(createRule)

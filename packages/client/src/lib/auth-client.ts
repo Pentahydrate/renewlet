@@ -6,7 +6,7 @@
  *
  * 状态链路：
  *   Cloudflare localStorage token -> shared query 校验 /session -> useSession -> AuthSync 路由/query 刷新
- *   PocketBase authStore restore/login/logout -> toSessionData -> useSession -> AuthSync 路由/query 刷新
+ *   PocketBase authStore token -> authRefresh 校验 -> toSessionData -> useSession -> AuthSync 路由/query 刷新
  *
  * 注意： `SessionData.session.id` 使用 token 作为变化标识，只用于前端缓存失效；
  * 不要把它当成可展示或可持久化的业务 session id。
@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-query";
 import { pb, type RecordModel } from "@/lib/pocketbase";
 import { getLocaleHeaders } from "@/i18n/api-locale";
+import { clearAuthSession } from "@/lib/auth-session";
 import {
   getCloudflareAuthHeader,
   isCloudflareSessionFresh,
@@ -40,10 +41,38 @@ export interface UseSessionResult {
 
 const CLOUDFLARE_SESSION_QUERY_KEY = ["auth-session"] as const;
 const CLOUDFLARE_SESSION_STALE_TIME_MS = 60_000;
+const POCKETBASE_SESSION_FRESH_TIME_MS = 60_000;
 const CLOUDFLARE_PASSWORD_RESET_DISABLED = "Email password reset is not enabled for this deployment.";
 // Cloudflare 页面会被 ProtectedRoute、AuthSync 和业务 hook 同时消费会话；同 token 只允许一条 /session 在途，防止线上切页时 session 风暴。
 let cloudflareSessionRefreshToken: string | null = null;
 let cloudflareSessionRefreshPromise: Promise<SessionData | null> | null = null;
+// PocketBase authStore 是本地缓存；恢复窗口只允许一条 authRefresh，服务端确认前不能放行私有页面。
+let pocketBaseSessionRefreshToken: string | null = null;
+let pocketBaseSessionRefreshPromise: Promise<SessionData | null> | null = null;
+let pocketBaseSessionVerifiedToken: string | null = null;
+let pocketBaseSessionVerifiedRecord: RecordModel | null = null;
+let pocketBaseSessionVerifiedAt = 0;
+let pocketBaseAuthEpoch = 0;
+
+function clearPocketBaseVerifiedSession() {
+  pocketBaseSessionVerifiedToken = null;
+  pocketBaseSessionVerifiedRecord = null;
+  pocketBaseSessionVerifiedAt = 0;
+}
+
+function rememberPocketBaseVerifiedSession(session: SessionData) {
+  pocketBaseSessionVerifiedToken = session.session.id;
+  pocketBaseSessionVerifiedRecord = pb.authStore.record;
+  pocketBaseSessionVerifiedAt = Date.now();
+}
+
+function restorePocketBaseVerifiedSession() {
+  if (pocketBaseSessionVerifiedToken && pocketBaseSessionVerifiedRecord) {
+    pb.authStore.save(pocketBaseSessionVerifiedToken, pocketBaseSessionVerifiedRecord);
+    return;
+  }
+  clearAuthSession(pb.authStore.token);
+}
 // 多个 useSession 共享一个 QueryClient；引用计数保证同 tab 只注册一条 localStorage 广播链。
 const cloudflareQueryClientSubscriptions = new WeakMap<QueryClient, {
   count: number;
@@ -105,6 +134,48 @@ async function refreshCloudflareSession(): Promise<SessionData | null> {
   return cloudflareSessionRefreshPromise;
 }
 
+async function refreshPocketBaseSession(): Promise<SessionData | null> {
+  const token = pb.authStore.token;
+  if (!token) {
+    clearPocketBaseVerifiedSession();
+    return null;
+  }
+  if (pocketBaseSessionRefreshPromise) {
+    return pocketBaseSessionRefreshPromise;
+  }
+
+  pocketBaseSessionRefreshToken = token;
+  const authEpoch = pocketBaseAuthEpoch;
+  pocketBaseSessionRefreshPromise = (async () => {
+    try {
+      await pb.collection("users").authRefresh();
+      if (authEpoch !== pocketBaseAuthEpoch) {
+        restorePocketBaseVerifiedSession();
+        return null;
+      }
+      const session = getCurrentSession();
+      if (session) {
+        rememberPocketBaseVerifiedSession(session);
+      }
+      return session;
+    } catch {
+      // PocketBase token 是无状态 bearer；数据目录重置、用户删除或禁用后必须清本地缓存，不能继续信 authStore 快照。
+      clearAuthSession(token);
+      if (!pb.authStore.token || pb.authStore.token === token) {
+        clearPocketBaseVerifiedSession();
+      }
+      return null;
+    }
+  })().finally(() => {
+    if (pocketBaseSessionRefreshToken === token) {
+      pocketBaseSessionRefreshToken = null;
+      pocketBaseSessionRefreshPromise = null;
+    }
+  });
+
+  return pocketBaseSessionRefreshPromise;
+}
+
 function toSessionData(record: RecordModel | null | undefined): SessionData | null {
   // SDK record 是运行时宽类型；这里用保守默认值阻断脏字段继续向组件树扩散。
   if (!pb.authStore.isValid || !record) return null;
@@ -122,6 +193,13 @@ function toSessionData(record: RecordModel | null | undefined): SessionData | nu
 
 function getCurrentSession(): SessionData | null {
   return toSessionData(pb.authStore.record);
+}
+
+function hasFreshPocketBaseSession() {
+  const token = pb.authStore.token;
+  return Boolean(token) &&
+    token === pocketBaseSessionVerifiedToken &&
+    Date.now() - pocketBaseSessionVerifiedAt < POCKETBASE_SESSION_FRESH_TIME_MS;
 }
 
 function subscribeQueryClientToCloudflareSession(queryClient: QueryClient): () => void {
@@ -179,7 +257,9 @@ export const authClient = {
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     });
-    const [pocketBaseData, setPocketBaseData] = useState<SessionData | null>(() => getCurrentSession());
+    const [pocketBaseData, setPocketBaseData] = useState<SessionData | null>(() =>
+      hasFreshPocketBaseSession() ? getCurrentSession() : null
+    );
     const [isPocketBasePending, setIsPocketBasePending] = useState(!isCloudflareRuntime);
 
     useEffect(() => {
@@ -189,10 +269,29 @@ export const authClient = {
 
     useEffect(() => {
       if (isCloudflareRuntime) return;
-      // `fireImmediately=true` 可覆盖刷新后 authStore 异步恢复的首帧状态。
+      const verify = () => {
+        if (!pb.authStore.token) {
+          if (pocketBaseSessionRefreshPromise) pocketBaseAuthEpoch += 1;
+          clearPocketBaseVerifiedSession();
+          setPocketBaseData(null);
+          setIsPocketBasePending(false);
+          return;
+        }
+        if (hasFreshPocketBaseSession()) {
+          setPocketBaseData(getCurrentSession());
+          setIsPocketBasePending(false);
+          return;
+        }
+        setPocketBaseData(null);
+        setIsPocketBasePending(true);
+        void refreshPocketBaseSession().then((session) => {
+          setPocketBaseData(session);
+          setIsPocketBasePending(false);
+        });
+      };
+      // `fireImmediately=true` 可覆盖刷新后 authStore 异步恢复的首帧状态；但必须先 authRefresh 才能放行私有页面。
       const unsubscribe = pb.authStore.onChange(() => {
-        setPocketBaseData(getCurrentSession());
-        setIsPocketBasePending(false);
+        verify();
       }, true);
       return unsubscribe;
     }, []);
@@ -221,8 +320,11 @@ export const authClient = {
           writeCloudflareSession(data);
           return { data, error: null };
         }
+        pocketBaseAuthEpoch += 1;
         await pb.collection("users").authWithPassword(email, password);
-        return { data: getCurrentSession(), error: null };
+        const session = getCurrentSession();
+        if (session) rememberPocketBaseVerifiedSession(session);
+        return { data: session, error: null };
       } catch (error) {
         return { data: null, error };
       }
@@ -239,7 +341,8 @@ export const authClient = {
       }
       return;
     }
-    pb.authStore.clear();
+    pocketBaseAuthEpoch += 1;
+    clearAuthSession();
   },
 
   async requestPasswordReset(email: string) {

@@ -68,7 +68,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "system.checkDeferredTitle": "暂时无法检查更新",
         "system.currentVersion": "当前版本",
         "system.latestVersion": "最新版本",
-        "system.noUpdateDescription": "当前部署不需要更新。",
+        "system.noUpdateDescription": "无需操作。",
         "system.noUpdateTitle": "已是最新版本",
         "system.openUpdateDialog": "打开系统更新",
         "system.cloudflareDeployGuide": "Cloudflare 部署说明",

@@ -169,7 +169,6 @@ export function SystemUpdateDialog({ open, onOpenChange }: SystemUpdateDialogPro
                 currentVersion={version.currentVersion}
                 hasUpdate={version.hasUpdate}
                 checkSucceeded={version.checkSucceeded}
-                statusText={!version.checkSucceeded ? t("system.checkDeferredTitle") : version.hasUpdate ? `${t("system.latestVersion")}: v${version.latestVersion}` : t("system.noUpdateTitle")}
               />
 
               {updateError ? (
@@ -260,7 +259,7 @@ export function SystemVersionBadge() {
   );
 }
 
-function VersionHero({ currentVersion, hasUpdate, checkSucceeded, statusText }: { currentVersion: string; hasUpdate: boolean; checkSucceeded: boolean; statusText: string }) {
+function VersionHero({ currentVersion, hasUpdate, checkSucceeded }: { currentVersion: string; hasUpdate: boolean; checkSucceeded: boolean }) {
   return (
     <div className="text-center">
       <div className="inline-flex min-w-0 items-center justify-center gap-2">
@@ -271,7 +270,6 @@ function VersionHero({ currentVersion, hasUpdate, checkSucceeded, statusText }: 
           </span>
         ) : null}
       </div>
-      <p className="mt-1 truncate text-sm text-muted-foreground">{statusText}</p>
     </div>
   );
 }
@@ -317,9 +315,10 @@ function StatePanel({ icon, tone, title, description }: { icon: ReactNode; tone:
     success: "border-primary/30 bg-primary/10 text-primary",
     warning: "border-amber-400/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
   }[tone];
+  const statusRole = tone === "danger" ? "alert" : "status";
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg border p-3 ${toneClassName}`}>
+    <div className={`flex items-center gap-3 rounded-lg border p-3 ${toneClassName}`} role={statusRole}>
       <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background/60">{icon}</div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold">{title}</div>

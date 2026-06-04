@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import { withPocketBaseAuthGuard } from "@/lib/auth-session";
 import { uploadImageResponseSchema, type ApiUploadImageResponse, type UploadKind } from "@/lib/api/schemas/media";
 import { getApiLocale } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
@@ -105,7 +106,7 @@ export const assetService = {
     }
 
     form.append("user", userId);
-    const record = await pb.collection("assets").create<RecordModel>(form);
+    const record = await withPocketBaseAuthGuard(pb.collection("assets").create<RecordModel>(form));
     const storedFile = typeof record["file"] === "string" ? record["file"] : "";
     if (!storedFile) throw new Error(translate(getApiLocale(), "media.uploadFailed"));
     return { url: `/api/app/assets/${record.id}` };
@@ -122,11 +123,11 @@ export const assetService = {
       return await apiFetch(`/api/app/assets?${params.toString()}`, uploadedAssetPageSchema);
     }
 
-    const result = await pb.collection("assets").getList<RecordModel>(page, UPLOADED_LOGOS_PAGE_SIZE, {
+    const result = await withPocketBaseAuthGuard(pb.collection("assets").getList<RecordModel>(page, UPLOADED_LOGOS_PAGE_SIZE, {
       filter: pb.filter("kind = {:kind}", { kind: "logo" }),
       sort: "-updated",
       fields: UPLOADED_LOGOS_FIELDS,
-    });
+    }));
     return {
       items: result.items.map(normalizeAsset).filter((asset): asset is UploadedAsset => asset !== null),
       page: result.page,

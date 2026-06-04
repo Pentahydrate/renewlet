@@ -16,6 +16,28 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+func servePocketBaseTestRequest(t *testing.T, app core.App, method string, target string, body string, token string) *httptest.ResponseRecorder {
+	t.Helper()
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	registerRoutes(app, router)
+	mux, err := router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(method, target, bytes.NewBufferString(body))
+	req.Header.Set("content-type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", token)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	return rec
+}
+
 func serveTestRequest(t *testing.T, app core.App, method string, target string, body string, token string) *httptest.ResponseRecorder {
 	t.Helper()
 	router, err := apis.NewRouter(app)
@@ -559,6 +581,64 @@ func TestAccountPasswordRouteRequiresCurrentPassword(t *testing.T) {
 	}
 	if !reloadedUser.ValidatePassword("password123") {
 		t.Fatal("expected wrong current password to keep the old password")
+	}
+}
+
+func TestBannedUserCannotRefreshOrUseExistingPocketBaseToken(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	user, token := createRouteTestUser(t, app, "user")
+	subscriptions, err := app.FindCollectionByNameOrId("subscriptions")
+	if err != nil {
+		t.Fatal(err)
+	}
+	subscription := core.NewRecord(subscriptions)
+	subscription.Set("user", user.Id)
+	subscription.Set("name", "Banned token test")
+	subscription.Set("price", 12)
+	subscription.Set("currency", "USD")
+	subscription.Set("billingCycle", "monthly")
+	subscription.Set("category", "Software")
+	subscription.Set("status", "active")
+	subscription.Set("startDate", "2026-06-04")
+	subscription.Set("nextBillingDate", "2026-07-04")
+	if err := app.Save(subscription); err != nil {
+		t.Fatal(err)
+	}
+	user.Set("banned", true)
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+
+	refreshRes := servePocketBaseTestRequest(t, app, http.MethodPost, "/api/collections/users/auth-refresh", `{}`, token)
+	if refreshRes.Code != http.StatusUnauthorized {
+		t.Fatalf("expected banned auth refresh to return 401, got %d: %s", refreshRes.Code, refreshRes.Body.String())
+	}
+
+	listRes := servePocketBaseTestRequest(t, app, http.MethodGet, "/api/collections/subscriptions/records", "", token)
+	if listRes.Code != http.StatusOK {
+		t.Fatalf("expected banned collection list to preserve PocketBase list status, got %d: %s", listRes.Code, listRes.Body.String())
+	}
+	if strings.Contains(listRes.Body.String(), subscription.Id) {
+		t.Fatalf("expected banned collection list not to return private record, got %s", listRes.Body.String())
+	}
+}
+
+func TestDeletedUserTokenCannotUseCustomAuthenticatedRoutes(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	user, token := createRouteTestUser(t, app, "user")
+	if err := app.Delete(user); err != nil {
+		t.Fatal(err)
+	}
+
+	res := serveTestRequest(t, app, http.MethodGet, "/api/app/notifications/history?status=all&limit=5", "", token)
+	if res.Code != http.StatusUnauthorized {
+		t.Fatalf("expected deleted user token to return 401, got %d: %s", res.Code, res.Body.String())
 	}
 }
 

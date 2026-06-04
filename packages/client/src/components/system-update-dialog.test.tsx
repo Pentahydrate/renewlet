@@ -35,7 +35,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "system.checkFailedTitle": "版本检查失败",
         "system.currentVersion": "当前版本",
         "system.latestVersion": "最新版本",
-        "system.noUpdateDescription": "当前部署不需要更新。",
+        "system.noUpdateDescription": "无需操作。",
         "system.noUpdateTitle": "已是最新版本",
         "system.openUpdateDialog": "打开系统更新",
         "system.cloudflareDeployGuide": "Cloudflare 部署说明",
@@ -163,8 +163,10 @@ describe("SystemUpdateDialog", () => {
 
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
 
-    expect((await screen.findAllByText("已是最新版本")).length).toBeGreaterThan(0);
-    expect(await screen.findByText("当前部署不需要更新。")).toBeInTheDocument();
+    expect(await screen.findByText("已是最新版本")).toBeInTheDocument();
+    expect(screen.getAllByText("已是最新版本")).toHaveLength(1);
+    expect(screen.getByText("无需操作。")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("已是最新版本");
     expect(screen.queryByText("暂时无法检查更新")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "立即更新" })).not.toBeInTheDocument();
   });
@@ -288,6 +290,7 @@ describe("SystemUpdateDialog", () => {
     await user.click(await screen.findByRole("button", { name: "立即更新" }));
 
     expect(await screen.findByText("更新失败")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("更新失败");
     expect(screen.getByRole("button", { name: "重试" })).toBeInTheDocument();
   });
 
@@ -342,7 +345,8 @@ describe("SystemUpdateDialog", () => {
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
 
     await screen.findByText("GitHub API 临时限流，请稍后重新检查。");
-    expect(screen.getAllByText("暂时无法检查更新").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("暂时无法检查更新")).toHaveLength(1);
+    expect(screen.getByRole("status")).toHaveTextContent("暂时无法检查更新");
     expect(screen.getByText("GitHub API 临时限流，请稍后重新检查。")).toBeInTheDocument();
     expect(screen.queryByText("已是最新版本")).not.toBeInTheDocument();
   });

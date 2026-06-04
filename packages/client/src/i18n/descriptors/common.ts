@@ -70,7 +70,7 @@ export const messages = [
   msg({ id: "system.updateAvailableTitle", message: "发现新版本" }),
   msg({ id: "system.updateAvailableDescription", message: "可以更新到 v{version}。更新会替换 Docker 运行二进制。" }),
   msg({ id: "system.noUpdateTitle", message: "已是最新版本" }),
-  msg({ id: "system.noUpdateDescription", message: "当前部署不需要更新。" }),
+  msg({ id: "system.noUpdateDescription", message: "无需操作。" }),
   msg({ id: "system.releaseLink", message: "发布页" }),
   msg({ id: "system.cloudflareDeployGuide", message: "Cloudflare 部署说明" }),
   msg({ id: "system.viewChangelog", message: "查看更新日志" }),

@@ -251,7 +251,7 @@ msgstr "In-app update is not supported here"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/common.ts:69
 msgid "system.noUpdateDescription"
-msgstr "This deployment does not need an update."
+msgstr "No action needed."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/common.ts:102

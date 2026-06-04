@@ -13,6 +13,7 @@ import (
 func newSchemaTestApp(t *testing.T) *pocketbase.PocketBase {
 	t.Helper()
 	app := pocketbase.NewWithConfig(pocketbase.Config{DefaultDataDir: t.TempDir()})
+	registerAuthHooks(app)
 	if err := app.Bootstrap(); err != nil {
 		t.Fatal(err)
 	}

@@ -23,6 +23,7 @@
  * 注意： 不要恢复 `apiFetch<T>` 式的纯类型断言；本文件是前端拒绝异常 API 响应的唯一运行时边界。
  */
 import { getAuthHeader } from "@/lib/pocketbase";
+import { clearAuthSession } from "@/lib/auth-session";
 import { getApiLocale, getLocaleHeaders } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
 import { z } from "zod";
@@ -253,6 +254,9 @@ export async function apiFetch<Schema extends z.ZodType>(
 
   if (!res.ok) {
     const message = getErrorMessage(json) || res.statusText || "Request failed";
+    if (res.status === 401) {
+      clearAuthSession();
+    }
     throw new ApiError(message, res.status, json, getErrorCode(json));
   }
 
