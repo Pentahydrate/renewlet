@@ -64,6 +64,7 @@ PR 标题和 commit 使用 Conventional Commits。示例：`feat: add notificati
 3. 输入 RC 编号，例如 `1`。
 4. workflow 会用 release bot token 创建 `v0.1.0-rc.1` tag。
 5. GitHub 只有在 tag 由 release bot token 推送时，才会启动 tag 驱动的 `Release Publish` workflow。默认 `GITHUB_TOKEN` 创建的 tag 不会触发后续 workflow。
+   `Release Publish` 会在 softprops 创建 RC GitHub prerelease 前删除同 tag 残留 draft；旧 draft 否则可能让首次发布在 finalizing 时撞上 `tag_name already_exists`。
 6. `Release Publish` 会构建并推送：
    - `zhiyingzzhou/renewlet:0.1.0-rc.1`
    - `zhiyingzzhou/renewlet:rc`

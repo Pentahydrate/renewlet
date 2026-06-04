@@ -64,6 +64,7 @@ Add these repository settings before running `Maintainer Release`:
 3. Enter the RC number, for example `1`.
 4. The workflow creates tag `v0.1.0-rc.1` with the release bot token.
 5. GitHub only starts the tag-driven `Release Publish` workflow when the tag is pushed by the release bot token. Tags created by the default `GITHUB_TOKEN` do not trigger follow-up workflows.
+   Before softprops creates the RC GitHub prerelease, `Release Publish` deletes stale draft Releases with the same tag because a leftover draft can make the first publish fail with `tag_name already_exists`.
 6. `Release Publish` builds and pushes:
    - `zhiyingzzhou/renewlet:0.1.0-rc.1`
    - `zhiyingzzhou/renewlet:rc`

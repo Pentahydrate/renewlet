@@ -210,6 +210,20 @@ function checkDockerSelfUpdateLayout() {
       throw new Error(`release-publish.yml must keep self-update release asset snippet: ${snippet}`);
     }
   }
+  // GitHub Release 仍交给 softprops；RC 前置清理只移除同 tag 残留 draft，避免首次发布撞 duplicate tag。
+  for (const snippet of [
+    "Cleanup stale draft release",
+    "if: ${{ needs.metadata.outputs.is-stable != 'true' }}",
+    "uses: actions/github-script@v9.0.0",
+    "item.draft && item.tag_name === tag",
+    "github.rest.repos.deleteRelease",
+    "uses: softprops/action-gh-release@v3.0.0",
+    "fail_on_unmatched_files: true",
+  ]) {
+    if (!releaseWorkflow.includes(snippet)) {
+      throw new Error(`release-publish.yml must keep GitHub Release hygiene snippet: ${snippet}`);
+    }
+  }
 }
 
 function checkCloudflareDeployMigrationScript() {

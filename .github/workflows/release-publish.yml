@@ -228,6 +228,29 @@ jobs:
           done
           (cd tmp/release && sha256sum renewlet_${{ needs.metadata.outputs.version }}_linux_*.tar.gz > checksums.txt)
 
+      - name: Cleanup stale draft release
+        if: ${{ needs.metadata.outputs.is-stable != 'true' }}
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const tag = `v${{ needs.metadata.outputs.version }}`;
+            const { owner, repo } = context.repo;
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            // RC 应直接发布为 prerelease；同 tag 残留 draft 会让 softprops 在 finalizing 撞 tag_name already_exists。
+            for (const release of releases.filter((item) => item.draft && item.tag_name === tag)) {
+              core.info(`Deleting stale draft release ${release.id} for ${tag}`);
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.id,
+              });
+            }
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3.0.0
         with:
@@ -235,6 +258,7 @@ jobs:
           prerelease: ${{ needs.metadata.outputs.is-stable != 'true' }}
           draft: ${{ needs.metadata.outputs.is-stable == 'true' }}
           body_path: tmp-release-body.md
+          fail_on_unmatched_files: true
           files: |
             tmp/release/renewlet-docker-v${{ needs.metadata.outputs.version }}.zip
             tmp/release/renewlet_${{ needs.metadata.outputs.version }}_linux_amd64.tar.gz
