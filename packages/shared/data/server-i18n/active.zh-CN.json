@@ -163,6 +163,7 @@
   "system.updateUnsupportedDockerBridge": "未找到可替换的 Docker 运行二进制，请先用 docker compose pull && docker compose up -d 升级一次。",
   "system.updateUnsupportedLinuxDocker": "页面内一键更新只支持 Linux Docker 镜像。",
   "system.updateUnsupportedNotRelease": "当前不是 Release 构建，请使用源码或镜像方式升级。",
+  "system.updateUnsupportedReleaseAsset": "目标 Release 暂缺页面内更新所需附件：{asset}。请稍后重新检查，或打开 GitHub Release 手动查看。",
   "system.updateUnsupportedSelfUpdateDisabled": "页面内一键更新已被 RENEWLET_SELF_UPDATE_ENABLED=false 禁用，请使用 docker compose pull && docker compose up -d 升级。",
   "system.updateUnsupportedRuntime": "当前部署不支持页面内一键更新，请使用原部署方式手动升级。",
   "system.versionCheckAccessWarning": "暂时无法访问 GitHub Release。若部署环境共用出口或受限，请稍后重试，或配置 RENEWLET_GITHUB_TOKEN 后重新检查。",

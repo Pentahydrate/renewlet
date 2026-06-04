@@ -14,1777 +14,1786 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:77
+#: src/i18n/descriptors/subscription.ts:124
 msgid "subscriptions.filteredCount"
 msgstr "（从 {count} 个中筛选）"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:259
+#: src/i18n/descriptors/subscription.ts:320
 msgid "statistics.monthlyCostHint"
 msgstr "(月费用)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:261
+#: src/i18n/descriptors/subscription.ts:322
 msgid "statistics.monthlyBudgetHint"
 msgstr "(月预算: {amount})"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:238
+#: src/i18n/descriptors/subscription.ts:299
 msgid "statistics.ratesUpdatedAt"
 msgstr "(汇率更新于 {date})"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:260
+#: src/i18n/descriptors/subscription.ts:321
 msgid "statistics.subscriptionCountHint"
 msgstr "(订阅数量)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:286
+#: src/i18n/descriptors/subscription.ts:347
 msgid "calendar.renewalCount"
 msgstr "{count} 个订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:176
+#: src/i18n/descriptors/subscription.ts:223
 msgid "import.previewCount"
 msgstr "{count} 条记录"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:296
+#: src/i18n/descriptors/subscription.ts:357
 msgid "calendar.dayRenewalCount"
 msgstr "{date} {count} 个续费"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:295
+#: src/i18n/descriptors/subscription.ts:356
 msgid "calendar.dayRenewals"
 msgstr "{date} 续费"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:65
+#: src/i18n/descriptors/subscription.ts:112
 msgid "subscription.card.renewsInDays"
 msgstr "{days} 天后续费"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:278
+#: src/i18n/descriptors/subscription.ts:339
 msgid "upcoming.daysShort"
 msgstr "{days}天"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:212
+#: src/i18n/descriptors/subscription.ts:262
 msgid "import.warning.dateInvalid"
 msgstr "{field} 缺失或格式无效，已使用 {fallback}。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:208
+#: src/i18n/descriptors/subscription.ts:258
 msgid "import.warning.forSubscription"
 msgstr "{name}：{warning}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:232
+#: src/i18n/descriptors/subscription.ts:293
 msgid "statistics.perMonth"
 msgstr "/ 月"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:284
+#: src/i18n/descriptors/subscription.ts:345
 msgid "calendar.more"
 msgstr "+{count} 更多"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:149
+#: src/i18n/descriptors/subscription.ts:196
 msgid "import.wallosGuideApiTitle"
 msgstr "API JSON"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:156
+#: src/i18n/descriptors/subscription.ts:203
 msgid "import.wallosGuideZipTitle"
 msgstr "backup.zip"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:132
+#: src/i18n/descriptors/subscription.ts:179
 msgid "import.wallosGuideDescription"
 msgstr "backup.zip 保留 DB 和 Logo；UI JSON 只适合轻量迁移。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:158
+#: src/i18n/descriptors/subscription.ts:205
 msgid "import.wallosGuideValueCode"
 msgstr "code"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:152
+#: src/i18n/descriptors/subscription.ts:199
 msgid "import.wallosGuideValueCodeOrId"
 msgstr "code / id"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:157
+#: src/i18n/descriptors/subscription.ts:204
 msgid "import.wallosGuideZipNote"
 msgstr "DB + 本地 Logo"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:139
-msgid "import.wallosGuideColumnLogo"
-msgstr "Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:201
-msgid "import.assetProgress"
-msgstr "Logo {done}/{total}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:142
-msgid "import.wallosGuideJsonTitle"
-msgstr "UI JSON"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:219
-msgid "import.warning.wallosCurrencyIdOnly"
-msgstr "Wallos API 内容只有 currency_id，没有 currencies.code，已使用当前默认货币。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:215
-msgid "import.warning.wallosMissingLogoFile"
-msgstr "Wallos Logo 文件不在导入包内，已跳过，可在预览中手动修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:214
-msgid "import.warning.wallosExternalLogo"
-msgstr "Wallos Logo 是外链，已按原地址保留。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:213
-msgid "import.warning.renewletLegacyBillingCycleDefaulted"
-msgstr "旧版 Renewlet 扣费周期无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:214
-msgid "import.warning.renewletLegacyCurrencyDefaulted"
-msgstr "旧版 Renewlet 货币无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:215
-msgid "import.warning.renewletLegacyCustomDaysDefaulted"
-msgstr "旧版 Renewlet 自定义周期天数无效，已按 {fallback} 天导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:216
-msgid "import.warning.renewletLegacyLogoDropped"
-msgstr "旧版 Renewlet Logo 形态已不再支持，已清空，可在预览中重新指定。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:217
-msgid "import.warning.renewletLegacyPriceDefaulted"
-msgstr "旧版 Renewlet 价格无效，已按 0 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:218
-msgid "import.warning.renewletLegacyReminderDaysDefaulted"
-msgstr "旧版 Renewlet 提醒提前天数无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:219
-msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
-msgstr "旧版 Renewlet 重复提醒间隔无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:220
-msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
-msgstr "旧版 Renewlet 重复提醒窗口无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:221
-msgid "import.warning.renewletLegacyStatusDefaulted"
-msgstr "旧版 Renewlet 状态无效，已按 {fallback} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.warning.renewletLegacyTagsTrimmed"
-msgstr "旧版 Renewlet 标签包含无效或超长值，已清理，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:211
-msgid "import.warning.wallosDisplayLowConfidence"
-msgstr "Wallos UI JSON 不包含原始 ID；再次导入时会按名称、网址、分类和周期查找已有记录。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:220
-msgid "import.warning.currencySymbolAmbiguous"
-msgstr "Wallos 价格符号 {symbol} 可对应多个币种，已按 {currency} 导入，可在预览中修改。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:206
-msgid "import.field.renewletDueDate"
-msgstr "Renewlet 下次扣费日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:207
-msgid "import.field.renewletStartDate"
-msgstr "Renewlet 开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:208
-msgid "import.field.renewletTrialEndDate"
-msgstr "Renewlet 试用结束日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:206
-msgid "import.field.wallosDueDate"
-msgstr "Wallos 到期日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:207
-msgid "import.field.wallosStartDate"
-msgstr "Wallos 开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:131
-msgid "import.wallosGuideTitle"
-msgstr "Wallos 来源提示"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:169
-msgid "import.wallosUser"
-msgstr "Wallos 用户"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:218
-msgid "import.warning.wallosNotifyDisabled"
-msgstr "Wallos 这条订阅关闭了通知；Renewlet 没有单条通知开关，已保留默认提前 3 天提醒。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:161
-msgid "import.wallosGuideDbTitle"
-msgstr "wallos.db"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:52
-msgid "subscription.oneTimeDateHelp"
-msgstr "一次性购买不会自动推算后续续费日。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:216
-msgid "import.warning.wallosOneTime"
-msgstr "一次性购买已按买断记录导入，不参与自动续费。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:281
-msgid "calendar.previousMonth"
-msgstr "上个月"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:282
-msgid "calendar.nextMonth"
-msgstr "下个月"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:291
-msgid "calendar.nextBilling"
-msgstr "下次扣费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:143
-msgid "import.wallosGuideJsonNote"
-msgstr "个人资料页导出"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:163
-msgid "import.wallosGuideValueFilenameOnly"
-msgstr "仅文件名"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:145
-msgid "import.wallosGuideValueDefaultCurrency"
-msgstr "仅符号"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:277
-msgid "upcoming.todayShort"
-msgstr "今"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:64
-msgid "subscription.card.renewsToday"
-msgstr "今天续费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
-msgid "subscription.field.price"
-msgstr "价格"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:109
-msgid "subscriptions.csv.price"
-msgstr "价格"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:35
-msgid "subscription.placeholder.name"
-msgstr "例如: Netflix, Spotify"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:10
-msgid "subscription.dialogEditSubmit"
-msgstr "保存修改"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:194
-msgid "import.logoEdit"
-msgstr "修改 Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:197
-msgid "import.logoEditTitle"
-msgstr "修改导入 Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:8
-msgid "subscription.dialogEditDescription"
-msgstr "修改订阅名称、价格、扣费周期、日期、Logo 和标签等信息。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:253
-msgid "statistics.annualSavings"
-msgstr "停用年节省"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:251
-msgid "statistics.monthlySavings"
-msgstr "停用月节省"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:254
-msgid "statistics.annualSavingsDescription"
-msgstr "停用月节省乘以 12，用于估算一年少支出的订阅费用。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:187
-msgid "import.filter.all"
-msgstr "全部"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:76
-msgid "subscriptions.count"
-msgstr "共 {count} 个订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:267
-msgid "dashboard.totalSubscriptions"
-msgstr "共 {count} 个订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:246
-msgid "statistics.mostExpensive"
-msgstr "最昂贵订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:247
-msgid "statistics.mostExpensiveNamed"
-msgstr "最贵: {name}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:172
-msgid "import.conflictMode"
-msgstr "冲突处理"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:25
-msgid "subscription.field.category"
-msgstr "分类"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:112
-msgid "subscriptions.csv.category"
-msgstr "分类"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:290
-msgid "calendar.category"
-msgstr "分类"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:256
-msgid "statistics.categoryView"
-msgstr "分类视图"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:41
-msgid "subscription.tags.create"
-msgstr "创建标签「{tag}」"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:68
-msgid "subscription.card.duePrefix"
-msgstr "到期: {date}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:88
-msgid "subscriptions.sort.renewalAsc"
-msgstr "到期最近"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:89
-msgid "subscriptions.sort.renewalDesc"
-msgstr "到期最远"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:31
-msgid "subscription.field.reminder"
-msgstr "到期提醒"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:30
-msgid "subscription.field.nextBillingDate"
-msgstr "到期日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:115
-msgid "subscriptions.csv.nextBillingDate"
-msgstr "到期日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:14
-msgid "subscription.validation.dateOrderInvalid"
-msgstr "到期日期不能早于开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:239
-msgid "statistics.refreshRates"
-msgstr "刷新汇率"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:235
-msgid "statistics.budgetRemaining"
-msgstr "剩余预算"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.validation.tagTooLong"
-msgstr "单个标签不能超过 {count} 个字符"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:93
-msgid "subscriptions.sort.priceAsc"
-msgstr "单次扣费最低"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:92
-msgid "subscriptions.sort.priceDesc"
-msgstr "单次扣费最高"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:268
-msgid "dashboard.upcomingRenewals"
-msgstr "即将续费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:151
-msgid "import.wallosGuideValueOriginalId"
-msgstr "原 ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:137
-msgid "import.wallosGuideColumnId"
-msgstr "原始 ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:198
-msgid "import.logoPreviewHint"
-msgstr "只影响本次导入，预览阶段不会上传资产。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:177
-msgid "import.ready"
-msgstr "可导入"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:154
-msgid "import.wallosGuideValueOptional"
-msgstr "可选"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:224
-msgid "import.error.sourceIdDuplicate"
-msgstr "同一个导入文件里存在重复来源 ID，请先移除重复项或跳过其中一条。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:108
-msgid "subscriptions.csv.name"
-msgstr "名称"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:94
-msgid "subscriptions.sort.nameAsc"
-msgstr "名称 A-Z"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:95
-msgid "subscriptions.sort.nameDesc"
-msgstr "名称 Z-A"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:171
-msgid "import.conflictDescription"
-msgstr "命中相同导入来源和来源 ID 时，可以替换当前记录或跳过。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:7
-msgid "subscription.dialogCreateDescription"
-msgstr "填写订阅名称、价格、扣费周期、日期、Logo 和标签等信息后创建订阅。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:33
-msgid "subscription.field.notes"
-msgstr "备注"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:153
-msgid "import.wallosGuideValueExternalOrAutoLogo"
-msgstr "外链/自动匹配"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:140
-msgid "import.wallosGuideColumnUsers"
-msgstr "多用户"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:47
-msgid "subscription.daysUnit"
-msgstr "天"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:48
-msgid "subscription.daysPlaceholder"
-msgstr "天数"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:265
-msgid "dashboard.realTimeRates"
-msgstr "实时汇率换算 ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:202
-msgid "import.applyProgress"
-msgstr "导入 {done}/{total}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:119
-msgid "import.description"
-msgstr "导入 Renewlet 备份，或一键迁移 Wallos JSON、ZIP 备份和 SQLite 数据库。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:228
-msgid "import.error.confidenceInvalid"
-msgstr "导入匹配信息无效。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:167
-msgid "import.applyFailed"
-msgstr "导入失败"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:204
-msgid "import.successTitle"
-msgstr "导入完成"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:82
-msgid "subscriptions.importData"
-msgstr "导入数据"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:118
-msgid "import.title"
-msgstr "导入数据"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:223
-msgid "import.error.workerParseFailed"
-msgstr "导入文件后台解析失败。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:166
-msgid "import.parseFailed"
-msgstr "导入文件解析失败"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:128
-msgid "import.fileTooLarge"
-msgstr "导入文件超过 50 MB，请拆分后再试。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:227
-msgid "import.error.sourceIdInvalid"
-msgstr "导入来源 ID 无效。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:226
-msgid "import.error.sourceInvalid"
-msgstr "导入来源无效。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:130
-msgid "import.optionsTitle"
-msgstr "导入设置"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:225
-msgid "import.error.keyRequired"
-msgstr "导入项缺少来源匹配信息。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:165
-msgid "import.previewFailed"
-msgstr "导入预览失败"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:81
-msgid "subscriptions.exportCsv"
-msgstr "导出 CSV"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:79
-msgid "subscriptions.exportJson"
-msgstr "导出备份 ZIP"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:80
-msgid "subscriptions.exportJsonWithSecrets"
-msgstr "导出备份 ZIP（含通知密钥）"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:78
-msgid "subscriptions.exportMenu"
-msgstr "导出订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:125
-msgid "import.fileEmpty"
-msgstr "尚未选择文件"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:234
-msgid "statistics.budgetUsed"
-msgstr "已使用"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:252
-msgid "statistics.monthlySavingsDescription"
-msgstr "已暂停、已取消和已过期订阅按月折算后的金额，不包含活跃或试用订阅，也不是预算剩余。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:170
-msgid "import.conflictTitle"
-msgstr "已有同源订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:66
-msgid "subscription.card.expired"
-msgstr "已过期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:67
-msgid "subscription.card.expiredDays"
-msgstr "已过期 {days} 天"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:138
-msgid "import.wallosGuideColumnCurrency"
-msgstr "币种"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:150
-msgid "import.wallosGuideApiNote"
-msgstr "带 lookup 表更准"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:245
-msgid "statistics.avgMonthly"
-msgstr "平均每月订阅费用"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:244
-msgid "statistics.annualCost"
-msgstr "年费用 ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:63
-msgid "subscription.card.startPrefix"
-msgstr "开始:"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:29
-msgid "subscription.field.startDate"
-msgstr "开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:114
-msgid "subscriptions.csv.startDate"
-msgstr "开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:292
-msgid "calendar.startDate"
-msgstr "开始日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.error.workerUnsupported"
-msgstr "当前浏览器不支持后台解析导入文件。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:193
-msgid "import.previewFilterEmpty"
-msgstr "当前筛选没有记录"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:241
-msgid "statistics.overview"
-msgstr "总体统计"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:196
-msgid "import.restoreItem"
-msgstr "恢复导入"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:84
-msgid "subscriptions.allCategories"
-msgstr "所有分类"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:85
-msgid "subscriptions.allStatuses"
-msgstr "所有状态"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:26
-msgid "subscription.field.billingCycle"
-msgstr "扣费周期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:111
-msgid "subscriptions.csv.billingCycle"
-msgstr "扣费周期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:230
-msgid "import.error.billingCycleInvalid"
-msgstr "扣费周期无效。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:122
-msgid "import.stepApply"
-msgstr "执行"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:203
-msgid "import.apply"
-msgstr "执行导入"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:255
-msgid "statistics.breakdown"
-msgstr "拆分视图"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:148
-msgid "import.wallosGuideValueLowConfidence"
-msgstr "按内容匹配"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:86
-msgid "subscriptions.sort.label"
-msgstr "排序"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:135
-msgid "import.wallosGuideBest"
-msgstr "推荐"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:134
-msgid "import.wallosGuidePreferred"
-msgstr "推荐 backup.zip"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:56
-msgid "subscription.reminderBefore"
-msgstr "提前"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:70
-msgid "subscription.card.reminderDays"
-msgstr "提前 {days} 天提醒"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:293
-msgid "calendar.reminder"
-msgstr "提前提醒"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:181
-msgid "import.summaryWarning"
-msgstr "提示"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:191
-msgid "import.filter.warning"
-msgstr "提示"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:116
-msgid "subscriptions.csv.reminderDays"
-msgstr "提醒天数"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.validation.reminderInvalid"
-msgstr "提醒天数必须是 0 到 3650 之间的整数"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:100
-msgid "subscriptions.tags.searchPlaceholder"
-msgstr "搜索标签..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:83
-msgid "subscriptions.searchPlaceholder"
-msgstr "搜索订阅、标签或备注..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:44
-msgid "subscription.search.currency"
-msgstr "搜索货币、代码或符号..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:28
-msgid "subscription.field.paymentMethod"
-msgstr "支付方式"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:257
-msgid "statistics.paymentView"
-msgstr "支付方式视图"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:275
-msgid "dashboard.spendingDistribution"
-msgstr "支出分布"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:160
-msgid "import.wallosGuideValueSupported"
-msgstr "支持"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:126
-msgid "import.fileHint"
-msgstr "支持 Renewlet ZIP/JSON、Wallos JSON、backup.zip、wallos.db。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:178
-msgid "import.summaryCreate"
-msgstr "新增"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:183
-msgid "import.action.create"
-msgstr "新增"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:188
-msgid "import.filter.create"
-msgstr "新增"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:205
-msgid "import.successDescription"
-msgstr "新增 {creates}，替换 {replaces}，跳过 {skips}。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:147
-msgid "import.wallosGuideValueNone"
-msgstr "无"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:144
-msgid "import.wallosGuideValueHash"
-msgstr "无原始 ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:221
-msgid "import.error.unrecognizedFile"
-msgstr "无法识别导入文件，请选择 Renewlet v1 导出或 Wallos 导出/备份。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.error.wallosTableTooLarge"
-msgstr "Wallos SQLite 单表超过 5000 行，请先拆分备份后再导入。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:49
-msgid "subscription.section.dates"
-msgstr "日期设置"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:43
-msgid "subscription.tags.empty"
-msgstr "暂无可复用标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:233
-msgid "statistics.noSubscriptionData"
-msgstr "暂无订阅数据"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:62
-msgid "subscription.moreActions"
-msgstr "更多操作"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:106
-msgid "subscription.pin"
-msgstr "置顶"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:107
-msgid "subscription.unpin"
-msgstr "取消置顶"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:179
-msgid "import.summaryReplace"
-msgstr "替换"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:184
-msgid "import.action.replace"
-msgstr "替换"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:189
-msgid "import.filter.replace"
-msgstr "替换"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:174
-msgid "import.conflictReplace"
-msgstr "替换已有记录"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:263
-msgid "dashboard.monthlySpend"
-msgstr "月度支出"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:91
-msgid "subscriptions.sort.monthlyCostAsc"
-msgstr "月成本最低"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:90
-msgid "subscriptions.sort.monthlyCostDesc"
-msgstr "月成本最高"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:243
-msgid "statistics.monthlyCost"
-msgstr "月费用 ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.field.name"
-msgstr "服务名称"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:45
-msgid "subscription.empty.currency"
-msgstr "未找到货币"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:269
-msgid "dashboard.next7Days"
-msgstr "未来 7 天内"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:276
-msgid "upcoming.noneNextTwoWeeks"
-msgstr "未来两周内无续费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:217
-msgid "import.warning.wallosUnknownCycle"
-msgstr "未知 Wallos 周期，已按月度订阅导入。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:159
-msgid "import.wallosGuideValueLocalLogo"
-msgstr "本地文件"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:248
-msgid "statistics.thisMonthDue"
-msgstr "本月应付金额"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:298
-msgid "calendar.mobileAgendaEmpty"
-msgstr "本月暂无续费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:285
-msgid "calendar.monthlyRenewals"
-msgstr "本月续费"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:297
-msgid "calendar.mobileAgendaTitle"
-msgstr "本月续费明细"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:136
-msgid "import.wallosGuideColumnSource"
-msgstr "来源"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:209
-msgid "import.warning.lowConfidenceKey"
-msgstr "来源没有原始 ID，Renewlet 会按名称、网址、分类和周期查找已有记录。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:210
-msgid "import.warning.lowConfidenceNameMatched"
-msgstr "来源没有原始 ID，已按名称找到现有 Wallos 记录，请确认是否替换。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:288
-msgid "calendar.detailDescription"
-msgstr "查看 {name} 的价格、周期、日期、标签、网站和备注。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:273
-msgid "dashboard.viewAll"
-msgstr "查看全部 ({count})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:274
-msgid "dashboard.viewAllSubscriptions"
-msgstr "查看全部 {count} 个订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:133
-msgid "import.wallosGuideExpand"
-msgstr "查看差异"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:237
-msgid "statistics.subtitle"
-msgstr "查看订阅支出和使用情况的详细分析"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:280
-msgid "calendar.pageSubtitle"
-msgstr "查看订阅续费日期和月度支出"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:289
-msgid "calendar.detailFallbackDescription"
-msgstr "查看订阅详情。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:34
-msgid "subscription.field.tags"
-msgstr "标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:97
-msgid "subscriptions.tags.open"
-msgstr "标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:117
-msgid "subscriptions.csv.tags"
-msgstr "标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:98
-msgid "subscriptions.tags.selectedCount"
-msgstr "标签({count})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:51
-msgid "subscription.autoCalculateHelp"
-msgstr "根据开始日期和扣费周期自动计算"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:168
-msgid "import.loading"
-msgstr "正在解析和生成预览..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:46
-msgid "subscription.customCycleEvery"
-msgstr "每"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.validation.tagsTooMany"
-msgstr "每个订阅最多支持 {count} 个标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:264
-msgid "dashboard.ratesLoading"
-msgstr "汇率加载中..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:240
-msgid "statistics.ratesError"
-msgstr "汇率获取失败，使用备用汇率。{error}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:162
-msgid "import.wallosGuideDbNote"
-msgstr "没有 Logo 文件"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:101
-msgid "subscriptions.tags.emptyMatch"
-msgstr "没有匹配的标签"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:104
-msgid "subscriptions.emptyTitle"
-msgstr "没有找到订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:242
-msgid "statistics.activeSubscriptions"
-msgstr "活跃订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:266
-msgid "dashboard.activeSubscriptions"
-msgstr "活跃订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:39
-msgid "subscription.placeholder.notes"
-msgstr "添加备注信息..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:5
-msgid "subscription.dialogCreateTitle"
-msgstr "添加新订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:107
-msgid "subscriptions.addFirst"
-msgstr "添加第一个订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:106
-msgid "subscriptions.emptyNoData"
-msgstr "添加第一个订阅后即可开始跟踪续费。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:4
-msgid "subscription.add"
-msgstr "添加订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:5
-msgid "subscription.addToCalendar"
-msgstr "添加到日历"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:6
-msgid "subscription.addToCalendarTitle"
-msgstr "添加到日历"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:7
-msgid "subscription.addToCalendarDescription"
-msgstr "为「{name}」创建单独日历订阅，只同步这一条续费。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:8
-msgid "subscription.addToCalendarEventDate"
-msgstr "事件日期"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:9
-msgid "subscription.addToCalendarEventType"
-msgstr "事件类型"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:10
-msgid "subscription.addToCalendarSingleEvent"
-msgstr "单次事件"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
-msgid "subscription.addToCalendarSubscriptionFeed"
-msgstr "订阅 Feed"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
-msgid "subscription.addToCalendarSyncStatus"
-msgstr "同步状态"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:12
-msgid "subscription.addToCalendarNoSync"
-msgstr "不会持续同步"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
-msgid "subscription.addToCalendarSubscriptionSync"
-msgstr "持续同步此订阅"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
-msgid "subscription.addToCalendarSingleEventNotice"
-msgstr "系统订阅需要日历 App 能持续访问这个 URL；下载 ICS 和在线日历入口都是一次性添加。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
-msgid "subscription.addToCalendarSubscribeSystem"
-msgstr "在系统日历中订阅"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarGenerateFeed"
-msgstr "生成订阅链接"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.addToCalendarSubscribeLoading"
-msgstr "正在生成..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
-msgid "subscription.addToCalendarDownloadIcs"
-msgstr "下载 ICS 文件"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendarAndroidSingleEvent"
-msgstr "添加单次事件到 Android 日历"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendarFeedUrl"
-msgstr "本次订阅 URL"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.addToCalendarCopyFeedUrl"
-msgstr "复制 URL"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerate"
-msgstr "重新生成订阅链接"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateTitle"
-msgstr "重新生成这个订阅链接？"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateDescription"
-msgstr "旧 URL 会立即失效，已经添加到日历 App 的这个订阅需要重新添加。"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerated"
-msgstr "订阅链接已重新生成"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegeneratedDescription"
-msgstr "旧 URL 已失效，请使用新的订阅链接。"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateFailed"
-msgstr "订阅链接重新生成失败"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.addToCalendarSubscribed"
-msgstr "日历订阅已生成"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
-msgid "subscription.addToCalendarSubscribedDescription"
-msgstr "已尝试唤起系统日历；如果系统拒绝，请复制本次 URL 后在日历 App 中手动添加订阅。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:23
-msgid "subscription.addToCalendarSubscribeFailed"
-msgstr "日历订阅生成失败"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarOpenSystemFailed"
-msgstr "系统日历订阅打开失败"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarOpenSystemFailedDescription"
-msgstr "订阅 URL 当前没有返回可用的 ICS 内容；请复制 URL 手动添加订阅，或下载 ICS 文件一次性导入。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:24
-msgid "subscription.addToCalendarFeedUrlCopied"
-msgstr "订阅 URL 已复制"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:25
-msgid "subscription.addToCalendarFeedUrlCopyFailed"
-msgstr "订阅 URL 复制失败"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.addToCalendarOnlineServices"
-msgstr "在线日历服务"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
-msgid "subscription.addToCalendarGoogle"
-msgstr "用 Google Calendar 打开"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendarOutlook"
-msgstr "用 Outlook.com 打开"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendarOffice365"
-msgstr "用 Office 365 打开"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.addToCalendarYahoo"
-msgstr "用 Yahoo Calendar 打开"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
+#: src/i18n/descriptors/subscription.ts:42
 msgid "subscription.addToCalendarDownloaded"
 msgstr "ICS 文件已生成"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
+#: src/i18n/descriptors/subscription.ts:43
 msgid "subscription.addToCalendarDownloadFailed"
 msgstr "ICS 文件生成失败"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
+#: src/i18n/descriptors/subscription.ts:186
+msgid "import.wallosGuideColumnLogo"
+msgstr "Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:248
+msgid "import.assetProgress"
+msgstr "Logo {done}/{total}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:44
 msgid "subscription.addToCalendarCalendarName"
 msgstr "Renewlet - {name}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendar.description.amount"
-msgstr "金额：{amount}"
+#: src/i18n/descriptors/subscription.ts:253
+msgid "import.field.renewletDueDate"
+msgstr "Renewlet 下次扣费日期"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendar.description.billingCycle"
-msgstr "扣费周期：{cycle}"
+#: src/i18n/descriptors/subscription.ts:254
+msgid "import.field.renewletStartDate"
+msgstr "Renewlet 开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:255
+msgid "import.field.renewletTrialEndDate"
+msgstr "Renewlet 试用结束日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:189
+msgid "import.wallosGuideJsonTitle"
+msgstr "UI JSON"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:279
+msgid "import.warning.wallosCurrencyIdOnly"
+msgstr "Wallos API 内容只有 currency_id，没有 currencies.code，已使用当前默认货币。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:275
+msgid "import.warning.wallosMissingLogoFile"
+msgstr "Wallos Logo 文件不在导入包内，已跳过，可在预览中手动修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:274
+msgid "import.warning.wallosExternalLogo"
+msgstr "Wallos Logo 是外链，已按原地址保留。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:282
+msgid "import.error.wallosTableTooLarge"
+msgstr "Wallos SQLite 单表超过 5000 行，请先拆分备份后再导入。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:261
+msgid "import.warning.wallosDisplayLowConfidence"
+msgstr "Wallos UI JSON 不包含原始 ID；再次导入时会按名称、网址、分类和周期查找已有记录。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:280
+msgid "import.warning.currencySymbolAmbiguous"
+msgstr "Wallos 价格符号 {symbol} 可对应多个币种，已按 {currency} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:256
+msgid "import.field.wallosDueDate"
+msgstr "Wallos 到期日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:257
+msgid "import.field.wallosStartDate"
+msgstr "Wallos 开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:178
+msgid "import.wallosGuideTitle"
+msgstr "Wallos 来源提示"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:216
+msgid "import.wallosUser"
+msgstr "Wallos 用户"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:278
+msgid "import.warning.wallosNotifyDisabled"
+msgstr "Wallos 这条订阅关闭了通知；Renewlet 没有单条通知开关，已保留默认提前 3 天提醒。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:208
+msgid "import.wallosGuideDbTitle"
+msgstr "wallos.db"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:97
+msgid "subscription.oneTimeDateHelp"
+msgstr "一次性购买不会自动推算后续续费日。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:276
+msgid "import.warning.wallosOneTime"
+msgstr "一次性购买已按买断记录导入，不参与自动续费。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:342
+msgid "calendar.previousMonth"
+msgstr "上个月"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:343
+msgid "calendar.nextMonth"
+msgstr "下个月"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:352
+msgid "calendar.nextBilling"
+msgstr "下次扣费"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarDownloadIcs"
+msgstr "下载 ICS 文件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:14
+msgid "subscription.addToCalendarNoSync"
+msgstr "不会持续同步"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:190
+msgid "import.wallosGuideJsonNote"
+msgstr "个人资料页导出"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:8
+msgid "subscription.addToCalendarDescription"
+msgstr "为「{name}」创建单独日历订阅，只同步这一条续费。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:9
+msgid "subscription.addToCalendarEventDate"
+msgstr "事件日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:10
+msgid "subscription.addToCalendarEventType"
+msgstr "事件类型"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:210
+msgid "import.wallosGuideValueFilenameOnly"
+msgstr "仅文件名"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:192
+msgid "import.wallosGuideValueDefaultCurrency"
+msgstr "仅符号"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:338
+msgid "upcoming.todayShort"
+msgstr "今"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:111
+msgid "subscription.card.renewsToday"
+msgstr "今天续费"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:67
+msgid "subscription.field.price"
+msgstr "价格"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:156
+msgid "subscriptions.csv.price"
+msgstr "价格"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:80
+msgid "subscription.placeholder.name"
+msgstr "例如: Netflix, Spotify"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:55
+msgid "subscription.dialogEditSubmit"
+msgstr "保存修改"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:241
+msgid "import.logoEdit"
+msgstr "修改 Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:244
+msgid "import.logoEditTitle"
+msgstr "修改导入 Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:53
+msgid "subscription.dialogEditDescription"
+msgstr "修改订阅名称、价格、扣费周期、日期、Logo 和标签等信息。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:314
+msgid "statistics.annualSavings"
+msgstr "停用年节省"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:312
+msgid "statistics.monthlySavings"
+msgstr "停用月节省"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:315
+msgid "statistics.annualSavingsDescription"
+msgstr "停用月节省乘以 12，用于估算一年少支出的订阅费用。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:234
+msgid "import.filter.all"
+msgstr "全部"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:123
+msgid "subscriptions.count"
+msgstr "共 {count} 个订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:328
+msgid "dashboard.totalSubscriptions"
+msgstr "共 {count} 个订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:307
+msgid "statistics.mostExpensive"
+msgstr "最昂贵订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:308
+msgid "statistics.mostExpensiveNamed"
+msgstr "最贵: {name}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:219
+msgid "import.conflictMode"
+msgstr "冲突处理"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:70
+msgid "subscription.field.category"
+msgstr "分类"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:159
+msgid "subscriptions.csv.category"
+msgstr "分类"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:351
+msgid "calendar.category"
+msgstr "分类"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:47
 msgid "subscription.addToCalendar.description.category"
 msgstr "分类：{category}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.addToCalendar.description.paymentMethod"
-msgstr "支付方式：{paymentMethod}"
+#: src/i18n/descriptors/subscription.ts:317
+msgid "statistics.categoryView"
+msgstr "分类视图"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
+#: src/i18n/descriptors/subscription.ts:86
+msgid "subscription.tags.create"
+msgstr "创建标签「{tag}」"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:115
+msgid "subscription.card.duePrefix"
+msgstr "到期: {date}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:135
+msgid "subscriptions.sort.renewalAsc"
+msgstr "到期最近"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:136
+msgid "subscriptions.sort.renewalDesc"
+msgstr "到期最远"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:76
+msgid "subscription.field.reminder"
+msgstr "到期提醒"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:75
+msgid "subscription.field.nextBillingDate"
+msgstr "到期日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:162
+msgid "subscriptions.csv.nextBillingDate"
+msgstr "到期日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:59
+msgid "subscription.validation.dateOrderInvalid"
+msgstr "到期日期不能早于开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:300
+msgid "statistics.refreshRates"
+msgstr "刷新汇率"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:296
+msgid "statistics.budgetRemaining"
+msgstr "剩余预算"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:65
+msgid "subscription.validation.tagTooLong"
+msgstr "单个标签不能超过 {count} 个字符"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSingleEvent"
+msgstr "单次事件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:140
+msgid "subscriptions.sort.priceAsc"
+msgstr "单次扣费最低"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:139
+msgid "subscriptions.sort.priceDesc"
+msgstr "单次扣费最高"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:329
+msgid "dashboard.upcomingRenewals"
+msgstr "即将续费"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:198
+msgid "import.wallosGuideValueOriginalId"
+msgstr "原 ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:184
+msgid "import.wallosGuideColumnId"
+msgstr "原始 ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:109
+msgid "subscription.unpin"
+msgstr "取消置顶"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:245
+msgid "import.logoPreviewHint"
+msgstr "只影响本次导入，预览阶段不会上传资产。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:224
+msgid "import.ready"
+msgstr "可导入"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:201
+msgid "import.wallosGuideValueOptional"
+msgstr "可选"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:285
+msgid "import.error.sourceIdDuplicate"
+msgstr "同一个导入文件里存在重复来源 ID，请先移除重复项或跳过其中一条。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSyncStatus"
+msgstr "同步状态"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:155
+msgid "subscriptions.csv.name"
+msgstr "名称"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:141
+msgid "subscriptions.sort.nameAsc"
+msgstr "名称 A-Z"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:142
+msgid "subscriptions.sort.nameDesc"
+msgstr "名称 Z-A"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:218
+msgid "import.conflictDescription"
+msgstr "命中相同导入来源和来源 ID 时，可以替换当前记录或跳过。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarSubscribeSystem"
+msgstr "在系统日历中订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:37
+msgid "subscription.addToCalendarOnlineServices"
+msgstr "在线日历服务"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:52
+msgid "subscription.dialogCreateDescription"
+msgstr "填写订阅名称、价格、扣费周期、日期、Logo 和标签等信息后创建订阅。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:78
+msgid "subscription.field.notes"
+msgstr "备注"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:49
 msgid "subscription.addToCalendar.description.notes"
 msgstr "备注：{notes}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:9
+#: src/i18n/descriptors/subscription.ts:23
+msgid "subscription.addToCalendarCopyFeedUrl"
+msgstr "复制 URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:200
+msgid "import.wallosGuideValueExternalOrAutoLogo"
+msgstr "外链/自动匹配"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:187
+msgid "import.wallosGuideColumnUsers"
+msgstr "多用户"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:92
+msgid "subscription.daysUnit"
+msgstr "天"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:93
+msgid "subscription.daysPlaceholder"
+msgstr "天数"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:326
+msgid "dashboard.realTimeRates"
+msgstr "实时汇率换算 ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:249
+msgid "import.applyProgress"
+msgstr "导入 {done}/{total}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:166
+msgid "import.description"
+msgstr "导入 Renewlet 备份，或一键迁移 Wallos JSON、ZIP 备份和 SQLite 数据库。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:289
+msgid "import.error.confidenceInvalid"
+msgstr "导入匹配信息无效。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:214
+msgid "import.applyFailed"
+msgstr "导入失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:251
+msgid "import.successTitle"
+msgstr "导入完成"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:129
+msgid "subscriptions.importData"
+msgstr "导入数据"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:165
+msgid "import.title"
+msgstr "导入数据"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:284
+msgid "import.error.workerParseFailed"
+msgstr "导入文件后台解析失败。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:213
+msgid "import.parseFailed"
+msgstr "导入文件解析失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:175
+msgid "import.fileTooLarge"
+msgstr "导入文件超过 50 MB，请拆分后再试。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:288
+msgid "import.error.sourceIdInvalid"
+msgstr "导入来源 ID 无效。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:287
+msgid "import.error.sourceInvalid"
+msgstr "导入来源无效。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:177
+msgid "import.optionsTitle"
+msgstr "导入设置"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:286
+msgid "import.error.keyRequired"
+msgstr "导入项缺少来源匹配信息。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:212
+msgid "import.previewFailed"
+msgstr "导入预览失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:128
+msgid "subscriptions.exportCsv"
+msgstr "导出 CSV"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:126
+msgid "subscriptions.exportJson"
+msgstr "导出备份 ZIP"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:127
+msgid "subscriptions.exportJsonWithSecrets"
+msgstr "导出备份 ZIP（含通知密钥）"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:125
+msgid "subscriptions.exportMenu"
+msgstr "导出订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:172
+msgid "import.fileEmpty"
+msgstr "尚未选择文件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:295
+msgid "statistics.budgetUsed"
+msgstr "已使用"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:31
+msgid "subscription.addToCalendarSubscribedDescription"
+msgstr "已尝试唤起系统日历；如果系统拒绝，请复制本次 URL 后在日历 App 中手动添加订阅。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:313
+msgid "statistics.monthlySavingsDescription"
+msgstr "已暂停、已取消和已过期订阅按月折算后的金额，不包含活跃或试用订阅，也不是预算剩余。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:217
+msgid "import.conflictTitle"
+msgstr "已有同源订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:113
+msgid "subscription.card.expired"
+msgstr "已过期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:114
+msgid "subscription.card.expiredDays"
+msgstr "已过期 {days} 天"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:185
+msgid "import.wallosGuideColumnCurrency"
+msgstr "币种"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:197
+msgid "import.wallosGuideApiNote"
+msgstr "带 lookup 表更准"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:306
+msgid "statistics.avgMonthly"
+msgstr "平均每月订阅费用"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:305
+msgid "statistics.annualCost"
+msgstr "年费用 ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:110
+msgid "subscription.card.startPrefix"
+msgstr "开始:"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:74
+msgid "subscription.field.startDate"
+msgstr "开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:161
+msgid "subscriptions.csv.startDate"
+msgstr "开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:353
+msgid "calendar.startDate"
+msgstr "开始日期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:283
+msgid "import.error.workerUnsupported"
+msgstr "当前浏览器不支持后台解析导入文件。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:240
+msgid "import.previewFilterEmpty"
+msgstr "当前筛选没有记录"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:302
+msgid "statistics.overview"
+msgstr "总体统计"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:243
+msgid "import.restoreItem"
+msgstr "恢复导入"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:131
+msgid "subscriptions.allCategories"
+msgstr "所有分类"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:132
+msgid "subscriptions.allStatuses"
+msgstr "所有状态"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:71
+msgid "subscription.field.billingCycle"
+msgstr "扣费周期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:158
+msgid "subscriptions.csv.billingCycle"
+msgstr "扣费周期"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:46
+msgid "subscription.addToCalendar.description.billingCycle"
+msgstr "扣费周期：{cycle}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:291
+msgid "import.error.billingCycleInvalid"
+msgstr "扣费周期无效。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:169
+msgid "import.stepApply"
+msgstr "执行"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:250
+msgid "import.apply"
+msgstr "执行导入"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:316
+msgid "statistics.breakdown"
+msgstr "拆分视图"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarSubscriptionSync"
+msgstr "持续同步此订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:195
+msgid "import.wallosGuideValueLowConfidence"
+msgstr "按内容匹配"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:133
+msgid "subscriptions.sort.label"
+msgstr "排序"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:182
+msgid "import.wallosGuideBest"
+msgstr "推荐"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:181
+msgid "import.wallosGuidePreferred"
+msgstr "推荐 backup.zip"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:101
+msgid "subscription.reminderBefore"
+msgstr "提前"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:117
+msgid "subscription.card.reminderDays"
+msgstr "提前 {days} 天提醒"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:354
+msgid "calendar.reminder"
+msgstr "提前提醒"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:228
+msgid "import.summaryWarning"
+msgstr "提示"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:238
+msgid "import.filter.warning"
+msgstr "提示"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:163
+msgid "subscriptions.csv.reminderDays"
+msgstr "提醒天数"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:61
+msgid "subscription.validation.reminderInvalid"
+msgstr "提醒天数必须是 0 到 3650 之间的整数"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:147
+msgid "subscriptions.tags.searchPlaceholder"
+msgstr "搜索标签..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:130
+msgid "subscriptions.searchPlaceholder"
+msgstr "搜索订阅、标签或备注..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:89
+msgid "subscription.search.currency"
+msgstr "搜索货币、代码或符号..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:73
+msgid "subscription.field.paymentMethod"
+msgstr "支付方式"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:48
+msgid "subscription.addToCalendar.description.paymentMethod"
+msgstr "支付方式：{paymentMethod}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:318
+msgid "statistics.paymentView"
+msgstr "支付方式视图"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:336
+msgid "dashboard.spendingDistribution"
+msgstr "支出分布"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:207
+msgid "import.wallosGuideValueSupported"
+msgstr "支持"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:173
+msgid "import.fileHint"
+msgstr "支持 Renewlet ZIP/JSON、Wallos JSON、backup.zip、wallos.db。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:225
+msgid "import.summaryCreate"
+msgstr "新增"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:230
+msgid "import.action.create"
+msgstr "新增"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:235
+msgid "import.filter.create"
+msgstr "新增"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:252
+msgid "import.successDescription"
+msgstr "新增 {creates}，替换 {replaces}，跳过 {skips}。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:194
+msgid "import.wallosGuideValueNone"
+msgstr "无"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:191
+msgid "import.wallosGuideValueHash"
+msgstr "无原始 ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:281
+msgid "import.error.unrecognizedFile"
+msgstr "无法识别导入文件，请选择 Renewlet v1 导出或 Wallos 导出/备份。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:30
+msgid "subscription.addToCalendarSubscribed"
+msgstr "日历订阅已生成"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:32
+msgid "subscription.addToCalendarSubscribeFailed"
+msgstr "日历订阅生成失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:94
+msgid "subscription.section.dates"
+msgstr "日期设置"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:26
+msgid "subscription.addToCalendarRegenerateDescription"
+msgstr "旧 URL 会立即失效，已经添加到日历 App 的这个订阅需要重新添加。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:28
+msgid "subscription.addToCalendarRegeneratedDescription"
+msgstr "旧 URL 已失效，请使用新的订阅链接。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:267
+msgid "import.warning.renewletLegacyLogoDropped"
+msgstr "旧版 Renewlet Logo 形态已不再支持，已清空，可在预览中重新指定。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:268
+msgid "import.warning.renewletLegacyPriceDefaulted"
+msgstr "旧版 Renewlet 价格无效，已按 0 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:264
+msgid "import.warning.renewletLegacyBillingCycleDefaulted"
+msgstr "旧版 Renewlet 扣费周期无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:269
+msgid "import.warning.renewletLegacyReminderDaysDefaulted"
+msgstr "旧版 Renewlet 提醒提前天数无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:273
+msgid "import.warning.renewletLegacyTagsTrimmed"
+msgstr "旧版 Renewlet 标签包含无效或超长值，已清理，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:272
+msgid "import.warning.renewletLegacyStatusDefaulted"
+msgstr "旧版 Renewlet 状态无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:266
+msgid "import.warning.renewletLegacyCustomDaysDefaulted"
+msgstr "旧版 Renewlet 自定义周期天数无效，已按 {fallback} 天导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:265
+msgid "import.warning.renewletLegacyCurrencyDefaulted"
+msgstr "旧版 Renewlet 货币无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:271
+msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
+msgstr "旧版 Renewlet 重复提醒窗口无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:270
+msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
+msgstr "旧版 Renewlet 重复提醒间隔无效，已按 {fallback} 导入，可在预览中修改。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:88
+msgid "subscription.tags.empty"
+msgstr "暂无可复用标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:294
+msgid "statistics.noSubscriptionData"
+msgstr "暂无订阅数据"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:107
+msgid "subscription.moreActions"
+msgstr "更多操作"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:226
+msgid "import.summaryReplace"
+msgstr "替换"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:231
+msgid "import.action.replace"
+msgstr "替换"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:236
+msgid "import.filter.replace"
+msgstr "替换"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:221
+msgid "import.conflictReplace"
+msgstr "替换已有记录"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:324
+msgid "dashboard.monthlySpend"
+msgstr "月度支出"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:138
+msgid "subscriptions.sort.monthlyCostAsc"
+msgstr "月成本最低"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:137
+msgid "subscriptions.sort.monthlyCostDesc"
+msgstr "月成本最高"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:304
+msgid "statistics.monthlyCost"
+msgstr "月费用 ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:66
+msgid "subscription.field.name"
+msgstr "服务名称"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:90
+msgid "subscription.empty.currency"
+msgstr "未找到货币"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:330
+msgid "dashboard.next7Days"
+msgstr "未来 7 天内"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:337
+msgid "upcoming.noneNextTwoWeeks"
+msgstr "未来两周内无续费"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:277
+msgid "import.warning.wallosUnknownCycle"
+msgstr "未知 Wallos 周期，已按月度订阅导入。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:206
+msgid "import.wallosGuideValueLocalLogo"
+msgstr "本地文件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:309
+msgid "statistics.thisMonthDue"
+msgstr "本月应付金额"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:359
+msgid "calendar.mobileAgendaEmpty"
+msgstr "本月暂无续费"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:346
+msgid "calendar.monthlyRenewals"
+msgstr "本月续费"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:358
+msgid "calendar.mobileAgendaTitle"
+msgstr "本月续费明细"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendarFeedUrl"
+msgstr "本次订阅 URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:183
+msgid "import.wallosGuideColumnSource"
+msgstr "来源"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:259
+msgid "import.warning.lowConfidenceKey"
+msgstr "来源没有原始 ID，Renewlet 会按名称、网址、分类和周期查找已有记录。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:260
+msgid "import.warning.lowConfidenceNameMatched"
+msgstr "来源没有原始 ID，已按名称找到现有 Wallos 记录，请确认是否替换。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:349
+msgid "calendar.detailDescription"
+msgstr "查看 {name} 的价格、周期、日期、标签、网站和备注。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:334
+msgid "dashboard.viewAll"
+msgstr "查看全部 ({count})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:335
+msgid "dashboard.viewAllSubscriptions"
+msgstr "查看全部 {count} 个订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:180
+msgid "import.wallosGuideExpand"
+msgstr "查看差异"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:298
+msgid "statistics.subtitle"
+msgstr "查看订阅支出和使用情况的详细分析"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:341
+msgid "calendar.pageSubtitle"
+msgstr "查看订阅续费日期和月度支出"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:350
+msgid "calendar.detailFallbackDescription"
+msgstr "查看订阅详情。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:79
+msgid "subscription.field.tags"
+msgstr "标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:144
+msgid "subscriptions.tags.open"
+msgstr "标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:164
+msgid "subscriptions.csv.tags"
+msgstr "标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:145
+msgid "subscriptions.tags.selectedCount"
+msgstr "标签({count})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:96
+msgid "subscription.autoCalculateHelp"
+msgstr "根据开始日期和扣费周期自动计算"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarSubscribeLoading"
+msgstr "正在生成..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:215
+msgid "import.loading"
+msgstr "正在解析和生成预览..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:91
+msgid "subscription.customCycleEvery"
+msgstr "每"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:64
+msgid "subscription.validation.tagsTooMany"
+msgstr "每个订阅最多支持 {count} 个标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:325
+msgid "dashboard.ratesLoading"
+msgstr "汇率加载中..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:301
+msgid "statistics.ratesError"
+msgstr "汇率获取失败，使用备用汇率。{error}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:209
+msgid "import.wallosGuideDbNote"
+msgstr "没有 Logo 文件"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:148
+msgid "subscriptions.tags.emptyMatch"
+msgstr "没有匹配的标签"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:151
+msgid "subscriptions.emptyTitle"
+msgstr "没有找到订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:303
+msgid "statistics.activeSubscriptions"
+msgstr "活跃订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:327
+msgid "dashboard.activeSubscriptions"
+msgstr "活跃订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:6
+msgid "subscription.addToCalendar"
+msgstr "添加到日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:7
+msgid "subscription.addToCalendarTitle"
+msgstr "添加到日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendarAndroidSingleEvent"
+msgstr "添加单次事件到 Android 日历"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:84
+msgid "subscription.placeholder.notes"
+msgstr "添加备注信息..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:50
+msgid "subscription.dialogCreateTitle"
+msgstr "添加新订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:154
+msgid "subscriptions.addFirst"
+msgstr "添加第一个订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:153
+msgid "subscriptions.emptyNoData"
+msgstr "添加第一个订阅后即可开始跟踪续费。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:5
+msgid "subscription.add"
+msgstr "添加订阅"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:54
 msgid "subscription.dialogCreateSubmit"
 msgstr "添加订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:102
+#: src/i18n/descriptors/subscription.ts:149
 msgid "subscriptions.tags.clearSelection"
 msgstr "清空标签"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:199
+#: src/i18n/descriptors/subscription.ts:246
 msgid "import.logoClear"
 msgstr "清除 Logo"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:96
+#: src/i18n/descriptors/subscription.ts:143
 msgid "subscriptions.clearFilters"
 msgstr "清除筛选"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:283
+#: src/i18n/descriptors/subscription.ts:344
 msgid "calendar.viewDetails"
 msgstr "点击查看详情"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:24
+#: src/i18n/descriptors/subscription.ts:69
 msgid "subscription.field.status"
 msgstr "状态"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:113
+#: src/i18n/descriptors/subscription.ts:160
 msgid "subscriptions.csv.status"
 msgstr "状态"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:164
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarGenerateFeed"
+msgstr "生成订阅链接"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:211
 msgid "import.preview"
 msgstr "生成预览"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:103
+#: src/i18n/descriptors/subscription.ts:38
+msgid "subscription.addToCalendarGoogle"
+msgstr "用 Google Calendar 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:40
+msgid "subscription.addToCalendarOffice365"
+msgstr "用 Office 365 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:39
+msgid "subscription.addToCalendarOutlook"
+msgstr "用 Outlook.com 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:41
+msgid "subscription.addToCalendarYahoo"
+msgstr "用 Yahoo Calendar 打开"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:150
 msgid "subscriptions.tags.apply"
 msgstr "确定"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:74
+#: src/i18n/descriptors/subscription.ts:121
 msgid "subscription.deleteDescription"
 msgstr "确定要删除「{name}」订阅吗？此操作无法撤销。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:73
+#: src/i18n/descriptors/subscription.ts:120
 msgid "subscription.deleteTitle"
 msgstr "确认删除订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:42
+#: src/i18n/descriptors/subscription.ts:87
 msgid "subscription.tags.remove"
 msgstr "移除标签 {tag}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:155
+#: src/i18n/descriptors/subscription.ts:202
 msgid "import.wallosGuideValueStable"
 msgstr "稳定"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:99
+#: src/i18n/descriptors/subscription.ts:146
 msgid "subscriptions.tags.drawerTitle"
 msgstr "筛选标签"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:124
+#: src/i18n/descriptors/subscription.ts:171
 msgid "import.tabPaste"
 msgstr "粘贴 JSON"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:129
+#: src/i18n/descriptors/subscription.ts:176
 msgid "import.pastePlaceholder"
 msgstr "粘贴 Renewlet 或 Wallos JSON..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:236
+#: src/i18n/descriptors/subscription.ts:33
+msgid "subscription.addToCalendarOpenSystemFailed"
+msgstr "系统日历订阅打开失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarSingleEventNotice"
+msgstr "系统订阅需要日历 App 能持续访问这个 URL；下载 ICS 和在线日历入口都是一次性添加。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:297
 msgid "statistics.title"
 msgstr "统计分析"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:279
+#: src/i18n/descriptors/subscription.ts:340
 msgid "calendar.title"
 msgstr "续费日历"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:6
+#: src/i18n/descriptors/subscription.ts:51
 msgid "subscription.dialogEditTitle"
 msgstr "编辑订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:32
+#: src/i18n/descriptors/subscription.ts:77
 msgid "subscription.field.website"
 msgstr "网站"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
+#: src/i18n/descriptors/subscription.ts:63
 msgid "subscription.validation.websiteInvalid"
 msgstr "网站地址必须使用 http:// 或 https://"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:213
+#: src/i18n/descriptors/subscription.ts:263
 msgid "import.warning.invalidWebsite"
 msgstr "网站地址无效，已跳过，可在预览中手动修改。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:146
+#: src/i18n/descriptors/subscription.ts:108
+msgid "subscription.pin"
+msgstr "置顶"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:193
 msgid "import.wallosGuideValueAutoLogo"
 msgstr "自动匹配"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:200
+#: src/i18n/descriptors/subscription.ts:247
 msgid "import.logoAutoMatched"
 msgstr "自动匹配"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:50
+#: src/i18n/descriptors/subscription.ts:95
 msgid "subscription.autoCalculate"
 msgstr "自动计算到期日"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:27
+#: src/i18n/descriptors/subscription.ts:72
 msgid "subscription.field.customDays"
 msgstr "自定义天数"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:53
+#: src/i18n/descriptors/subscription.ts:98
 msgid "subscription.reminderCustom"
 msgstr "自定义天数"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
+#: src/i18n/descriptors/subscription.ts:62
 msgid "subscription.validation.customCycleInvalid"
 msgstr "自定义扣费周期必须是 1 到 3650 之间的整数天"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
+#: src/i18n/descriptors/subscription.ts:12
+msgid "subscription.addToCalendarSubscriptionFeed"
+msgstr "订阅 Feed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:36
+msgid "subscription.addToCalendarFeedUrlCopyFailed"
+msgstr "订阅 URL 复制失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:35
+msgid "subscription.addToCalendarFeedUrlCopied"
+msgstr "订阅 URL 已复制"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:34
+msgid "subscription.addToCalendarOpenSystemFailedDescription"
+msgstr "订阅 URL 当前没有返回可用的 ICS 内容；请复制 URL 手动添加订阅，或下载 ICS 文件一次性导入。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:56
 msgid "subscription.formIncomplete"
 msgstr "订阅信息不完整，请检查后重试"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:75
+#: src/i18n/descriptors/subscription.ts:122
 msgid "subscriptions.title"
 msgstr "订阅列表"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:231
+#: src/i18n/descriptors/subscription.ts:292
 msgid "import.error.statusInvalid"
 msgstr "订阅状态无效。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:294
+#: src/i18n/descriptors/subscription.ts:27
+msgid "subscription.addToCalendarRegenerated"
+msgstr "订阅链接已重新生成"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:29
+msgid "subscription.addToCalendarRegenerateFailed"
+msgstr "订阅链接重新生成失败"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:355
 msgid "calendar.visit"
 msgstr "访问"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:270
+#: src/i18n/descriptors/subscription.ts:331
 msgid "dashboard.trials"
 msgstr "试用中"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:72
+#: src/i18n/descriptors/subscription.ts:119
 msgid "subscription.card.trialEnds"
 msgstr "试用期将于 {date} 结束"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:262
+#: src/i18n/descriptors/subscription.ts:323
 msgid "statistics.explain"
 msgstr "说明：{label}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:12
+#: src/i18n/descriptors/subscription.ts:57
 msgid "subscription.validation.nameRequired"
 msgstr "请输入服务名称"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
+#: src/i18n/descriptors/subscription.ts:58
 msgid "subscription.validation.datesRequired"
 msgstr "请选择开始日期和下次扣费日期"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:105
+#: src/i18n/descriptors/subscription.ts:152
 msgid "subscriptions.emptyFiltered"
 msgstr "调整搜索或筛选条件后再试。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:23
+#: src/i18n/descriptors/subscription.ts:68
 msgid "subscription.field.currency"
 msgstr "货币"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:110
+#: src/i18n/descriptors/subscription.ts:157
 msgid "subscriptions.csv.currency"
 msgstr "货币"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:69
+#: src/i18n/descriptors/subscription.ts:116
 msgid "subscription.card.oneTimeDate"
 msgstr "购买日期: {date}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:258
+#: src/i18n/descriptors/subscription.ts:319
 msgid "statistics.costBudget"
 msgstr "费用与预算"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:180
+#: src/i18n/descriptors/subscription.ts:227
 msgid "import.summarySkip"
 msgstr "跳过"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:185
+#: src/i18n/descriptors/subscription.ts:232
 msgid "import.action.skip"
 msgstr "跳过"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:190
+#: src/i18n/descriptors/subscription.ts:237
 msgid "import.filter.skip"
 msgstr "跳过"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:173
+#: src/i18n/descriptors/subscription.ts:220
 msgid "import.conflictSkip"
 msgstr "跳过已有记录"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:195
+#: src/i18n/descriptors/subscription.ts:242
 msgid "import.skipItem"
 msgstr "跳过此条"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:229
+#: src/i18n/descriptors/subscription.ts:290
 msgid "import.error.skipIndexInvalid"
 msgstr "跳过项索引无效。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:272
+#: src/i18n/descriptors/subscription.ts:333
 msgid "dashboard.recentSubscriptions"
 msgstr "近期订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:120
+#: src/i18n/descriptors/subscription.ts:167
 msgid "import.stepSelect"
 msgstr "选择"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:299
+#: src/i18n/descriptors/subscription.ts:360
 msgid "calendar.dayListDescription"
 msgstr "选择 {date} 要查看的订阅。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:300
+#: src/i18n/descriptors/subscription.ts:361
 msgid "calendar.dayListFallbackDescription"
 msgstr "选择当天要查看的订阅。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:40
+#: src/i18n/descriptors/subscription.ts:85
 msgid "subscription.placeholder.tags"
 msgstr "选择或输入标签"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:37
+#: src/i18n/descriptors/subscription.ts:82
 msgid "subscription.placeholder.paymentMethod"
 msgstr "选择支付方式"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:123
+#: src/i18n/descriptors/subscription.ts:170
 msgid "import.tabFile"
 msgstr "选择文件"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:127
+#: src/i18n/descriptors/subscription.ts:174
 msgid "import.chooseFile"
 msgstr "选择文件"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:38
+#: src/i18n/descriptors/subscription.ts:83
 msgid "subscription.placeholder.date"
 msgstr "选择日期"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:36
+#: src/i18n/descriptors/subscription.ts:81
 msgid "subscription.placeholder.currency"
 msgstr "选择货币"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:141
+#: src/i18n/descriptors/subscription.ts:188
 msgid "import.wallosGuideColumnMatch"
 msgstr "重复导入"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:57
+#: src/i18n/descriptors/subscription.ts:102
 msgid "subscription.repeatReminder"
 msgstr "重复提醒"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:59
+#: src/i18n/descriptors/subscription.ts:104
 msgid "subscription.repeatReminderWindow"
 msgstr "重复范围"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
+#: src/i18n/descriptors/subscription.ts:24
+msgid "subscription.addToCalendarRegenerate"
+msgstr "重新生成订阅链接"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:25
+msgid "subscription.addToCalendarRegenerateTitle"
+msgstr "重新生成这个订阅链接？"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:45
+msgid "subscription.addToCalendar.description.amount"
+msgstr "金额：{amount}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:60
 msgid "subscription.validation.amountInvalid"
 msgstr "金额必须是 0 到 1,000,000,000 之间的有效数字"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:182
+#: src/i18n/descriptors/subscription.ts:229
 msgid "import.summaryError"
 msgstr "错误"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:186
+#: src/i18n/descriptors/subscription.ts:233
 msgid "import.action.error"
 msgstr "错误"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:192
+#: src/i18n/descriptors/subscription.ts:239
 msgid "import.filter.error"
 msgstr "错误"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:58
+#: src/i18n/descriptors/subscription.ts:103
 msgid "subscription.repeatReminderInterval"
 msgstr "间隔"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:271
+#: src/i18n/descriptors/subscription.ts:332
 msgid "dashboard.trialsNeedAttention"
 msgstr "需关注转付费"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:250
+#: src/i18n/descriptors/subscription.ts:311
 msgid "statistics.inactiveSubscriptions"
 msgstr "非活动订阅"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:249
+#: src/i18n/descriptors/subscription.ts:310
 msgid "statistics.budgetPercent"
 msgstr "预算使用百分比"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:121
+#: src/i18n/descriptors/subscription.ts:168
 msgid "import.stepPreview"
 msgstr "预览"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:175
+#: src/i18n/descriptors/subscription.ts:222
 msgid "import.previewTitle"
 msgstr "预览结果"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:287
+#: src/i18n/descriptors/subscription.ts:348
 msgid "calendar.estimatedSpend"
 msgstr "预计支出"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:60
+#: src/i18n/descriptors/subscription.ts:105
 msgid "subscription.repeatReminderPreview.afterFirst"
 msgstr "首次提醒后，{interval}重复一次，直到到期日通知时间。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:61
+#: src/i18n/descriptors/subscription.ts:106
 msgid "subscription.repeatReminderPreview.finalWindow"
 msgstr "首次提醒照常发送，重复提醒只在到期前最后 {hours} 小时内发送。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:55
+#: src/i18n/descriptors/subscription.ts:100
 msgid "subscription.reminderInheritCsv"
 msgstr "默认值从设置中获取"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:54
+#: src/i18n/descriptors/subscription.ts:99
 msgid "subscription.reminderInherit"
 msgstr "默认值从设置中获取（提前 {days} 天）"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:71
+#: src/i18n/descriptors/subscription.ts:118
 msgid "subscription.card.reminderInherit"
 msgstr "默认提醒：提前 {days} 天"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:87
+#: src/i18n/descriptors/subscription.ts:134
 msgid "subscriptions.sort.default"
 msgstr "默认顺序"

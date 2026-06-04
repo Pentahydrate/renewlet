@@ -14,1123 +14,389 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-msgid "settings.calendarFeed"
-msgstr "Calendar subscription"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedHelp"
-msgstr "Generate a private ICS URL and sync future renewal dates to calendar apps that support subscriptions."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedEnabled"
-msgstr "Enabled"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedDisabled"
-msgstr "Not enabled"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedUrl"
-msgstr "Calendar subscription URL"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOneTimeHelp"
-msgstr "This is your private subscription link. If it gets shared by mistake, regenerate it to invalidate the old link."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedDisabledHelp"
-msgstr "After generating a URL, subscribe to it from iOS, macOS, Android, Outlook, Thunderbird, or another calendar app."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOpenSystem"
-msgstr "Subscribe in system calendar"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedCopy"
-msgstr "Copy URL"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedGenerate"
-msgstr "Generate URL"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRegenerate"
-msgstr "Regenerate"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRegenerateTitle"
-msgstr "Regenerate calendar subscription URL?"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRegenerateDescription"
-msgstr "The old URL will stop working immediately. Calendar apps that already use it need to be re-added."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRevoke"
-msgstr "Revoke subscription"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedGenerated"
-msgstr "Calendar subscription generated"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedGeneratedDescription"
-msgstr "You can return here anytime to copy the URL or open the system calendar subscription flow."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRegenerated"
-msgstr "Calendar subscription regenerated"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRegeneratedDescription"
-msgstr "The old URL is invalid. Add the new URL to your calendar app."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedCopied"
-msgstr "URL copied"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedCopiedDescription"
-msgstr "You can now add it as a subscribed calendar."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedCopyFailed"
-msgstr "Copy failed"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedCopyFailedDescription"
-msgstr "The browser blocked clipboard access. Select and copy the URL manually."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOpenSystemAttempted"
-msgstr "Tried to open the system calendar"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOpenSystemAttemptedDescription"
-msgstr "If the system calendar rejects this URL, copy it and add the subscription manually in your calendar app."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOpenSystemFailed"
-msgstr "Failed to open system calendar subscription"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedOpenSystemFailedDescription"
-msgstr "The subscription URL is not returning usable ICS content right now. Copy the URL to add the subscription manually."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedFailed"
-msgstr "Calendar subscription failed"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedFailedDescription"
-msgstr "Could not generate the calendar subscription. Try again later."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRevoked"
-msgstr "Calendar subscription revoked"
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRevokedDescription"
-msgstr "The old URL is now invalid; calendar clients will not be able to refresh it."
-
-#. js-lingui-explicit-id
-msgid "settings.calendarFeedRevokeFailedDescription"
-msgstr "Could not revoke the calendar subscription. Try again later."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:105
+#: src/i18n/descriptors/settings.ts:151
 msgid "settings.channelConfig"
 msgstr "{channel} configuration"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:143
+#: src/i18n/descriptors/settings.ts:189
 msgid "settings.channel.webhookReady"
 msgstr "{method} Webhook URL filled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:119
+#: src/i18n/descriptors/settings.ts:165
 msgid "settings.sectionSaved"
 msgstr "{section} updated"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:171
+#: src/i18n/descriptors/settings.ts:217
 msgid "settings.wechatAtAll"
 msgstr "@ all members"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:169
+#: src/i18n/descriptors/settings.ts:215
 msgid "settings.wechatPhones"
 msgstr "@ phone numbers (optional)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:54
+#: src/i18n/descriptors/settings.ts:69
 msgid "settings.perMonth"
 msgstr "/ month"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:92
+#: src/i18n/descriptors/settings.ts:138
 msgid "settings.cachePolicyValue"
 msgstr "24-hour local cache"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:175
+#: src/i18n/descriptors/settings.ts:221
 msgid "settings.smtpSecureHelp"
 msgstr "465 is usually enabled; 587/2525 are usually disabled and use STARTTLS. Cloudflare Workers does not support 25."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:141
+#: src/i18n/descriptors/settings.ts:187
 msgid "settings.channel.notifyxReady"
 msgstr "API Key filled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:154
+#: src/i18n/descriptors/settings.ts:200
 msgid "settings.help.bark"
 msgstr "Bark iOS app"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:139
+#: src/i18n/descriptors/settings.ts:185
 msgid "settings.channel.telegramReady"
 msgstr "Bot Token and Chat ID filled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:45
+#: src/i18n/descriptors/settings.ts:60
 msgid "settings.builtInIconSourceShort.dashboardIcons"
 msgstr "Dashboard"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:44
+#: src/i18n/descriptors/settings.ts:59
 msgid "settings.builtInIconSource.dashboardIcons"
 msgstr "Dashboard Icons"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:84
+#: src/i18n/descriptors/settings.ts:130
 msgid "settings.exchangeRateProvider.exchangeApi"
 msgstr "Exchange API"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:85
+#: src/i18n/descriptors/settings.ts:131
 msgid "settings.exchangeRateProvider.floatrates"
 msgstr "FloatRates JSON Feeds"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:159
+#: src/i18n/descriptors/settings.ts:205
 msgid "settings.webhookGetPostHelp"
 msgstr "GET sends title/content/timestamp as query parameters. POST sends JSON by default, or uses the template below."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:161
+#: src/i18n/descriptors/settings.ts:207
 msgid "settings.webhookHeadersHelp"
 msgstr "Custom headers in JSON format. Leave empty to use defaults."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:155
+#: src/i18n/descriptors/settings.ts:201
 msgid "settings.help.notifyx"
 msgstr "Notifyx help"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:12
+#: src/i18n/descriptors/settings.ts:27
 msgid "settings.pocketBaseAdmin"
 msgstr "PocketBase Admin"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:41
+#: src/i18n/descriptors/settings.ts:56
 msgid "settings.builtInIconSourceShort.selfhst"
 msgstr "selfh.st"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:40
+#: src/i18n/descriptors/settings.ts:55
 msgid "settings.builtInIconSource.selfhst"
 msgstr "selfh.st icons"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:177
+#: src/i18n/descriptors/settings.ts:223
 msgid "settings.smtpPassword"
 msgstr "SMTP password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:172
+#: src/i18n/descriptors/settings.ts:218
 msgid "settings.smtpHost"
 msgstr "SMTP server"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:176
+#: src/i18n/descriptors/settings.ts:222
 msgid "settings.smtpUser"
 msgstr "SMTP username"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:173
+#: src/i18n/descriptors/settings.ts:219
 msgid "settings.smtpPort"
 msgstr "SMTP port"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:36
+#: src/i18n/descriptors/settings.ts:51
 msgid "settings.builtInIconSource.thesvg"
 msgstr "TheSVG"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:37
+#: src/i18n/descriptors/settings.ts:52
 msgid "settings.builtInIconSourceShort.thesvg"
 msgstr "TheSVG"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:152
+#: src/i18n/descriptors/settings.ts:95
+msgid "settings.calendarFeedCopied"
+msgstr "URL copied"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:198
 msgid "settings.help.webhook"
 msgstr "Webhook overview"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:93
+#: src/i18n/descriptors/settings.ts:139
 msgid "settings.lastUpdated"
 msgstr "Last updated"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:137
+#: src/i18n/descriptors/settings.ts:183
 msgid "settings.currencyPolicy.defaultTitle"
 msgstr "Reporting currency cannot be disabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:27
+#: src/i18n/descriptors/settings.ts:42
 msgid "settings.showExpiredHelp"
 msgstr "Turn this off to keep notifications shorter."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:188
+#: src/i18n/descriptors/settings.ts:234
 msgid "settings.barkKeyHelp"
 msgstr "Device Key from the Bark iOS app"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:157
+#: src/i18n/descriptors/settings.ts:203
 msgid "settings.notifyxHelp"
 msgstr "API Key from the Notifyx platform"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:124
+#: src/i18n/descriptors/settings.ts:170
 msgid "settings.partialSaveFailedDescription"
 msgstr "These changes were not saved: {scope}. Check them and try again."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:153
+#: src/i18n/descriptors/settings.ts:199
 msgid "settings.help.wechat"
 msgstr "WeCom bot docs"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:83
+#: src/i18n/descriptors/settings.ts:129
 msgid "settings.exchangeRateProviderHelp"
 msgstr "The selected source is tried first. If it fails, the other remote source is tried before built-in fallback rates."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:174
+#: src/i18n/descriptors/settings.ts:92
+msgid "settings.calendarFeedGeneratedDescription"
+msgstr "You can return here anytime to copy the URL or open the system calendar subscription flow."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:220
 msgid "settings.smtpSecure"
 msgstr "Use direct TLS"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:156
+#: src/i18n/descriptors/settings.ts:202
 msgid "settings.telegramChatPlaceholder"
 msgstr "e.g. 123456789 (available from @userinfobot)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:120
+#: src/i18n/descriptors/settings.ts:166
 msgid "settings.saveFailed"
 msgstr "Save failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:111
+#: src/i18n/descriptors/settings.ts:157
 msgid "settings.saveAll"
 msgstr "Save all settings"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:21
+#: src/i18n/descriptors/settings.ts:36
 msgid "settings.saveNewPassword"
 msgstr "Save new password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:114
+#: src/i18n/descriptors/settings.ts:160
 msgid "settings.saveChanges"
 msgstr "Save changes"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:13
+#: src/i18n/descriptors/settings.ts:28
 msgid "settings.changePassword"
 msgstr "Change password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:15
+#: src/i18n/descriptors/settings.ts:30
 msgid "settings.passwordDialogTitle"
 msgstr "Change password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:116
+#: src/i18n/descriptors/settings.ts:162
 msgid "settings.allSettings"
 msgstr "All settings"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:28
+#: src/i18n/descriptors/settings.ts:43
 msgid "settings.builtInIconSources"
 msgstr "Built-in icon sources"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:86
+#: src/i18n/descriptors/settings.ts:132
 msgid "settings.exchangeRateProvider.builtin"
 msgstr "Built-in fallback rates"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:20
+#: src/i18n/descriptors/settings.ts:35
 msgid "settings.confirmPasswordPlaceholder"
 msgstr "Enter it again"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:64
+#: src/i18n/descriptors/settings.ts:110
 msgid "settings.categoryManager"
 msgstr "Categories"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:50
+#: src/i18n/descriptors/settings.ts:65
 msgid "settings.builtInIconSourceVariantsToggle"
 msgstr "Toggle {source} variants"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:48
+#: src/i18n/descriptors/settings.ts:63
 msgid "settings.builtInIconSourceToggle"
 msgstr "Toggle {source} source"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:151
+#: src/i18n/descriptors/settings.ts:197
 msgid "settings.help.telegram"
 msgstr "Create Telegram bot"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:8
+#: src/i18n/descriptors/settings.ts:23
 msgid "settings.emailLoading"
 msgstr "Loading..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:178
+#: src/i18n/descriptors/settings.ts:224
 msgid "settings.smtpFrom"
 msgstr "From"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:162
+#: src/i18n/descriptors/settings.ts:208
 msgid "settings.webhookPayload"
 msgstr "Payload (optional JSON)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:107
+#: src/i18n/descriptors/settings.ts:153
 msgid "settings.channelDisabledHelp"
 msgstr "You can fill in configuration first, then enable and save before testing."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:49
+#: src/i18n/descriptors/settings.ts:64
 msgid "settings.builtInIconSourceVariants"
 msgstr "Enable variants"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:39
+#: src/i18n/descriptors/settings.ts:54
 msgid "settings.builtInIconSource.thesvg.variantsHelp"
 msgstr "Shows upstream variants such as default, mono, and wordmark."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:43
+#: src/i18n/descriptors/settings.ts:58
 msgid "settings.builtInIconSource.selfhst.variantsHelp"
 msgstr "Shows theme variants such as light and dark."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:47
+#: src/i18n/descriptors/settings.ts:62
 msgid "settings.builtInIconSource.dashboardIcons.variantsHelp"
 msgstr "Shows theme variants such as light and dark."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:75
+#: src/i18n/descriptors/settings.ts:121
 msgid "settings.currencyManagerDescription"
 msgstr "Enable or disable available currency options. The shared rate-source scope supports 146 currencies."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:190
+#: src/i18n/descriptors/settings.ts:236
 msgid "settings.barkSilentHelp"
 msgstr "When enabled, push notifications will not play a sound."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:179
+#: src/i18n/descriptors/settings.ts:225
 msgid "settings.smtpReplyTo"
 msgstr "Reply-To"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:165
+#: src/i18n/descriptors/settings.ts:14
+msgid "settings.sectionNav.iconSources"
+msgstr "Icon sources"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:211
 msgid "settings.wechatHelp"
 msgstr "Get it after adding a group bot in a WeCom group."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:26
+#: src/i18n/descriptors/settings.ts:84
+msgid "settings.calendarFeedOpenSystem"
+msgstr "Subscribe in system calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:41
 msgid "settings.showExpired"
 msgstr "Include expired subscriptions in notifications"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:140
+#: src/i18n/descriptors/settings.ts:186
 msgid "settings.channel.telegramTodo"
 msgstr "Fill in Bot Token and Chat ID"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:142
+#: src/i18n/descriptors/settings.ts:188
 msgid "settings.channel.notifyxTodo"
 msgstr "Fill in Notifyx API Key"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:148
+#: src/i18n/descriptors/settings.ts:194
 msgid "settings.channel.emailTodo"
 msgstr "Fill in SMTP and recipient email"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:144
+#: src/i18n/descriptors/settings.ts:190
 msgid "settings.channel.webhookTodo"
 msgstr "Fill in Webhook URL"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:146
+#: src/i18n/descriptors/settings.ts:192
 msgid "settings.channel.wechatTodo"
 msgstr "Fill in WeCom bot Webhook URL"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:150
+#: src/i18n/descriptors/settings.ts:196
 msgid "settings.channel.barkTodo"
 msgstr "Fill in server URL and Device Key"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:22
-msgid "settings.appearance"
-msgstr "Appearance"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:170
-msgid "settings.wechatPhonesHelp"
-msgstr "Separate multiple numbers with commas or new lines. Only applies to text messages."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:181
-msgid "settings.multipleRecipients"
-msgstr "Multiple recipients"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:34
-msgid "settings.builtInIconSourcesDialogDone"
-msgstr "Done"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:16
-msgid "settings.passwordDialogDescription"
-msgstr "The password will be written to the local auth account. It will not be shown after a successful change, so keep it safe."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:14
-msgid "settings.passwordHelp"
-msgstr "Password is used for sign-in and API access."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:132
-msgid "settings.exchangeRateProviderSwitched"
-msgstr "{provider} is now tried first."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:129
-msgid "settings.defaultCurrencySwitched"
-msgstr "Switched to {currency}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:31
-msgid "settings.builtInIconSourcesSummary"
-msgstr "{enabled} sources enabled · variants {variants}/{total}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:127
-msgid "settings.ratesUpdatedDescription"
-msgstr "Latest exchange-rate data has been fetched."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:103
-msgid "settings.cronTip"
-msgstr "Cron should still call the endpoint every minute or at least every 5 minutes. The app decides per user time zone whether to send."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:122
-msgid "settings.appSettingsScope"
-msgstr "App settings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:182
-msgid "settings.multipleRecipientsHelp"
-msgstr "When enabled, separate multiple email addresses with commas or new lines."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:17
-msgid "settings.currentPassword"
-msgstr "Current password"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:106
-msgid "settings.channelEnabledHelp"
-msgstr "This channel is enabled and will send notifications after saving."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:138
-msgid "settings.currencyPolicy.defaultDescription"
-msgstr "{currency} is used for app-wide amount conversion. Switch the reporting currency first, then disable it."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:118
-msgid "settings.savedDescription"
-msgstr "All changes have been synced."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:184
-msgid "settings.recipientEmailHelp"
-msgstr "Destination email for notifications. Defaults to the current login email."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:29
-msgid "settings.builtInIconSourcesHelp"
-msgstr "Control which built-in SVG icon libraries are used for Logo and custom icon search."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:102
-msgid "settings.tip"
-msgstr "Tip"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:59
-msgid "settings.timezoneSearch"
-msgstr "Search city, time zone, or UTC offset..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:88
-msgid "settings.currencySearch"
-msgstr "Search currency, code, or symbol..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:72
-msgid "settings.paymentManager"
-msgstr "Payment methods"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:163
-msgid "settings.webhookPayloadHelp"
-msgstr "Supports variables: '{title}', '{content}', '{timestamp}'. They are replaced with sent content."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:183
-msgid "settings.recipientEmail"
-msgstr "Recipient email"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:147
-msgid "settings.channel.emailReady"
-msgstr "Recipient email filled"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:113
-msgid "settings.discardChanges"
-msgstr "Discard changes"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:90
-msgid "settings.dataSource"
-msgstr "Data source"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:62
-msgid "settings.dataConfig"
-msgstr "Data configuration"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:123
-msgid "settings.customConfigScope"
-msgstr "Data configuration"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:167
-msgid "settings.textMessage"
-msgstr "Text message"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:133
-msgid "settings.exchangeRateProviderSaveFailed"
-msgstr "Could not save rate source. Please try again later."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:134
-msgid "settings.exchangeRateProviderServerOutdated"
-msgstr "Could not save rate source. The server may not be updated or restarted; restart the server and try again."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:130
-msgid "settings.defaultCurrencySaveFailed"
-msgstr "Could not save reporting currency. Please try again later."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:121
-msgid "settings.saveFailedDescription"
-msgstr "Could not save settings. Please try again later."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:68
-msgid "settings.categoryCheckFailed"
-msgstr "Could not check whether this category is used because subscriptions failed to load. Try again later."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:56
-msgid "settings.timezone"
-msgstr "Time zone"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:57
-msgid "settings.timezoneSelect"
-msgstr "Select time zone"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:23
-msgid "settings.display"
-msgstr "Display"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:35
-msgid "settings.builtInIconSourcesPendingHint"
-msgstr "Changes take effect when you save the settings page."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:78
-msgid "settings.ratesUpdating"
-msgstr "Updating..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:77
-msgid "settings.refreshRates"
-msgstr "Update rates"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:53
-msgid "settings.monthlyBudget"
-msgstr "Monthly budget"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:112
-msgid "settings.unsavedChanges"
-msgstr "Unsaved changes"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:185
-msgid "settings.barkServer"
-msgstr "Server URL"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:60
-msgid "settings.timezoneEmpty"
-msgstr "No time zone found"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:89
-msgid "settings.currencyEmpty"
-msgstr "No currency found"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:94
-msgid "settings.notFetched"
-msgstr "Not fetched"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:9
-msgid "settings.emailMissing"
-msgstr "Email unavailable"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:164
-msgid "settings.wechatUrl"
-msgstr "Bot Webhook URL"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:145
-msgid "settings.channel.wechatReady"
-msgstr "Bot Webhook URL filled"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:67
-msgid "settings.categoryChecking"
-msgstr "Checking whether this category is used. Please wait..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:76
-msgid "settings.exchange"
-msgstr "Exchange rates and reporting currency"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:126
-msgid "settings.ratesUpdated"
-msgstr "Exchange rates updated"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:96
-msgid "settings.ratesInfo"
-msgstr "Exchange rates update automatically every 24 hours, or manually from the button above. If the selected source fails, the other remote source is tried before totals fall back to built-in rates."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:82
-msgid "settings.exchangeRateProvider"
-msgstr "Rate source"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:131
-msgid "settings.exchangeRateProviderSaved"
-msgstr "Rate source saved"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:79
-msgid "settings.ratesError"
-msgstr "Could not fetch exchange rates. Fallback rates are being used. {error}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:95
-msgid "settings.ratesPreview"
-msgstr "Rate preview (1 {currency} = )"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:193
-msgid "settings.testChannel.webhook"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:191
-msgid "settings.testChannel.telegram"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:192
-msgid "settings.testChannel.notifyx"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:194
-msgid "settings.testChannel.wechat"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:196
-msgid "settings.testChannel.bark"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:195
-msgid "settings.testChannel.email"
-msgstr "Test {channel} notification"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:197
-msgid "settings.testing"
-msgstr "Testing..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:168
-msgid "settings.wechatModeTag"
-msgstr "Prefix messages with a Renewlet marker"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:166
-msgid "settings.messageType"
-msgstr "Message type"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:70
-msgid "settings.statusManager"
-msgstr "Statuses"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:7
-msgid "settings.username"
-msgstr "Username"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:10
-msgid "settings.usernameHelp"
-msgstr "The username is your login email and cannot be changed."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:108
-msgid "settings.testPhone"
-msgstr "Third-party API test number"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:6
-msgid "settings.account"
-msgstr "Admin account"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:5
-msgid "settings.subtitle"
-msgstr "Manage your account, display, and notification settings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:11
-msgid "settings.manageUsers"
-msgstr "Manage users"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:73
-msgid "settings.paymentManagerDescription"
-msgstr "Manage payment channel options and custom icons."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:65
-msgid "settings.categoryManagerDescription"
-msgstr "Manage subscription category options and colors."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:4
-msgid "settings.title"
-msgstr "System settings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:80
-msgid "settings.defaultCurrency"
-msgstr "Reporting currency"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:128
-msgid "settings.defaultCurrencySaved"
-msgstr "Reporting currency saved"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:91
-msgid "settings.cachePolicy"
-msgstr "Cache policy"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:63
-msgid "settings.dataConfigDescription"
-msgstr "Customize subscription categories, statuses, payment methods, and currencies."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:160
-msgid "settings.webhookHeaders"
-msgstr "Custom headers (optional JSON)"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:19
-msgid "settings.newPasswordPlaceholder"
-msgstr "At least 8 characters"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:66
-msgid "settings.categoryKeepOne"
-msgstr "Keep at least 1 category so new subscriptions and filters still have a selectable category."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:51
-msgid "settings.builtInIconSourcesRequired"
-msgstr "Keep at least one source enabled so Logo and icon search can return built-in candidates."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:135
-msgid "settings.currencyPolicy.noneTitle"
-msgstr "Enable at least one currency"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:71
-msgid "settings.statusManagerDescription"
-msgstr "Subscription statuses affect statistics and only support sorting."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:101
-msgid "settings.notificationReminderDaysHelp"
-msgstr "Subscriptions set to default from Settings use this number of days before renewal."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:187
-msgid "settings.barkKey"
-msgstr "Device Key"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:149
-msgid "settings.channel.barkReady"
-msgstr "Device Key filled"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:117
-msgid "settings.saved"
-msgstr "Settings saved"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:55
-msgid "settings.monthlyBudgetHelp"
-msgstr "Set a monthly subscription budget for budget analysis on the statistics page."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:115
-msgid "settings.unsavedLeavePrompt"
-msgstr "You have unsaved settings changes. Leave this page?"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:69
-msgid "settings.categoryUsed"
-msgstr "This category is used by {count} subscriptions. Change those subscriptions to another category before deleting it."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:24
-msgid "settings.language"
-msgstr "Language"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:25
-msgid "settings.languageHelp"
-msgstr "Language previews immediately in the UI and syncs to account notifications and other devices after saving."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:109
-msgid "settings.testPhonePlaceholder"
-msgstr "Send a test message and verify, e.g. 86xxxxxx"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:158
-msgid "settings.webhookMethod"
-msgstr "Request method"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:136
-msgid "settings.currencyPolicy.noneDescription"
-msgstr "Keep at least 1 enabled currency, otherwise reporting and new subscription currency selection will be unavailable."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:74
-msgid "settings.currencyManager"
-msgstr "Currencies"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:18
-msgid "settings.currentPasswordPlaceholder"
-msgstr "Enter current password"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:61
-msgid "settings.timezoneHelp"
-msgstr "Choose an IANA time zone. Notification time and date windows such as today/upcoming days will use it."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:33
-msgid "settings.builtInIconSourcesDialogDescription"
-msgstr "Choose which built-in SVG icon libraries Logo and custom icon search can use, and control whether upstream variants are shown."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:58
-msgid "settings.timezonePlaceholder"
-msgstr "Select time zone"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:99
-msgid "settings.notificationTimeHelp"
-msgstr "Choose the local time for daily notifications. The server combines it with the time zone above."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:87
-msgid "settings.currencyPlaceholder"
-msgstr "Select currency"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:38
-msgid "settings.builtInIconSource.thesvg.help"
-msgstr "General brand and technology icon library, shown first by default."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:104
-msgid "settings.notificationChannels"
-msgstr "Notification methods (multi-select)"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:98
-msgid "settings.notificationTime"
-msgstr "Notification time (local)"
+#: src/i18n/descriptors/settings.ts:85
+msgid "settings.calendarFeedCopy"
+msgstr "Copy URL"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:97
-msgid "settings.notifications"
-msgstr "Notifications"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:180
-msgid "settings.smtpHelp"
-msgstr "Email notifications use the current account's SMTP. Leaving these fields empty does not use a deployment fallback."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:30
-msgid "settings.builtInIconSourcesConfigure"
-msgstr "Configure"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:32
-msgid "settings.builtInIconSourcesDialogTitle"
-msgstr "Configure built-in icon sources"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:189
-msgid "settings.barkSilent"
-msgstr "Silent push"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:46
-msgid "settings.builtInIconSource.dashboardIcons.help"
-msgstr "Service icon library for dashboards such as Homarr, Homepage, and Dashy."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:42
-msgid "settings.builtInIconSource.selfhst.help"
-msgstr "Icon library focused on self-hosted services and dashboards."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:110
-msgid "settings.testPhoneHelp"
-msgstr "Reserved field for channels that may need a phone number or recipient ID. It does not affect currently supported channels."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:125
-msgid "settings.budgetInvalid"
-msgstr "Budget must be a valid number between 0 and 1,000,000,000."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:52
-msgid "settings.budget"
-msgstr "Budget"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:81
-msgid "settings.defaultCurrencyHelp"
-msgstr "Dashboard and statistics amounts are converted to this currency. Individual subscriptions keep their original currency."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:186
-msgid "settings.barkServerHelp"
-msgstr "Official service is `https://api.day.app` by default. Enter your own Bark server URL if self-hosted."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:100
-msgid "settings.notificationReminderDays"
-msgstr "Default reminder lead time"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:7
-msgid "settings.sectionNavLabel"
-msgstr "Settings sections"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:8
-msgid "settings.sectionNavTitle"
-msgstr "Settings menu"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:9
-msgid "settings.sectionNavOpen"
-msgstr "Open settings menu"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:10
-msgid "settings.sectionNavCompactTrigger"
-msgstr "Contents"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:11
-msgid "settings.sectionNav.account"
-msgstr "Account"
+msgid "settings.calendarFeedCopyFailed"
+msgstr "Copy failed"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:12
@@ -1138,41 +404,806 @@ msgid "settings.sectionNav.appearance"
 msgstr "Appearance"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:12
-msgid "settings.sectionNav.display"
-msgstr "Display"
+#: src/i18n/descriptors/settings.ts:37
+msgid "settings.appearance"
+msgstr "Appearance"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:13
-msgid "settings.sectionNav.iconSources"
-msgstr "Icon sources"
+#: src/i18n/descriptors/settings.ts:216
+msgid "settings.wechatPhonesHelp"
+msgstr "Separate multiple numbers with commas or new lines. Only applies to text messages."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:14
-msgid "settings.sectionNav.budget"
-msgstr "Budget"
+#: src/i18n/descriptors/settings.ts:227
+msgid "settings.multipleRecipients"
+msgstr "Multiple recipients"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:15
+#: src/i18n/descriptors/settings.ts:100
+msgid "settings.calendarFeedOpenSystemAttemptedDescription"
+msgstr "If the system calendar rejects this URL, copy it and add the subscription manually in your calendar app."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:49
+msgid "settings.builtInIconSourcesDialogDone"
+msgstr "Done"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:31
+msgid "settings.passwordDialogDescription"
+msgstr "The password will be written to the local auth account. It will not be shown after a successful change, so keep it safe."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:29
+msgid "settings.passwordHelp"
+msgstr "Password is used for sign-in and API access."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:178
+msgid "settings.exchangeRateProviderSwitched"
+msgstr "{provider} is now tried first."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:175
+msgid "settings.defaultCurrencySwitched"
+msgstr "Switched to {currency}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:79
+msgid "settings.calendarFeedEnabled"
+msgstr "Enabled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:46
+msgid "settings.builtInIconSourcesSummary"
+msgstr "{enabled} sources enabled · variants {variants}/{total}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:99
+msgid "settings.calendarFeedOpenSystemAttempted"
+msgstr "Tried to open the system calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:173
+msgid "settings.ratesUpdatedDescription"
+msgstr "Latest exchange-rate data has been fetched."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:149
+msgid "settings.cronTip"
+msgstr "Cron should still call the endpoint every minute or at least every 5 minutes. The app decides per user time zone whether to send."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:168
+msgid "settings.appSettingsScope"
+msgstr "App settings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:228
+msgid "settings.multipleRecipientsHelp"
+msgstr "When enabled, separate multiple email addresses with commas or new lines."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:32
+msgid "settings.currentPassword"
+msgstr "Current password"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:152
+msgid "settings.channelEnabledHelp"
+msgstr "This channel is enabled and will send notifications after saving."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:184
+msgid "settings.currencyPolicy.defaultDescription"
+msgstr "{currency} is used for app-wide amount conversion. Switch the reporting currency first, then disable it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:164
+msgid "settings.savedDescription"
+msgstr "All changes have been synced."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:9
+msgid "settings.sectionNavOpen"
+msgstr "Open settings menu"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:230
+msgid "settings.recipientEmailHelp"
+msgstr "Destination email for notifications. Defaults to the current login email."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:44
+msgid "settings.builtInIconSourcesHelp"
+msgstr "Control which built-in SVG icon libraries are used for Logo and custom icon search."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:148
+msgid "settings.tip"
+msgstr "Tip"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:74
+msgid "settings.timezoneSearch"
+msgstr "Search city, time zone, or UTC offset..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:134
+msgid "settings.currencySearch"
+msgstr "Search currency, code, or symbol..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:90
+msgid "settings.calendarFeedRevoke"
+msgstr "Revoke subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:118
+msgid "settings.paymentManager"
+msgstr "Payment methods"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:209
+msgid "settings.webhookPayloadHelp"
+msgstr "Supports variables: '{title}', '{content}', '{timestamp}'. They are replaced with sent content."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:229
+msgid "settings.recipientEmail"
+msgstr "Recipient email"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:193
+msgid "settings.channel.emailReady"
+msgstr "Recipient email filled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:159
+msgid "settings.discardChanges"
+msgstr "Discard changes"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:136
+msgid "settings.dataSource"
+msgstr "Data source"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:16
 msgid "settings.sectionNav.dataConfig"
 msgstr "Data config"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:16
-msgid "settings.sectionNav.exchange"
-msgstr "Exchange rates"
+#: src/i18n/descriptors/settings.ts:108
+msgid "settings.dataConfig"
+msgstr "Data configuration"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:17
+#: src/i18n/descriptors/settings.ts:169
+msgid "settings.customConfigScope"
+msgstr "Data configuration"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:213
+msgid "settings.textMessage"
+msgstr "Text message"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:179
+msgid "settings.exchangeRateProviderSaveFailed"
+msgstr "Could not save rate source. Please try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:180
+msgid "settings.exchangeRateProviderServerOutdated"
+msgstr "Could not save rate source. The server may not be updated or restarted; restart the server and try again."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:176
+msgid "settings.defaultCurrencySaveFailed"
+msgstr "Could not save reporting currency. Please try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:167
+msgid "settings.saveFailedDescription"
+msgstr "Could not save settings. Please try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:107
+msgid "settings.calendarFeedRevokeFailedDescription"
+msgstr "Could not revoke the calendar subscription. Try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:114
+msgid "settings.categoryCheckFailed"
+msgstr "Could not check whether this category is used because subscriptions failed to load. Try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:104
+msgid "settings.calendarFeedFailedDescription"
+msgstr "Could not generate the calendar subscription. Try again later."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:18
 msgid "settings.sectionNav.calendarFeed"
 msgstr "Calendar feed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:18
+#: src/i18n/descriptors/settings.ts:77
+msgid "settings.calendarFeed"
+msgstr "Calendar subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:81
+msgid "settings.calendarFeedUrl"
+msgstr "Calendar subscription URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:105
+msgid "settings.calendarFeedRevoked"
+msgstr "Calendar subscription revoked"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:91
+msgid "settings.calendarFeedGenerated"
+msgstr "Calendar subscription generated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:93
+msgid "settings.calendarFeedRegenerated"
+msgstr "Calendar subscription regenerated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:103
+msgid "settings.calendarFeedFailed"
+msgstr "Calendar subscription failed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:89
+msgid "settings.calendarFeedRegenerateDescription"
+msgstr "The old URL will stop working immediately. Calendar apps that already use it need to be re-added."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:106
+msgid "settings.calendarFeedRevokedDescription"
+msgstr "The old URL is now invalid; calendar clients will not be able to refresh it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:94
+msgid "settings.calendarFeedRegeneratedDescription"
+msgstr "The old URL is invalid. Add the new URL to your calendar app."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:19
 msgid "settings.sectionNav.timezone"
 msgstr "Time zone"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:19
+#: src/i18n/descriptors/settings.ts:71
+msgid "settings.timezone"
+msgstr "Time zone"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:72
+msgid "settings.timezoneSelect"
+msgstr "Select time zone"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:13
+msgid "settings.sectionNav.display"
+msgstr "Display"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:38
+msgid "settings.display"
+msgstr "Display"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:50
+msgid "settings.builtInIconSourcesPendingHint"
+msgstr "Changes take effect when you save the settings page."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:124
+msgid "settings.ratesUpdating"
+msgstr "Updating..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:123
+msgid "settings.refreshRates"
+msgstr "Update rates"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:68
+msgid "settings.monthlyBudget"
+msgstr "Monthly budget"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:158
+msgid "settings.unsavedChanges"
+msgstr "Unsaved changes"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:231
+msgid "settings.barkServer"
+msgstr "Server URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:80
+msgid "settings.calendarFeedDisabled"
+msgstr "Not enabled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:75
+msgid "settings.timezoneEmpty"
+msgstr "No time zone found"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:135
+msgid "settings.currencyEmpty"
+msgstr "No currency found"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:140
+msgid "settings.notFetched"
+msgstr "Not fetched"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:24
+msgid "settings.emailMissing"
+msgstr "Email unavailable"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:210
+msgid "settings.wechatUrl"
+msgstr "Bot Webhook URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:191
+msgid "settings.channel.wechatReady"
+msgstr "Bot Webhook URL filled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:113
+msgid "settings.categoryChecking"
+msgstr "Checking whether this category is used. Please wait..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:17
+msgid "settings.sectionNav.exchange"
+msgstr "Exchange rates"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:122
+msgid "settings.exchange"
+msgstr "Exchange rates and reporting currency"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:172
+msgid "settings.ratesUpdated"
+msgstr "Exchange rates updated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:142
+msgid "settings.ratesInfo"
+msgstr "Exchange rates update automatically every 24 hours, or manually from the button above. If the selected source fails, the other remote source is tried before totals fall back to built-in rates."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:128
+msgid "settings.exchangeRateProvider"
+msgstr "Rate source"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:177
+msgid "settings.exchangeRateProviderSaved"
+msgstr "Rate source saved"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:125
+msgid "settings.ratesError"
+msgstr "Could not fetch exchange rates. Fallback rates are being used. {error}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:141
+msgid "settings.ratesPreview"
+msgstr "Rate preview (1 {currency} = )"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:239
+msgid "settings.testChannel.webhook"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:237
+msgid "settings.testChannel.telegram"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:238
+msgid "settings.testChannel.notifyx"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:240
+msgid "settings.testChannel.wechat"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:242
+msgid "settings.testChannel.bark"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:241
+msgid "settings.testChannel.email"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:243
+msgid "settings.testing"
+msgstr "Testing..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:98
+msgid "settings.calendarFeedCopyFailedDescription"
+msgstr "The browser blocked clipboard access. Select and copy the URL manually."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:214
+msgid "settings.wechatModeTag"
+msgstr "Prefix messages with a Renewlet marker"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:212
+msgid "settings.messageType"
+msgstr "Message type"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:116
+msgid "settings.statusManager"
+msgstr "Statuses"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:96
+msgid "settings.calendarFeedCopiedDescription"
+msgstr "You can now add it as a subscribed calendar."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:83
+msgid "settings.calendarFeedDisabledHelp"
+msgstr "After generating a URL, subscribe to it from iOS, macOS, Android, Outlook, Thunderbird, or another calendar app."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:78
+msgid "settings.calendarFeedHelp"
+msgstr "Generate a private ICS URL and sync future renewal dates to calendar apps that support subscriptions."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:86
+msgid "settings.calendarFeedGenerate"
+msgstr "Generate URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:22
+msgid "settings.username"
+msgstr "Username"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:25
+msgid "settings.usernameHelp"
+msgstr "The username is your login email and cannot be changed."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:10
+msgid "settings.sectionNavCompactTrigger"
+msgstr "Contents"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:154
+msgid "settings.testPhone"
+msgstr "Third-party API test number"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:21
+msgid "settings.account"
+msgstr "Admin account"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:6
+msgid "settings.subtitle"
+msgstr "Manage your account, display, and notification settings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:26
+msgid "settings.manageUsers"
+msgstr "Manage users"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:119
+msgid "settings.paymentManagerDescription"
+msgstr "Manage payment channel options and custom icons."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:111
+msgid "settings.categoryManagerDescription"
+msgstr "Manage subscription category options and colors."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:101
+msgid "settings.calendarFeedOpenSystemFailed"
+msgstr "Failed to open system calendar subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:5
+msgid "settings.title"
+msgstr "System settings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:126
+msgid "settings.defaultCurrency"
+msgstr "Reporting currency"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:174
+msgid "settings.defaultCurrencySaved"
+msgstr "Reporting currency saved"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:137
+msgid "settings.cachePolicy"
+msgstr "Cache policy"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:109
+msgid "settings.dataConfigDescription"
+msgstr "Customize subscription categories, statuses, payment methods, and currencies."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:206
+msgid "settings.webhookHeaders"
+msgstr "Custom headers (optional JSON)"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:34
+msgid "settings.newPasswordPlaceholder"
+msgstr "At least 8 characters"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:112
+msgid "settings.categoryKeepOne"
+msgstr "Keep at least 1 category so new subscriptions and filters still have a selectable category."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:66
+msgid "settings.builtInIconSourcesRequired"
+msgstr "Keep at least one source enabled so Logo and icon search can return built-in candidates."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:181
+msgid "settings.currencyPolicy.noneTitle"
+msgstr "Enable at least one currency"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:102
+msgid "settings.calendarFeedOpenSystemFailedDescription"
+msgstr "The subscription URL is not returning usable ICS content right now. Copy the URL to add the subscription manually."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:117
+msgid "settings.statusManagerDescription"
+msgstr "Subscription statuses affect statistics and only support sorting."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:147
+msgid "settings.notificationReminderDaysHelp"
+msgstr "Subscriptions set to default from Settings use this number of days before renewal."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:233
+msgid "settings.barkKey"
+msgstr "Device Key"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:195
+msgid "settings.channel.barkReady"
+msgstr "Device Key filled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:7
+msgid "settings.sectionNavLabel"
+msgstr "Settings sections"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:163
+msgid "settings.saved"
+msgstr "Settings saved"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:70
+msgid "settings.monthlyBudgetHelp"
+msgstr "Set a monthly subscription budget for budget analysis on the statistics page."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:8
+msgid "settings.sectionNavTitle"
+msgstr "Settings menu"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:161
+msgid "settings.unsavedLeavePrompt"
+msgstr "You have unsaved settings changes. Leave this page?"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:115
+msgid "settings.categoryUsed"
+msgstr "This category is used by {count} subscriptions. Change those subscriptions to another category before deleting it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:39
+msgid "settings.language"
+msgstr "Language"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:40
+msgid "settings.languageHelp"
+msgstr "Language previews immediately in the UI and syncs to account notifications and other devices after saving."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:155
+msgid "settings.testPhonePlaceholder"
+msgstr "Send a test message and verify, e.g. 86xxxxxx"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:204
+msgid "settings.webhookMethod"
+msgstr "Request method"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:182
+msgid "settings.currencyPolicy.noneDescription"
+msgstr "Keep at least 1 enabled currency, otherwise reporting and new subscription currency selection will be unavailable."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:11
+msgid "settings.sectionNav.account"
+msgstr "Account"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:120
+msgid "settings.currencyManager"
+msgstr "Currencies"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:33
+msgid "settings.currentPasswordPlaceholder"
+msgstr "Enter current password"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:82
+msgid "settings.calendarFeedOneTimeHelp"
+msgstr "This is your private subscription link. If it gets shared by mistake, regenerate it to invalidate the old link."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:76
+msgid "settings.timezoneHelp"
+msgstr "Choose an IANA time zone. Notification time and date windows such as today/upcoming days will use it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:48
+msgid "settings.builtInIconSourcesDialogDescription"
+msgstr "Choose which built-in SVG icon libraries Logo and custom icon search can use, and control whether upstream variants are shown."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:73
+msgid "settings.timezonePlaceholder"
+msgstr "Select time zone"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:145
+msgid "settings.notificationTimeHelp"
+msgstr "Choose the local time for daily notifications. The server combines it with the time zone above."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:133
+msgid "settings.currencyPlaceholder"
+msgstr "Select currency"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:53
+msgid "settings.builtInIconSource.thesvg.help"
+msgstr "General brand and technology icon library, shown first by default."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:20
 msgid "settings.sectionNav.notifications"
 msgstr "Notifications"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:150
+msgid "settings.notificationChannels"
+msgstr "Notification methods (multi-select)"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:144
+msgid "settings.notificationTime"
+msgstr "Notification time (local)"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:143
+msgid "settings.notifications"
+msgstr "Notifications"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:226
+msgid "settings.smtpHelp"
+msgstr "Email notifications use the current account's SMTP. Leaving these fields empty does not use a deployment fallback."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:45
+msgid "settings.builtInIconSourcesConfigure"
+msgstr "Configure"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:47
+msgid "settings.builtInIconSourcesDialogTitle"
+msgstr "Configure built-in icon sources"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:87
+msgid "settings.calendarFeedRegenerate"
+msgstr "Regenerate"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:88
+msgid "settings.calendarFeedRegenerateTitle"
+msgstr "Regenerate calendar subscription URL?"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:235
+msgid "settings.barkSilent"
+msgstr "Silent push"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:61
+msgid "settings.builtInIconSource.dashboardIcons.help"
+msgstr "Service icon library for dashboards such as Homarr, Homepage, and Dashy."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:57
+msgid "settings.builtInIconSource.selfhst.help"
+msgstr "Icon library focused on self-hosted services and dashboards."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:156
+msgid "settings.testPhoneHelp"
+msgstr "Reserved field for channels that may need a phone number or recipient ID. It does not affect currently supported channels."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:15
+msgid "settings.sectionNav.budget"
+msgstr "Budget"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:171
+msgid "settings.budgetInvalid"
+msgstr "Budget must be a valid number between 0 and 1,000,000,000."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:67
+msgid "settings.budget"
+msgstr "Budget"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:127
+msgid "settings.defaultCurrencyHelp"
+msgstr "Dashboard and statistics amounts are converted to this currency. Individual subscriptions keep their original currency."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:232
+msgid "settings.barkServerHelp"
+msgstr "Official service is `https://api.day.app` by default. Enter your own Bark server URL if self-hosted."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:146
+msgid "settings.notificationReminderDays"
+msgstr "Default reminder lead time"

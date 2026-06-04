@@ -163,6 +163,7 @@
   "system.updateUnsupportedDockerBridge": "The Docker self-update binary was not found. Run docker compose pull && docker compose up -d once first.",
   "system.updateUnsupportedLinuxDocker": "In-app updates are only supported for the Linux Docker image.",
   "system.updateUnsupportedNotRelease": "This is not a release build. Upgrade it from source or Docker image instead.",
+  "system.updateUnsupportedReleaseAsset": "The target Release is missing the asset required for in-app updates: {asset}. Check again later or open GitHub Releases manually.",
   "system.updateUnsupportedSelfUpdateDisabled": "In-app updates are disabled by RENEWLET_SELF_UPDATE_ENABLED=false. Upgrade with docker compose pull && docker compose up -d.",
   "system.updateUnsupportedRuntime": "This deployment does not support in-app updates. Upgrade it with the original deployment method.",
   "system.versionCheckAccessWarning": "GitHub Releases cannot be reached right now. If this deployment uses a shared or restricted network, try again later or set RENEWLET_GITHUB_TOKEN before checking again.",

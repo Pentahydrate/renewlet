@@ -106,7 +106,9 @@ func cloneSystemVersionResponse(response *systemVersionResponse, cached bool) *s
 	clone.Cached = cached
 	if response.ReleaseInfo != nil {
 		release := *response.ReleaseInfo
-		release.Assets = append([]systemReleaseAssetDTO(nil), response.ReleaseInfo.Assets...)
+		// ReleaseInfo 是前端 Zod 校验的 API 契约；空附件列表也必须保持 []，不能让 Go nil slice 编成 null。
+		release.Assets = make([]systemReleaseAssetDTO, len(response.ReleaseInfo.Assets))
+		copy(release.Assets, response.ReleaseInfo.Assets)
 		clone.ReleaseInfo = &release
 	}
 	return &clone

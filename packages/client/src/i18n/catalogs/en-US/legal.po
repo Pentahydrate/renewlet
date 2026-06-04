@@ -14,161 +14,161 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:24
+#: src/i18n/descriptors/legal.ts:25
 msgid "legal.terms.scope.title"
 msgstr "1. Scope of Use"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:7
+#: src/i18n/descriptors/legal.ts:8
 msgid "legal.privacy.data.title"
 msgstr "1. Data We Process"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:11
+#: src/i18n/descriptors/legal.ts:12
 msgid "legal.privacy.usage.title"
 msgstr "2. How Data Is Used"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:27
+#: src/i18n/descriptors/legal.ts:28
 msgid "legal.terms.account.title"
 msgstr "2. Accounts and Data"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:30
+#: src/i18n/descriptors/legal.ts:31
 msgid "legal.terms.thirdParty.title"
 msgstr "3. Third-Party Services"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:14
+#: src/i18n/descriptors/legal.ts:15
 msgid "legal.privacy.thirdParty.title"
 msgstr "3. Third-Party Requests"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:18
+#: src/i18n/descriptors/legal.ts:19
 msgid "legal.privacy.control.title"
 msgstr "4. Your Control"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:33
+#: src/i18n/descriptors/legal.ts:34
 msgid "legal.terms.disclaimer.title"
 msgstr "4. Disclaimer"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:23
+#: src/i18n/descriptors/legal.ts:24
 msgid "legal.terms.intro"
 msgstr "Renewlet (renewlet) is an open-source subscription management tool. This page explains the basic rules you should understand when using this project or a deployed instance."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:9
+#: src/i18n/descriptors/legal.ts:10
 msgid "legal.privacy.data.business"
 msgstr "Application data: subscriptions, category/payment/currency configuration, user settings, and related SQLite data."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:25
+#: src/i18n/descriptors/legal.ts:26
 msgid "legal.terms.scope.lawful"
 msgstr "You may use this project, including self-hosted deployments, as long as your use is lawful and compliant."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:19
+#: src/i18n/descriptors/legal.ts:20
 msgid "legal.privacy.control.settings"
 msgstr "You can change notification channel settings or disable notifications from Settings at any time."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:26
+#: src/i18n/descriptors/legal.ts:27
 msgid "legal.terms.scope.accuracy"
 msgstr "You are responsible for the accuracy of subscription, price, exchange-rate, and related data you enter. The project only provides management and display features."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:5
+#: src/i18n/descriptors/legal.ts:6
 msgid "legal.privacy.subtitle"
 msgstr "Last updated: 2026-01-12"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:22
+#: src/i18n/descriptors/legal.ts:23
 msgid "legal.terms.subtitle"
 msgstr "Last updated: 2026-01-12"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:35
+#: src/i18n/descriptors/legal.ts:36
 msgid "legal.terms.disclaimer.loss"
 msgstr "You are responsible for any loss caused by using this project or a deployed instance."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:16
+#: src/i18n/descriptors/legal.ts:17
 msgid "legal.privacy.thirdParty.icons"
 msgstr "Icon search: external favicon/logo candidates may be loaded in the browser as a fallback, with graceful fallback on failure."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:29
+#: src/i18n/descriptors/legal.ts:30
 msgid "legal.terms.account.operator"
 msgstr "If you use an instance operated by someone else, understand that the operator may have server and database administration access."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:20
+#: src/i18n/descriptors/legal.ts:21
 msgid "legal.privacy.control.selfHost"
 msgstr "If you self-host the deployment, you can manage, back up, or delete data through the PocketBase admin UI and `/pb_data`."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:21
+#: src/i18n/descriptors/legal.ts:22
 msgid "legal.terms.title"
 msgstr "Terms of Service"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:34
+#: src/i18n/descriptors/legal.ts:35
 msgid "legal.terms.disclaimer.asIs"
 msgstr "The project is provided as is, without warranties of any kind, including accuracy, timeliness, or fitness for a particular purpose."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:6
+#: src/i18n/descriptors/legal.ts:7
 msgid "legal.privacy.intro"
 msgstr "This project does not include third-party analytics or advertising SDKs by default. When you use a deployed instance, its operator, which may be you, is responsible for storing and processing the data."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:28
+#: src/i18n/descriptors/legal.ts:29
 msgid "legal.terms.account.localAuth"
 msgstr "The project uses local authentication by default. Data is stored in SQLite and the local upload directory."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:15
+#: src/i18n/descriptors/legal.ts:16
 msgid "legal.privacy.thirdParty.rates"
 msgstr "Exchange rates: Exchange API or FloatRates JSON Feeds can be used for rate data, with the other remote source tried before built-in fallback rates."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:12
+#: src/i18n/descriptors/legal.ts:13
 msgid "legal.privacy.usage.core"
 msgstr "To provide core features: subscription management, statistics, calendar views, and personalized settings."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:13
+#: src/i18n/descriptors/legal.ts:14
 msgid "legal.privacy.usage.notifications"
 msgstr "For optional notifications: when notification channels are enabled, notification content is sent to the third-party channels you configure."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:32
+#: src/i18n/descriptors/legal.ts:33
 msgid "legal.terms.thirdParty.responsibility"
 msgstr "Availability, rate limits, and data accuracy of third-party services are the responsibility of those services."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:8
+#: src/i18n/descriptors/legal.ts:9
 msgid "legal.privacy.data.account"
 msgstr "Account data: managed by PocketBase authentication, such as email and local tokens."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:10
+#: src/i18n/descriptors/legal.ts:11
 msgid "legal.privacy.data.files"
 msgstr "Resource files: uploaded Logo/Icon images and similar files stored locally."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:17
+#: src/i18n/descriptors/legal.ts:18
 msgid "legal.privacy.thirdParty.notifications"
 msgstr "Notifications: Telegram, WeCom, Webhook, SMTP email, Bark, and similar channels receive the notification content you configure."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:31
+#: src/i18n/descriptors/legal.ts:32
 msgid "legal.terms.thirdParty.features"
 msgstr "Some features request third-party services, such as exchange-rate APIs, notification channels, and icon search sites."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:4
+#: src/i18n/descriptors/legal.ts:5
 msgid "legal.privacy.title"
 msgstr "Privacy Policy"

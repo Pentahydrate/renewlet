@@ -37,16 +37,19 @@ class MemoryStorageMock implements Storage {
   }
 }
 
-function ensureStorage(name: "localStorage" | "sessionStorage") {
-  const value = globalThis[name] as Storage | undefined;
-  if (typeof value?.clear === "function" && typeof value?.setItem === "function") return;
-  vi.stubGlobal(name, new MemoryStorageMock());
+function installStorage(name: "localStorage" | "sessionStorage") {
+  // 这里不用 vi.stubGlobal，也不读取 Node 25 的内建 storage getter；前者会被 vi.unstubAllGlobals() 还原，后者会打印无效路径 warning。
+  Object.defineProperty(globalThis, name, {
+    configurable: true,
+    writable: true,
+    value: new MemoryStorageMock(),
+  });
 }
 
 // 组件库依赖 ResizeObserver/scrollIntoView，但单测只验证 React 状态和可访问输出，不需要真实布局引擎。
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
-ensureStorage("localStorage");
-ensureStorage("sessionStorage");
+installStorage("localStorage");
+installStorage("sessionStorage");
 localStorage.setItem("renewlet_locale", "zh-CN");
 Element.prototype.scrollIntoView = vi.fn();
 
@@ -54,8 +57,8 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.clearAllMocks();
-  ensureStorage("localStorage");
-  ensureStorage("sessionStorage");
+  installStorage("localStorage");
+  installStorage("sessionStorage");
   localStorage.clear();
   localStorage.setItem("renewlet_locale", "zh-CN");
   sessionStorage.clear();

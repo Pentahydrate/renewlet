@@ -58,6 +58,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "system.updateFailedTitle": "更新失败",
         "system.updateNow": "立即更新",
         "system.updateTitle": "系统更新",
+        "system.updateUnavailableTitle": "页面内更新不可用",
         "system.updating": "更新中...",
         "system.viewChangelog": "查看更新日志",
         "system.warningTitle": "检查提示",
@@ -211,6 +212,33 @@ describe("SystemUpdateDialog", () => {
     expect(screen.getByRole("button", { name: "立即重启" })).toBeInTheDocument();
   });
 
+  it("shows release asset unavailable state without update actions", async () => {
+    mockVersionEndpoint({
+      hasUpdate: true,
+      updateSupported: false,
+      unsupportedReason: "目标 Release 暂缺页面内更新所需附件：renewlet_1.1.0_linux_amd64.tar.gz。",
+      releaseInfo: {
+        tagName: "v1.1.0",
+        version: "1.1.0",
+        name: "Renewlet 1.1.0",
+        body: "",
+        publishedAt: "2026-05-26T00:00:00Z",
+        htmlUrl: "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.1.0",
+        assets: [],
+      },
+    });
+
+    const user = userEvent.setup();
+    renderWithQuery(<SystemUpdateHarness />);
+
+    await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
+
+    expect(await screen.findByText("页面内更新不可用")).toBeInTheDocument();
+    expect(screen.getByText("目标 Release 暂缺页面内更新所需附件：renewlet_1.1.0_linux_amd64.tar.gz。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "发布页" })).toHaveAttribute("href", "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.1.0");
+    expect(screen.queryByRole("button", { name: "立即更新" })).not.toBeInTheDocument();
+  });
+
   it("shows unsupported source builds without update actions", async () => {
     mockVersionEndpoint({
       hasUpdate: false,
@@ -232,7 +260,7 @@ describe("SystemUpdateDialog", () => {
 
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
 
-    expect(await screen.findByText("当前部署不支持一键更新")).toBeInTheDocument();
+    expect(await screen.findByText("页面内更新不可用")).toBeInTheDocument();
     expect(screen.getByText("源码构建不支持")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "立即更新" })).not.toBeInTheDocument();
     expect(screen.queryByText("源码构建")).not.toBeInTheDocument();
@@ -267,7 +295,8 @@ describe("SystemUpdateDialog", () => {
 
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
 
-    expect(await screen.findByText("Cloudflare 需要通过部署流程升级")).toBeInTheDocument();
+    expect(await screen.findByText("页面内更新不可用")).toBeInTheDocument();
+    expect(screen.getByText("Cloudflare 需要通过部署流程升级")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Cloudflare 部署说明" })).toHaveAttribute("href", expect.stringContaining("docs/cloudflare-workers-deploy.md"));
     expect(screen.getByRole("link", { name: "发布页" })).toHaveAttribute("href", "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.1.0");
     expect(screen.queryByText("源码构建")).not.toBeInTheDocument();
@@ -349,6 +378,21 @@ describe("SystemUpdateDialog", () => {
     expect(screen.getByRole("status")).toHaveTextContent("暂时无法检查更新");
     expect(screen.getByText("GitHub API 临时限流，请稍后重新检查。")).toBeInTheDocument();
     expect(screen.queryByText("已是最新版本")).not.toBeInTheDocument();
+  });
+
+  it("shows check failed state when the version response is invalid", async () => {
+    mocks.apiFetch.mockImplementation((input: string) => {
+      if (input.startsWith("/api/app/admin/system/version")) return Promise.reject(new Error("invalid_response"));
+      return Promise.reject(new Error(`Unexpected request ${input}`));
+    });
+
+    const user = userEvent.setup();
+    renderWithQuery(<SystemUpdateHarness />);
+
+    await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
+
+    expect(await screen.findByText("版本检查失败")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("版本检查失败");
   });
 });
 

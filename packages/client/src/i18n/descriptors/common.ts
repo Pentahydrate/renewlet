@@ -66,6 +66,7 @@ export const messages = [
   msg({ id: "system.checkDeferredTitle", message: "暂时无法检查更新" }),
   msg({ id: "system.checkDeferredDescription", message: "当前显示的是本机版本；请稍后重新检查。" }),
   msg({ id: "system.unsupportedTitle", message: "当前部署不支持一键更新" }),
+  msg({ id: "system.updateUnavailableTitle", message: "页面内更新不可用" }),
   msg({ id: "system.unsupportedDescription", message: "请使用原部署方式升级。" }),
   msg({ id: "system.updateAvailableTitle", message: "发现新版本" }),
   msg({ id: "system.updateAvailableDescription", message: "可以更新到 v{version}。更新会替换 Docker 运行二进制。" }),

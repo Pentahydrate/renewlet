@@ -14,221 +14,221 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:42
+#: src/i18n/descriptors/admin.ts:43
 msgid "admin.currentUserProtected"
 msgstr "You cannot disable, demote, or delete the current signed-in account"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:39
+#: src/i18n/descriptors/admin.ts:40
 msgid "admin.resetDescription"
 msgstr "Set a new password for {name} ({email})."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:40
+#: src/i18n/descriptors/admin.ts:41
 msgid "admin.resetFallback"
 msgstr "Set a new password for the user."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:7
+#: src/i18n/descriptors/admin.ts:8
 msgid "admin.createDescription"
 msgstr "Create an account that can sign in. The initial password will not be shown again, so confirm before submitting."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:6
+#: src/i18n/descriptors/admin.ts:7
 msgid "admin.createUser"
 msgstr "Create user"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:25
+#: src/i18n/descriptors/admin.ts:26
 msgid "admin.createFailed"
 msgstr "Create user failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:26
+#: src/i18n/descriptors/admin.ts:27
 msgid "admin.createFailedDescription"
 msgstr "Could not create user. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:5
+#: src/i18n/descriptors/admin.ts:6
 msgid "admin.subtitle"
 msgstr "Create accounts, disable accounts, and reset passwords"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:22
+#: src/i18n/descriptors/admin.ts:23
 msgid "admin.initialPassword"
 msgstr "Initial password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:46
+#: src/i18n/descriptors/admin.ts:47
 msgid "admin.validation.initialPasswordLength"
 msgstr "Initial password must be at least 8 characters."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:21
+#: src/i18n/descriptors/admin.ts:22
 msgid "admin.deleting"
 msgstr "Deleting..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:17
+#: src/i18n/descriptors/admin.ts:18
 msgid "admin.deleteUser"
 msgstr "Delete user"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:34
+#: src/i18n/descriptors/admin.ts:35
 msgid "admin.deleteFailed"
 msgstr "Delete user failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:35
+#: src/i18n/descriptors/admin.ts:36
 msgid "admin.deleteFailedDescription"
 msgstr "Could not delete user. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:27
+#: src/i18n/descriptors/admin.ts:28
 msgid "admin.loadFailed"
 msgstr "Load users failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:28
+#: src/i18n/descriptors/admin.ts:29
 msgid "admin.loadFailedDescription"
 msgstr "Could not load users. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:14
+#: src/i18n/descriptors/admin.ts:15
 msgid "admin.enabled"
 msgstr "Enabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:36
+#: src/i18n/descriptors/admin.ts:37
 msgid "admin.resetSuccess"
 msgstr "Password reset"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:18
+#: src/i18n/descriptors/admin.ts:19
 msgid "admin.deleteDescription"
 msgstr "This will permanently delete {name} ({email}) including account, subscriptions, settings, and uploaded files. This action cannot be undone."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:19
+#: src/i18n/descriptors/admin.ts:20
 msgid "admin.deleteFallback"
 msgstr "This will permanently delete this user's account, subscriptions, settings, and uploaded files. This action cannot be undone."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:11
+#: src/i18n/descriptors/admin.ts:12
 msgid "admin.actions"
 msgstr "Actions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:31
+#: src/i18n/descriptors/admin.ts:32
 msgid "admin.updateStatusFailed"
 msgstr "Update status failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:32
+#: src/i18n/descriptors/admin.ts:33
 msgid "admin.updateStatusFailedDescription"
 msgstr "Could not update status. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:29
+#: src/i18n/descriptors/admin.ts:30
 msgid "admin.updateRoleFailed"
 msgstr "Update role failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:30
+#: src/i18n/descriptors/admin.ts:31
 msgid "admin.updateRoleFailedDescription"
 msgstr "Could not update role. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:10
+#: src/i18n/descriptors/admin.ts:11
 msgid "admin.status"
 msgstr "Status"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:8
+#: src/i18n/descriptors/admin.ts:9
 msgid "admin.user"
 msgstr "User"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:12
+#: src/i18n/descriptors/admin.ts:13
 msgid "admin.roleUser"
 msgstr "User"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:24
+#: src/i18n/descriptors/admin.ts:25
 msgid "admin.createSuccess"
 msgstr "User created"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:33
+#: src/i18n/descriptors/admin.ts:34
 msgid "admin.deleteSuccess"
 msgstr "User deleted"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:4
+#: src/i18n/descriptors/admin.ts:5
 msgid "admin.title"
 msgstr "User management"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:20
+#: src/i18n/descriptors/admin.ts:21
 msgid "admin.confirmDelete"
 msgstr "Confirm delete"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:23
+#: src/i18n/descriptors/admin.ts:24
 msgid "admin.confirmInitialPassword"
 msgstr "Confirm password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:15
+#: src/i18n/descriptors/admin.ts:16
 msgid "admin.banned"
 msgstr "Disabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:13
+#: src/i18n/descriptors/admin.ts:14
 msgid "admin.roleAdmin"
 msgstr "Admin"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:41
+#: src/i18n/descriptors/admin.ts:42
 msgid "admin.lastAdmin"
 msgstr "At least one enabled admin must remain"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:9
+#: src/i18n/descriptors/admin.ts:10
 msgid "admin.role"
 msgstr "Role"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:47
+#: src/i18n/descriptors/admin.ts:48
 msgid "admin.validation.confirmInitial"
 msgstr "Enter the initial password again"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:45
+#: src/i18n/descriptors/admin.ts:46
 msgid "admin.validation.emailInvalid"
 msgstr "Enter a valid email address"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:43
+#: src/i18n/descriptors/admin.ts:44
 msgid "admin.validation.nameRequired"
 msgstr "Enter a user name"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:44
+#: src/i18n/descriptors/admin.ts:45
 msgid "admin.validation.emailRequired"
 msgstr "Enter an email address"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:16
+#: src/i18n/descriptors/admin.ts:17
 msgid "admin.resetPassword"
 msgstr "Reset password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:37
+#: src/i18n/descriptors/admin.ts:38
 msgid "admin.resetFailed"
 msgstr "Reset password failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/admin.ts:38
+#: src/i18n/descriptors/admin.ts:39
 msgid "admin.resetFailedDescription"
 msgstr "Could not reset password. Please try again later."

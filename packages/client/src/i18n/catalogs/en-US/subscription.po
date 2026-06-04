@@ -14,1777 +14,1786 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:77
+#: src/i18n/descriptors/subscription.ts:124
 msgid "subscriptions.filteredCount"
 msgstr "(filtered from {count})"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:259
+#: src/i18n/descriptors/subscription.ts:320
 msgid "statistics.monthlyCostHint"
 msgstr "(monthly cost)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:261
+#: src/i18n/descriptors/subscription.ts:322
 msgid "statistics.monthlyBudgetHint"
 msgstr "(monthly budget: {amount})"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:238
+#: src/i18n/descriptors/subscription.ts:299
 msgid "statistics.ratesUpdatedAt"
 msgstr "(rates updated {date})"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:260
+#: src/i18n/descriptors/subscription.ts:321
 msgid "statistics.subscriptionCountHint"
 msgstr "(subscription count)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:286
+#: src/i18n/descriptors/subscription.ts:347
 msgid "calendar.renewalCount"
 msgstr "{count} subscriptions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:176
+#: src/i18n/descriptors/subscription.ts:223
 msgid "import.previewCount"
 msgstr "{count} records"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:296
+#: src/i18n/descriptors/subscription.ts:357
 msgid "calendar.dayRenewalCount"
 msgstr "{date}: {count, plural, one {# renewal} other {# renewals}}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:295
+#: src/i18n/descriptors/subscription.ts:356
 msgid "calendar.dayRenewals"
 msgstr "{date} renewals"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:65
+#: src/i18n/descriptors/subscription.ts:112
 msgid "subscription.card.renewsInDays"
 msgstr "Renews in {days} days"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:278
+#: src/i18n/descriptors/subscription.ts:339
 msgid "upcoming.daysShort"
 msgstr "{days}d"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:212
+#: src/i18n/descriptors/subscription.ts:262
 msgid "import.warning.dateInvalid"
 msgstr "{field} is missing or invalid. Renewlet used {fallback}."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:208
+#: src/i18n/descriptors/subscription.ts:258
 msgid "import.warning.forSubscription"
 msgstr "{name}: {warning}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:232
+#: src/i18n/descriptors/subscription.ts:293
 msgid "statistics.perMonth"
 msgstr "/ month"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:284
+#: src/i18n/descriptors/subscription.ts:345
 msgid "calendar.more"
 msgstr "+{count} more"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:149
+#: src/i18n/descriptors/subscription.ts:196
 msgid "import.wallosGuideApiTitle"
 msgstr "API JSON"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:156
+#: src/i18n/descriptors/subscription.ts:203
 msgid "import.wallosGuideZipTitle"
 msgstr "backup.zip"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:132
+#: src/i18n/descriptors/subscription.ts:179
 msgid "import.wallosGuideDescription"
 msgstr "backup.zip keeps the DB and Logos. UI JSON is only for lightweight moves."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:158
+#: src/i18n/descriptors/subscription.ts:205
 msgid "import.wallosGuideValueCode"
 msgstr "code"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:152
+#: src/i18n/descriptors/subscription.ts:199
 msgid "import.wallosGuideValueCodeOrId"
 msgstr "code / id"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:157
+#: src/i18n/descriptors/subscription.ts:204
 msgid "import.wallosGuideZipNote"
 msgstr "DB + local Logos"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:139
-msgid "import.wallosGuideColumnLogo"
-msgstr "Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:201
-msgid "import.assetProgress"
-msgstr "Logo {done}/{total}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:142
-msgid "import.wallosGuideJsonTitle"
-msgstr "UI JSON"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:219
-msgid "import.warning.wallosCurrencyIdOnly"
-msgstr "Wallos API content only has currency_id and no currencies.code. Renewlet used the current default currency."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:215
-msgid "import.warning.wallosMissingLogoFile"
-msgstr "Wallos Logo file is not included in this import package. It was skipped and can be changed in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:214
-msgid "import.warning.wallosExternalLogo"
-msgstr "Wallos Logo is an external URL and was kept as-is."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:213
-msgid "import.warning.renewletLegacyBillingCycleDefaulted"
-msgstr "The legacy Renewlet billing cycle is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:214
-msgid "import.warning.renewletLegacyCurrencyDefaulted"
-msgstr "The legacy Renewlet currency is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:215
-msgid "import.warning.renewletLegacyCustomDaysDefaulted"
-msgstr "The legacy Renewlet custom cycle length is invalid. Imported as {fallback} day(s); you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:216
-msgid "import.warning.renewletLegacyLogoDropped"
-msgstr "This legacy Renewlet Logo format is no longer supported. It was cleared and can be reassigned in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:217
-msgid "import.warning.renewletLegacyPriceDefaulted"
-msgstr "The legacy Renewlet price is invalid. Imported as 0; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:218
-msgid "import.warning.renewletLegacyReminderDaysDefaulted"
-msgstr "The legacy Renewlet reminder lead time is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:219
-msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
-msgstr "The legacy Renewlet repeat reminder interval is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:220
-msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
-msgstr "The legacy Renewlet repeat reminder window is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:221
-msgid "import.warning.renewletLegacyStatusDefaulted"
-msgstr "The legacy Renewlet status is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.warning.renewletLegacyTagsTrimmed"
-msgstr "The legacy Renewlet tags included invalid or overlong values. They were cleaned and can be changed in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:211
-msgid "import.warning.wallosDisplayLowConfidence"
-msgstr "Wallos UI JSON does not include original IDs. Repeat imports match by name, website, category, and billing cycle."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:220
-msgid "import.warning.currencySymbolAmbiguous"
-msgstr "Wallos price symbol {symbol} can mean more than one currency. Imported as {currency}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:206
-msgid "import.field.renewletDueDate"
-msgstr "Renewlet next billing date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:207
-msgid "import.field.renewletStartDate"
-msgstr "Renewlet start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:208
-msgid "import.field.renewletTrialEndDate"
-msgstr "Renewlet trial end date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:206
-msgid "import.field.wallosDueDate"
-msgstr "Wallos due date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:207
-msgid "import.field.wallosStartDate"
-msgstr "Wallos start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:131
-msgid "import.wallosGuideTitle"
-msgstr "Wallos source note"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:169
-msgid "import.wallosUser"
-msgstr "Wallos user"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:218
-msgid "import.warning.wallosNotifyDisabled"
-msgstr "Notifications are off for this Wallos subscription. Renewlet kept the default 3-day reminder."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:161
-msgid "import.wallosGuideDbTitle"
-msgstr "wallos.db"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:52
-msgid "subscription.oneTimeDateHelp"
-msgstr "One-time purchases do not auto-calculate another renewal date."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:216
-msgid "import.warning.wallosOneTime"
-msgstr "One-time purchase was imported as a buyout record and will not auto-renew."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:281
-msgid "calendar.previousMonth"
-msgstr "Previous month"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:282
-msgid "calendar.nextMonth"
-msgstr "Next month"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:291
-msgid "calendar.nextBilling"
-msgstr "Next billing"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:143
-msgid "import.wallosGuideJsonNote"
-msgstr "Profile export"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:163
-msgid "import.wallosGuideValueFilenameOnly"
-msgstr "Filename only"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:145
-msgid "import.wallosGuideValueDefaultCurrency"
-msgstr "Symbol only"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:277
-msgid "upcoming.todayShort"
-msgstr "Today"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:64
-msgid "subscription.card.renewsToday"
-msgstr "Renews today"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
-msgid "subscription.field.price"
-msgstr "Price"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:109
-msgid "subscriptions.csv.price"
-msgstr "Price"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:35
-msgid "subscription.placeholder.name"
-msgstr "e.g. Netflix, Spotify"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:10
-msgid "subscription.dialogEditSubmit"
-msgstr "Save changes"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:194
-msgid "import.logoEdit"
-msgstr "Edit Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:197
-msgid "import.logoEditTitle"
-msgstr "Edit import Logo"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:8
-msgid "subscription.dialogEditDescription"
-msgstr "Update the subscription name, price, cycle, dates, logo, and tags."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:253
-msgid "statistics.annualSavings"
-msgstr "Inactive annual savings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:251
-msgid "statistics.monthlySavings"
-msgstr "Inactive monthly savings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:254
-msgid "statistics.annualSavingsDescription"
-msgstr "Inactive monthly savings multiplied by 12, useful for estimating annual subscription spend avoided."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:187
-msgid "import.filter.all"
-msgstr "All"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:76
-msgid "subscriptions.count"
-msgstr "{count} subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:267
-msgid "dashboard.totalSubscriptions"
-msgstr "{count} subscriptions total"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:246
-msgid "statistics.mostExpensive"
-msgstr "Most expensive subscription"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:247
-msgid "statistics.mostExpensiveNamed"
-msgstr "Most expensive: {name}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:172
-msgid "import.conflictMode"
-msgstr "Conflict handling"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:25
-msgid "subscription.field.category"
-msgstr "Category"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:112
-msgid "subscriptions.csv.category"
-msgstr "Category"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:290
-msgid "calendar.category"
-msgstr "Category"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:256
-msgid "statistics.categoryView"
-msgstr "Category view"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:41
-msgid "subscription.tags.create"
-msgstr "Create tag \"{tag}\""
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:68
-msgid "subscription.card.duePrefix"
-msgstr "Due: {date}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:88
-msgid "subscriptions.sort.renewalAsc"
-msgstr "Renewal soonest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:89
-msgid "subscriptions.sort.renewalDesc"
-msgstr "Renewal latest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:31
-msgid "subscription.field.reminder"
-msgstr "Renewal reminder"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:30
-msgid "subscription.field.nextBillingDate"
-msgstr "Renewal date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:115
-msgid "subscriptions.csv.nextBillingDate"
-msgstr "Renewal date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:14
-msgid "subscription.validation.dateOrderInvalid"
-msgstr "Renewal date cannot be before the start date."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:239
-msgid "statistics.refreshRates"
-msgstr "Refresh rates"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:235
-msgid "statistics.budgetRemaining"
-msgstr "Remaining budget"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.validation.tagTooLong"
-msgstr "A single tag cannot exceed {count} characters."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:93
-msgid "subscriptions.sort.priceAsc"
-msgstr "Single payment lowest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:92
-msgid "subscriptions.sort.priceDesc"
-msgstr "Single payment highest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:268
-msgid "dashboard.upcomingRenewals"
-msgstr "Upcoming renewals"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:151
-msgid "import.wallosGuideValueOriginalId"
-msgstr "Original ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:137
-msgid "import.wallosGuideColumnId"
-msgstr "Original ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:198
-msgid "import.logoPreviewHint"
-msgstr "Only affects this import. Preview does not upload assets."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:177
-msgid "import.ready"
-msgstr "Ready"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:154
-msgid "import.wallosGuideValueOptional"
-msgstr "Optional"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:224
-msgid "import.error.sourceIdDuplicate"
-msgstr "This import file contains duplicate source IDs. Remove duplicates or skip one of them."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:108
-msgid "subscriptions.csv.name"
-msgstr "Name"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:94
-msgid "subscriptions.sort.nameAsc"
-msgstr "Name A-Z"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:95
-msgid "subscriptions.sort.nameDesc"
-msgstr "Name Z-A"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:171
-msgid "import.conflictDescription"
-msgstr "When the same source and source ID already exist, replace the current record or skip it."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:7
-msgid "subscription.dialogCreateDescription"
-msgstr "Create a subscription after filling in its name, price, cycle, dates, logo, and tags."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:33
-msgid "subscription.field.notes"
-msgstr "Notes"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:153
-msgid "import.wallosGuideValueExternalOrAutoLogo"
-msgstr "External/auto match"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:140
-msgid "import.wallosGuideColumnUsers"
-msgstr "Users"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:47
-msgid "subscription.daysUnit"
-msgstr "days"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:48
-msgid "subscription.daysPlaceholder"
-msgstr "Days"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:265
-msgid "dashboard.realTimeRates"
-msgstr "Live exchange rates ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:202
-msgid "import.applyProgress"
-msgstr "Import {done}/{total}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:119
-msgid "import.description"
-msgstr "Import a Renewlet backup, or migrate Wallos JSON, backup.zip, and SQLite databases."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:228
-msgid "import.error.confidenceInvalid"
-msgstr "Import matching information is invalid."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:167
-msgid "import.applyFailed"
-msgstr "Import failed."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:204
-msgid "import.successTitle"
-msgstr "Import complete"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:82
-msgid "subscriptions.importData"
-msgstr "Import data"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:118
-msgid "import.title"
-msgstr "Import data"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:223
-msgid "import.error.workerParseFailed"
-msgstr "Background import parsing failed."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:166
-msgid "import.parseFailed"
-msgstr "Failed to parse import file."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:128
-msgid "import.fileTooLarge"
-msgstr "Import file is larger than 50 MB. Split it and try again."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:227
-msgid "import.error.sourceIdInvalid"
-msgstr "Import source ID is invalid."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:226
-msgid "import.error.sourceInvalid"
-msgstr "Import source is invalid."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:130
-msgid "import.optionsTitle"
-msgstr "Import settings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:225
-msgid "import.error.keyRequired"
-msgstr "Import item is missing source matching information."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:165
-msgid "import.previewFailed"
-msgstr "Import preview failed."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:81
-msgid "subscriptions.exportCsv"
-msgstr "Export CSV"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:79
-msgid "subscriptions.exportJson"
-msgstr "Export backup ZIP"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:80
-msgid "subscriptions.exportJsonWithSecrets"
-msgstr "Export backup ZIP with notification secrets"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:78
-msgid "subscriptions.exportMenu"
-msgstr "Export subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:125
-msgid "import.fileEmpty"
-msgstr "No file selected"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:234
-msgid "statistics.budgetUsed"
-msgstr "Used"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:252
-msgid "statistics.monthlySavingsDescription"
-msgstr "Monthly equivalent of paused, cancelled, and expired subscriptions. It excludes active and trial subscriptions and is not the remaining budget."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:170
-msgid "import.conflictTitle"
-msgstr "Existing same-source subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:66
-msgid "subscription.card.expired"
-msgstr "Expired"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:67
-msgid "subscription.card.expiredDays"
-msgstr "Expired {days} days ago"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:138
-msgid "import.wallosGuideColumnCurrency"
-msgstr "Currency"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:150
-msgid "import.wallosGuideApiNote"
-msgstr "Better with lookup tables"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:245
-msgid "statistics.avgMonthly"
-msgstr "Average monthly subscription cost"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:244
-msgid "statistics.annualCost"
-msgstr "Annual cost ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:63
-msgid "subscription.card.startPrefix"
-msgstr "Start:"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:29
-msgid "subscription.field.startDate"
-msgstr "Start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:114
-msgid "subscriptions.csv.startDate"
-msgstr "Start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:292
-msgid "calendar.startDate"
-msgstr "Start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.error.workerUnsupported"
-msgstr "This browser does not support background import parsing."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:193
-msgid "import.previewFilterEmpty"
-msgstr "No records match this filter"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:241
-msgid "statistics.overview"
-msgstr "Overview"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:196
-msgid "import.restoreItem"
-msgstr "Restore row"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:84
-msgid "subscriptions.allCategories"
-msgstr "All categories"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:85
-msgid "subscriptions.allStatuses"
-msgstr "All statuses"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:26
-msgid "subscription.field.billingCycle"
-msgstr "Billing cycle"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:111
-msgid "subscriptions.csv.billingCycle"
-msgstr "Billing cycle"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:230
-msgid "import.error.billingCycleInvalid"
-msgstr "Billing cycle is invalid."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:122
-msgid "import.stepApply"
-msgstr "Apply"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:203
-msgid "import.apply"
-msgstr "Import"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:255
-msgid "statistics.breakdown"
-msgstr "Breakdown"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:148
-msgid "import.wallosGuideValueLowConfidence"
-msgstr "Match by details"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:86
-msgid "subscriptions.sort.label"
-msgstr "Sort"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:135
-msgid "import.wallosGuideBest"
-msgstr "Best"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:134
-msgid "import.wallosGuidePreferred"
-msgstr "Recommended: backup.zip"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:56
-msgid "subscription.reminderBefore"
-msgstr "Before"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:70
-msgid "subscription.card.reminderDays"
-msgstr "Remind {days} days before"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:293
-msgid "calendar.reminder"
-msgstr "Reminder"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:181
-msgid "import.summaryWarning"
-msgstr "Warnings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:191
-msgid "import.filter.warning"
-msgstr "Warnings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:116
-msgid "subscriptions.csv.reminderDays"
-msgstr "Reminder days"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.validation.reminderInvalid"
-msgstr "Reminder days must be an integer between 0 and 3650."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:100
-msgid "subscriptions.tags.searchPlaceholder"
-msgstr "Search tags..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:83
-msgid "subscriptions.searchPlaceholder"
-msgstr "Search subscriptions, tags, or notes..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:44
-msgid "subscription.search.currency"
-msgstr "Search currency, code, or symbol..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:28
-msgid "subscription.field.paymentMethod"
-msgstr "Payment method"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:257
-msgid "statistics.paymentView"
-msgstr "Payment method view"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:275
-msgid "dashboard.spendingDistribution"
-msgstr "Spending distribution"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:160
-msgid "import.wallosGuideValueSupported"
-msgstr "Supported"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:126
-msgid "import.fileHint"
-msgstr "Supports Renewlet ZIP/JSON, Wallos JSON, backup.zip, and wallos.db."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:178
-msgid "import.summaryCreate"
-msgstr "Create"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:183
-msgid "import.action.create"
-msgstr "Create"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:188
-msgid "import.filter.create"
-msgstr "Create"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:205
-msgid "import.successDescription"
-msgstr "Created {creates}, replaced {replaces}, skipped {skips}."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:147
-msgid "import.wallosGuideValueNone"
-msgstr "None"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:144
-msgid "import.wallosGuideValueHash"
-msgstr "No original ID"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:221
-msgid "import.error.unrecognizedFile"
-msgstr "Import file is not recognized. Choose a Renewlet v1 export or a Wallos export/backup."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:222
-msgid "import.error.wallosTableTooLarge"
-msgstr "A Wallos SQLite table has more than 5000 rows. Split the backup before importing."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:49
-msgid "subscription.section.dates"
-msgstr "Date settings"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:43
-msgid "subscription.tags.empty"
-msgstr "No reusable tags yet"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:233
-msgid "statistics.noSubscriptionData"
-msgstr "No subscription data"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:62
-msgid "subscription.moreActions"
-msgstr "More actions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:106
-msgid "subscription.pin"
-msgstr "Pin"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:107
-msgid "subscription.unpin"
-msgstr "Unpin"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:179
-msgid "import.summaryReplace"
-msgstr "Replace"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:184
-msgid "import.action.replace"
-msgstr "Replace"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:189
-msgid "import.filter.replace"
-msgstr "Replace"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:174
-msgid "import.conflictReplace"
-msgstr "Replace existing records"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:263
-msgid "dashboard.monthlySpend"
-msgstr "Monthly spend"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:91
-msgid "subscriptions.sort.monthlyCostAsc"
-msgstr "Monthly cost lowest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:90
-msgid "subscriptions.sort.monthlyCostDesc"
-msgstr "Monthly cost highest"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:243
-msgid "statistics.monthlyCost"
-msgstr "Monthly cost ({currency})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.field.name"
-msgstr "Service name"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:45
-msgid "subscription.empty.currency"
-msgstr "No currency found"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:269
-msgid "dashboard.next7Days"
-msgstr "Next 7 days"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:276
-msgid "upcoming.noneNextTwoWeeks"
-msgstr "No renewals in the next two weeks"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:217
-msgid "import.warning.wallosUnknownCycle"
-msgstr "Unknown Wallos cycle. Imported as a monthly subscription."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:159
-msgid "import.wallosGuideValueLocalLogo"
-msgstr "Local file"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:248
-msgid "statistics.thisMonthDue"
-msgstr "Amount due this month"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:298
-msgid "calendar.mobileAgendaEmpty"
-msgstr "No renewals this month"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:285
-msgid "calendar.monthlyRenewals"
-msgstr "Renewals this month"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:297
-msgid "calendar.mobileAgendaTitle"
-msgstr "This month's renewals"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:136
-msgid "import.wallosGuideColumnSource"
-msgstr "Source"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:209
-msgid "import.warning.lowConfidenceKey"
-msgstr "The source has no original ID. Renewlet will look for existing records by name, website, category, and billing cycle."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:210
-msgid "import.warning.lowConfidenceNameMatched"
-msgstr "The source has no original ID. Renewlet found an existing Wallos record by name; confirm before replacing it."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:288
-msgid "calendar.detailDescription"
-msgstr "View price, cycle, dates, tags, website, and notes for {name}."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:273
-msgid "dashboard.viewAll"
-msgstr "View all ({count})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:274
-msgid "dashboard.viewAllSubscriptions"
-msgstr "View all {count} subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:133
-msgid "import.wallosGuideExpand"
-msgstr "Compare formats"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:237
-msgid "statistics.subtitle"
-msgstr "Detailed analysis of subscription spending and usage"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:280
-msgid "calendar.pageSubtitle"
-msgstr "View renewal dates and monthly spend"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:289
-msgid "calendar.detailFallbackDescription"
-msgstr "View subscription details."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:34
-msgid "subscription.field.tags"
-msgstr "Tags"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:97
-msgid "subscriptions.tags.open"
-msgstr "Tags"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:117
-msgid "subscriptions.csv.tags"
-msgstr "Tags"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:98
-msgid "subscriptions.tags.selectedCount"
-msgstr "Tags({count})"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:51
-msgid "subscription.autoCalculateHelp"
-msgstr "Calculated from the start date and billing cycle"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:168
-msgid "import.loading"
-msgstr "Parsing and building preview..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:46
-msgid "subscription.customCycleEvery"
-msgstr "Every"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.validation.tagsTooMany"
-msgstr "Each subscription supports at most {count} tags."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:264
-msgid "dashboard.ratesLoading"
-msgstr "Loading rates..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:240
-msgid "statistics.ratesError"
-msgstr "Could not fetch exchange rates. Fallback rates are being used. {error}"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:162
-msgid "import.wallosGuideDbNote"
-msgstr "No Logo files"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:101
-msgid "subscriptions.tags.emptyMatch"
-msgstr "No matching tags"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:104
-msgid "subscriptions.emptyTitle"
-msgstr "No subscriptions found"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:242
-msgid "statistics.activeSubscriptions"
-msgstr "Active subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:266
-msgid "dashboard.activeSubscriptions"
-msgstr "Active subscriptions"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:39
-msgid "subscription.placeholder.notes"
-msgstr "Add notes..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:5
-msgid "subscription.dialogCreateTitle"
-msgstr "Add new subscription"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:107
-msgid "subscriptions.addFirst"
-msgstr "Add first subscription"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:106
-msgid "subscriptions.emptyNoData"
-msgstr "Add your first subscription to start tracking renewals."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:4
-msgid "subscription.add"
-msgstr "Add subscription"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:5
-msgid "subscription.addToCalendar"
-msgstr "Add to calendar"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:6
-msgid "subscription.addToCalendarTitle"
-msgstr "Add to calendar"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:7
-msgid "subscription.addToCalendarDescription"
-msgstr "Create a separate calendar subscription for “{name}” that only syncs this renewal."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:8
-msgid "subscription.addToCalendarEventDate"
-msgstr "Event date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:9
-msgid "subscription.addToCalendarEventType"
-msgstr "Event type"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:10
-msgid "subscription.addToCalendarSingleEvent"
-msgstr "Single event"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
-msgid "subscription.addToCalendarSubscriptionFeed"
-msgstr "Subscription feed"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
-msgid "subscription.addToCalendarSyncStatus"
-msgstr "Sync status"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:12
-msgid "subscription.addToCalendarNoSync"
-msgstr "Will not stay in sync"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
-msgid "subscription.addToCalendarSubscriptionSync"
-msgstr "Syncs this subscription"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
-msgid "subscription.addToCalendarSingleEventNotice"
-msgstr "System subscription requires the calendar app to keep reaching this URL. ICS download and online calendar links add a one-time event."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
-msgid "subscription.addToCalendarSubscribeSystem"
-msgstr "Subscribe in system calendar"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarGenerateFeed"
-msgstr "Generate subscription link"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.addToCalendarSubscribeLoading"
-msgstr "Generating..."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
-msgid "subscription.addToCalendarDownloadIcs"
-msgstr "Download ICS file"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendarAndroidSingleEvent"
-msgstr "Add one-time event to Android Calendar"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendarFeedUrl"
-msgstr "This subscription URL"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.addToCalendarCopyFeedUrl"
-msgstr "Copy URL"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerate"
-msgstr "Regenerate subscription link"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateTitle"
-msgstr "Regenerate this subscription link?"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateDescription"
-msgstr "The old URL will stop working immediately. Calendar apps that already use this subscription need to be re-added."
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerated"
-msgstr "Subscription link regenerated"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegeneratedDescription"
-msgstr "The old URL is invalid. Use the new subscription link."
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarRegenerateFailed"
-msgstr "Failed to regenerate subscription link"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.addToCalendarSubscribed"
-msgstr "Calendar subscription generated"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
-msgid "subscription.addToCalendarSubscribedDescription"
-msgstr "Renewlet tried to open the system calendar. If the system rejects the URL, copy it and add the subscription manually in your calendar app."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:23
-msgid "subscription.addToCalendarSubscribeFailed"
-msgstr "Failed to generate calendar subscription"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarOpenSystemFailed"
-msgstr "Failed to open system calendar subscription"
-
-#. js-lingui-explicit-id
-msgid "subscription.addToCalendarOpenSystemFailedDescription"
-msgstr "The subscription URL is not returning usable ICS content right now. Copy the URL to add the subscription manually, or download the ICS file for a one-time import."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:24
-msgid "subscription.addToCalendarFeedUrlCopied"
-msgstr "Subscription URL copied"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:25
-msgid "subscription.addToCalendarFeedUrlCopyFailed"
-msgstr "Failed to copy subscription URL"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
-msgid "subscription.addToCalendarOnlineServices"
-msgstr "Online calendar services"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
-msgid "subscription.addToCalendarGoogle"
-msgstr "Open with Google Calendar"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendarOutlook"
-msgstr "Open with Outlook.com"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendarOffice365"
-msgstr "Open with Office 365"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:20
-msgid "subscription.addToCalendarYahoo"
-msgstr "Open with Yahoo Calendar"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
+#: src/i18n/descriptors/subscription.ts:42
 msgid "subscription.addToCalendarDownloaded"
 msgstr "ICS file generated"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:16
+#: src/i18n/descriptors/subscription.ts:43
 msgid "subscription.addToCalendarDownloadFailed"
 msgstr "Failed to generate ICS file"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
+#: src/i18n/descriptors/subscription.ts:186
+msgid "import.wallosGuideColumnLogo"
+msgstr "Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:248
+msgid "import.assetProgress"
+msgstr "Logo {done}/{total}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:44
 msgid "subscription.addToCalendarCalendarName"
 msgstr "Renewlet - {name}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
-msgid "subscription.addToCalendar.description.amount"
-msgstr "Amount: {amount}"
+#: src/i18n/descriptors/subscription.ts:253
+msgid "import.field.renewletDueDate"
+msgstr "Renewlet next billing date"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:19
-msgid "subscription.addToCalendar.description.billingCycle"
-msgstr "Billing cycle: {cycle}"
+#: src/i18n/descriptors/subscription.ts:254
+msgid "import.field.renewletStartDate"
+msgstr "Renewlet start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:255
+msgid "import.field.renewletTrialEndDate"
+msgstr "Renewlet trial end date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:189
+msgid "import.wallosGuideJsonTitle"
+msgstr "UI JSON"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:279
+msgid "import.warning.wallosCurrencyIdOnly"
+msgstr "Wallos API content only has currency_id and no currencies.code. Renewlet used the current default currency."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:275
+msgid "import.warning.wallosMissingLogoFile"
+msgstr "Wallos Logo file is not included in this import package. It was skipped and can be changed in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:274
+msgid "import.warning.wallosExternalLogo"
+msgstr "Wallos Logo is an external URL and was kept as-is."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:282
+msgid "import.error.wallosTableTooLarge"
+msgstr "A Wallos SQLite table has more than 5000 rows. Split the backup before importing."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:261
+msgid "import.warning.wallosDisplayLowConfidence"
+msgstr "Wallos UI JSON does not include original IDs. Repeat imports match by name, website, category, and billing cycle."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:280
+msgid "import.warning.currencySymbolAmbiguous"
+msgstr "Wallos price symbol {symbol} can mean more than one currency. Imported as {currency}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:256
+msgid "import.field.wallosDueDate"
+msgstr "Wallos due date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:257
+msgid "import.field.wallosStartDate"
+msgstr "Wallos start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:178
+msgid "import.wallosGuideTitle"
+msgstr "Wallos source note"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:216
+msgid "import.wallosUser"
+msgstr "Wallos user"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:278
+msgid "import.warning.wallosNotifyDisabled"
+msgstr "Notifications are off for this Wallos subscription. Renewlet kept the default 3-day reminder."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:208
+msgid "import.wallosGuideDbTitle"
+msgstr "wallos.db"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:97
+msgid "subscription.oneTimeDateHelp"
+msgstr "One-time purchases do not auto-calculate another renewal date."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:276
+msgid "import.warning.wallosOneTime"
+msgstr "One-time purchase was imported as a buyout record and will not auto-renew."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:342
+msgid "calendar.previousMonth"
+msgstr "Previous month"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:343
+msgid "calendar.nextMonth"
+msgstr "Next month"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:352
+msgid "calendar.nextBilling"
+msgstr "Next billing"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:20
+msgid "subscription.addToCalendarDownloadIcs"
+msgstr "Download ICS file"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:14
+msgid "subscription.addToCalendarNoSync"
+msgstr "Will not stay in sync"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:190
+msgid "import.wallosGuideJsonNote"
+msgstr "Profile export"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:8
+msgid "subscription.addToCalendarDescription"
+msgstr "Create a separate calendar subscription for “{name}” that only syncs this renewal."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:9
+msgid "subscription.addToCalendarEventDate"
+msgstr "Event date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:10
+msgid "subscription.addToCalendarEventType"
+msgstr "Event type"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:210
+msgid "import.wallosGuideValueFilenameOnly"
+msgstr "Filename only"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:192
+msgid "import.wallosGuideValueDefaultCurrency"
+msgstr "Symbol only"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:338
+msgid "upcoming.todayShort"
+msgstr "Today"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:111
+msgid "subscription.card.renewsToday"
+msgstr "Renews today"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:67
+msgid "subscription.field.price"
+msgstr "Price"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:156
+msgid "subscriptions.csv.price"
+msgstr "Price"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:80
+msgid "subscription.placeholder.name"
+msgstr "e.g. Netflix, Spotify"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:55
+msgid "subscription.dialogEditSubmit"
+msgstr "Save changes"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:241
+msgid "import.logoEdit"
+msgstr "Edit Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:244
+msgid "import.logoEditTitle"
+msgstr "Edit import Logo"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:53
+msgid "subscription.dialogEditDescription"
+msgstr "Update the subscription name, price, cycle, dates, logo, and tags."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:314
+msgid "statistics.annualSavings"
+msgstr "Inactive annual savings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:312
+msgid "statistics.monthlySavings"
+msgstr "Inactive monthly savings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:315
+msgid "statistics.annualSavingsDescription"
+msgstr "Inactive monthly savings multiplied by 12, useful for estimating annual subscription spend avoided."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:234
+msgid "import.filter.all"
+msgstr "All"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:123
+msgid "subscriptions.count"
+msgstr "{count} subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:328
+msgid "dashboard.totalSubscriptions"
+msgstr "{count} subscriptions total"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:307
+msgid "statistics.mostExpensive"
+msgstr "Most expensive subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:308
+msgid "statistics.mostExpensiveNamed"
+msgstr "Most expensive: {name}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:219
+msgid "import.conflictMode"
+msgstr "Conflict handling"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:70
+msgid "subscription.field.category"
+msgstr "Category"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:159
+msgid "subscriptions.csv.category"
+msgstr "Category"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:351
+msgid "calendar.category"
+msgstr "Category"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:47
 msgid "subscription.addToCalendar.description.category"
 msgstr "Category: {category}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:21
-msgid "subscription.addToCalendar.description.paymentMethod"
-msgstr "Payment method: {paymentMethod}"
+#: src/i18n/descriptors/subscription.ts:317
+msgid "statistics.categoryView"
+msgstr "Category view"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:22
+#: src/i18n/descriptors/subscription.ts:86
+msgid "subscription.tags.create"
+msgstr "Create tag \"{tag}\""
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:115
+msgid "subscription.card.duePrefix"
+msgstr "Due: {date}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:135
+msgid "subscriptions.sort.renewalAsc"
+msgstr "Renewal soonest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:136
+msgid "subscriptions.sort.renewalDesc"
+msgstr "Renewal latest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:76
+msgid "subscription.field.reminder"
+msgstr "Renewal reminder"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:75
+msgid "subscription.field.nextBillingDate"
+msgstr "Renewal date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:162
+msgid "subscriptions.csv.nextBillingDate"
+msgstr "Renewal date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:59
+msgid "subscription.validation.dateOrderInvalid"
+msgstr "Renewal date cannot be before the start date."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:300
+msgid "statistics.refreshRates"
+msgstr "Refresh rates"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:296
+msgid "statistics.budgetRemaining"
+msgstr "Remaining budget"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:65
+msgid "subscription.validation.tagTooLong"
+msgstr "A single tag cannot exceed {count} characters."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:11
+msgid "subscription.addToCalendarSingleEvent"
+msgstr "Single event"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:140
+msgid "subscriptions.sort.priceAsc"
+msgstr "Single payment lowest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:139
+msgid "subscriptions.sort.priceDesc"
+msgstr "Single payment highest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:329
+msgid "dashboard.upcomingRenewals"
+msgstr "Upcoming renewals"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:198
+msgid "import.wallosGuideValueOriginalId"
+msgstr "Original ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:184
+msgid "import.wallosGuideColumnId"
+msgstr "Original ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:109
+msgid "subscription.unpin"
+msgstr "Unpin"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:245
+msgid "import.logoPreviewHint"
+msgstr "Only affects this import. Preview does not upload assets."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:224
+msgid "import.ready"
+msgstr "Ready"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:201
+msgid "import.wallosGuideValueOptional"
+msgstr "Optional"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:285
+msgid "import.error.sourceIdDuplicate"
+msgstr "This import file contains duplicate source IDs. Remove duplicates or skip one of them."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:13
+msgid "subscription.addToCalendarSyncStatus"
+msgstr "Sync status"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:155
+msgid "subscriptions.csv.name"
+msgstr "Name"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:141
+msgid "subscriptions.sort.nameAsc"
+msgstr "Name A-Z"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:142
+msgid "subscriptions.sort.nameDesc"
+msgstr "Name Z-A"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:218
+msgid "import.conflictDescription"
+msgstr "When the same source and source ID already exist, replace the current record or skip it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:17
+msgid "subscription.addToCalendarSubscribeSystem"
+msgstr "Subscribe in system calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:37
+msgid "subscription.addToCalendarOnlineServices"
+msgstr "Online calendar services"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:52
+msgid "subscription.dialogCreateDescription"
+msgstr "Create a subscription after filling in its name, price, cycle, dates, logo, and tags."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:78
+msgid "subscription.field.notes"
+msgstr "Notes"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:49
 msgid "subscription.addToCalendar.description.notes"
 msgstr "Notes: {notes}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:9
+#: src/i18n/descriptors/subscription.ts:23
+msgid "subscription.addToCalendarCopyFeedUrl"
+msgstr "Copy URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:200
+msgid "import.wallosGuideValueExternalOrAutoLogo"
+msgstr "External/auto match"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:187
+msgid "import.wallosGuideColumnUsers"
+msgstr "Users"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:92
+msgid "subscription.daysUnit"
+msgstr "days"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:93
+msgid "subscription.daysPlaceholder"
+msgstr "Days"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:326
+msgid "dashboard.realTimeRates"
+msgstr "Live exchange rates ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:249
+msgid "import.applyProgress"
+msgstr "Import {done}/{total}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:166
+msgid "import.description"
+msgstr "Import a Renewlet backup, or migrate Wallos JSON, backup.zip, and SQLite databases."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:289
+msgid "import.error.confidenceInvalid"
+msgstr "Import matching information is invalid."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:214
+msgid "import.applyFailed"
+msgstr "Import failed."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:251
+msgid "import.successTitle"
+msgstr "Import complete"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:129
+msgid "subscriptions.importData"
+msgstr "Import data"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:165
+msgid "import.title"
+msgstr "Import data"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:284
+msgid "import.error.workerParseFailed"
+msgstr "Background import parsing failed."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:213
+msgid "import.parseFailed"
+msgstr "Failed to parse import file."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:175
+msgid "import.fileTooLarge"
+msgstr "Import file is larger than 50 MB. Split it and try again."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:288
+msgid "import.error.sourceIdInvalid"
+msgstr "Import source ID is invalid."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:287
+msgid "import.error.sourceInvalid"
+msgstr "Import source is invalid."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:177
+msgid "import.optionsTitle"
+msgstr "Import settings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:286
+msgid "import.error.keyRequired"
+msgstr "Import item is missing source matching information."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:212
+msgid "import.previewFailed"
+msgstr "Import preview failed."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:128
+msgid "subscriptions.exportCsv"
+msgstr "Export CSV"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:126
+msgid "subscriptions.exportJson"
+msgstr "Export backup ZIP"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:127
+msgid "subscriptions.exportJsonWithSecrets"
+msgstr "Export backup ZIP with notification secrets"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:125
+msgid "subscriptions.exportMenu"
+msgstr "Export subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:172
+msgid "import.fileEmpty"
+msgstr "No file selected"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:295
+msgid "statistics.budgetUsed"
+msgstr "Used"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:31
+msgid "subscription.addToCalendarSubscribedDescription"
+msgstr "Renewlet tried to open the system calendar. If the system rejects the URL, copy it and add the subscription manually in your calendar app."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:313
+msgid "statistics.monthlySavingsDescription"
+msgstr "Monthly equivalent of paused, cancelled, and expired subscriptions. It excludes active and trial subscriptions and is not the remaining budget."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:217
+msgid "import.conflictTitle"
+msgstr "Existing same-source subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:113
+msgid "subscription.card.expired"
+msgstr "Expired"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:114
+msgid "subscription.card.expiredDays"
+msgstr "Expired {days} days ago"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:185
+msgid "import.wallosGuideColumnCurrency"
+msgstr "Currency"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:197
+msgid "import.wallosGuideApiNote"
+msgstr "Better with lookup tables"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:306
+msgid "statistics.avgMonthly"
+msgstr "Average monthly subscription cost"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:305
+msgid "statistics.annualCost"
+msgstr "Annual cost ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:110
+msgid "subscription.card.startPrefix"
+msgstr "Start:"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:74
+msgid "subscription.field.startDate"
+msgstr "Start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:161
+msgid "subscriptions.csv.startDate"
+msgstr "Start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:353
+msgid "calendar.startDate"
+msgstr "Start date"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:283
+msgid "import.error.workerUnsupported"
+msgstr "This browser does not support background import parsing."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:240
+msgid "import.previewFilterEmpty"
+msgstr "No records match this filter"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:302
+msgid "statistics.overview"
+msgstr "Overview"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:243
+msgid "import.restoreItem"
+msgstr "Restore row"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:131
+msgid "subscriptions.allCategories"
+msgstr "All categories"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:132
+msgid "subscriptions.allStatuses"
+msgstr "All statuses"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:71
+msgid "subscription.field.billingCycle"
+msgstr "Billing cycle"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:158
+msgid "subscriptions.csv.billingCycle"
+msgstr "Billing cycle"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:46
+msgid "subscription.addToCalendar.description.billingCycle"
+msgstr "Billing cycle: {cycle}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:291
+msgid "import.error.billingCycleInvalid"
+msgstr "Billing cycle is invalid."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:169
+msgid "import.stepApply"
+msgstr "Apply"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:250
+msgid "import.apply"
+msgstr "Import"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:316
+msgid "statistics.breakdown"
+msgstr "Breakdown"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:15
+msgid "subscription.addToCalendarSubscriptionSync"
+msgstr "Syncs this subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:195
+msgid "import.wallosGuideValueLowConfidence"
+msgstr "Match by details"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:133
+msgid "subscriptions.sort.label"
+msgstr "Sort"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:182
+msgid "import.wallosGuideBest"
+msgstr "Best"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:181
+msgid "import.wallosGuidePreferred"
+msgstr "Recommended: backup.zip"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:101
+msgid "subscription.reminderBefore"
+msgstr "Before"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:117
+msgid "subscription.card.reminderDays"
+msgstr "Remind {days} days before"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:354
+msgid "calendar.reminder"
+msgstr "Reminder"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:228
+msgid "import.summaryWarning"
+msgstr "Warnings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:238
+msgid "import.filter.warning"
+msgstr "Warnings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:163
+msgid "subscriptions.csv.reminderDays"
+msgstr "Reminder days"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:61
+msgid "subscription.validation.reminderInvalid"
+msgstr "Reminder days must be an integer between 0 and 3650."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:147
+msgid "subscriptions.tags.searchPlaceholder"
+msgstr "Search tags..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:130
+msgid "subscriptions.searchPlaceholder"
+msgstr "Search subscriptions, tags, or notes..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:89
+msgid "subscription.search.currency"
+msgstr "Search currency, code, or symbol..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:73
+msgid "subscription.field.paymentMethod"
+msgstr "Payment method"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:48
+msgid "subscription.addToCalendar.description.paymentMethod"
+msgstr "Payment method: {paymentMethod}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:318
+msgid "statistics.paymentView"
+msgstr "Payment method view"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:336
+msgid "dashboard.spendingDistribution"
+msgstr "Spending distribution"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:207
+msgid "import.wallosGuideValueSupported"
+msgstr "Supported"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:173
+msgid "import.fileHint"
+msgstr "Supports Renewlet ZIP/JSON, Wallos JSON, backup.zip, and wallos.db."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:225
+msgid "import.summaryCreate"
+msgstr "Create"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:230
+msgid "import.action.create"
+msgstr "Create"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:235
+msgid "import.filter.create"
+msgstr "Create"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:252
+msgid "import.successDescription"
+msgstr "Created {creates}, replaced {replaces}, skipped {skips}."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:194
+msgid "import.wallosGuideValueNone"
+msgstr "None"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:191
+msgid "import.wallosGuideValueHash"
+msgstr "No original ID"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:281
+msgid "import.error.unrecognizedFile"
+msgstr "Import file is not recognized. Choose a Renewlet v1 export or a Wallos export/backup."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:30
+msgid "subscription.addToCalendarSubscribed"
+msgstr "Calendar subscription generated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:32
+msgid "subscription.addToCalendarSubscribeFailed"
+msgstr "Failed to generate calendar subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:94
+msgid "subscription.section.dates"
+msgstr "Date settings"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:26
+msgid "subscription.addToCalendarRegenerateDescription"
+msgstr "The old URL will stop working immediately. Calendar apps that already use this subscription need to be re-added."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:28
+msgid "subscription.addToCalendarRegeneratedDescription"
+msgstr "The old URL is invalid. Use the new subscription link."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:267
+msgid "import.warning.renewletLegacyLogoDropped"
+msgstr "This legacy Renewlet Logo format is no longer supported. It was cleared and can be reassigned in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:268
+msgid "import.warning.renewletLegacyPriceDefaulted"
+msgstr "The legacy Renewlet price is invalid. Imported as 0; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:264
+msgid "import.warning.renewletLegacyBillingCycleDefaulted"
+msgstr "The legacy Renewlet billing cycle is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:269
+msgid "import.warning.renewletLegacyReminderDaysDefaulted"
+msgstr "The legacy Renewlet reminder lead time is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:273
+msgid "import.warning.renewletLegacyTagsTrimmed"
+msgstr "The legacy Renewlet tags included invalid or overlong values. They were cleaned and can be changed in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:272
+msgid "import.warning.renewletLegacyStatusDefaulted"
+msgstr "The legacy Renewlet status is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:266
+msgid "import.warning.renewletLegacyCustomDaysDefaulted"
+msgstr "The legacy Renewlet custom cycle length is invalid. Imported as {fallback} day(s); you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:265
+msgid "import.warning.renewletLegacyCurrencyDefaulted"
+msgstr "The legacy Renewlet currency is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:271
+msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
+msgstr "The legacy Renewlet repeat reminder window is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:270
+msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
+msgstr "The legacy Renewlet repeat reminder interval is invalid. Imported as {fallback}; you can change it in preview."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:88
+msgid "subscription.tags.empty"
+msgstr "No reusable tags yet"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:294
+msgid "statistics.noSubscriptionData"
+msgstr "No subscription data"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:107
+msgid "subscription.moreActions"
+msgstr "More actions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:226
+msgid "import.summaryReplace"
+msgstr "Replace"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:231
+msgid "import.action.replace"
+msgstr "Replace"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:236
+msgid "import.filter.replace"
+msgstr "Replace"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:221
+msgid "import.conflictReplace"
+msgstr "Replace existing records"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:324
+msgid "dashboard.monthlySpend"
+msgstr "Monthly spend"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:138
+msgid "subscriptions.sort.monthlyCostAsc"
+msgstr "Monthly cost lowest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:137
+msgid "subscriptions.sort.monthlyCostDesc"
+msgstr "Monthly cost highest"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:304
+msgid "statistics.monthlyCost"
+msgstr "Monthly cost ({currency})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:66
+msgid "subscription.field.name"
+msgstr "Service name"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:90
+msgid "subscription.empty.currency"
+msgstr "No currency found"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:330
+msgid "dashboard.next7Days"
+msgstr "Next 7 days"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:337
+msgid "upcoming.noneNextTwoWeeks"
+msgstr "No renewals in the next two weeks"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:277
+msgid "import.warning.wallosUnknownCycle"
+msgstr "Unknown Wallos cycle. Imported as a monthly subscription."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:206
+msgid "import.wallosGuideValueLocalLogo"
+msgstr "Local file"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:309
+msgid "statistics.thisMonthDue"
+msgstr "Amount due this month"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:359
+msgid "calendar.mobileAgendaEmpty"
+msgstr "No renewals this month"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:346
+msgid "calendar.monthlyRenewals"
+msgstr "Renewals this month"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:358
+msgid "calendar.mobileAgendaTitle"
+msgstr "This month's renewals"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:22
+msgid "subscription.addToCalendarFeedUrl"
+msgstr "This subscription URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:183
+msgid "import.wallosGuideColumnSource"
+msgstr "Source"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:259
+msgid "import.warning.lowConfidenceKey"
+msgstr "The source has no original ID. Renewlet will look for existing records by name, website, category, and billing cycle."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:260
+msgid "import.warning.lowConfidenceNameMatched"
+msgstr "The source has no original ID. Renewlet found an existing Wallos record by name; confirm before replacing it."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:349
+msgid "calendar.detailDescription"
+msgstr "View price, cycle, dates, tags, website, and notes for {name}."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:334
+msgid "dashboard.viewAll"
+msgstr "View all ({count})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:335
+msgid "dashboard.viewAllSubscriptions"
+msgstr "View all {count} subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:180
+msgid "import.wallosGuideExpand"
+msgstr "Compare formats"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:298
+msgid "statistics.subtitle"
+msgstr "Detailed analysis of subscription spending and usage"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:341
+msgid "calendar.pageSubtitle"
+msgstr "View renewal dates and monthly spend"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:350
+msgid "calendar.detailFallbackDescription"
+msgstr "View subscription details."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:79
+msgid "subscription.field.tags"
+msgstr "Tags"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:144
+msgid "subscriptions.tags.open"
+msgstr "Tags"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:164
+msgid "subscriptions.csv.tags"
+msgstr "Tags"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:145
+msgid "subscriptions.tags.selectedCount"
+msgstr "Tags({count})"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:96
+msgid "subscription.autoCalculateHelp"
+msgstr "Calculated from the start date and billing cycle"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:19
+msgid "subscription.addToCalendarSubscribeLoading"
+msgstr "Generating..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:215
+msgid "import.loading"
+msgstr "Parsing and building preview..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:91
+msgid "subscription.customCycleEvery"
+msgstr "Every"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:64
+msgid "subscription.validation.tagsTooMany"
+msgstr "Each subscription supports at most {count} tags."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:325
+msgid "dashboard.ratesLoading"
+msgstr "Loading rates..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:301
+msgid "statistics.ratesError"
+msgstr "Could not fetch exchange rates. Fallback rates are being used. {error}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:209
+msgid "import.wallosGuideDbNote"
+msgstr "No Logo files"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:148
+msgid "subscriptions.tags.emptyMatch"
+msgstr "No matching tags"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:151
+msgid "subscriptions.emptyTitle"
+msgstr "No subscriptions found"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:303
+msgid "statistics.activeSubscriptions"
+msgstr "Active subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:327
+msgid "dashboard.activeSubscriptions"
+msgstr "Active subscriptions"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:6
+msgid "subscription.addToCalendar"
+msgstr "Add to calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:7
+msgid "subscription.addToCalendarTitle"
+msgstr "Add to calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:21
+msgid "subscription.addToCalendarAndroidSingleEvent"
+msgstr "Add one-time event to Android Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:84
+msgid "subscription.placeholder.notes"
+msgstr "Add notes..."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:50
+msgid "subscription.dialogCreateTitle"
+msgstr "Add new subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:154
+msgid "subscriptions.addFirst"
+msgstr "Add first subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:153
+msgid "subscriptions.emptyNoData"
+msgstr "Add your first subscription to start tracking renewals."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:5
+msgid "subscription.add"
+msgstr "Add subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:54
 msgid "subscription.dialogCreateSubmit"
 msgstr "Add subscription"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:102
+#: src/i18n/descriptors/subscription.ts:149
 msgid "subscriptions.tags.clearSelection"
 msgstr "Clear tags"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:199
+#: src/i18n/descriptors/subscription.ts:246
 msgid "import.logoClear"
 msgstr "Clear Logo"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:96
+#: src/i18n/descriptors/subscription.ts:143
 msgid "subscriptions.clearFilters"
 msgstr "Clear filters"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:283
+#: src/i18n/descriptors/subscription.ts:344
 msgid "calendar.viewDetails"
 msgstr "Click to view details"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:24
+#: src/i18n/descriptors/subscription.ts:69
 msgid "subscription.field.status"
 msgstr "Status"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:113
+#: src/i18n/descriptors/subscription.ts:160
 msgid "subscriptions.csv.status"
 msgstr "Status"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:164
+#: src/i18n/descriptors/subscription.ts:18
+msgid "subscription.addToCalendarGenerateFeed"
+msgstr "Generate subscription link"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:211
 msgid "import.preview"
 msgstr "Preview"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:103
+#: src/i18n/descriptors/subscription.ts:38
+msgid "subscription.addToCalendarGoogle"
+msgstr "Open with Google Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:40
+msgid "subscription.addToCalendarOffice365"
+msgstr "Open with Office 365"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:39
+msgid "subscription.addToCalendarOutlook"
+msgstr "Open with Outlook.com"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:41
+msgid "subscription.addToCalendarYahoo"
+msgstr "Open with Yahoo Calendar"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:150
 msgid "subscriptions.tags.apply"
 msgstr "Apply"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:74
+#: src/i18n/descriptors/subscription.ts:121
 msgid "subscription.deleteDescription"
 msgstr "Delete \"{name}\"? This action cannot be undone."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:73
+#: src/i18n/descriptors/subscription.ts:120
 msgid "subscription.deleteTitle"
 msgstr "Delete subscription"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:42
+#: src/i18n/descriptors/subscription.ts:87
 msgid "subscription.tags.remove"
 msgstr "Remove tag {tag}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:155
+#: src/i18n/descriptors/subscription.ts:202
 msgid "import.wallosGuideValueStable"
 msgstr "Stable"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:99
+#: src/i18n/descriptors/subscription.ts:146
 msgid "subscriptions.tags.drawerTitle"
 msgstr "Filter by tags"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:124
+#: src/i18n/descriptors/subscription.ts:171
 msgid "import.tabPaste"
 msgstr "Paste JSON"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:129
+#: src/i18n/descriptors/subscription.ts:176
 msgid "import.pastePlaceholder"
 msgstr "Paste Renewlet or Wallos JSON..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:236
+#: src/i18n/descriptors/subscription.ts:33
+msgid "subscription.addToCalendarOpenSystemFailed"
+msgstr "Failed to open system calendar subscription"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:16
+msgid "subscription.addToCalendarSingleEventNotice"
+msgstr "System subscription requires the calendar app to keep reaching this URL. ICS download and online calendar links add a one-time event."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:297
 msgid "statistics.title"
 msgstr "Statistics"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:279
+#: src/i18n/descriptors/subscription.ts:340
 msgid "calendar.title"
 msgstr "Renewal calendar"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:6
+#: src/i18n/descriptors/subscription.ts:51
 msgid "subscription.dialogEditTitle"
 msgstr "Edit subscription"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:32
+#: src/i18n/descriptors/subscription.ts:77
 msgid "subscription.field.website"
 msgstr "Website"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:18
+#: src/i18n/descriptors/subscription.ts:63
 msgid "subscription.validation.websiteInvalid"
 msgstr "Website URL must use http:// or https://."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:213
+#: src/i18n/descriptors/subscription.ts:263
 msgid "import.warning.invalidWebsite"
 msgstr "Website URL is invalid and was skipped. You can change it in preview."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:146
+#: src/i18n/descriptors/subscription.ts:108
+msgid "subscription.pin"
+msgstr "Pin"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:193
 msgid "import.wallosGuideValueAutoLogo"
 msgstr "Auto match"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:200
+#: src/i18n/descriptors/subscription.ts:247
 msgid "import.logoAutoMatched"
 msgstr "Auto matched"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:50
+#: src/i18n/descriptors/subscription.ts:95
 msgid "subscription.autoCalculate"
 msgstr "Auto-calculate renewal date"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:27
+#: src/i18n/descriptors/subscription.ts:72
 msgid "subscription.field.customDays"
 msgstr "Custom days"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:53
+#: src/i18n/descriptors/subscription.ts:98
 msgid "subscription.reminderCustom"
 msgstr "Custom days"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:17
+#: src/i18n/descriptors/subscription.ts:62
 msgid "subscription.validation.customCycleInvalid"
 msgstr "Custom billing cycle must be an integer between 1 and 3650 days."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:11
+#: src/i18n/descriptors/subscription.ts:12
+msgid "subscription.addToCalendarSubscriptionFeed"
+msgstr "Subscription feed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:36
+msgid "subscription.addToCalendarFeedUrlCopyFailed"
+msgstr "Failed to copy subscription URL"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:35
+msgid "subscription.addToCalendarFeedUrlCopied"
+msgstr "Subscription URL copied"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:34
+msgid "subscription.addToCalendarOpenSystemFailedDescription"
+msgstr "The subscription URL is not returning usable ICS content right now. Copy the URL to add the subscription manually, or download the ICS file for a one-time import."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:56
 msgid "subscription.formIncomplete"
 msgstr "Subscription details are incomplete. Please check and try again."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:75
+#: src/i18n/descriptors/subscription.ts:122
 msgid "subscriptions.title"
 msgstr "Subscriptions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:231
+#: src/i18n/descriptors/subscription.ts:292
 msgid "import.error.statusInvalid"
 msgstr "Subscription status is invalid."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:294
+#: src/i18n/descriptors/subscription.ts:27
+msgid "subscription.addToCalendarRegenerated"
+msgstr "Subscription link regenerated"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:29
+msgid "subscription.addToCalendarRegenerateFailed"
+msgstr "Failed to regenerate subscription link"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:355
 msgid "calendar.visit"
 msgstr "Visit"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:270
+#: src/i18n/descriptors/subscription.ts:331
 msgid "dashboard.trials"
 msgstr "Trials"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:72
+#: src/i18n/descriptors/subscription.ts:119
 msgid "subscription.card.trialEnds"
 msgstr "Trial ends on {date}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:262
+#: src/i18n/descriptors/subscription.ts:323
 msgid "statistics.explain"
 msgstr "Explanation: {label}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:12
+#: src/i18n/descriptors/subscription.ts:57
 msgid "subscription.validation.nameRequired"
 msgstr "Enter a service name."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:13
+#: src/i18n/descriptors/subscription.ts:58
 msgid "subscription.validation.datesRequired"
 msgstr "Please select a start date and next billing date."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:105
+#: src/i18n/descriptors/subscription.ts:152
 msgid "subscriptions.emptyFiltered"
 msgstr "Adjust your search or filters and try again."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:23
+#: src/i18n/descriptors/subscription.ts:68
 msgid "subscription.field.currency"
 msgstr "Currency"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:110
+#: src/i18n/descriptors/subscription.ts:157
 msgid "subscriptions.csv.currency"
 msgstr "Currency"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:69
+#: src/i18n/descriptors/subscription.ts:116
 msgid "subscription.card.oneTimeDate"
 msgstr "Purchased: {date}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:258
+#: src/i18n/descriptors/subscription.ts:319
 msgid "statistics.costBudget"
 msgstr "Cost and budget"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:180
+#: src/i18n/descriptors/subscription.ts:227
 msgid "import.summarySkip"
 msgstr "Skip"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:185
+#: src/i18n/descriptors/subscription.ts:232
 msgid "import.action.skip"
 msgstr "Skip"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:190
+#: src/i18n/descriptors/subscription.ts:237
 msgid "import.filter.skip"
 msgstr "Skip"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:173
+#: src/i18n/descriptors/subscription.ts:220
 msgid "import.conflictSkip"
 msgstr "Skip existing records"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:195
+#: src/i18n/descriptors/subscription.ts:242
 msgid "import.skipItem"
 msgstr "Skip row"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:229
+#: src/i18n/descriptors/subscription.ts:290
 msgid "import.error.skipIndexInvalid"
 msgstr "Skipped item index is invalid."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:272
+#: src/i18n/descriptors/subscription.ts:333
 msgid "dashboard.recentSubscriptions"
 msgstr "Recent subscriptions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:120
+#: src/i18n/descriptors/subscription.ts:167
 msgid "import.stepSelect"
 msgstr "Select"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:299
+#: src/i18n/descriptors/subscription.ts:360
 msgid "calendar.dayListDescription"
 msgstr "Choose a subscription to view for {date}."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:300
+#: src/i18n/descriptors/subscription.ts:361
 msgid "calendar.dayListFallbackDescription"
 msgstr "Choose a subscription to view for this day."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:40
+#: src/i18n/descriptors/subscription.ts:85
 msgid "subscription.placeholder.tags"
 msgstr "Select or enter tags"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:37
+#: src/i18n/descriptors/subscription.ts:82
 msgid "subscription.placeholder.paymentMethod"
 msgstr "Select payment method"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:123
+#: src/i18n/descriptors/subscription.ts:170
 msgid "import.tabFile"
 msgstr "Choose file"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:127
+#: src/i18n/descriptors/subscription.ts:174
 msgid "import.chooseFile"
 msgstr "Choose file"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:38
+#: src/i18n/descriptors/subscription.ts:83
 msgid "subscription.placeholder.date"
 msgstr "Select date"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:36
+#: src/i18n/descriptors/subscription.ts:81
 msgid "subscription.placeholder.currency"
 msgstr "Select currency"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:141
+#: src/i18n/descriptors/subscription.ts:188
 msgid "import.wallosGuideColumnMatch"
 msgstr "Repeat import"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:57
+#: src/i18n/descriptors/subscription.ts:102
 msgid "subscription.repeatReminder"
 msgstr "Repeat"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:59
+#: src/i18n/descriptors/subscription.ts:104
 msgid "subscription.repeatReminderWindow"
 msgstr "Repeat range"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:15
+#: src/i18n/descriptors/subscription.ts:24
+msgid "subscription.addToCalendarRegenerate"
+msgstr "Regenerate subscription link"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:25
+msgid "subscription.addToCalendarRegenerateTitle"
+msgstr "Regenerate this subscription link?"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:45
+msgid "subscription.addToCalendar.description.amount"
+msgstr "Amount: {amount}"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:60
 msgid "subscription.validation.amountInvalid"
 msgstr "Amount must be a valid number between 0 and 1,000,000,000."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:182
+#: src/i18n/descriptors/subscription.ts:229
 msgid "import.summaryError"
 msgstr "Errors"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:186
+#: src/i18n/descriptors/subscription.ts:233
 msgid "import.action.error"
 msgstr "Error"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:192
+#: src/i18n/descriptors/subscription.ts:239
 msgid "import.filter.error"
 msgstr "Errors"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:58
+#: src/i18n/descriptors/subscription.ts:103
 msgid "subscription.repeatReminderInterval"
 msgstr "Interval"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:271
+#: src/i18n/descriptors/subscription.ts:332
 msgid "dashboard.trialsNeedAttention"
 msgstr "Watch for paid conversion"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:250
+#: src/i18n/descriptors/subscription.ts:311
 msgid "statistics.inactiveSubscriptions"
 msgstr "Inactive subscriptions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:249
+#: src/i18n/descriptors/subscription.ts:310
 msgid "statistics.budgetPercent"
 msgstr "Budget usage"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:121
+#: src/i18n/descriptors/subscription.ts:168
 msgid "import.stepPreview"
 msgstr "Preview"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:175
+#: src/i18n/descriptors/subscription.ts:222
 msgid "import.previewTitle"
 msgstr "Preview result"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:287
+#: src/i18n/descriptors/subscription.ts:348
 msgid "calendar.estimatedSpend"
 msgstr "Estimated spend"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:60
+#: src/i18n/descriptors/subscription.ts:105
 msgid "subscription.repeatReminderPreview.afterFirst"
 msgstr "After the first reminder, repeat {interval} until the renewal notification time."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:61
+#: src/i18n/descriptors/subscription.ts:106
 msgid "subscription.repeatReminderPreview.finalWindow"
 msgstr "The first reminder still sends as scheduled. Repeats only run in the last {hours} hours before renewal."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:55
+#: src/i18n/descriptors/subscription.ts:100
 msgid "subscription.reminderInheritCsv"
 msgstr "Default from Settings"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:54
+#: src/i18n/descriptors/subscription.ts:99
 msgid "subscription.reminderInherit"
 msgstr "Default from Settings ({days} days before)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:71
+#: src/i18n/descriptors/subscription.ts:118
 msgid "subscription.card.reminderInherit"
 msgstr "Default reminder: {days} days before"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:87
+#: src/i18n/descriptors/subscription.ts:134
 msgid "subscriptions.sort.default"
 msgstr "Default order"

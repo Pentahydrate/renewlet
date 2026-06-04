@@ -197,7 +197,12 @@ export function SystemUpdateDialog({ open, onOpenChange }: SystemUpdateDialogPro
                 <StatePanel icon={<AlertCircle className="h-4 w-4" />} tone="warning" title={t("system.checkDeferredTitle")} description={version.warning ?? t("system.checkDeferredDescription")} />
               ) : !version.updateSupported ? (
                 <div className="space-y-3">
-                  <StatePanel icon={<Server className="h-4 w-4" />} tone="neutral" title={t("system.unsupportedTitle")} description={version.unsupportedReason ?? t("system.unsupportedDescription")} />
+                  <StatePanel
+                    icon={<Server className="h-4 w-4" />}
+                    tone="neutral"
+                    title={t("system.updateUnavailableTitle")}
+                    description={version.unsupportedReason ?? t("system.unsupportedDescription")}
+                  />
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-background/40 px-3 py-2">
                     {version.updateMode === "cloudflare-deploy" ? <ReleaseLink href={CLOUDFLARE_DEPLOY_GUIDE_URL} label={t("system.cloudflareDeployGuide")} /> : null}
                     {version.releaseInfo?.htmlUrl ? <ReleaseLink href={version.releaseInfo.htmlUrl} label={t("system.releaseLink")} /> : null}

@@ -54,6 +54,12 @@ func (service *systemUpdateService) CheckVersion(ctx context.Context, locale app
 	response.ReleaseInfo = release.dto
 	response.LatestVersion = release.dto.Version
 	response.HasUpdate = service.isTargetVersionNewer(release.dto.Version)
+	if response.HasUpdate && response.UpdateSupported {
+		if reason := systemUpdateAssetsUnsupportedReason(locale, release.assets, release.dto.Version); reason != "" {
+			response.UpdateSupported = false
+			response.UnsupportedReason = reason
+		}
+	}
 	service.storeVersion(response)
 	return cloneSystemVersionResponse(response, false), nil
 }
@@ -251,10 +257,7 @@ func currentUpdateChannel() string {
 }
 
 func systemReleaseFromGitHub(release *githubRelease, version string) *fetchedSystemRelease {
-	assets := make([]systemReleaseAssetDTO, 0, len(release.Assets))
-	for _, asset := range release.Assets {
-		assets = append(assets, systemReleaseAssetDTO{Name: asset.Name, Size: asset.Size})
-	}
+	assets := makeSystemReleaseAssetDTOs(release.Assets)
 	return &fetchedSystemRelease{
 		dto: &systemReleaseInfoDTO{
 			TagName:     release.TagName,
@@ -267,6 +270,14 @@ func systemReleaseFromGitHub(release *githubRelease, version string) *fetchedSys
 		},
 		assets: append([]githubAsset(nil), release.Assets...),
 	}
+}
+
+func makeSystemReleaseAssetDTOs(source []githubAsset) []systemReleaseAssetDTO {
+	assets := make([]systemReleaseAssetDTO, 0, len(source))
+	for _, asset := range source {
+		assets = append(assets, systemReleaseAssetDTO{Name: asset.Name, Size: asset.Size})
+	}
+	return assets
 }
 
 func (service *systemUpdateService) cachedVersion() *systemVersionResponse {
@@ -419,7 +430,7 @@ func updateModeForManualDeployment() string {
 	return "source-manual"
 }
 
-func selectSystemUpdateAssets(assets []githubAsset, version string) (githubAsset, githubAsset, error) {
+func findSystemUpdateAssets(assets []githubAsset, version string) (*githubAsset, *githubAsset) {
 	archiveName := systemArchiveName(version)
 	var archiveAsset *githubAsset
 	var checksumAsset *githubAsset
@@ -432,6 +443,22 @@ func selectSystemUpdateAssets(assets []githubAsset, version string) (githubAsset
 			checksumAsset = asset
 		}
 	}
+	return archiveAsset, checksumAsset
+}
+
+func systemUpdateAssetsUnsupportedReason(locale appLocale, assets []githubAsset, version string) string {
+	archiveAsset, checksumAsset := findSystemUpdateAssets(assets, version)
+	if archiveAsset == nil {
+		return serverFormat(locale, "system.updateUnsupportedReleaseAsset", map[string]interface{}{"asset": systemArchiveName(version)})
+	}
+	if checksumAsset == nil {
+		return serverFormat(locale, "system.updateUnsupportedReleaseAsset", map[string]interface{}{"asset": "checksums.txt"})
+	}
+	return ""
+}
+
+func selectSystemUpdateAssets(assets []githubAsset, version string) (githubAsset, githubAsset, error) {
+	archiveAsset, checksumAsset := findSystemUpdateAssets(assets, version)
 	if archiveAsset == nil {
 		return githubAsset{}, githubAsset{}, fmt.Errorf("no compatible release asset found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}

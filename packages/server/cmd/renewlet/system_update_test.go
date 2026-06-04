@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -319,6 +320,17 @@ func TestStableVersionUsesLatestReleaseEndpointAndIgnoresPrereleaseTargets(t *te
 }
 
 func TestRCVersionSelectsHighestNewerPrerelease(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("self-update capability depends on linux Docker binary semantics")
+	}
+	tempDir := t.TempDir()
+	binaryPath := filepath.Join(tempDir, "renewlet")
+	if err := os.WriteFile(binaryPath, []byte("old"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("RENEWLET_SELF_UPDATE_ENABLED", "true")
+	t.Setenv("RENEWLET_SELF_UPDATE_BINARY", binaryPath)
+	t.Setenv("RENEWLET_SELF_UPDATE_BACKUP_DIR", filepath.Join(tempDir, "backups"))
 	oldVersion, oldBuildType := Version, BuildType
 	Version, BuildType = "0.1.0-rc.1", "release"
 	t.Cleanup(func() {
@@ -348,8 +360,123 @@ func TestRCVersionSelectsHighestNewerPrerelease(t *testing.T) {
 	if !response.CheckSucceeded || !response.HasUpdate {
 		t.Fatalf("expected rc version update, got %#v", response)
 	}
+	if !response.UpdateSupported {
+		t.Fatalf("expected rc version update to be installable, got %#v", response)
+	}
 	if response.LatestVersion != "0.2.0-rc.1" {
 		t.Fatalf("latestVersion = %q, want 0.2.0-rc.1", response.LatestVersion)
+	}
+}
+
+func TestSystemVersionReleaseAssetsStayArrayWhenEmpty(t *testing.T) {
+	oldVersion, oldBuildType := Version, BuildType
+	Version, BuildType = "0.1.0-rc.1", "release"
+	t.Cleanup(func() {
+		Version, BuildType = oldVersion, oldBuildType
+	})
+	t.Setenv("RENEWLET_SELF_UPDATE_ENABLED", "false")
+
+	service := newSystemUpdateService(&fakeSystemReleaseClient{releases: [][]githubRelease{{
+		{
+			TagName:     "v0.1.0-rc.2",
+			Name:        "Renewlet 0.1.0-rc.2",
+			PublishedAt: "2026-06-04T00:00:00Z",
+			HTMLURL:     "https://github.com/zhiyingzzhou/renewlet/releases/tag/v0.1.0-rc.2",
+			Prerelease:  true,
+			Assets:      nil,
+		},
+	}}})
+
+	first, err := service.CheckVersion(context.Background(), localeZhCN, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := service.CheckVersion(context.Background(), localeZhCN, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, response := range map[string]*systemVersionResponse{"force": first, "cached": second} {
+		payload, err := json.Marshal(response)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(payload), `"assets":[]`) {
+			t.Fatalf("%s response JSON = %s, want releaseInfo.assets as []", name, payload)
+		}
+		if strings.Contains(string(payload), `"assets":null`) {
+			t.Fatalf("%s response JSON = %s, must not encode assets as null", name, payload)
+		}
+	}
+	if !second.Cached {
+		t.Fatal("second check should come from cache")
+	}
+}
+
+func TestSystemVersionDisablesInAppUpdateWhenReleaseAssetsMissing(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("self-update capability depends on linux Docker binary semantics")
+	}
+	oldVersion, oldBuildType := Version, BuildType
+	t.Cleanup(func() {
+		Version, BuildType = oldVersion, oldBuildType
+	})
+
+	cases := []struct {
+		name           string
+		assets         []githubAsset
+		wantReasonPart string
+	}{
+		{
+			name:           "missing platform archive",
+			assets:         []githubAsset{{Name: "renewlet-docker-v0.1.0-rc.2.zip"}},
+			wantReasonPart: systemArchiveName("0.1.0-rc.2"),
+		},
+		{
+			name:           "missing checksums",
+			assets:         []githubAsset{{Name: systemArchiveName("0.1.0-rc.2")}},
+			wantReasonPart: "checksums.txt",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			binaryPath := filepath.Join(tempDir, "renewlet")
+			if err := os.WriteFile(binaryPath, []byte("old"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("RENEWLET_SELF_UPDATE_ENABLED", "true")
+			t.Setenv("RENEWLET_SELF_UPDATE_BINARY", binaryPath)
+			t.Setenv("RENEWLET_SELF_UPDATE_BACKUP_DIR", filepath.Join(tempDir, "backups"))
+			Version, BuildType = "0.1.0-rc.1", "release"
+
+			service := newSystemUpdateService(&fakeSystemReleaseClient{releases: [][]githubRelease{{
+				{
+					TagName:    "v0.1.0-rc.2",
+					Name:       "Renewlet 0.1.0-rc.2",
+					HTMLURL:    "https://github.com/zhiyingzzhou/renewlet/releases/tag/v0.1.0-rc.2",
+					Prerelease: true,
+					Assets:     tc.assets,
+				},
+			}}})
+
+			response, err := service.CheckVersion(context.Background(), localeZhCN, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !response.CheckSucceeded || !response.HasUpdate {
+				t.Fatalf("expected newer release to be reported, got %#v", response)
+			}
+			if response.UpdateSupported {
+				t.Fatalf("UpdateSupported = true, want false when install asset is missing: %#v", response)
+			}
+			if !strings.Contains(response.UnsupportedReason, tc.wantReasonPart) {
+				t.Fatalf("UnsupportedReason = %q, want to contain %q", response.UnsupportedReason, tc.wantReasonPart)
+			}
+			if response.ReleaseInfo == nil || response.ReleaseInfo.HTMLURL == "" {
+				t.Fatalf("release info should stay available: %#v", response.ReleaseInfo)
+			}
+		})
 	}
 }
 

@@ -14,76 +14,76 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:10
+#: src/i18n/descriptors/custom-config.ts:11
 msgid "customConfig.enabledCount"
 msgstr "{enabled}/{total} enabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:6
+#: src/i18n/descriptors/custom-config.ts:7
 msgid "customConfig.labelZhPlaceholder"
 msgstr "Chinese name"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:13
+#: src/i18n/descriptors/custom-config.ts:14
 msgid "customConfig.dragSortOnly"
 msgstr "Drag sorting only"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:15
+#: src/i18n/descriptors/custom-config.ts:16
 msgid "customConfig.totalItems"
 msgstr "{count} items total"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:4
+#: src/i18n/descriptors/custom-config.ts:5
 msgid "customConfig.iconLabel"
 msgstr "Icon:"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:14
+#: src/i18n/descriptors/custom-config.ts:15
 msgid "customConfig.dragSort"
 msgstr "Drag to sort"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:12
+#: src/i18n/descriptors/custom-config.ts:13
 msgid "customConfig.dragSortEnabled"
 msgstr "Drag to sort · {enabled}/{total} enabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:9
+#: src/i18n/descriptors/custom-config.ts:10
 msgid "customConfig.empty"
 msgstr "No configuration items"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:16
+#: src/i18n/descriptors/custom-config.ts:17
 msgid "customConfig.addOption"
 msgstr "Add option"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:18
+#: src/i18n/descriptors/custom-config.ts:19
 msgid "customConfig.confirmDeleteDescription"
 msgstr "Delete \"{label}\"? Existing subscription data will remain, but this option will no longer be selectable and may affect display or filters."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:17
+#: src/i18n/descriptors/custom-config.ts:18
 msgid "customConfig.confirmDeleteTitle"
 msgstr "Confirm deletion"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:11
+#: src/i18n/descriptors/custom-config.ts:12
 msgid "customConfig.srDescription"
 msgstr "Manage options, order, and enabled state for {title}."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:8
+#: src/i18n/descriptors/custom-config.ts:9
 msgid "customConfig.customColorPlaceholder"
 msgstr "Custom color"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:7
+#: src/i18n/descriptors/custom-config.ts:8
 msgid "customConfig.labelEnPlaceholder"
 msgstr "English name"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/custom-config.ts:5
+#: src/i18n/descriptors/custom-config.ts:6
 msgid "customConfig.valuePlaceholder"
 msgstr "Value"

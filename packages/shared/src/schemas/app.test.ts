@@ -41,6 +41,40 @@ describe("system app schemas", () => {
     expect(parsed.updateSupported).toBe(false);
   });
 
+  it("accepts release info with an empty assets array", () => {
+    const parsed = systemVersionResponseSchema.parse({
+      ...baseVersionResponse,
+      releaseInfo: {
+        tagName: "v1.1.0",
+        version: "1.1.0",
+        name: "Renewlet 1.1.0",
+        body: "",
+        publishedAt: "2026-05-26T00:00:00Z",
+        htmlUrl: "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.1.0",
+        assets: [],
+      },
+    });
+
+    expect(parsed.releaseInfo?.assets).toEqual([]);
+  });
+
+  it("rejects release info with null assets", () => {
+    const result = systemVersionResponseSchema.safeParse({
+      ...baseVersionResponse,
+      releaseInfo: {
+        tagName: "v1.1.0",
+        version: "1.1.0",
+        name: "Renewlet 1.1.0",
+        body: "",
+        publishedAt: "2026-05-26T00:00:00Z",
+        htmlUrl: "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.1.0",
+        assets: null,
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects the old runtime field after the deployment contract switch", () => {
     const result = systemVersionResponseSchema.safeParse({
       ...baseVersionResponse,

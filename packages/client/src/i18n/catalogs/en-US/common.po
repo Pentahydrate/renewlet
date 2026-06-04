@@ -14,621 +14,626 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:5
-msgid "appError.title"
-msgstr "This page cannot be displayed right now"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:6
-msgid "appError.description"
-msgstr "An unexpected interface error occurred. You can reload the page; saved data will not be affected."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:7
-msgid "appError.reload"
-msgstr "Reload page"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:32
+#: src/i18n/descriptors/common.ts:36
 msgid "common.options"
 msgstr "{count} options"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:31
+#: src/i18n/descriptors/common.ts:35
 msgid "common.items"
 msgstr "{count} items"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:33
+#: src/i18n/descriptors/common.ts:37
 msgid "common.optionDisabled"
 msgstr "{label} (disabled)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:59
+#: src/i18n/descriptors/common.ts:63
 msgid "system.runtime.cloudflare"
 msgstr "Cloudflare"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:58
+#: src/i18n/descriptors/common.ts:76
+msgid "system.cloudflareDeployGuide"
+msgstr "Cloudflare deploy guide"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:62
 msgid "system.runtime.docker"
 msgstr "Docker"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:82
+#: src/i18n/descriptors/common.ts:91
 msgid "locale.enUS"
 msgstr "English"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:98
+#: src/i18n/descriptors/common.ts:107
 msgid "theme.hexColor"
 msgstr "Hex color"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:48
+#: src/i18n/descriptors/common.ts:52
 msgid "system.badgeVersion"
 msgstr "v{version}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:17
+#: src/i18n/descriptors/common.ts:21
 msgid "common.uploading"
 msgstr "Uploading..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:18
+#: src/i18n/descriptors/common.ts:22
 msgid "common.uploadFailed"
 msgstr "Upload failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:87
+#: src/i18n/descriptors/common.ts:96
 msgid "time.noon"
 msgstr "Noon"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:81
+#: src/i18n/descriptors/common.ts:90
 msgid "locale.zhCN"
 msgstr "中文"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:95
+#: src/i18n/descriptors/common.ts:104
 msgid "theme.variant"
 msgstr "Theme style"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:101
+#: src/i18n/descriptors/common.ts:110
 msgid "theme.lightness"
 msgstr "Lightness (L)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:22
+#: src/i18n/descriptors/common.ts:26
 msgid "common.today"
 msgstr "Today"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:37
+#: src/i18n/descriptors/common.ts:41
 msgid "nav.dashboard"
 msgstr "Dashboard"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:118
+#: src/i18n/descriptors/common.ts:127
 msgid "theme.lavender.description"
 msgstr "Elegant romantic purple tones"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:9
+#: src/i18n/descriptors/common.ts:13
 msgid "common.save"
 msgstr "Save"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:11
+#: src/i18n/descriptors/common.ts:15
 msgid "common.saving"
 msgstr "Saving..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:88
+#: src/i18n/descriptors/common.ts:97
 msgid "time.evening"
 msgstr "Evening"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:6
+#: src/i18n/descriptors/common.ts:10
 msgid "common.close"
 msgstr "Close"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:30
+#: src/i18n/descriptors/common.ts:34
 msgid "common.dismissNotification"
 msgstr "Dismiss notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:28
+#: src/i18n/descriptors/common.ts:32
 msgid "common.builtIn"
 msgstr "Built in"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:55
+#: src/i18n/descriptors/common.ts:59
 msgid "system.latestVersion"
 msgstr "Latest version"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:85
+#: src/i18n/descriptors/common.ts:94
 msgid "time.minute"
 msgstr "Minute"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:42
+#: src/i18n/descriptors/common.ts:46
 msgid "header.toggleTheme"
 msgstr "Toggle theme"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:12
+#: src/i18n/descriptors/common.ts:16
 msgid "common.creating"
 msgstr "Creating..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:7
+#: src/i18n/descriptors/common.ts:11
 msgid "common.delete"
 msgstr "Delete"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:10
+#: src/i18n/descriptors/common.ts:8
+msgid "appError.reload"
+msgstr "Reload page"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:14
 msgid "common.loading"
 msgstr "Loading..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:70
+#: src/i18n/descriptors/common.ts:75
 msgid "system.releaseLink"
 msgstr "Release page"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/common.ts:71
-msgid "system.cloudflareDeployGuide"
-msgstr "Cloudflare deploy guide"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:72
-msgid "system.viewChangelog"
-msgstr "View changelog"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:66
 msgid "system.updateAvailableTitle"
 msgstr "New version available"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:5
+#: src/i18n/descriptors/common.ts:7
+msgid "appError.description"
+msgstr "An unexpected interface error occurred. You can reload the page; saved data will not be affected."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:9
 msgid "common.cancel"
 msgstr "Cancel"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:67
+#: src/i18n/descriptors/common.ts:72
 msgid "system.updateAvailableDescription"
 msgstr "You can update to v{version}. The update replaces the Docker runtime binary."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:49
+#: src/i18n/descriptors/common.ts:53
 msgid "system.badgeUpdate"
 msgstr "Update to v{version}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:25
+#: src/i18n/descriptors/common.ts:29
 msgid "common.enable"
 msgstr "Enable"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:36
+#: src/i18n/descriptors/common.ts:40
 msgid "common.backToTop"
 msgstr "Back to top"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:23
+#: src/i18n/descriptors/common.ts:27
 msgid "common.enabled"
 msgstr "Enabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:68
+#: src/i18n/descriptors/common.ts:73
 msgid "system.noUpdateTitle"
 msgstr "Already up to date"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:44
+#: src/i18n/descriptors/common.ts:48
 msgid "header.logoutSuccessTitle"
 msgstr "Signed out"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:63
+#: src/i18n/descriptors/common.ts:67
 msgid "system.checkDeferredDescription"
 msgstr "Showing the installed version for now. Try checking again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:54
+#: src/i18n/descriptors/common.ts:58
 msgid "system.currentVersion"
 msgstr "Current version"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:64
+#: src/i18n/descriptors/common.ts:68
 msgid "system.unsupportedTitle"
 msgstr "In-app update is not supported here"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:69
-msgid "system.noUpdateDescription"
-msgstr "No action needed."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:102
+#: src/i18n/descriptors/common.ts:111
 msgid "theme.quickPick"
 msgstr "Quick pick"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:47
+#: src/i18n/descriptors/common.ts:51
 msgid "system.openUpdateDialog"
 msgstr "Open system update"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:83
+#: src/i18n/descriptors/common.ts:92
 msgid "reminder.days"
 msgstr "{days} days before"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:15
+#: src/i18n/descriptors/common.ts:19
 msgid "common.searchPlaceholder"
 msgstr "Search..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:20
+#: src/i18n/descriptors/common.ts:24
 msgid "common.none"
 msgstr "None"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:39
+#: src/i18n/descriptors/common.ts:74
+msgid "system.noUpdateDescription"
+msgstr "No action needed."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:43
 msgid "nav.calendar"
 msgstr "Calendar"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:115
+#: src/i18n/descriptors/common.ts:124
 msgid "theme.sunset.name"
 msgstr "Sunset"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:86
+#: src/i18n/descriptors/common.ts:95
 msgid "time.morning"
 msgstr "Morning"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:84
+#: src/i18n/descriptors/common.ts:93
 msgid "time.hour"
 msgstr "Hour"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:91
+#: src/i18n/descriptors/common.ts:100
 msgid "theme.mode"
 msgstr "Appearance mode"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:89
+#: src/i18n/descriptors/common.ts:98
 msgid "time.night"
 msgstr "Night"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:19
+#: src/i18n/descriptors/common.ts:23
 msgid "common.noData"
 msgstr "No data"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:62
+#: src/i18n/descriptors/common.ts:66
 msgid "system.checkDeferredTitle"
 msgstr "Could not check for updates"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:73
+#: src/i18n/descriptors/common.ts:80
 msgid "system.updating"
 msgstr "Updating..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:75
+#: src/i18n/descriptors/common.ts:82
 msgid "system.updateFailedTitle"
 msgstr "Update failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:76
+#: src/i18n/descriptors/common.ts:83
 msgid "system.updateFailedDescription"
 msgstr "Update failed. Please try again later."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:74
+#: src/i18n/descriptors/common.ts:81
 msgid "system.updateComplete"
 msgstr "Update complete"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:45
+#: src/i18n/descriptors/common.ts:49
 msgid "header.logoutSuccessDescription"
 msgstr "See you next time"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:24
+#: src/i18n/descriptors/common.ts:28
 msgid "common.disabled"
 msgstr "Disabled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:21
+#: src/i18n/descriptors/common.ts:25
 msgid "common.unknown"
 msgstr "Unknown"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:57
+#: src/i18n/descriptors/common.ts:61
 msgid "system.buildType"
 msgstr "Build type"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:61
+#: src/i18n/descriptors/common.ts:77
+msgid "system.viewChangelog"
+msgstr "View changelog"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:65
 msgid "system.warningTitle"
 msgstr "Check warning"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:104
+#: src/i18n/descriptors/common.ts:113
 msgid "theme.color.orange"
 msgstr "Orange"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:13
+#: src/i18n/descriptors/common.ts:17
 msgid "common.searching"
 msgstr "Searching..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:51
+#: src/i18n/descriptors/common.ts:55
 msgid "system.checking"
 msgstr "Checking version..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:114
-msgid "theme.ocean.description"
-msgstr "Calm elegant ocean blue"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:16
-msgid "common.noMatches"
-msgstr "No matches"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:92
-msgid "theme.light"
-msgstr "Light"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:113
-msgid "theme.ocean.name"
-msgstr "Ocean"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:93
-msgid "theme.dark"
-msgstr "Dark"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:112
-msgid "theme.emerald.description"
-msgstr "Fresh natural emerald tones"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:116
-msgid "theme.sunset.description"
-msgstr "Warm energetic sunset color"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:60
-msgid "system.runtime.source"
-msgstr "Source/manual deployment"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:52
-msgid "system.checkFailedTitle"
-msgstr "Version check failed"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:119
-msgid "theme.rose.name"
-msgstr "Rose"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:26
-msgid "common.disable"
-msgstr "Disable"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:72
-msgid "system.updateNow"
-msgstr "Update now"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:77
-msgid "system.restartRequired"
-msgstr "Restart the service to apply the update"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:81
-msgid "system.restartNow"
-msgstr "Restart now"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:82
+#: src/i18n/descriptors/common.ts:87
 msgid "system.restarting"
 msgstr "Restarting..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:77
-msgid "system.retry"
-msgstr "Retry"
+#: src/i18n/descriptors/common.ts:123
+msgid "theme.ocean.description"
+msgstr "Calm elegant ocean blue"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:110
+#: src/i18n/descriptors/common.ts:20
+msgid "common.noMatches"
+msgstr "No matches"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:101
+msgid "theme.light"
+msgstr "Light"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:122
+msgid "theme.ocean.name"
+msgstr "Ocean"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:102
+msgid "theme.dark"
+msgstr "Dark"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:121
+msgid "theme.emerald.description"
+msgstr "Fresh natural emerald tones"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:125
+msgid "theme.sunset.description"
+msgstr "Warm energetic sunset color"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:64
+msgid "system.runtime.source"
+msgstr "Source/manual deployment"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:56
+msgid "system.checkFailedTitle"
+msgstr "Version check failed"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:128
+msgid "theme.rose.name"
+msgstr "Rose"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:30
+msgid "common.disable"
+msgstr "Disable"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:79
+msgid "system.updateNow"
+msgstr "Update now"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:86
+msgid "system.restartNow"
+msgstr "Restart now"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:119
 msgid "theme.color.pink"
 msgstr "Pink"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:120
+#: src/i18n/descriptors/common.ts:129
 msgid "theme.rose.description"
 msgstr "Soft refined rose color"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:50
+#: src/i18n/descriptors/common.ts:54
 msgid "system.updateTitle"
 msgstr "System update"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:103
+#: src/i18n/descriptors/common.ts:112
 msgid "theme.color.red"
 msgstr "Red"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:109
+#: src/i18n/descriptors/common.ts:118
 msgid "theme.color.purple"
 msgstr "Purple"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:40
+#: src/i18n/descriptors/common.ts:44
 msgid "nav.statistics"
 msgstr "Statistics"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:106
+#: src/i18n/descriptors/common.ts:115
 msgid "theme.color.green"
 msgstr "Green"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:8
+#: src/i18n/descriptors/common.ts:12
 msgid "common.edit"
 msgstr "Edit"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:111
+#: src/i18n/descriptors/common.ts:120
 msgid "theme.emerald.name"
 msgstr "Emerald"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:96
+#: src/i18n/descriptors/common.ts:105
 msgid "theme.custom"
 msgstr "Custom"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:99
+#: src/i18n/descriptors/common.ts:108
 msgid "theme.hue"
 msgstr "Hue (H)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:108
+#: src/i18n/descriptors/common.ts:117
 msgid "theme.color.blue"
 msgstr "Blue"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:117
+#: src/i18n/descriptors/common.ts:126
 msgid "theme.lavender.name"
 msgstr "Lavender"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:38
+#: src/i18n/descriptors/common.ts:42
 msgid "nav.subscriptions"
 msgstr "Subscriptions"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:4
+#: src/i18n/descriptors/common.ts:5
 msgid "app.tagline"
 msgstr "Subscription manager"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:41
+#: src/i18n/descriptors/common.ts:45
 msgid "nav.settings"
 msgstr "Settings"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:65
+#: src/i18n/descriptors/common.ts:70
 msgid "system.unsupportedDescription"
 msgstr "Upgrade it with the original deployment method."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:53
+#: src/i18n/descriptors/common.ts:57
 msgid "system.checkFailedDescription"
 msgstr "Please try again later, or open GitHub Releases manually."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:14
+#: src/i18n/descriptors/common.ts:18
 msgid "common.selectPlaceholder"
 msgstr "Select"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:94
+#: src/i18n/descriptors/common.ts:85
+msgid "system.restartRequired"
+msgstr "Restart the service to apply the update"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:103
 msgid "theme.system"
 msgstr "System"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:56
+#: src/i18n/descriptors/common.ts:60
 msgid "system.runtime"
 msgstr "Runtime"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:34
+#: src/i18n/descriptors/common.ts:38
 msgid "common.backToLogin"
 msgstr "Back to Login"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:35
+#: src/i18n/descriptors/common.ts:39
 msgid "common.backHome"
 msgstr "Back Home"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:80
+#: src/i18n/descriptors/common.ts:89
 msgid "notFound.home"
 msgstr "Return home"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:46
+#: src/i18n/descriptors/common.ts:50
 msgid "header.logoutFailedTitle"
 msgstr "Sign out failed"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:43
+#: src/i18n/descriptors/common.ts:47
 msgid "header.logout"
 msgstr "Log out"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:97
+#: src/i18n/descriptors/common.ts:106
 msgid "theme.customDescription"
 msgstr "Choose your favorite color"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:29
+#: src/i18n/descriptors/common.ts:33
 msgid "common.notifications"
 msgstr "Notifications"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:90
+#: src/i18n/descriptors/common.ts:99
 msgid "time.notificationAria"
 msgstr "Notification time, current {time}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:27
+#: src/i18n/descriptors/common.ts:31
 msgid "common.configure"
 msgstr "Configure"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:71
+#: src/i18n/descriptors/common.ts:78
 msgid "system.recheck"
 msgstr "Check again"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:107
+#: src/i18n/descriptors/common.ts:84
+msgid "system.retry"
+msgstr "Retry"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:116
 msgid "theme.color.cyan"
 msgstr "Cyan"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:79
+#: src/i18n/descriptors/common.ts:69
+msgid "system.updateUnavailableTitle"
+msgstr "In-app update unavailable"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:6
+msgid "appError.title"
+msgstr "This page cannot be displayed right now"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/common.ts:88
 msgid "notFound.title"
 msgstr "Page not found"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:100
+#: src/i18n/descriptors/common.ts:109
 msgid "theme.saturation"
 msgstr "Saturation (S)"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/common.ts:105
+#: src/i18n/descriptors/common.ts:114
 msgid "theme.color.yellow"
 msgstr "Yellow"

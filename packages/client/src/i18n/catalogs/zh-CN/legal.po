@@ -14,161 +14,161 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:24
+#: src/i18n/descriptors/legal.ts:25
 msgid "legal.terms.scope.title"
 msgstr "1. 使用范围"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:7
+#: src/i18n/descriptors/legal.ts:8
 msgid "legal.privacy.data.title"
 msgstr "1. 我们会处理哪些数据"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:11
+#: src/i18n/descriptors/legal.ts:12
 msgid "legal.privacy.usage.title"
 msgstr "2. 数据如何被使用"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:27
+#: src/i18n/descriptors/legal.ts:28
 msgid "legal.terms.account.title"
 msgstr "2. 账号与数据"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:30
+#: src/i18n/descriptors/legal.ts:31
 msgid "legal.terms.thirdParty.title"
 msgstr "3. 第三方服务"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:14
+#: src/i18n/descriptors/legal.ts:15
 msgid "legal.privacy.thirdParty.title"
 msgstr "3. 第三方请求"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:18
+#: src/i18n/descriptors/legal.ts:19
 msgid "legal.privacy.control.title"
 msgstr "4. 你的控制权"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:33
+#: src/i18n/descriptors/legal.ts:34
 msgid "legal.terms.disclaimer.title"
 msgstr "4. 免责声明"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:23
+#: src/i18n/descriptors/legal.ts:24
 msgid "legal.terms.intro"
 msgstr "Renewlet（renewlet）是一个开源的订阅管理工具。本页面用于说明你在使用本项目或其部署实例时需要了解的基本规则。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:9
+#: src/i18n/descriptors/legal.ts:10
 msgid "legal.privacy.data.business"
 msgstr "业务数据：订阅信息、分类/支付方式/货币配置、用户设置等（SQLite）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:25
+#: src/i18n/descriptors/legal.ts:26
 msgid "legal.terms.scope.lawful"
 msgstr "你可以在合法合规的前提下使用本项目（含自托管部署）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:19
+#: src/i18n/descriptors/legal.ts:20
 msgid "legal.privacy.control.settings"
 msgstr "你可以在设置页随时修改通知渠道配置，或关闭通知。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:26
+#: src/i18n/descriptors/legal.ts:27
 msgid "legal.terms.scope.accuracy"
 msgstr "你需要自行确保录入的订阅/价格/汇率等数据准确性，本项目仅提供管理与展示能力。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:5
+#: src/i18n/descriptors/legal.ts:6
 msgid "legal.privacy.subtitle"
 msgstr "最后更新：2026-01-12"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:22
+#: src/i18n/descriptors/legal.ts:23
 msgid "legal.terms.subtitle"
 msgstr "最后更新：2026-01-12"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:35
+#: src/i18n/descriptors/legal.ts:36
 msgid "legal.terms.disclaimer.loss"
 msgstr "因使用本项目或其部署实例导致的任何损失，你应自行承担相应责任。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:16
+#: src/i18n/descriptors/legal.ts:17
 msgid "legal.privacy.thirdParty.icons"
 msgstr "图标搜索：可能会在浏览器中加载外部 favicon/logo 候选（作为备用能力，失败会自动降级）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:29
+#: src/i18n/descriptors/legal.ts:30
 msgid "legal.terms.account.operator"
 msgstr "如果你使用的是他人提供的部署实例，请了解该实例运营者可能拥有服务器与数据库层面的运维权限。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:20
+#: src/i18n/descriptors/legal.ts:21
 msgid "legal.privacy.control.selfHost"
 msgstr "如果你是自托管部署者，你可以通过 PocketBase 后台和 `/pb_data` 管理、备份或删除数据。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:21
+#: src/i18n/descriptors/legal.ts:22
 msgid "legal.terms.title"
 msgstr "服务条款"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:34
+#: src/i18n/descriptors/legal.ts:35
 msgid "legal.terms.disclaimer.asIs"
 msgstr "本项目按“现状”提供，不对任何结果作保证（包括但不限于准确性、及时性、适用性）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:6
+#: src/i18n/descriptors/legal.ts:7
 msgid "legal.privacy.intro"
 msgstr "本项目本身不内置任何第三方埋点/广告 SDK。你在使用某个部署实例时，数据将由该实例的运营者（可能是你自己）负责保存与处理。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:28
+#: src/i18n/descriptors/legal.ts:29
 msgid "legal.terms.account.localAuth"
 msgstr "本项目默认使用本地认证进行登录鉴权；数据存储在 SQLite 和本地上传目录。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:15
+#: src/i18n/descriptors/legal.ts:16
 msgid "legal.privacy.thirdParty.rates"
 msgstr "汇率：可使用 Exchange API 或 FloatRates JSON Feeds 获取汇率数据（远端失败时会尝试另一个来源，最终回退到内置汇率，保证可用）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:12
+#: src/i18n/descriptors/legal.ts:13
 msgid "legal.privacy.usage.core"
 msgstr "用于提供核心功能：订阅管理、统计、日历展示、个性化设置。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:13
+#: src/i18n/descriptors/legal.ts:14
 msgid "legal.privacy.usage.notifications"
 msgstr "用于通知功能（可选）：当你启用通知渠道后，系统会把通知内容发送到你配置的第三方渠道。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:32
+#: src/i18n/descriptors/legal.ts:33
 msgid "legal.terms.thirdParty.responsibility"
 msgstr "第三方服务的可用性、限流策略与数据准确性由其自身负责。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:8
+#: src/i18n/descriptors/legal.ts:9
 msgid "legal.privacy.data.account"
 msgstr "账号信息：由 PocketBase 认证管理（例如邮箱、本地 token）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:10
+#: src/i18n/descriptors/legal.ts:11
 msgid "legal.privacy.data.files"
 msgstr "资源文件：你上传的 Logo/Icon 等图片（本地文件存储）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:17
+#: src/i18n/descriptors/legal.ts:18
 msgid "legal.privacy.thirdParty.notifications"
 msgstr "通知：Telegram/企业微信/Webhook/SMTP 邮件/Bark 等渠道会接收你配置的通知内容。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:31
+#: src/i18n/descriptors/legal.ts:32
 msgid "legal.terms.thirdParty.features"
 msgstr "部分功能会请求第三方服务（例如汇率 API、通知渠道服务、图标搜索站点等）。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/legal.ts:4
+#: src/i18n/descriptors/legal.ts:5
 msgid "legal.privacy.title"
 msgstr "隐私政策"
