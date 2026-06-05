@@ -1,6 +1,6 @@
 // 通知 schema 测试保护历史响应的空数组和 union 形状，避免前端为旧 null 契约恢复兼容层。
 import { describe, expect, it } from "vitest";
-import { notificationHistoryResponseSchema } from "./notifications";
+import { notificationChannelSchema, notificationHistoryResponseSchema } from "./notifications";
 
 const skippedJob = {
   id: "job-1",
@@ -73,6 +73,61 @@ const normalizedSkippedHistoryResponse = {
 };
 
 describe("notification API schemas", () => {
+  it("accepts ServerChan as a notification channel", () => {
+    expect(notificationChannelSchema.safeParse("serverchan").success).toBe(true);
+  });
+
+  it("accepts ServerChan channel snapshots in notification history", () => {
+    const response = {
+      ...normalizedSkippedHistoryResponse,
+      summary: {
+        ...normalizedSkippedHistoryResponse.summary,
+        enabledChannels: ["serverchan"],
+        latestJob: {
+          ...skippedJob,
+          result: {
+            ...skippedJob.result,
+            settings: {
+              ...skippedJob.result.settings,
+              enabledChannels: ["serverchan"],
+            },
+            channels: {
+              attempted: ["serverchan"],
+              succeeded: ["serverchan"],
+              failed: [{
+                channel: "serverchan",
+                error: "Server酱响应格式无效",
+              }],
+            },
+          },
+        },
+      },
+      history: {
+        ...normalizedSkippedHistoryResponse.history,
+        jobs: [{
+          ...skippedJob,
+          result: {
+            ...skippedJob.result,
+            settings: {
+              ...skippedJob.result.settings,
+              enabledChannels: ["serverchan"],
+            },
+            channels: {
+              attempted: ["serverchan"],
+              succeeded: ["serverchan"],
+              failed: [{
+                channel: "serverchan",
+                error: "Server酱响应格式无效",
+              }],
+            },
+          },
+        }],
+      },
+    };
+
+    expect(notificationHistoryResponseSchema.safeParse(response).success).toBe(true);
+  });
+
   it("accepts normalized skipped history responses with empty arrays", () => {
     expect(notificationHistoryResponseSchema.safeParse(normalizedSkippedHistoryResponse).success).toBe(true);
   });

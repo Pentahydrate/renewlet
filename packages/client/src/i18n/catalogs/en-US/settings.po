@@ -29,12 +29,12 @@ msgid "settings.sectionSaved"
 msgstr "{section} updated"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:220
+#: src/i18n/descriptors/settings.ts:223
 msgid "settings.wechatAtAll"
 msgstr "@ all members"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:218
+#: src/i18n/descriptors/settings.ts:221
 msgid "settings.wechatPhones"
 msgstr "@ phone numbers (optional)"
 
@@ -49,7 +49,7 @@ msgid "settings.cachePolicyValue"
 msgstr "24-hour local cache"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:224
+#: src/i18n/descriptors/settings.ts:227
 msgid "settings.smtpSecureHelp"
 msgstr "465 is usually enabled; 587/2525 are usually disabled and use STARTTLS. Cloudflare Workers does not support 25."
 
@@ -59,7 +59,7 @@ msgid "settings.channel.notifyxReady"
 msgstr "API Key filled"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:203
+#: src/i18n/descriptors/settings.ts:205
 msgid "settings.help.bark"
 msgstr "Bark iOS app"
 
@@ -89,17 +89,17 @@ msgid "settings.exchangeRateProvider.floatrates"
 msgstr "FloatRates JSON Feeds"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:208
+#: src/i18n/descriptors/settings.ts:211
 msgid "settings.webhookGetPostHelp"
 msgstr "GET sends title/content/timestamp as query parameters. POST sends JSON by default, or uses the template below."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:210
+#: src/i18n/descriptors/settings.ts:213
 msgid "settings.webhookHeadersHelp"
 msgstr "Custom headers in JSON format. Leave empty to use defaults."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:204
+#: src/i18n/descriptors/settings.ts:206
 msgid "settings.help.notifyx"
 msgstr "Notifyx help"
 
@@ -107,6 +107,11 @@ msgstr "Notifyx help"
 #: src/i18n/descriptors/settings.ts:27
 msgid "settings.pocketBaseAdmin"
 msgstr "PocketBase Admin"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:244
+msgid "settings.serverchanSendKeyPlaceholder"
+msgstr "SCTxxxxxxxxxxxxxxxx or sctp123tabc"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:56
@@ -119,22 +124,37 @@ msgid "settings.builtInIconSource.selfhst"
 msgstr "selfh.st icons"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:226
+#: src/i18n/descriptors/settings.ts:243
+msgid "settings.serverchanSendKey"
+msgstr "SendKey"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:200
+msgid "settings.channel.serverchanReady"
+msgstr "SendKey filled"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:207
+msgid "settings.help.serverchan"
+msgstr "ServerChan docs"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:229
 msgid "settings.smtpPassword"
 msgstr "SMTP password"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:221
+#: src/i18n/descriptors/settings.ts:224
 msgid "settings.smtpHost"
 msgstr "SMTP server"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:225
+#: src/i18n/descriptors/settings.ts:228
 msgid "settings.smtpUser"
 msgstr "SMTP username"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:222
+#: src/i18n/descriptors/settings.ts:225
 msgid "settings.smtpPort"
 msgstr "SMTP port"
 
@@ -154,7 +174,7 @@ msgid "settings.calendarFeedCopied"
 msgstr "URL copied"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:201
+#: src/i18n/descriptors/settings.ts:203
 msgid "settings.help.webhook"
 msgstr "Webhook overview"
 
@@ -174,12 +194,12 @@ msgid "settings.showExpiredHelp"
 msgstr "Turn this off to keep notifications shorter."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:237
+#: src/i18n/descriptors/settings.ts:240
 msgid "settings.barkKeyHelp"
 msgstr "Device Key from the Bark iOS app"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:206
+#: src/i18n/descriptors/settings.ts:209
 msgid "settings.notifyxHelp"
 msgstr "API Key from the Notifyx platform"
 
@@ -189,7 +209,7 @@ msgid "settings.partialSaveFailedDescription"
 msgstr "These changes were not saved: {scope}. Check them and try again."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:202
+#: src/i18n/descriptors/settings.ts:204
 msgid "settings.help.wechat"
 msgstr "WeCom bot docs"
 
@@ -204,12 +224,12 @@ msgid "settings.calendarFeedGeneratedDescription"
 msgstr "You can return here anytime to copy the URL or open the system calendar subscription flow."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:223
+#: src/i18n/descriptors/settings.ts:226
 msgid "settings.smtpSecure"
 msgstr "Use direct TLS"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:205
+#: src/i18n/descriptors/settings.ts:208
 msgid "settings.telegramChatPlaceholder"
 msgstr "e.g. 123456789 (available from @userinfobot)"
 
@@ -279,7 +299,7 @@ msgid "settings.builtInIconSourceToggle"
 msgstr "Toggle {source} source"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:200
+#: src/i18n/descriptors/settings.ts:202
 msgid "settings.help.telegram"
 msgstr "Create Telegram bot"
 
@@ -289,12 +309,12 @@ msgid "settings.emailLoading"
 msgstr "Loading..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:227
+#: src/i18n/descriptors/settings.ts:230
 msgid "settings.smtpFrom"
 msgstr "From"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:211
+#: src/i18n/descriptors/settings.ts:214
 msgid "settings.webhookPayload"
 msgstr "Payload (optional JSON)"
 
@@ -329,12 +349,12 @@ msgid "settings.currencyManagerDescription"
 msgstr "Enable or disable available currency options. The shared rate-source scope supports 146 currencies."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:239
+#: src/i18n/descriptors/settings.ts:242
 msgid "settings.barkSilentHelp"
 msgstr "When enabled, push notifications will not play a sound."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:228
+#: src/i18n/descriptors/settings.ts:231
 msgid "settings.smtpReplyTo"
 msgstr "Reply-To"
 
@@ -344,7 +364,7 @@ msgid "settings.sectionNav.iconSources"
 msgstr "Icon sources"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:214
+#: src/i18n/descriptors/settings.ts:217
 msgid "settings.wechatHelp"
 msgstr "Get it after adding a group bot in a WeCom group."
 
@@ -367,6 +387,11 @@ msgstr "Fill in Bot Token and Chat ID"
 #: src/i18n/descriptors/settings.ts:191
 msgid "settings.channel.notifyxTodo"
 msgstr "Fill in Notifyx API Key"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:201
+msgid "settings.channel.serverchanTodo"
+msgstr "Fill in ServerChan SendKey"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:197
@@ -409,12 +434,12 @@ msgid "settings.appearance"
 msgstr "Appearance"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:219
+#: src/i18n/descriptors/settings.ts:222
 msgid "settings.wechatPhonesHelp"
 msgstr "Separate multiple numbers with commas or new lines. Only applies to text messages."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:230
+#: src/i18n/descriptors/settings.ts:233
 msgid "settings.multipleRecipients"
 msgstr "Multiple recipients"
 
@@ -484,7 +509,7 @@ msgid "settings.appSettingsScope"
 msgstr "App settings"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:231
+#: src/i18n/descriptors/settings.ts:234
 msgid "settings.multipleRecipientsHelp"
 msgstr "When enabled, separate multiple email addresses with commas or new lines."
 
@@ -514,7 +539,7 @@ msgid "settings.sectionNavOpen"
 msgstr "Open settings menu"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:233
+#: src/i18n/descriptors/settings.ts:236
 msgid "settings.recipientEmailHelp"
 msgstr "Destination email for notifications. Defaults to the current login email."
 
@@ -549,12 +574,17 @@ msgid "settings.paymentManager"
 msgstr "Payment methods"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:212
+#: src/i18n/descriptors/settings.ts:245
+msgid "settings.serverchanHelp"
+msgstr "Supports ServerChan Turbo and ServerChan 3 SendKeys, using the official push channel by default."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:215
 msgid "settings.webhookPayloadHelp"
 msgstr "Supports variables: '{title}', '{content}', '{timestamp}'. They are replaced with sent content."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:232
+#: src/i18n/descriptors/settings.ts:235
 msgid "settings.recipientEmail"
 msgstr "Recipient email"
 
@@ -594,7 +624,7 @@ msgid "settings.customConfigScope"
 msgstr "Data configuration"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:216
+#: src/i18n/descriptors/settings.ts:219
 msgid "settings.textMessage"
 msgstr "Text message"
 
@@ -734,7 +764,7 @@ msgid "settings.unsavedChanges"
 msgstr "Unsaved changes"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:234
+#: src/i18n/descriptors/settings.ts:237
 msgid "settings.barkServer"
 msgstr "Server URL"
 
@@ -769,7 +799,7 @@ msgid "settings.emailMissing"
 msgstr "Email unavailable"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:213
+#: src/i18n/descriptors/settings.ts:216
 msgid "settings.wechatUrl"
 msgstr "Bot Webhook URL"
 
@@ -814,37 +844,42 @@ msgid "settings.ratesError"
 msgstr "Could not fetch exchange rates. Fallback rates are being used. {error}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:242
+#: src/i18n/descriptors/settings.ts:248
 msgid "settings.testChannel.webhook"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:240
+#: src/i18n/descriptors/settings.ts:246
 msgid "settings.testChannel.telegram"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:241
+#: src/i18n/descriptors/settings.ts:247
 msgid "settings.testChannel.notifyx"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:243
+#: src/i18n/descriptors/settings.ts:249
 msgid "settings.testChannel.wechat"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:245
+#: src/i18n/descriptors/settings.ts:251
 msgid "settings.testChannel.bark"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:244
+#: src/i18n/descriptors/settings.ts:252
+msgid "settings.testChannel.serverchan"
+msgstr "Test {channel} notification"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:250
 msgid "settings.testChannel.email"
 msgstr "Test {channel} notification"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:246
+#: src/i18n/descriptors/settings.ts:253
 msgid "settings.testing"
 msgstr "Testing..."
 
@@ -854,12 +889,12 @@ msgid "settings.calendarFeedCopyFailedDescription"
 msgstr "The browser blocked clipboard access. Select and copy the URL manually."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:217
+#: src/i18n/descriptors/settings.ts:220
 msgid "settings.wechatModeTag"
 msgstr "Prefix messages with a Renewlet marker"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:215
+#: src/i18n/descriptors/settings.ts:218
 msgid "settings.messageType"
 msgstr "Message type"
 
@@ -969,7 +1004,7 @@ msgid "settings.dataConfigDescription"
 msgstr "Customize subscription categories, statuses, payment methods, and currencies."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:209
+#: src/i18n/descriptors/settings.ts:212
 msgid "settings.webhookHeaders"
 msgstr "Custom headers (optional JSON)"
 
@@ -1009,7 +1044,7 @@ msgid "settings.notificationReminderDaysHelp"
 msgstr "Subscriptions set to default from Settings use this number of days before renewal."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:236
+#: src/i18n/descriptors/settings.ts:239
 msgid "settings.barkKey"
 msgstr "Device Key"
 
@@ -1064,7 +1099,7 @@ msgid "settings.testPhonePlaceholder"
 msgstr "Send a test message and verify, e.g. 86xxxxxx"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:207
+#: src/i18n/descriptors/settings.ts:210
 msgid "settings.webhookMethod"
 msgstr "Request method"
 
@@ -1144,7 +1179,7 @@ msgid "settings.notifications"
 msgstr "Notifications"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:229
+#: src/i18n/descriptors/settings.ts:232
 msgid "settings.smtpHelp"
 msgstr "Email notifications use the current account's SMTP. Leaving these fields empty does not use a deployment fallback."
 
@@ -1169,7 +1204,7 @@ msgid "settings.calendarFeedRegenerateTitle"
 msgstr "Regenerate calendar subscription URL?"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:238
+#: src/i18n/descriptors/settings.ts:241
 msgid "settings.barkSilent"
 msgstr "Silent push"
 
@@ -1214,7 +1249,7 @@ msgid "settings.defaultCurrencyHelp"
 msgstr "Dashboard and statistics amounts are converted to this currency. Individual subscriptions keep their original currency."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:235
+#: src/i18n/descriptors/settings.ts:238
 msgid "settings.barkServerHelp"
 msgstr "Official service is `https://api.day.app` by default. Enter your own Bark server URL if self-hosted."
 

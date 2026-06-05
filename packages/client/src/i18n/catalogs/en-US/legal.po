@@ -161,7 +161,7 @@ msgstr "Resource files: uploaded Logo/Icon images and similar files stored local
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:18
 msgid "legal.privacy.thirdParty.notifications"
-msgstr "Notifications: Telegram, WeCom, Webhook, SMTP email, Bark, and similar channels receive the notification content you configure."
+msgstr "Notifications: Telegram, WeCom, Webhook, SMTP email, Bark, ServerChan, and similar channels receive the notification content you configure."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:32

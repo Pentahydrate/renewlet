@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+var notificationHTTPClientFactory = defaultNotificationHTTPClient
+
 func postJSON[T interface{}](endpoint string, payload T, serviceLabel string, locale appLocale) (*http.Response, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -40,19 +42,23 @@ func sendHTTPRequest(method, endpoint string, headers map[string]string, body []
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
+	client := notificationHTTPClientFactory()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.New(serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": serviceLabel, "error": err}))
+	}
+	return resp, nil
+}
+
+func defaultNotificationHTTPClient() *http.Client {
 	// 该函数只负责统一 HTTP 客户端策略；用户可配置 URL 必须在调用前先经过 assertSafeOutboundURL。
-	client := &http.Client{
+	return &http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
 			// 外发通知只接受 TLS 1.2+，避免把 token/邮件内容发送到弱 TLS 连接。
 			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
 		},
 	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.New(serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": serviceLabel, "error": err}))
-	}
-	return resp, nil
 }
 
 func channelHTTPError(locale appLocale, channel string, statusCode int, detail string) error {

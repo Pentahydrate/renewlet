@@ -33,6 +33,8 @@ function getNotificationChannelSummary(settings: AppSettings, channel: Notificat
       return settings.recipientEmail.trim() ? t("settings.channel.emailReady") : t("settings.channel.emailTodo");
     case 'bark':
       return settings.barkDeviceKey.trim() ? t("settings.channel.barkReady") : t("settings.channel.barkTodo");
+    case 'serverchan':
+      return settings.serverchanSendKey.trim() ? t("settings.channel.serverchanReady") : t("settings.channel.serverchanTodo");
   }
 }
 

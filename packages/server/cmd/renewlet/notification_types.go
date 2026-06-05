@@ -32,12 +32,13 @@ const (
 var (
 	notificationCronMu sync.Mutex
 	knownChannels      = map[string]struct{}{
-		"telegram": {},
-		"notifyx":  {},
-		"webhook":  {},
-		"wechat":   {},
-		"email":    {},
-		"bark":     {},
+		"telegram":   {},
+		"notifyx":    {},
+		"webhook":    {},
+		"wechat":     {},
+		"email":      {},
+		"bark":       {},
+		"serverchan": {},
 	}
 )
 
@@ -83,6 +84,7 @@ type appSettings struct {
 	BarkServerURL            string                    `json:"barkServerUrl"`
 	BarkDeviceKey            string                    `json:"barkDeviceKey"`
 	BarkSilentPush           bool                      `json:"barkSilentPush"`
+	ServerChanSendKey        string                    `json:"serverchanSendKey"`
 }
 
 type themeCustomColor struct {
@@ -359,6 +361,17 @@ type webhookDefaultPayload struct {
 	Title     string `json:"title"`
 	Content   string `json:"content"`
 	Timestamp string `json:"timestamp"`
+}
+
+type serverChanSendRequest struct {
+	Title string `json:"title"`
+	Desp  string `json:"desp"`
+}
+
+type serverChanSendResponse struct {
+	Code    *int   `json:"code"`
+	Message string `json:"message"`
+	Detail  string `json:"detail"`
 }
 
 func defaultAppSettings() appSettings {

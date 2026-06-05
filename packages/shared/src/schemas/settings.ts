@@ -106,6 +106,7 @@ const appSettingsShape = {
   barkServerUrl: optionalHttpsUrlSchema,
   barkDeviceKey: z.string().trim().max(256),
   barkSilentPush: z.boolean(),
+  serverchanSendKey: z.string().trim().max(256),
 };
 
 const builtInIconSourcesPatchSchema = z.object({

@@ -174,6 +174,8 @@ func localizedFieldLabel(locale appLocale, key string) string {
 		return serverText(locale, "service.barkServerURL")
 	case "barkDeviceKey":
 		return serverText(locale, "service.barkDeviceKey")
+	case "serverchanSendKey":
+		return serverText(locale, "service.serverchanSendKey")
 	default:
 		return key
 	}

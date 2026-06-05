@@ -43,6 +43,7 @@ export const messages = [
   msg({ id: "channel.wechat", message: "企业微信机器人" }),
   msg({ id: "channel.email", message: "邮件通知" }),
   msg({ id: "channel.bark", message: "Bark" }),
+  msg({ id: "channel.serverchan", message: "Server酱" }),
   msg({ id: "payment.alipay", message: "支付宝" }),
   msg({ id: "payment.wechat", message: "微信支付" }),
   msg({ id: "payment.creditCard", message: "信用卡" }),

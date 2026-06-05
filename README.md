@@ -35,7 +35,7 @@ Idle memory usage is around 20-30MiB in local testing, making it comfortable for
 - Understand spending: normalize costs by month and year, then review budget usage, category breakdowns, payment-method charts, and inactive-subscription savings.
 - Get renewal reminders: jobs are generated from each user's IANA time zone and local notification time, with reminder days, repeat reminders, delivery history, and failed-send retries.
 - Subscribe from calendar apps: generate a global private ICS feed URL in settings, or create an independent per-subscription feed from a subscription card or calendar detail dialog to open the system calendar subscription flow.
-- Send notifications through six channels: Telegram, Notifyx, Webhook, WeCom Bot, SMTP email, and Bark.
+- Send notifications through seven channels: Telegram, Notifyx, Webhook, WeCom Bot, SMTP email, Bark, and ServerChan.
 - Choose subscription artwork: upload a Logo, paste an image URL, search built-in icon sources, or use favicon fallback suggestions.
 - Handle multiple currencies: choose Exchange API or FloatRates JSON Feeds, with fallback rates when remote providers are unavailable.
 - Move subscription data in and out: export from Renewlet, import Renewlet or Wallos files, preview mapped subscriptions, and adjust Logos before saving.

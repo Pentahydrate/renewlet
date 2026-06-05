@@ -54,5 +54,6 @@ export function createDefaultAppSettings(options: DefaultSettingsOptions = {}): 
     barkServerUrl: "https://api.day.app",
     barkDeviceKey: "",
     barkSilentPush: false,
+    serverchanSendKey: "",
   };
 }

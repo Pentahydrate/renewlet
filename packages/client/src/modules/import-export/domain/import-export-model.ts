@@ -108,6 +108,7 @@ const SECRET_SETTING_KEYS = new Set<keyof AppSettings>([
   "recipientEmail",
   "barkServerUrl",
   "barkDeviceKey",
+  "serverchanSendKey",
 ]);
 
 type RenewletExportSubscription = RenewletExportV1["data"]["subscriptions"][number];

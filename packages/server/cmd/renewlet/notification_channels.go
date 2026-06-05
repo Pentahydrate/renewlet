@@ -7,17 +7,22 @@ package main
 //
 // 注意： Webhook、WeCom、Bark 都可能携带用户配置 URL，必须经过 SSRF/公网 HTTPS 防护后才能请求。
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 )
+
+var serverChanSCTPSendKeyRe = regexp.MustCompile(`^sctp(\d+)t`)
 
 func sendToChannels(app core.App, channels []string, settings appSettings, message notificationMessage) sendSummary {
 	summary := sendSummary{
@@ -54,6 +59,8 @@ func sendToChannel(app core.App, channel string, settings appSettings, message n
 		return sendEmail(settings, message)
 	case "bark":
 		return sendBark(settings, message)
+	case "serverchan":
+		return sendServerChan(settings, message)
 	default:
 		return errors.New(serverFormat(locale, "notification.channelUnknown", map[string]interface{}{"channel": channel}))
 	}
@@ -315,4 +322,108 @@ func safePublicHTTPSIconURL(rawURL string) string {
 		return ""
 	}
 	return parsed.String()
+}
+
+// sendServerChan 发送 Server酱 Turbo / Server酱³ 推送。
+func sendServerChan(settings appSettings, message notificationMessage) error {
+	locale := normalizeAppLocale(settings.Locale)
+	sendKey, err := requireNonEmptyLocalized(locale, serverText(locale, "service.serverchanSendKey"), settings.ServerChanSendKey)
+	if err != nil {
+		return err
+	}
+	endpoint, err := buildServerChanEndpoint(sendKey, locale)
+	if err != nil {
+		return err
+	}
+	resp, err := postServerChanJSON(endpoint, serverChanSendRequest{
+		Title: message.Title,
+		Desp:  message.Content + "\n\n" + message.Timestamp,
+	}, locale)
+	if err != nil {
+		return err
+	}
+	return requireServerChanSuccess(resp, locale, sendKey)
+}
+
+func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale appLocale) (*http.Response, error) {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("content-type", "application/json")
+	resp, err := notificationHTTPClientFactory().Do(req)
+	if err != nil {
+		return nil, errors.New(serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": "ServerChan", "error": serverText(locale, "service.serverchanRequestFailed")}))
+	}
+	return resp, nil
+}
+
+func buildServerChanEndpoint(sendKey string, locale appLocale) (string, error) {
+	sendKey = strings.TrimSpace(sendKey)
+	if strings.HasPrefix(sendKey, "sctp") {
+		// sctp SendKey 的数字子域名来自官方 Go SDK 和 Wallos 兼容实现，不允许用户配置任意 URL。
+		matches := serverChanSCTPSendKeyRe.FindStringSubmatch(sendKey)
+		if len(matches) != 2 {
+			return "", errors.New(serverText(locale, "service.serverchanSendKeyInvalid"))
+		}
+		return fmt.Sprintf("https://%s.push.ft07.com/send/%s.send", matches[1], url.PathEscape(sendKey)), nil
+	}
+	return fmt.Sprintf("https://sctapi.ftqq.com/%s.send", url.PathEscape(sendKey)), nil
+}
+
+func requireServerChanSuccess(resp *http.Response, locale appLocale, sendKey string) error {
+	if resp == nil {
+		return channelHTTPError(locale, "ServerChan", 0, "")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 8192))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return channelHTTPError(locale, "ServerChan", resp.StatusCode, fallbackText(redactServerChanSecret(serverChanJSONErrorDetail(body), sendKey), serverText(locale, "service.serverchanResponseInvalid")))
+	}
+	var result serverChanSendResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return channelHTTPError(locale, "ServerChan", resp.StatusCode, serverText(locale, "service.serverchanResponseInvalid"))
+	}
+	// Server酱可能 HTTP 2xx 但业务 code 失败；历史摘要必须按 code 判断真实发送结果。
+	if result.Code == nil {
+		return channelHTTPError(locale, "ServerChan", resp.StatusCode, serverText(locale, "service.serverchanResponseInvalid"))
+	}
+	if *result.Code != 0 {
+		return channelHTTPError(locale, "ServerChan", resp.StatusCode, fallbackText(redactServerChanSecret(firstNonBlank(result.Message, result.Detail), sendKey), serverText(locale, "service.serverchanResponseInvalid")))
+	}
+	return nil
+}
+
+func serverChanJSONErrorDetail(body []byte) string {
+	var result serverChanSendResponse
+	if err := json.Unmarshal(body, &result); err == nil {
+		return trimLongText(firstNonBlank(result.Message, result.Detail))
+	}
+	return ""
+}
+
+func firstNonBlank(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func redactServerChanSecret(value, sendKey string) string {
+	value = strings.TrimSpace(value)
+	sendKey = strings.TrimSpace(sendKey)
+	if sendKey != "" {
+		value = strings.ReplaceAll(value, sendKey, "[redacted]")
+		value = strings.ReplaceAll(value, url.PathEscape(sendKey), "[redacted]")
+	}
+	return trimLongText(value)
 }

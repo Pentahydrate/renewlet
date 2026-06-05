@@ -120,7 +120,7 @@ export type BuiltInPaymentMethod = (typeof PAYMENT_METHODS)[number];
  */
 export type PaymentMethod = BuiltInPaymentMethod | (string & {});
 
-export const NOTIFICATION_CHANNELS = ['telegram', 'notifyx', 'webhook', 'wechat', 'email', 'bark'] as const;
+export const NOTIFICATION_CHANNELS = ['telegram', 'notifyx', 'webhook', 'wechat', 'email', 'bark', 'serverchan'] as const;
 /** 通知渠道（用于配置页选择 + 后续通知任务）。 */
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
@@ -319,6 +319,8 @@ export interface AppSettings {
   barkDeviceKey: string;
   /** Bark 是否静音推送。 */
   barkSilentPush: boolean;
+  /** Server酱 SendKey。 */
+  serverchanSendKey: string;
 }
 
 export const CATEGORY_LABELS: Record<BuiltInCategory, LocalizedLabels> = {
@@ -372,6 +374,7 @@ export const CHANNEL_LABELS: Record<NotificationChannel, LocalizedLabels> = {
   wechat: labelsFromCatalog("channel.wechat"),
   email: labelsFromCatalog("channel.email"),
   bark: labelsFromCatalog("channel.bark"),
+  serverchan: labelsFromCatalog("channel.serverchan"),
 };
 
 export const PAYMENT_METHOD_LABELS: Record<BuiltInPaymentMethod, LocalizedLabels> = {

@@ -20,6 +20,7 @@ import { DEFAULT_SERVER_I18N_LOCALE, serverFormat, serverText } from "./server-i
 import { requireAuth } from "./auth";
 import { notificationSmtpConfig, sendSmtpEmail } from "./smtp";
 import { assertSafeOutboundUrl } from "./outbound-url-policy";
+import { sendServerChan } from "./notification-serverchan";
 import type { Env, NotificationJobRow } from "./types";
 
 const CRON_USER_PAGE_SIZE = 50;
@@ -245,6 +246,9 @@ async function sendChannel(env: Env, channel: Channel, settings: ApiAppSettings,
       return;
     case "email":
       await sendEmail(env, settings, message, locale, appUrl);
+      return;
+    case "serverchan":
+      await sendServerChan(settings, message, locale);
       return;
   }
 }

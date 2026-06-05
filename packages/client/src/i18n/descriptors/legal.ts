@@ -15,7 +15,7 @@ export const messages = [
   msg({ id: "legal.privacy.thirdParty.title", message: "3. 第三方请求" }),
   msg({ id: "legal.privacy.thirdParty.rates", message: "汇率：可使用 Exchange API 或 FloatRates JSON Feeds 获取汇率数据（远端失败时会尝试另一个来源，最终回退到内置汇率，保证可用）。" }),
   msg({ id: "legal.privacy.thirdParty.icons", message: "图标搜索：可能会在浏览器中加载外部 favicon/logo 候选（作为备用能力，失败会自动降级）。" }),
-  msg({ id: "legal.privacy.thirdParty.notifications", message: "通知：Telegram/企业微信/Webhook/SMTP 邮件/Bark 等渠道会接收你配置的通知内容。" }),
+  msg({ id: "legal.privacy.thirdParty.notifications", message: "通知：Telegram/企业微信/Webhook/SMTP 邮件/Bark/Server酱 等渠道会接收你配置的通知内容。" }),
   msg({ id: "legal.privacy.control.title", message: "4. 你的控制权" }),
   msg({ id: "legal.privacy.control.settings", message: "你可以在设置页随时修改通知渠道配置，或关闭通知。" }),
   msg({ id: "legal.privacy.control.selfHost", message: "如果你是自托管部署者，你可以通过 PocketBase 后台和 `/pb_data` 管理、备份或删除数据。" }),

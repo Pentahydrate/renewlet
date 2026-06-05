@@ -405,6 +405,30 @@ describe("SettingsScreen SMTP email settings", () => {
     expect(screen.getByRole("button", { name: "测试 Bark 通知" })).toBeEnabled();
   });
 
+  it("renders ServerChan config with SendKey input and help link", async () => {
+    const user = userEvent.setup();
+    const controller = createControllerState({
+      settings: {
+        enabledChannels: ["telegram", "serverchan"],
+        serverchanSendKey: "SCT123456",
+      },
+    });
+    mocks.useSettingsFormController.mockReturnValue(controller);
+
+    renderSettingsScreen();
+
+    expect(screen.getByText("SendKey 已填写")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "配置 Server酱" }));
+
+    expect(screen.getByRole("heading", { name: "Server酱 配置" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Server酱 文档" })).toHaveAttribute("href", "https://sct.ftqq.com/");
+    const input = screen.getByLabelText("SendKey");
+    expect(input).toHaveValue("SCT123456");
+    await user.type(input, "x");
+    expect(controller.updateSetting).toHaveBeenLastCalledWith("serverchanSendKey", "SCT123456x");
+    expect(screen.getByRole("button", { name: "测试 Server酱 通知" })).toBeEnabled();
+  });
+
   it("renders Webhook examples as placeholders instead of default textarea values", () => {
     mocks.useSettingsFormController.mockReturnValue(createControllerState({
       settings: {

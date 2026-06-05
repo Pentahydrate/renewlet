@@ -363,7 +363,7 @@ func TestMergeSettingsSanitizesNotificationFields(t *testing.T) {
 	settings, err := mergeSettings(defaultAppSettings(), json.RawMessage(`{
 		"timezone": "Not/AZone",
 		"notificationTimeLocal": "99:99",
-		"enabledChannels": ["telegram", "telegram", "unknown", "email"],
+		"enabledChannels": ["telegram", "serverchan", "telegram", "unknown", "serverchan", "email"],
 		"exchangeRateProvider": "unknown",
 		"notificationReminderDays": -2,
 		"webhookMethod": "DELETE",
@@ -385,7 +385,7 @@ func TestMergeSettingsSanitizesNotificationFields(t *testing.T) {
 	if settings.NotificationReminderDays != defaultNotificationReminderDays {
 		t.Fatalf("expected global reminder fallback, got %d", settings.NotificationReminderDays)
 	}
-	if len(settings.EnabledChannels) != 2 || settings.EnabledChannels[0] != "telegram" || settings.EnabledChannels[1] != "email" {
+	if len(settings.EnabledChannels) != 3 || settings.EnabledChannels[0] != "telegram" || settings.EnabledChannels[1] != "serverchan" || settings.EnabledChannels[2] != "email" {
 		t.Fatalf("unexpected channels %#v", settings.EnabledChannels)
 	}
 	if settings.ExchangeRateProvider != "floatrates" {
