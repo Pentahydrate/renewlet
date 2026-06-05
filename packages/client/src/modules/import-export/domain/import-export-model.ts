@@ -1,4 +1,4 @@
-import type { ImportPayload, ImportSubscription } from "@/lib/api/schemas/import-export";
+import type { ImportPayload, ImportSubscription, RenewletExportV1 } from "@/lib/api/schemas/import-export";
 import type { AppSettings, BillingCycle, CustomCycleUnit, Subscription } from "@/types/subscription";
 import type { ConfigItem, CustomConfig } from "@/types/config";
 import { labels } from "@/i18n/locales";
@@ -110,6 +110,8 @@ const SECRET_SETTING_KEYS = new Set<keyof AppSettings>([
   "barkDeviceKey",
 ]);
 
+type RenewletExportSubscription = RenewletExportV1["data"]["subscriptions"][number];
+
 /**
  * sanitizeSettingsForExport 移除默认不应进入备份的通知和账号 secret。
  *
@@ -162,7 +164,7 @@ export function subscriptionToImportSubscription(subscription: Subscription, sou
  *
  * 这里保留原始 status/extra，和 CSV 的“有效状态”报表口径分开，保证备份可用于未来迁移。
  */
-export function subscriptionToExportRow(subscription: Subscription) {
+export function subscriptionToExportRow(subscription: Subscription): RenewletExportSubscription {
   return {
     id: subscription.id,
     name: subscription.name,
@@ -173,6 +175,7 @@ export function subscriptionToExportRow(subscription: Subscription) {
     ...(subscription.billingCycle === "custom" ? { customDays: subscription.customDays, customCycleUnit: subscription.customCycleUnit } : {}),
     category: subscription.category,
     status: subscription.status,
+    pinned: subscription.pinned,
     ...(subscription.paymentMethod ? { paymentMethod: subscription.paymentMethod } : {}),
     startDate: subscription.startDate,
     nextBillingDate: subscription.nextBillingDate,

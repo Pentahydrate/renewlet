@@ -98,6 +98,7 @@ export function buildFromRenewletExport(
       customCycleUnit: subscription.billingCycle === "custom" ? subscription.customCycleUnit ?? "day" : null,
       category: subscription.category,
       status: subscription.status,
+      pinned: subscription.pinned,
       paymentMethod: subscription.paymentMethod ?? null,
       startDate: subscription.startDate,
       nextBillingDate: subscription.nextBillingDate,
