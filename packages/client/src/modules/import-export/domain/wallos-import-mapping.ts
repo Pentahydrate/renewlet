@@ -74,6 +74,24 @@ interface BuildContext extends ImportBuildBaseContext {
   logoFiles: Map<string, ImportAssetSource>;
 }
 
+const MAX_IMPORT_NOTES_LENGTH = 5000;
+const WALLOS_AUDIT_FIELDS = [
+  "id",
+  "user_id",
+  "cycle",
+  "frequency",
+  "auto_renew",
+  "inactive",
+  "notify",
+  "notify_days_before",
+  "cancellation_date",
+  "replacement_subscription_id",
+  "currency_id",
+  "category_id",
+  "payment_method_id",
+  "payer_user_id",
+] as const;
+
 export function buildFromRenewletExport(
   data: RenewletExportV1,
   context: ImportBuildBaseContext,
@@ -332,8 +350,7 @@ function makeImportSubscription(input: {
   wallos: unknown;
   warnings: string[];
 }): ImportSubscription {
-  const wallosExtra: Record<string, unknown> = isRecord(input.wallos) ? { ...input.wallos } : { raw: input.wallos };
-  if (input.oneTime) wallosExtra["oneTime"] = true;
+  const wallosExtra = buildWallosImportAudit(input.wallos, Boolean(input.oneTime));
   return {
     name: input.name,
     logo: input.logo ?? null,
@@ -351,7 +368,7 @@ function makeImportSubscription(input: {
     autoCalculateNextBillingDate: input.oneTime ? false : input.autoCalculateNextBillingDate ?? true,
     trialEndDate: null,
     website: input.website ?? null,
-    notes: input.notes || null,
+    notes: truncateImportNotes(input.notes),
     tags: [],
     reminderDays: input.reminderDays ?? 3,
     repeatReminderEnabled: false,
@@ -362,6 +379,24 @@ function makeImportSubscription(input: {
       wallos: wallosExtra,
     },
   };
+}
+
+function buildWallosImportAudit(value: unknown, oneTime: boolean): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  if (isRecord(value)) {
+    // Wallos 行可能含超长 notes/logo/url；extra 只保留稳定排障字段，避免 Cloudflare D1 写入和 Go schema 预览校验漂移。
+    for (const field of WALLOS_AUDIT_FIELDS) {
+      if (value[field] !== undefined) result[field] = value[field];
+    }
+  }
+  if (oneTime) result["oneTime"] = true;
+  return result;
+}
+
+function truncateImportNotes(value: string | undefined): string | null {
+  const text = value?.trim();
+  if (!text) return null;
+  return text.length > MAX_IMPORT_NOTES_LENGTH ? text.slice(0, MAX_IMPORT_NOTES_LENGTH) : text;
 }
 
 function makeAssetRef(subscriptionIndex: number, filename: string, source: ImportAssetSource): ImportAssetRef {

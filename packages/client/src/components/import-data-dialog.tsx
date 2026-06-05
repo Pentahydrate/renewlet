@@ -33,6 +33,7 @@ import { importExportService } from "@/services/import-export-service";
 import { invalidateSubscriptionsQueries } from "@/hooks/use-subscriptions";
 import { SETTINGS_QUERY_KEY } from "@/hooks/use-settings";
 import { mediaCandidateService } from "@/services/media-candidate-service";
+import { getDisplayErrorMessage } from "@/lib/display-error";
 import {
   importApplyResponseSchema,
   importPayloadSchema,
@@ -58,6 +59,13 @@ function parseApplyPayload(value: unknown): ImportPayload {
 
 function parseApplyResult(value: unknown): ImportApplyResponse {
   return importApplyResponseSchema.parse(value) as ImportApplyResponse;
+}
+
+class ImportAssetUploadError extends Error {
+  constructor(readonly cause: unknown) {
+    super("IMPORT_ASSET_UPLOAD_FAILED");
+    this.name = "ImportAssetUploadError";
+  }
 }
 
 const AUTO_LOGO_RESOLVE_BATCH_SIZE = 100;
@@ -270,7 +278,13 @@ export function ImportDataDialog({ open, onOpenChange, settings, config }: Impor
       const skipIndexList = [...skippedIndexes].sort((a, b) => a - b);
       const effectivePreview = recomputePreviewForConflictMode(preview, conflictMode, skippedIndexes);
       // 资产上传属于 apply 阶段：预览不产生写入，且 skip 行不会上传 staged/zip Logo。
-      const payload = parseApplyPayload(await resolveImportAssets(prepared, effectivePreview.items, (done, total) => setAssetProgress({ done, total })));
+      let resolvedPayload: unknown;
+      try {
+        resolvedPayload = await resolveImportAssets(prepared, effectivePreview.items, (done, total) => setAssetProgress({ done, total }));
+      } catch (assetError) {
+        throw new ImportAssetUploadError(assetError);
+      }
+      const payload = parseApplyPayload(resolvedPayload);
       const result = parseApplyResult(await importExportService.applyChunked(payload, conflictMode, skipIndexList, (done, total) => setApplyProgress({ done, total })));
       // 导入可能同时写订阅、设置和自定义配置；成功后统一失效，避免页面继续展示导入前缓存。
       await Promise.all([
@@ -288,8 +302,11 @@ export function ImportDataDialog({ open, onOpenChange, settings, config }: Impor
       });
       handleOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? formatImportMessage(err.message, t) : t("import.applyFailed"));
-      toast({ title: t("import.applyFailed"), variant: "destructive" });
+      const message = err instanceof ImportAssetUploadError
+        ? t("import.assetUploadFailed")
+        : getDisplayErrorMessage(err, t("import.applyFailed"));
+      setError(message);
+      toast({ title: message, variant: "destructive" });
     } finally {
       setApplying(false);
     }

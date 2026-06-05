@@ -4,6 +4,12 @@ import { HttpError, json, ok, readJson, requestLocale } from "./http";
 import { serverText } from "./server-i18n";
 import { requireAuth } from "./auth";
 import type { Env, SubscriptionRow } from "./types";
+import { z } from "zod";
+
+const subscriptionStorageBodySchema = subscriptionCreateBodySchema.refine((body) => body.nextBillingDate >= body.startDate, {
+  path: ["nextBillingDate"],
+  message: "NEXT_BILLING_DATE_BEFORE_START_DATE",
+});
 
 /** 读取当前用户订阅页；cursor 只决定分页位置，权限始终来自 Worker session。 */
 export async function readSubscriptions(request: Request, env: Env): Promise<Response> {
@@ -30,7 +36,7 @@ export async function readSubscriptions(request: Request, env: Env): Promise<Res
 export async function createSubscription(request: Request, env: Env): Promise<Response> {
   const locale = requestLocale(request);
   const auth = await requireAuth(request, env);
-  const body = await readJson(request, subscriptionCreateBodySchema, locale);
+  const body = parseSubscriptionBodyForStorage(await readJson(request, subscriptionCreateBodySchema, locale), locale);
   const timestamp = nowIso();
   const row = toSubscriptionRow(newId("sub"), auth.user.id, body, timestamp, timestamp);
   await env.DB.prepare(`
@@ -52,7 +58,7 @@ export async function updateSubscription(request: Request, env: Env, id: string)
   const patch = await readJson(request, subscriptionUpdateBodySchema, locale);
   const timestamp = nowIso();
   // Worker 没有 PocketBase hook 可二次归一；更新必须先回 API body，再合并 patch 走同一套 create schema。
-  const mergedBody = subscriptionCreateBodySchema.parse({ ...toBody(existing), ...stripUndefined(patch) });
+  const mergedBody = parseSubscriptionBodyForStorage({ ...toBody(existing), ...stripUndefined(patch) }, locale);
   const merged = toSubscriptionRow(existing.id, auth.user.id, mergedBody, existing.created_at, timestamp);
   await env.DB.prepare(`
     UPDATE subscriptions SET
@@ -101,6 +107,35 @@ export async function deleteSubscription(request: Request, env: Env, id: string)
 }
 
 export type SubscriptionBody = ReturnType<typeof subscriptionCreateBodySchema.parse>;
+
+export function normalizeSubscriptionBodyForStorage(body: unknown): SubscriptionBody {
+  const parsed = subscriptionStorageBodySchema.parse(body);
+  // Worker 没有 PocketBase hook；这里承接 Go 持久层同款规范化，供 create/update/import 三条写入路径共用。
+  if (parsed.billingCycle === "custom") {
+    return {
+      ...parsed,
+      customDays: parsed.customDays ?? 1,
+      customCycleUnit: parsed.customCycleUnit ?? "day",
+    };
+  }
+  return {
+    ...parsed,
+    customDays: null,
+    customCycleUnit: null,
+    autoCalculateNextBillingDate: parsed.billingCycle === "one-time" ? false : parsed.autoCalculateNextBillingDate,
+  };
+}
+
+function parseSubscriptionBodyForStorage(body: unknown, locale: ReturnType<typeof requestLocale>): SubscriptionBody {
+  try {
+    return normalizeSubscriptionBodyForStorage(body);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new HttpError(400, serverText(locale, "common.invalidPayload"), "INVALID_PAYLOAD", error.flatten());
+    }
+    throw error;
+  }
+}
 
 /** 把 D1 row 还原成 shared 写入 body，用于 PATCH 合并而不是直接拼 SQL 字段。 */
 function toBody(row: SubscriptionRow): SubscriptionBody {

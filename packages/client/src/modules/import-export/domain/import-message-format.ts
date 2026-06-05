@@ -14,6 +14,7 @@ const IMPORT_MESSAGE_KEYS: Record<string, MessageKey> = {
   IMPORT_SOURCE_ID_DUPLICATE: "import.error.sourceIdDuplicate",
   IMPORT_SOURCE_ID_INVALID: "import.error.sourceIdInvalid",
   IMPORT_SOURCE_INVALID: "import.error.sourceInvalid",
+  IMPORT_SUBSCRIPTION_INVALID: "import.error.subscriptionInvalid",
   SUBSCRIPTION_STATUS_INVALID: "import.error.statusInvalid",
   IMPORT_WARNING_CURRENCY_SYMBOL_AMBIGUOUS: "import.warning.currencySymbolAmbiguous",
   IMPORT_WARNING_INVALID_WEBSITE: "import.warning.invalidWebsite",
@@ -86,5 +87,8 @@ export function formatImportMessage(message: string, t: Translate): string {
     return t("import.warning.renewletLegacyRepeatWindowDefaulted", { fallback: parts[1] ?? "" });
   }
   const key = IMPORT_MESSAGE_KEYS[code];
+  if (!key && code.startsWith("IMPORT_SUBSCRIPTION_INVALID:")) {
+    return t("import.error.subscriptionInvalid");
+  }
   return key ? t(key) : message;
 }

@@ -634,6 +634,11 @@ msgid "import.applyFailed"
 msgstr "Import failed."
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:233
+msgid "import.assetUploadFailed"
+msgstr "Logo upload failed. Remove the problematic logo and try again."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:269
 msgid "import.successTitle"
 msgstr "Import complete"
@@ -667,6 +672,11 @@ msgstr "Import file is larger than 50 MB. Split it and try again."
 #: src/i18n/descriptors/subscription.ts:306
 msgid "import.error.sourceIdInvalid"
 msgstr "Import source ID is invalid."
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:310
+msgid "import.error.subscriptionInvalid"
+msgstr "Subscription fields do not meet Renewlet write rules. Check dates, logo, website, or notes."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:305

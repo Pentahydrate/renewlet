@@ -634,6 +634,11 @@ msgid "import.applyFailed"
 msgstr "导入失败"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:233
+msgid "import.assetUploadFailed"
+msgstr "Logo 上传失败，请移除异常 Logo 后重试。"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:269
 msgid "import.successTitle"
 msgstr "导入完成"
@@ -667,6 +672,11 @@ msgstr "导入文件超过 50 MB，请拆分后再试。"
 #: src/i18n/descriptors/subscription.ts:306
 msgid "import.error.sourceIdInvalid"
 msgstr "导入来源 ID 无效。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:310
+msgid "import.error.subscriptionInvalid"
+msgstr "订阅字段不符合 Renewlet 写入规则，请检查日期、Logo、网站或备注。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:305

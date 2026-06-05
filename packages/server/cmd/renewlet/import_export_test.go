@@ -171,6 +171,29 @@ func TestImportPreviewMarksDuplicateSourceId(t *testing.T) {
 	}
 }
 
+func TestImportPreviewRejectsSubscriptionStorageErrors(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	registerRecordHooks(app)
+	_, token := createRouteTestUser(t, app, "user")
+	body := importRequestBody("skip", 12)
+	var decoded map[string]interface{}
+	_ = json.Unmarshal([]byte(body), &decoded)
+	payload := decoded["payload"].(map[string]interface{})
+	subscriptions := payload["subscriptions"].([]interface{})
+	subscription := subscriptions[0].(map[string]interface{})
+	subscription["startDate"] = "2026-07-01"
+	subscription["nextBillingDate"] = "2026-06-01"
+	data, _ := json.Marshal(decoded)
+
+	res := serveTestRequest(t, app, http.MethodPost, "/api/app/import/preview", string(data), token)
+	if res.Code != http.StatusOK || !strings.Contains(res.Body.String(), `"errors":1`) || !strings.Contains(res.Body.String(), "NEXT_BILLING_DATE_BEFORE_START_DATE") {
+		t.Fatalf("expected preview storage validation error, got %d: %s", res.Code, res.Body.String())
+	}
+}
+
 func TestImportApplyAcceptsOneTimeBillingCycle(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {
