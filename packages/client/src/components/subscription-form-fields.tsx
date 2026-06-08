@@ -41,6 +41,21 @@ export type { SubscriptionFormReminderType };
 export type { SubscriptionFormState };
 export type { SubscriptionFormErrors, SubscriptionFormFieldsProps };
 
+function disabledReminderFields(): Pick<SubscriptionFormState, "reminderType" | "reminderDays" | "repeatReminderEnabled"> {
+  return {
+    reminderType: "disabled",
+    reminderDays: String(DISABLED_REMINDER_DAYS),
+    repeatReminderEnabled: false,
+  };
+}
+
+function inheritedReminderFields(): Pick<SubscriptionFormState, "reminderType" | "reminderDays"> {
+  return {
+    reminderType: "inherit",
+    reminderDays: String(INHERIT_REMINDER_DAYS),
+  };
+}
+
 export const SubscriptionFormFields = memo(function SubscriptionFormFields({
   idPrefix,
   config,
@@ -60,18 +75,38 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
     setFormData((prev) => {
       if (key === "billingCycle") {
         const nextBillingCycle = value as BillingCycle;
+        const leavingImplicitBuyoutReminder =
+          prev.billingCycle === "one-time" && prev.oneTimeMode === "buyout" && prev.reminderType === "disabled";
         return {
           ...prev,
           billingCycle: nextBillingCycle,
           customDays: nextBillingCycle === "custom" ? prev.customDays : "",
           customCycleUnit: nextBillingCycle === "custom" ? prev.customCycleUnit : "day",
-          oneTimeMode: nextBillingCycle === "one-time" ? "term" : prev.oneTimeMode,
+          // one-time 无服务期是通知/日历契约里的买断语义，默认静默，避免把购买日误当成到期提醒边界。
+          oneTimeMode: nextBillingCycle === "one-time" ? "buyout" : prev.oneTimeMode,
           oneTimeTermCount: nextBillingCycle === "one-time" ? prev.oneTimeTermCount || "1" : prev.oneTimeTermCount,
           oneTimeTermUnit: nextBillingCycle === "one-time" ? prev.oneTimeTermUnit || "month" : prev.oneTimeTermUnit,
           // autoRenew 默认关闭；从 one-time 切回周期时保留用户当前选择，不把沉默状态改成自动续订。
           autoRenew: nextBillingCycle === "one-time" ? false : prev.autoRenew,
           autoCalculate: nextBillingCycle === "one-time" ? false : prev.autoCalculate,
           nextBillingDate: nextBillingCycle === "one-time" ? prev.startDate : prev.nextBillingDate,
+          ...(nextBillingCycle === "one-time"
+            ? disabledReminderFields()
+            : leavingImplicitBuyoutReminder
+              ? inheritedReminderFields()
+              : {}),
+        };
+      }
+      if (key === "oneTimeMode") {
+        const nextOneTimeMode = value as SubscriptionFormState["oneTimeMode"];
+        return {
+          ...prev,
+          oneTimeMode: nextOneTimeMode,
+          oneTimeTermCount: nextOneTimeMode === "term" ? prev.oneTimeTermCount || "1" : prev.oneTimeTermCount,
+          oneTimeTermUnit: nextOneTimeMode === "term" ? prev.oneTimeTermUnit || "month" : prev.oneTimeTermUnit,
+          autoCalculate: false,
+          nextBillingDate: nextOneTimeMode === "buyout" ? prev.startDate : prev.nextBillingDate,
+          ...(nextOneTimeMode === "buyout" ? disabledReminderFields() : inheritedReminderFields()),
         };
       }
       if (key === "startDate") {
@@ -128,6 +163,7 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
   const repeatReminderWindowHours =
     formData.repeatReminderWindow === "full" ? null : Number.parseInt(formData.repeatReminderWindow, 10);
   const isReminderDisabled = formData.reminderType === "disabled";
+  const isOneTimeBuyout = formData.billingCycle === "one-time" && formData.oneTimeMode === "buyout";
   const reminderDaysForPreview = isReminderDisabled || formData.reminderType === "inherit"
     ? notificationReminderDays
     : toReminderDays(formData);
@@ -417,130 +453,161 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
 
       <SubscriptionFormDateFields id={id} formData={formData} update={update} errors={errors} />
 
-      <div className="grid gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Label>{t("subscription.field.reminder")}</Label>
-          {!isReminderDisabled && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor={id("repeatReminderEnabled")} className="text-sm text-muted-foreground cursor-pointer">
-                {t("subscription.repeatReminder")}
-              </Label>
-              <Switch
-                id={id("repeatReminderEnabled")}
-                checked={formData.repeatReminderEnabled}
-                onCheckedChange={(checked) => update("repeatReminderEnabled", checked)}
-              />
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Select
-            value={formData.reminderType === "custom" ? "custom" : formData.reminderType === "disabled" ? String(DISABLED_REMINDER_DAYS) : formData.reminderType === "inherit" ? String(INHERIT_REMINDER_DAYS) : formData.reminderDays}
-            onValueChange={(value) => {
-              if (value === "custom") {
-                update("reminderType", "custom");
-              } else if (value === String(DISABLED_REMINDER_DAYS)) {
-                update("reminderType", "disabled");
-                update("reminderDays", String(DISABLED_REMINDER_DAYS));
-                update("repeatReminderEnabled", false);
-              } else if (value === String(INHERIT_REMINDER_DAYS)) {
-                update("reminderType", "inherit");
-                update("reminderDays", String(INHERIT_REMINDER_DAYS));
-              } else {
-                update("reminderType", "preset");
-                update("reminderDays", value);
-              }
-            }}
-          >
-            <SelectTrigger
-              className={cn(
-                "w-full border-border bg-secondary sm:flex-1",
-                errors.reminderDays && "border-destructive focus:ring-destructive/40",
-              )}
-              aria-invalid={Boolean(errors.reminderDays)}
-              aria-describedby={errors.reminderDays ? id("reminder-error") : undefined}
-              aria-label={t("subscription.field.reminder")}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={String(DISABLED_REMINDER_DAYS)}>
-                {t("subscription.reminderDisabled")}
-              </SelectItem>
-              <SelectItem value={String(INHERIT_REMINDER_DAYS)}>
-                {t("subscription.reminderInherit", { days: notificationReminderDays })}
-              </SelectItem>
-              {REMINDER_DAYS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {label(option.labels)}
-                </SelectItem>
-              ))}
-              <SelectItem value="custom">{t("subscription.reminderCustom")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {formData.reminderType === "custom" && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">{t("subscription.reminderBefore")}</span>
-              <NumericInput
-                name={id("customReminderDays")} allowNegative={false}
-                decimalScale={0}
-                inputMode="numeric" enterKeyHint="next"
-                placeholder={t("subscription.daysPlaceholder")}
-                value={formData.customReminderDays}
-                onRawValueChange={(value: string) => update("customReminderDays", value)}
-                aria-invalid={Boolean(errors.reminderDays)}
-                aria-describedby={errors.reminderDays ? id("reminder-error") : undefined}
-                className="w-20 border-border bg-secondary"
-              />
-              <span className="text-sm text-muted-foreground">{t("subscription.daysUnit")}</span>
-            </div>
-          )}
-        </div>
-        <FieldError id={id("reminder-error")} message={errors.reminderDays} />
-
-        {!isReminderDisabled && formData.repeatReminderEnabled && (
-          <div className="grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label htmlFor={id("repeatReminderInterval")}>{t("subscription.repeatReminderInterval")}</Label>
-              <Select
-                value={formData.repeatReminderInterval}
-                onValueChange={(value) => update("repeatReminderInterval", value as RepeatReminderInterval)}
-              >
-                <SelectTrigger id={id("repeatReminderInterval")} className="border-border bg-secondary">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REPEAT_REMINDER_INTERVAL_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {label(option.labels)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor={id("repeatReminderWindow")}>{t("subscription.repeatReminderWindow")}</Label>
-              <Select
-                value={formData.repeatReminderWindow}
-                onValueChange={(value) => update("repeatReminderWindow", value as RepeatReminderWindow)}
-              >
-                <SelectTrigger id={id("repeatReminderWindow")} className="border-border bg-secondary">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REPEAT_REMINDER_WINDOW_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {label(option.labels)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">{repeatReminderPreview}</p>
+      {isOneTimeBuyout ? (
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/30 p-3">
+          <div className="min-w-0">
+            <Label className="text-sm font-medium">{t("subscription.field.reminder")}</Label>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{t("subscription.oneTimeBuyoutReminderHelp")}</p>
           </div>
-        )}
-      </div>
+          <span className="shrink-0 text-sm font-medium text-muted-foreground">{t("subscription.reminderDisabledStatus")}</span>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/30 p-3">
+            <div className="min-w-0">
+              <Label htmlFor={id("reminderEnabled")} className="cursor-pointer text-sm font-medium">
+                {t("subscription.field.reminder")}
+              </Label>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                {isReminderDisabled ? t("subscription.reminderDisabledHelp") : t("subscription.reminderEnabledHelp")}
+              </p>
+            </div>
+            <Switch
+              id={id("reminderEnabled")}
+              checked={!isReminderDisabled}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  update("reminderType", "inherit");
+                  update("reminderDays", String(INHERIT_REMINDER_DAYS));
+                  update("repeatReminderEnabled", false);
+                } else {
+                  update("reminderType", "disabled");
+                  update("reminderDays", String(DISABLED_REMINDER_DAYS));
+                  update("repeatReminderEnabled", false);
+                }
+              }}
+              aria-label={t("subscription.field.reminder")}
+            />
+          </div>
+
+          {!isReminderDisabled ? (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Select
+                  value={formData.reminderType === "custom" ? "custom" : formData.reminderType === "inherit" ? String(INHERIT_REMINDER_DAYS) : formData.reminderDays}
+                  onValueChange={(value) => {
+                    if (value === "custom") {
+                      update("reminderType", "custom");
+                    } else if (value === String(INHERIT_REMINDER_DAYS)) {
+                      update("reminderType", "inherit");
+                      update("reminderDays", String(INHERIT_REMINDER_DAYS));
+                    } else {
+                      update("reminderType", "preset");
+                      update("reminderDays", value);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    id={id("reminderDays")}
+                    className={cn(
+                      "w-full border-border bg-secondary sm:flex-1",
+                      errors.reminderDays && "border-destructive focus:ring-destructive/40",
+                    )}
+                    aria-invalid={Boolean(errors.reminderDays)}
+                    aria-describedby={errors.reminderDays ? id("reminder-error") : undefined}
+                    aria-label={t("subscription.field.reminder")}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={String(INHERIT_REMINDER_DAYS)}>
+                      {t("subscription.reminderInherit", { days: notificationReminderDays })}
+                    </SelectItem>
+                    {REMINDER_DAYS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value.toString()}>
+                        {label(option.labels)}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">{t("subscription.reminderCustom")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {formData.reminderType === "custom" && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">{t("subscription.reminderBefore")}</span>
+                    <NumericInput
+                      name={id("customReminderDays")} allowNegative={false}
+                      decimalScale={0}
+                      inputMode="numeric" enterKeyHint="next"
+                      placeholder={t("subscription.daysPlaceholder")}
+                      value={formData.customReminderDays}
+                      onRawValueChange={(value: string) => update("customReminderDays", value)}
+                      aria-invalid={Boolean(errors.reminderDays)}
+                      aria-describedby={errors.reminderDays ? id("reminder-error") : undefined}
+                      className="w-20 border-border bg-secondary"
+                    />
+                    <span className="text-sm text-muted-foreground">{t("subscription.daysUnit")}</span>
+                  </div>
+                )}
+              </div>
+              <FieldError id={id("reminder-error")} message={errors.reminderDays} />
+
+              <div className="flex items-center gap-2">
+                <Label htmlFor={id("repeatReminderEnabled")} className="text-sm text-muted-foreground cursor-pointer">
+                  {t("subscription.repeatReminder")}
+                </Label>
+                <Switch
+                  id={id("repeatReminderEnabled")}
+                  checked={formData.repeatReminderEnabled}
+                  onCheckedChange={(checked) => update("repeatReminderEnabled", checked)}
+                />
+              </div>
+
+              {formData.repeatReminderEnabled && (
+                <div className="grid gap-3 rounded-lg border border-border bg-secondary/30 p-3 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor={id("repeatReminderInterval")}>{t("subscription.repeatReminderInterval")}</Label>
+                    <Select
+                      value={formData.repeatReminderInterval}
+                      onValueChange={(value) => update("repeatReminderInterval", value as RepeatReminderInterval)}
+                    >
+                      <SelectTrigger id={id("repeatReminderInterval")} className="border-border bg-secondary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REPEAT_REMINDER_INTERVAL_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {label(option.labels)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={id("repeatReminderWindow")}>{t("subscription.repeatReminderWindow")}</Label>
+                    <Select
+                      value={formData.repeatReminderWindow}
+                      onValueChange={(value) => update("repeatReminderWindow", value as RepeatReminderWindow)}
+                    >
+                      <SelectTrigger id={id("repeatReminderWindow")} className="border-border bg-secondary">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REPEAT_REMINDER_WINDOW_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {label(option.labels)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground sm:col-span-2">{repeatReminderPreview}</p>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/30 p-3">
         <div className="min-w-0">

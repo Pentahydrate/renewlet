@@ -78,7 +78,7 @@ export function createSubscriptionFormState(
     billingCycle: "monthly",
     customDays: "",
     customCycleUnit: "day",
-    oneTimeMode: "term",
+    oneTimeMode: "buyout",
     oneTimeTermCount: "1",
     oneTimeTermUnit: "month",
     category: "productivity",

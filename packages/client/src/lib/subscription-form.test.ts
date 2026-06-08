@@ -209,13 +209,16 @@ describe("subscription-form", () => {
       name: "Lifetime license",
       price: "199",
       billingCycle: "one-time",
-      oneTimeMode: "buyout",
       autoCalculate: true,
       customDays: "30",
       startDate: assertDateOnly("2026-05-14"),
       nextBillingDate: undefined,
+      reminderType: "inherit",
+      reminderDays: "-1",
+      repeatReminderEnabled: true,
     });
 
+    expect(form.oneTimeMode).toBe("buyout");
     expect(getSubscriptionDraftValidationError(form)).toBeNull();
     expect(toSubscriptionDraft(form)).toMatchObject({
       billingCycle: "one-time",
@@ -225,6 +228,8 @@ describe("subscription-form", () => {
       oneTimeTermCount: undefined,
       oneTimeTermUnit: undefined,
       autoCalculateNextBillingDate: false,
+      reminderDays: -2,
+      repeatReminderEnabled: false,
     });
   });
 

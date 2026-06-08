@@ -103,7 +103,12 @@ describe("AI recognition form mapping", () => {
     expect(term.oneTimeMode).toBe("term");
     expect(term.oneTimeTermCount).toBe("2");
     expect(term.oneTimeTermUnit).toBe("year");
+    expect(term.reminderType).toBe("inherit");
+    expect(term.reminderDays).toBe("-1");
     expect(buyout.oneTimeMode).toBe("buyout");
+    expect(buyout.reminderType).toBe("disabled");
+    expect(buyout.reminderDays).toBe("-2");
+    expect(buyout.repeatReminderEnabled).toBe(false);
   });
 
   it("maps edited subscription form state back to an AI draft patch", () => {
@@ -207,6 +212,24 @@ describe("AI recognition form mapping", () => {
       name: "Silent service",
       reminderType: "disabled",
       reminderDays: "-2",
+      repeatReminderEnabled: true,
+    }), {
+      website: null,
+      notes: null,
+      trialEndDate: null,
+    });
+
+    expect(patch.reminderDays).toBe(-2);
+    expect(patch.repeatReminderEnabled).toBe(false);
+  });
+
+  it("forces edited one-time buyouts back to disabled reminders", () => {
+    const patch = subscriptionFormStateToAIDraftPatch(createSubscriptionFormState({
+      name: "Lifetime app",
+      billingCycle: "one-time",
+      oneTimeMode: "buyout",
+      reminderType: "inherit",
+      reminderDays: "-1",
       repeatReminderEnabled: true,
     }), {
       website: null,

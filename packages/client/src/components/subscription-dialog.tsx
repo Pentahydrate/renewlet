@@ -251,13 +251,15 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     if (nextFormData.billingCycle === "one-time" && nextFormData.oneTimeMode === "term" && parsePositiveIntegerInput(nextFormData.oneTimeTermCount) === null) {
       errors.oneTimeTerm = t("subscription.validation.oneTimeTermInvalid");
     }
-    const reminderValue = nextFormData.reminderType === "disabled"
+    const reminderValue = nextFormData.billingCycle === "one-time" && nextFormData.oneTimeMode === "buyout"
       ? DISABLED_REMINDER_DAYS
-      : nextFormData.reminderType === "inherit"
-        ? INHERIT_REMINDER_DAYS
-        : nextFormData.reminderType === "custom"
-          ? parseNonNegativeIntegerInput(nextFormData.customReminderDays)
-          : parseReminderDaysInput(nextFormData.reminderDays);
+      : nextFormData.reminderType === "disabled"
+        ? DISABLED_REMINDER_DAYS
+        : nextFormData.reminderType === "inherit"
+          ? INHERIT_REMINDER_DAYS
+          : nextFormData.reminderType === "custom"
+            ? parseNonNegativeIntegerInput(nextFormData.customReminderDays)
+            : parseReminderDaysInput(nextFormData.reminderDays);
     if (reminderValue === null) {
       errors.reminderDays = t("subscription.validation.reminderInvalid");
     }

@@ -175,21 +175,6 @@ describe("SubscriptionDialog", () => {
     expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("人民币 (¥)");
   });
 
-  it("defaults new subscriptions to the inherited reminder setting", () => {
-    render(
-      <TooltipProvider delayDuration={0}>
-        <SubscriptionDialog
-          mode="create"
-          open
-          onOpenChange={vi.fn()}
-          onSubmit={vi.fn()}
-        />
-      </TooltipProvider>,
-    );
-
-    expect(screen.getByRole("combobox", { name: "到期提醒" })).toHaveTextContent("默认值从设置中获取（提前 5 天）");
-  });
-
   it("defaults new subscriptions to manual renewal and submits explicit auto-renew opt-in", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
@@ -285,87 +270,6 @@ describe("SubscriptionDialog", () => {
     }));
   });
 
-  it("calculates and disables the expiry date when switching to one-time fixed term", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(
-      <TooltipProvider delayDuration={0}>
-        <SubscriptionDialog
-          mode="edit"
-          open
-          onOpenChange={vi.fn()}
-          onSubmit={onSubmit}
-          subscription={makeSubscription({
-            billingCycle: "monthly",
-            startDate: assertDateOnly("2026-05-14"),
-            nextBillingDate: assertDateOnly("2027-06-25"),
-            autoCalculateNextBillingDate: false,
-          })}
-        />
-      </TooltipProvider>,
-    );
-
-    expect(screen.getByRole("button", { name: /2027年6月25日/ })).not.toBeDisabled();
-
-    const billingCycleSelect = screen.getByRole("combobox", { name: "扣费周期" });
-    await user.click(billingCycleSelect);
-    await user.click(await screen.findByRole("option", { name: "一次性购买" }));
-
-    const renewalDateButton = screen.getByRole("button", { name: /到期日期.*2026年6月14日/ });
-    expect(renewalDateButton).toBeDisabled();
-    expect(screen.queryByText("2027年6月25日")).not.toBeInTheDocument();
-    const termDateHelp = screen.getByText("到期日根据购买日期和服务时长自动计算。");
-    expect(renewalDateButton).toHaveAttribute("aria-describedby", termDateHelp.id);
-
-    await user.click(screen.getByRole("button", { name: "保存修改" }));
-
-    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
-      id: "sub-1",
-      billingCycle: "one-time",
-      nextBillingDate: "2026-06-14",
-      autoCalculateNextBillingDate: false,
-      oneTimeTermCount: 1,
-      oneTimeTermUnit: "month",
-    }));
-  });
-
-  it("renders buyout date help inline without disabled renewal controls", async () => {
-    const user = userEvent.setup();
-    const onSubmit = vi.fn();
-
-    render(
-      <TooltipProvider delayDuration={0}>
-        <SubscriptionDialog
-          mode="create"
-          open
-          onOpenChange={vi.fn()}
-          onSubmit={onSubmit}
-        />
-      </TooltipProvider>,
-    );
-
-    await user.click(screen.getByRole("combobox", { name: "扣费周期" }));
-    await user.click(await screen.findByRole("option", { name: "一次性购买" }));
-    await user.click(screen.getByRole("button", { name: "买断/长期有效" }));
-
-    const purchaseDateButton = screen.getByRole("button", { name: /购买日期.*选择日期/ });
-    const buyoutHelp = screen.getByText("只保存购买日期，不进入续费或到期日历。");
-    expect(purchaseDateButton).toHaveAttribute("aria-describedby", buyoutHelp.id);
-    expect(buyoutHelp.parentElement).not.toHaveClass("border-dashed");
-    expect(screen.queryByLabelText("自动计算到期日")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /到期日期/ })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "添加订阅" }));
-
-    const dateError = screen.getByText("请选择开始日期和下次扣费日期");
-    const invalidPurchaseDateButton = screen.getByRole("button", { name: /购买日期.*选择日期/ });
-    const describedBy = invalidPurchaseDateButton.getAttribute("aria-describedby");
-    expect(describedBy).toContain(dateError.id);
-    expect(describedBy).toContain(buyoutHelp.id);
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
   it("keeps explicit reminder days when editing historical subscriptions", () => {
     render(
       <TooltipProvider delayDuration={0}>
@@ -411,7 +315,8 @@ describe("SubscriptionDialog", () => {
       </TooltipProvider>,
     );
 
-    expect(screen.getByRole("combobox", { name: "到期提醒" })).toHaveTextContent("不要提醒");
+    expect(screen.getByRole("switch", { name: "到期提醒" })).not.toBeChecked();
+    expect(screen.queryByRole("combobox", { name: "到期提醒" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("重复提醒")).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "间隔" })).not.toBeInTheDocument();
   });

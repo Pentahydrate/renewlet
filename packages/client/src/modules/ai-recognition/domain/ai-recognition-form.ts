@@ -28,7 +28,10 @@ export function aiDraftToSubscriptionFormState(
   draft: AiRecognizedSubscriptionDraft,
   context: AIDraftFormContext,
 ): SubscriptionFormState {
-  const reminderState = reminderStateFromDraft(draft, context.settings.notificationReminderDays);
+  const isOneTimeBuyout = draft.billingCycle === "one-time" && !draft.oneTimeTermCount;
+  const reminderState = isOneTimeBuyout
+    ? disabledReminderState()
+    : reminderStateFromDraft(draft, context.settings.notificationReminderDays);
   return createSubscriptionFormState({
     name: draft.name,
     logo: undefined,
@@ -37,7 +40,7 @@ export function aiDraftToSubscriptionFormState(
     billingCycle: draft.billingCycle ?? "monthly",
     customDays: draft.customDays === null ? "" : String(draft.customDays),
     customCycleUnit: draft.customCycleUnit ?? "day",
-    oneTimeMode: draft.billingCycle === "one-time" && !draft.oneTimeTermCount ? "buyout" : "term",
+    oneTimeMode: isOneTimeBuyout ? "buyout" : "term",
     oneTimeTermCount: draft.oneTimeTermCount === null ? "1" : String(draft.oneTimeTermCount),
     oneTimeTermUnit: draft.oneTimeTermUnit ?? "month",
     category: draft.category ?? context.config.categories[0]?.value ?? "other",
@@ -50,7 +53,7 @@ export function aiDraftToSubscriptionFormState(
     reminderType: reminderState.reminderType,
     reminderDays: reminderState.reminderDays,
     customReminderDays: reminderState.customReminderDays,
-    repeatReminderEnabled: draft.reminderDays === DISABLED_REMINDER_DAYS ? false : draft.repeatReminderEnabled ?? false,
+    repeatReminderEnabled: isOneTimeBuyout || draft.reminderDays === DISABLED_REMINDER_DAYS ? false : draft.repeatReminderEnabled ?? false,
     repeatReminderInterval: draft.repeatReminderInterval ?? "1h",
     repeatReminderWindow: draft.repeatReminderWindow ?? "72h",
     website: draft.website?.value ?? "",
@@ -63,7 +66,9 @@ export function subscriptionFormStateToAIDraftPatch(
   formData: SubscriptionFormState,
   previousDraft: AIDraftFormSourceFields,
 ): Partial<AiRecognizedSubscriptionDraft> {
-  const reminderDays = reminderDaysFromFormState(formData);
+  const reminderDays = formData.billingCycle === "one-time" && formData.oneTimeMode === "buyout"
+    ? DISABLED_REMINDER_DAYS
+    : reminderDaysFromFormState(formData);
   const oneTimeTermEnabled = formData.billingCycle === "one-time" && formData.oneTimeMode === "term";
   return {
     name: formData.name,
@@ -91,13 +96,17 @@ export function subscriptionFormStateToAIDraftPatch(
   };
 }
 
+function disabledReminderState(): Pick<SubscriptionFormState, "reminderType" | "reminderDays" | "customReminderDays"> {
+  return { reminderType: "disabled", reminderDays: String(DISABLED_REMINDER_DAYS), customReminderDays: "" };
+}
+
 function reminderStateFromDraft(
   draft: AiRecognizedSubscriptionDraft,
   defaultReminderDays: number,
 ): Pick<SubscriptionFormState, "reminderType" | "reminderDays" | "customReminderDays"> {
   const reminderDays = draft.reminderDays ?? INHERIT_REMINDER_DAYS;
   if (reminderDays === DISABLED_REMINDER_DAYS) {
-    return { reminderType: "disabled", reminderDays: String(DISABLED_REMINDER_DAYS), customReminderDays: "" };
+    return disabledReminderState();
   }
   if (reminderDays === INHERIT_REMINDER_DAYS) {
     return { reminderType: "inherit", reminderDays: String(INHERIT_REMINDER_DAYS), customReminderDays: "" };

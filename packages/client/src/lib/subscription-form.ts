@@ -160,13 +160,15 @@ export function getSubscriptionDraftValidationError(formData: SubscriptionFormSt
   }
   if (parseNonNegativeFiniteNumberInput(formData.price) === null) return translate(locale, "subscription.validation.amountInvalid");
   const reminderInput = formData.reminderType === "custom" ? formData.customReminderDays : formData.reminderDays;
-  const reminderValue = formData.reminderType === "disabled"
+  const reminderValue = formData.billingCycle === "one-time" && formData.oneTimeMode === "buyout"
     ? DISABLED_REMINDER_DAYS
-    : formData.reminderType === "inherit"
-      ? INHERIT_REMINDER_DAYS
-      : formData.reminderType === "custom"
-        ? parseNonNegativeIntegerInput(reminderInput)
-        : parseReminderDaysInput(reminderInput);
+    : formData.reminderType === "disabled"
+      ? DISABLED_REMINDER_DAYS
+      : formData.reminderType === "inherit"
+        ? INHERIT_REMINDER_DAYS
+        : formData.reminderType === "custom"
+          ? parseNonNegativeIntegerInput(reminderInput)
+          : parseReminderDaysInput(reminderInput);
   if (reminderValue === null) {
     return translate(locale, "subscription.validation.reminderInvalid");
   }
@@ -193,7 +195,9 @@ export function toSubscriptionDraft(formData: SubscriptionFormState): Subscripti
   if (getSubscriptionDraftValidationError(formData)) return null;
 
   const price = parseNonNegativeFiniteNumberInput(formData.price);
-  const reminderDays = toReminderDays(formData);
+  const reminderDays = formData.billingCycle === "one-time" && formData.oneTimeMode === "buyout"
+    ? DISABLED_REMINDER_DAYS
+    : toReminderDays(formData);
   const customDays = formData.billingCycle === "custom" ? parsePositiveIntegerInput(formData.customDays) : undefined;
   const oneTimeTermCount = formData.billingCycle === "one-time" && formData.oneTimeMode === "term"
     ? parsePositiveIntegerInput(formData.oneTimeTermCount)
