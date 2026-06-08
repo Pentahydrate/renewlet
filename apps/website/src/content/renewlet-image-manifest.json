@@ -53,7 +53,7 @@
       "viewport": "desktop",
       "path": "/",
       "waitFor": {
-        "zh": "月度支出",
+        "zh": "月均支出",
         "en": "Monthly spend"
       },
       "website": true,
@@ -77,8 +77,8 @@
       "viewport": "desktop",
       "path": "/calendar",
       "waitFor": {
-        "zh": "续费日历",
-        "en": "Renewal calendar"
+        "zh": "续费/到期日历",
+        "en": "Renewal / expiry calendar"
       },
       "website": true,
       "readme": true,
@@ -118,8 +118,8 @@
       "viewport": "mobile",
       "path": "/subscriptions",
       "waitFor": {
-        "zh": "Linear Business",
-        "en": "Linear Business"
+        "zh": "订阅列表",
+        "en": "Subscriptions"
       },
       "website": true,
       "readme": true
