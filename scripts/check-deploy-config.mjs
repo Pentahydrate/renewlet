@@ -285,37 +285,6 @@ function checkCloudflareDeployButtonVars() {
   }
 }
 
-function checkCloudflareFreshD1Migrations() {
-  const tempDir = mkdtempSync(join(tmpdir(), "renewlet-d1-migrations-"));
-  try {
-    // Deploy Button 会创建全新的 D1；历史 migration 必须能从 0001 顺序跑到最新，不能只验证已有生产库增量路径。
-    run("pnpm", ["exec", "wrangler", "d1", "migrations", "apply", "DB", "--local", "--persist-to", tempDir], {
-      env: {
-        ...process.env,
-        CI: "1",
-      },
-    });
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true });
-  }
-}
-
-function checkCloudflareDeployButtonVars() {
-  const wranglerConfig = readFileSync(join(repoRoot, "wrangler.jsonc"), "utf8");
-  const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
-  const packageBindings = packageJson.cloudflare?.bindings ?? {};
-
-  // Deploy Button 会把模板变量当成用户配置项；版本/commit/build time 必须由 workflow 注入。
-  for (const name of ["RENEWLET_VERSION", "RENEWLET_COMMIT", "RENEWLET_BUILD_TIME"]) {
-    if (wranglerConfig.includes(`"${name}"`)) {
-      throw new Error(`wrangler.jsonc must not expose ${name} as a Deploy Button user variable.`);
-    }
-    if (Object.hasOwn(packageBindings, name)) {
-      throw new Error(`package.json cloudflare.bindings must not expose ${name} as a Deploy Button field.`);
-    }
-  }
-}
-
 function checkCloudflareWorkflowBuildMetadata() {
   const selfHostedWorkflow = readFileSync(join(repoRoot, ".github/workflows/cloudflare-worker.yml"), "utf8");
   const releaseWorkflow = readFileSync(join(repoRoot, ".github/workflows/release-publish.yml"), "utf8");
