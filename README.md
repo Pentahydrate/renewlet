@@ -147,6 +147,16 @@ The full Docker environment template is in `.env.example`.
 <table>
   <tr>
     <td width="50%">
+      <strong>AI recognition</strong><br>
+      <img src="./docs/screenshots/renewlet-ai-recognition-en.png" alt="Renewlet AI recognition dialog showing the input state before turning text content into editable subscription drafts">
+    </td>
+    <td width="50%">
+      <strong>Public subscription status page</strong><br>
+      <img src="./docs/screenshots/renewlet-public-status-en.png" alt="Renewlet public subscription status page showing public subscription totals, prices, and subscription cards">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
       <strong>Subscriptions</strong><br>
       <img src="./docs/screenshots/renewlet-subscriptions-en.png" alt="Renewlet subscriptions view with filters, tags, statuses, and service logos">
     </td>

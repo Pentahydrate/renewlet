@@ -70,7 +70,7 @@
       },
       "prepareScenario": "ai-recognition-input",
       "website": true,
-      "readme": false,
+      "readme": true,
       "featureScene": "ai-recognition",
       "sizesKey": "featureWide"
     },
@@ -97,7 +97,7 @@
       "prepareScenario": "public-status-page",
       "assertStableVersion": false,
       "website": true,
-      "readme": false,
+      "readme": true,
       "featureScene": "public-status",
       "sizesKey": "featureWide"
     },

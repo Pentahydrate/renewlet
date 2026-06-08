@@ -147,6 +147,16 @@ docker compose down
 <table>
   <tr>
     <td width="50%">
+      <strong>AI 识别订阅</strong><br>
+      <img src="./docs/screenshots/renewlet-ai-recognition-zh.png" alt="Renewlet 中文 AI 识别订阅弹窗，展示从文本内容生成可编辑订阅草稿前的输入态">
+    </td>
+    <td width="50%">
+      <strong>公开订阅状态页</strong><br>
+      <img src="./docs/screenshots/renewlet-public-status-zh.png" alt="Renewlet 中文公开订阅状态页，展示公开订阅汇总、价格和订阅卡片">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
       <strong>订阅清单</strong><br>
       <img src="./docs/screenshots/renewlet-subscriptions-zh.png" alt="Renewlet 中文订阅清单，展示筛选、标签、状态和服务 Logo">
     </td>
