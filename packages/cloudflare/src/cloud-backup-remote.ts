@@ -16,18 +16,24 @@ import type { HttpRequest, HttpResponse } from "@smithy/protocol-http";
 import type { HttpHandlerOptions, RequestHandler, RequestHandlerOutput } from "@smithy/types";
 import { AuthType, createClient, getPatcher, type FileStat, type WebDAVClient, type WebDAVClientError } from "webdav/web";
 import {
-  CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS,
   CLOUD_BACKUP_MAX_SNAPSHOT_BYTES,
   cloudBackupSnapshotManifestSchema,
   type CloudBackupErrorDetails,
-  type CloudBackupProviderResponse,
   type CloudBackupS3Config,
   type CloudBackupSnapshotManifest,
   type CloudBackupWebDavConfig,
 } from "@renewlet/shared/schemas/cloud-backup";
+import { UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS } from "@renewlet/shared/schemas/upstream";
 import { listS3ObjectsV2ViaSignedFetch, S3ListObjectsError } from "./cloud-backup-s3-list";
+import {
+  recordToUpstreamHeaders,
+  redactUpstreamSecrets,
+  type UpstreamProviderResponse,
+  upstreamProviderResponseFromFetchResponse,
+} from "./upstream-response";
 
 const textEncoder = new TextEncoder();
+type CloudBackupProviderResponse = UpstreamProviderResponse;
 
 export class CloudBackupRemoteError extends Error {
   constructor(
@@ -322,12 +328,11 @@ export class S3CloudBackupClient implements CloudBackupRemoteClient {
         }),
         secrets: this.secretValues(),
         setAttemptedHost: (host) => this.capture.setAttemptedHost(host),
-        diagnostics: () => this.diagnostics("list"),
       });
     } catch (error) {
       if (error instanceof S3ListObjectsError) throw new CloudBackupRemoteError(error.code, error.details);
       if (error instanceof CloudBackupRemoteError) throw error;
-      throw this.capture.describeLocalError(error, this.diagnostics("list"));
+      throw this.capture.describeLocalError(error);
     }
   }
 
@@ -374,21 +379,9 @@ export class S3CloudBackupClient implements CloudBackupRemoteClient {
       return await operation();
     } catch (error) {
       const response = this.capture.last();
-      if (response) throw new CloudBackupRemoteError(s3ErrorCodeForStatus(code, response), cloudBackupRemoteErrorDetailsFromProviderResponse(code, response, this.diagnostics(s3OperationFromCode(code))));
-      throw this.capture.describeLocalError(error, this.diagnostics(s3OperationFromCode(code)));
+      if (response) throw new CloudBackupRemoteError(s3ErrorCodeForStatus(code, response), cloudBackupRemoteErrorDetailsFromProviderResponse(code, response));
+      throw this.capture.describeLocalError(error);
     }
-  }
-
-  private diagnostics(operation: string): Record<string, string> {
-    const attemptedHost = this.capture.attemptedHostValue();
-    // diagnostics 只暴露签名所需的非密配置摘要；不要把 access key、secret、Authorization 或预签名 query 带回浏览器。
-    return {
-      configuredEndpoint: providerHostSummary(this.settings.endpoint),
-      signingRegion: this.settings.region,
-      endpointMode: this.endpointMode,
-      operation,
-      ...(attemptedHost ? { attemptedHost } : {}),
-    };
   }
 
   private secretValues(): string[] {
@@ -424,17 +417,11 @@ class S3ProviderResponseCapture {
     return this.response;
   }
 
-  attemptedHostValue(): string | null {
-    return this.attemptedHost;
-  }
-
-  describeLocalError(error: unknown, diagnostics: Record<string, string>): CloudBackupRemoteError {
+  describeLocalError(error: unknown): CloudBackupRemoteError {
     const message = error instanceof Error ? error.message : String(error);
+    // 本地 SDK/DNS/TLS 错误没有上游响应；只把非密 host 摘要拼进一次性 raw 文本，仍不回显签名 query 或凭据。
     return new CloudBackupRemoteError("CLOUD_BACKUP_S3_LOCAL_FAILED", {
-      reason: "local_sdk_error",
-      providerMessage: this.attemptedHost ? `${message} (attempted host: ${this.attemptedHost})` : message,
-      providerResponse: null,
-      diagnostics: sanitizeCloudBackupDiagnostics(diagnostics),
+      rawResponseText: this.attemptedHost ? `${message} (attempted host: ${this.attemptedHost})` : message,
     });
   }
 }
@@ -479,60 +466,19 @@ async function cloudBackupRemoteErrorDetails(code: string, response: Response, s
   return cloudBackupRemoteErrorDetailsFromProviderResponse(code, providerResponse);
 }
 
-export function cloudBackupRemoteErrorDetailsFromProviderResponse(code: string, providerResponse: CloudBackupProviderResponse, diagnostics?: Record<string, string>): CloudBackupErrorDetails {
+export function cloudBackupRemoteErrorDetailsFromProviderResponse(code: string, providerResponse: CloudBackupProviderResponse): CloudBackupErrorDetails {
   const providerMessage = providerResponse.body || providerResponse.statusText || code;
-  return {
-    reason: `http_${providerResponse.status ?? 0}`,
-    providerMessage,
-    providerResponse,
-    ...(diagnostics ? { diagnostics: sanitizeCloudBackupDiagnostics(diagnostics) } : {}),
-  };
+  return { rawResponseText: providerMessage };
 }
 
 async function cloudBackupProviderResponseFromFetchResponse(response: Response, secrets: readonly string[]): Promise<CloudBackupProviderResponse> {
-  const body = await readProviderResponseBody(response);
-  return {
-    status: response.status,
-    statusText: response.statusText || null,
-    headers: headersToObject(response.headers, secrets),
-    body: body.text ? redactCloudBackupSecrets(body.text, secrets) : null,
-    bodyTruncated: body.truncated,
-  };
-}
-
-async function readProviderResponseBody(response: Response): Promise<{ text: string; truncated: boolean }> {
-  if (!response.body) {
-    const text = await response.text().catch(() => "");
-    return truncateProviderResponseText(text);
-  }
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let total = 0;
-  let text = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS) {
-      const remaining = Math.max(0, CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS - text.length);
-      if (remaining > 0) text += decoder.decode(value.slice(0, remaining), { stream: true });
-      await reader.cancel().catch(() => undefined);
-      return { text: text + decoder.decode(), truncated: true };
-    }
-    text += decoder.decode(value, { stream: true });
-  }
-  return { text: text + decoder.decode(), truncated: false };
-}
-
-function truncateProviderResponseText(text: string): { text: string; truncated: boolean } {
-  if (text.length <= CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS) return { text, truncated: false };
-  return { text: text.slice(0, CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS), truncated: true };
+  return await upstreamProviderResponseFromFetchResponse(response, { secrets });
 }
 
 async function readSmithyProviderResponseBody(body: unknown): Promise<{ text: string; bytes: Uint8Array; truncated: boolean }> {
-  const bytes = await bytesFromSdkBody(body, CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS + 1);
-  const truncated = bytes.length > CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS;
-  const visible = truncated ? bytes.slice(0, CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS) : bytes;
+  const bytes = await bytesFromSdkBody(body, UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS + 1);
+  const truncated = bytes.length > UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS;
+  const visible = truncated ? bytes.slice(0, UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS) : bytes;
   return {
     text: textDecoder(visible),
     bytes: visible,
@@ -634,59 +580,12 @@ function isReadableStreamBody(body: unknown): body is ReadableStream<Uint8Array>
   return typeof ReadableStream !== "undefined" && body instanceof ReadableStream;
 }
 
-function headersToObject(headers: Headers, secrets: readonly string[]): Record<string, string> | null {
-  const out: Record<string, string> = {};
-  headers.forEach((value, key) => {
-    if (!safeProviderResponseHeader(key)) return;
-    const text = redactCloudBackupSecrets(value.trim(), secrets);
-    if (text) out[key] = text;
-  });
-  return Object.keys(out).length > 0 ? out : null;
-}
-
 function headersRecordToObject(headers: Record<string, string> | undefined, secrets: readonly string[]): Record<string, string> | null {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(headers ?? {})) {
-    if (!safeProviderResponseHeader(key)) continue;
-    const text = redactCloudBackupSecrets(value.trim(), secrets);
-    if (text) out[key] = text;
-  }
-  return Object.keys(out).length > 0 ? out : null;
-}
-
-function safeProviderResponseHeader(key: string): boolean {
-  const normalized = key.toLowerCase();
-  if (normalized === "authorization" || normalized === "cookie" || normalized === "set-cookie") return false;
-  return !normalized.includes("secret")
-    && !normalized.includes("token")
-    && !normalized.includes("credential")
-    && !normalized.includes("signature")
-    && !normalized.includes("accesskey")
-    && !normalized.includes("access-key");
-}
-
-function sanitizeCloudBackupDiagnostics(values: Record<string, string>): Record<string, string> | undefined {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(values)) {
-    const name = key.trim();
-    const text = value.trim();
-    if (!name || !text || !safeProviderResponseHeader(name)) continue;
-    out[name] = text.length > 512 ? text.slice(0, 512) : text;
-  }
-  return Object.keys(out).length > 0 ? out : undefined;
+  return recordToUpstreamHeaders(headers, secrets);
 }
 
 function s3ErrorCodeForStatus(fallback: string, response: CloudBackupProviderResponse): string {
   return response.status === 404 ? "CLOUD_BACKUP_S3_NOT_FOUND" : fallback;
-}
-
-function s3OperationFromCode(code: string): string {
-  if (code.includes("_PUT_")) return "put";
-  if (code.includes("_HEAD_")) return "head";
-  if (code.includes("_GET_")) return "get";
-  if (code.includes("_DELETE_")) return "delete";
-  if (code.includes("_LIST_")) return "list";
-  return "s3";
 }
 
 function isS3NotFoundError(error: unknown): boolean {
@@ -694,15 +593,7 @@ function isS3NotFoundError(error: unknown): boolean {
 }
 
 function redactCloudBackupSecrets(value: string, secrets: readonly string[]): string {
-  let out = value;
-  for (const secret of normalizedCloudBackupSecrets(secrets)) {
-    out = out.split(secret).join("[redacted]");
-  }
-  return out;
-}
-
-function normalizedCloudBackupSecrets(secrets: readonly string[]): string[] {
-  return Array.from(new Set(secrets.map((secret) => secret.trim()).filter((secret) => secret.length >= 4)));
+  return redactUpstreamSecrets(value, secrets);
 }
 
 function manifestName(id: string): string {

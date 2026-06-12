@@ -104,17 +104,18 @@ func TestSendServerChanPostsOfficialPayload(t *testing.T) {
 
 func TestRequireServerChanSuccessHandlesFailures(t *testing.T) {
 	cases := []struct {
-		name       string
-		statusCode int
-		body       string
-		want       string
+		name             string
+		statusCode       int
+		body             string
+		want             string
+		wantBodyContains string
 	}{
-		{name: "http failure json", statusCode: http.StatusBadRequest, body: `{"code":40001,"message":"bad sendkey"}`, want: "bad sendkey"},
-		{name: "business failure", statusCode: http.StatusOK, body: `{"code":40001,"detail":"quota exhausted"}`, want: "quota exhausted"},
-		{name: "redacts sendkey", statusCode: http.StatusOK, body: `{"code":40001,"message":"SCTsecret disabled"}`, want: "[redacted] disabled"},
-		{name: "http failure invalid json", statusCode: http.StatusBadGateway, body: `upstream returned SCTsecret`, want: "Server酱响应格式无效"},
-		{name: "invalid json", statusCode: http.StatusOK, body: `not-json`, want: "Server酱响应格式无效"},
-		{name: "missing code", statusCode: http.StatusOK, body: `{"message":"ok"}`, want: "Server酱响应格式无效"},
+		{name: "http failure json", statusCode: http.StatusBadRequest, body: `{"code":40001,"message":"bad sendkey"}`, want: "bad sendkey", wantBodyContains: "bad sendkey"},
+		{name: "business failure", statusCode: http.StatusOK, body: `{"code":40001,"detail":"quota exhausted"}`, want: "quota exhausted", wantBodyContains: "quota exhausted"},
+		{name: "redacts sendkey", statusCode: http.StatusOK, body: `{"code":40001,"message":"SCTsecret disabled"}`, want: "[redacted] disabled", wantBodyContains: "[redacted] disabled"},
+		{name: "http failure invalid json", statusCode: http.StatusBadGateway, body: `upstream returned SCTsecret`, want: "upstream returned [redacted]", wantBodyContains: "upstream returned [redacted]"},
+		{name: "invalid json", statusCode: http.StatusOK, body: `not-json`, want: "not-json", wantBodyContains: "not-json"},
+		{name: "missing code", statusCode: http.StatusOK, body: `{"message":"ok"}`, want: "Server酱响应格式无效", wantBodyContains: `"message":"ok"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -127,6 +128,16 @@ func TestRequireServerChanSuccessHandlesFailures(t *testing.T) {
 			}
 			if strings.Contains(err.Error(), "SCTsecret") {
 				t.Fatalf("error leaked SendKey: %q", err)
+			}
+			channelErr := notificationChannelErrorFrom(err)
+			if channelErr == nil || channelErr.details == nil || channelErr.details.RawResponseText == nil {
+				t.Fatalf("expected upstream details, got %#v", err)
+			}
+			if !strings.Contains(*channelErr.details.RawResponseText, tc.wantBodyContains) {
+				t.Fatalf("expected upstream body to contain %q, got %#v", tc.wantBodyContains, channelErr.details.RawResponseText)
+			}
+			if strings.Contains(*channelErr.details.RawResponseText, "SCTsecret") {
+				t.Fatalf("provider response leaked SendKey: %q", *channelErr.details.RawResponseText)
 			}
 		})
 	}

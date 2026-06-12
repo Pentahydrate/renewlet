@@ -386,12 +386,7 @@ describe("Cloudflare AI recognition", () => {
       status: 400,
       code: "AI_RECOGNITION_TEST_FAILED",
       details: {
-        providerMessage: expect.stringContaining("[redacted]"),
-        providerResponse: {
-          status: 401,
-          headers: { "content-type": "application/json" },
-          body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"bad sk-test-secret\"}",
-        },
+        rawResponseText: "{\"code\":\"INVALID_API_KEY\",\"message\":\"bad [redacted]\"}",
       },
     });
   });
@@ -699,18 +694,7 @@ describe("Cloudflare AI recognition", () => {
       code: "AI_RECOGNITION_SCHEMA_MISMATCH",
       message: "AI 返回内容无法整理成订阅草稿，请换用更强的模型或补充更明确的价格、周期和名称。",
       details: {
-        reason: "schema_mismatch",
-        providerMessage: expect.stringContaining("No object generated"),
-        diagnostics: {
-          output: {
-            rawModelText: {
-              value: expect.stringContaining("[redacted]"),
-            },
-          },
-          response: {
-            finishReason: "stop",
-          },
-        },
+        rawResponseText: expect.stringContaining("No object generated"),
       },
     });
   });
@@ -727,13 +711,7 @@ describe("Cloudflare AI recognition", () => {
       status: 400,
       code: "AI_RECOGNITION_FAILED",
       details: {
-        providerMessage: expect.stringContaining("[redacted]"),
-        providerResponse: {
-          status: 403,
-          headers: { "content-type": "application/json" },
-          body: "{\"error\":\"forbidden sk-test-secret\"}",
-          bodyTruncated: false,
-        },
+        rawResponseText: "{\"error\":\"forbidden [redacted]\"}",
       },
     });
   });

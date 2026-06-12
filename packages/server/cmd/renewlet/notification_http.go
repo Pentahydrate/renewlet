@@ -27,15 +27,15 @@ var (
 	outboundURLResolver = defaultOutboundURLResolver
 )
 
-func postJSON[T interface{}](endpoint string, payload T, serviceLabel string, locale appLocale) (*http.Response, error) {
+func postJSON[T interface{}](endpoint string, payload T, serviceLabel string, locale appLocale, secrets ...string) (*http.Response, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
-	return sendHTTPRequest(http.MethodPost, endpoint, map[string]string{"content-type": "application/json"}, body, serviceLabel, locale)
+	return sendHTTPRequest(http.MethodPost, endpoint, map[string]string{"content-type": "application/json"}, body, serviceLabel, locale, secrets...)
 }
 
-func sendHTTPRequest(method, endpoint string, headers map[string]string, body []byte, serviceLabel string, locale appLocale) (*http.Response, error) {
+func sendHTTPRequest(method, endpoint string, headers map[string]string, body []byte, serviceLabel string, locale appLocale, secrets ...string) (*http.Response, error) {
 	var reader io.Reader
 	if body != nil {
 		reader = bytes.NewReader(body)
@@ -50,7 +50,11 @@ func sendHTTPRequest(method, endpoint string, headers map[string]string, body []
 	client := notificationHTTPClientFactory()
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.New(serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": serviceLabel, "error": err}))
+		message := redactUpstreamSecrets(err.Error(), secrets)
+		return nil, newNotificationChannelError(
+			serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": serviceLabel, "error": message}),
+			createUpstreamErrorDetails(nil, message),
+		)
 	}
 	return resp, nil
 }
@@ -67,7 +71,30 @@ func defaultNotificationHTTPClient() *http.Client {
 }
 
 func channelHTTPError(locale appLocale, channel string, statusCode int, detail string) error {
-	return errors.New(serverFormat(locale, "notification.httpSendFailed", map[string]interface{}{"channel": channel, "status": statusCode, "detail": detail}))
+	return errors.New(channelHTTPErrorMessage(locale, channel, statusCode, detail))
+}
+
+func channelHTTPErrorFromResponse(locale appLocale, channel string, resp *http.Response, secrets ...string) error {
+	providerResponse, _, err := captureUpstreamProviderResponse(resp, secrets)
+	if err != nil {
+		return err
+	}
+	statusCode := 0
+	if providerResponse != nil && providerResponse.Status != nil {
+		statusCode = *providerResponse.Status
+	}
+	detail := upstreamProviderMessage(providerResponse)
+	if detail == "" && resp != nil {
+		detail = resp.Status
+	}
+	return newNotificationChannelError(
+		channelHTTPErrorMessage(locale, channel, statusCode, detail),
+		createUpstreamErrorDetails(providerResponse, detail),
+	)
+}
+
+func channelHTTPErrorMessage(locale appLocale, channel string, statusCode int, detail string) string {
+	return serverFormat(locale, "notification.httpSendFailed", map[string]interface{}{"channel": channel, "status": statusCode, "detail": trimLongText(detail)})
 }
 
 func readResponseText(resp *http.Response) string {

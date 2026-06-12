@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { useI18n } from "@/i18n/I18nProvider";
+import { ApiError } from "@/lib/api-client";
 import {
   createCloudBackupErrorDetails,
   extractCloudBackupErrorDetails,
@@ -192,17 +193,16 @@ export function useCloudBackupController(onRestoreFile: (file: File) => void): C
     [activeProvider, snapshotsQuery.data],
   );
 
-  const openCloudBackupErrorDetails = useCallback((error: unknown, fallbackMessage: string, autoOpenOnlyWithProviderResponse = true) => {
+  const openCloudBackupErrorDetails = useCallback((error: unknown, fallbackMessage: string) => {
     const extracted = extractCloudBackupErrorDetails(error);
     const details = extracted ?? createCloudBackupErrorDetails(error, fallbackMessage);
-    if (autoOpenOnlyWithProviderResponse && !cloudBackupDetailsCanExplainFailure(details)) return;
     setCloudBackupErrorDetails(details);
     setCloudBackupErrorDetailsOpen(true);
   }, []);
 
   const openSnapshotsErrorDetails = useCallback(() => {
     if (!snapshotsQuery.error) return;
-    openCloudBackupErrorDetails(snapshotsQuery.error, t("settings.cloudBackupSnapshotsLoadFailed"), false);
+    openCloudBackupErrorDetails(snapshotsQuery.error, t("settings.cloudBackupSnapshotsLoadFailed"));
   }, [openCloudBackupErrorDetails, snapshotsQuery.error, t]);
 
   useEffect(() => {
@@ -595,17 +595,8 @@ function credentialSetForProvider(config: CloudBackupConfig, provider: CloudBack
 }
 
 function cloudBackupSnapshotsErrorMessage(error: unknown, fallback: string): string {
-  const details = extractCloudBackupErrorDetails(error);
-  if (details?.code === "CLOUD_BACKUP_LIST_FAILED") return fallback;
+  if (error instanceof ApiError && error.code === "CLOUD_BACKUP_LIST_FAILED") return fallback;
   return getDisplayErrorMessage(error, fallback);
-}
-
-function cloudBackupDetailsCanExplainFailure(details: CloudBackupErrorDetailsView): boolean {
-  return Boolean(details.providerResponse
-    || details.providerAttempts.length > 0
-    || details.reason
-    || details.providerMessage
-    || details.code?.startsWith("CLOUD_BACKUP_"));
 }
 
 function hasSavedCloudBackupTargetForProvider(config: CloudBackupConfig, provider: CloudBackupProvider): boolean {

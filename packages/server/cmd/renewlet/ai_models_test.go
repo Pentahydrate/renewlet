@@ -152,11 +152,11 @@ func TestAIModelListProviderErrorReturnsRawProviderResponse(t *testing.T) {
 	if httpErr.status != http.StatusUnauthorized || httpErr.reason != "http_401" {
 		t.Fatalf("provider 401 should pass through with reason http_401, got status=%d reason=%q", httpErr.status, httpErr.reason)
 	}
-	if httpErr.message == nil || *httpErr.message != "invalid sk-test-secret" {
-		t.Fatalf("provider message should keep raw body: %#v", httpErr.message)
+	if httpErr.message == nil || *httpErr.message != "invalid [redacted]" {
+		t.Fatalf("provider message should keep redacted raw body: %#v", httpErr.message)
 	}
-	if httpErr.providerResponse == nil || httpErr.providerResponse.Body == nil || *httpErr.providerResponse.Body != "invalid sk-test-secret" {
-		t.Fatalf("provider response body should keep raw body: %#v", httpErr.providerResponse)
+	if httpErr.providerResponse == nil || httpErr.providerResponse.Body == nil || *httpErr.providerResponse.Body != "invalid [redacted]" {
+		t.Fatalf("provider response body should keep redacted raw body: %#v", httpErr.providerResponse)
 	}
 	if httpErr.providerResponse.Status == nil || *httpErr.providerResponse.Status != http.StatusUnauthorized {
 		t.Fatalf("provider status not captured: %#v", httpErr.providerResponse)

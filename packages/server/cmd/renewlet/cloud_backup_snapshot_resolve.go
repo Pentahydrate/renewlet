@@ -30,8 +30,7 @@ func downloadCloudBackupSnapshotFromTargets(ctx context.Context, targets []cloud
 	}
 	return nil, cloudBackupSnapshotManifest{}, cloudBackupProviderAttemptsError(
 		"CLOUD_BACKUP_DOWNLOAD_FAILED",
-		"provider_attempts_failed",
-		"No configured cloud backup target returned a valid snapshot. Check providerAttempts for upstream responses.",
+		"No configured cloud backup target returned a valid snapshot.",
 		attempts,
 	)
 }
@@ -58,18 +57,16 @@ func deleteCloudBackupSnapshotFromTargets(ctx context.Context, targets []cloudBa
 		if cloudBackupManifestListContains(manifests, id) {
 			matches = append(matches, target)
 			attempts = append(attempts, cloudBackupProviderAttempt{
-				Provider:        target.Provider,
-				Code:            "CLOUD_BACKUP_SNAPSHOT_FOUND",
-				Reason:          "found",
-				ProviderMessage: optionalCloudBackupString("Snapshot exists in this provider."),
+				Provider: target.Provider,
+				Code:     "CLOUD_BACKUP_SNAPSHOT_FOUND",
+				Message:  "Snapshot exists in this provider.",
 			})
 			continue
 		}
 		attempts = append(attempts, cloudBackupProviderAttempt{
-			Provider:        target.Provider,
-			Code:            "CLOUD_BACKUP_SNAPSHOT_NOT_FOUND",
-			Reason:          "not_found",
-			ProviderMessage: optionalCloudBackupString("Snapshot was not listed by this provider."),
+			Provider: target.Provider,
+			Code:     "CLOUD_BACKUP_SNAPSHOT_NOT_FOUND",
+			Message:  "Snapshot was not listed by this provider.",
 		})
 	}
 	if len(matches) == 1 && !failedList {
@@ -79,15 +76,13 @@ func deleteCloudBackupSnapshotFromTargets(ctx context.Context, targets []cloudBa
 		// 缺 provider 的删除只有在唯一目标可证明时才执行；双目标命中或目标状态未知都必须让调用方显式指定。
 		return cloudBackupProviderAttemptsError(
 			"CLOUD_BACKUP_PROVIDER_REQUIRED",
-			"provider_required",
 			"Snapshot may exist in multiple cloud backup targets. Use provider=webdav or provider=s3.",
 			attempts,
 		)
 	}
 	return cloudBackupProviderAttemptsError(
 		"CLOUD_BACKUP_DELETE_FAILED",
-		"provider_attempts_failed",
-		"No configured cloud backup target listed this snapshot. Check providerAttempts for upstream responses.",
+		"No configured cloud backup target listed this snapshot.",
 		attempts,
 	)
 }

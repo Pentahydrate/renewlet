@@ -29,6 +29,7 @@ import { useSetupStatus } from "@/hooks/use-setup-status";
 import { useCalendarFeedStatus, useCreateCalendarFeed, useDeleteCalendarFeed } from "@/hooks/use-calendar-feed";
 import { useToast } from "@/hooks/use-toast";
 import { getDisplayErrorMessage } from "@/lib/display-error";
+import type { RawErrorResponseDetails } from "@/lib/raw-error-response";
 import { applyThemeVariant } from "@/lib/theme-variant";
 import { openValidatedWebcalUrl } from "@/shared/browser/calendar-links";
 import {
@@ -119,6 +120,7 @@ export interface SettingsFormController {
   ratesLoading: boolean;
   lastUpdated: Date | null;
   ratesError: string | null;
+  ratesErrorDetails: RawErrorResponseDetails | null;
   getCurrencySymbol: (currency: string) => string;
   updateCategories: (items: ConfigItem[]) => void;
   updateStatuses: (items: ConfigItem[]) => void;
@@ -142,6 +144,9 @@ export interface SettingsFormController {
   handleThemeCustomColorChange: (value: CustomThemeColor) => void;
   testingChannel: NotificationChannel | null;
   handleTestConnection: (channel: NotificationChannel) => void | Promise<void>;
+  notificationTestErrorDetails: RawErrorResponseDetails | null;
+  notificationTestErrorDetailsOpen: boolean;
+  setNotificationTestErrorDetailsOpen: (open: boolean) => void;
   notificationHistory: SettingsNotificationHistoryController;
   calendarFeed: SettingsCalendarFeedController;
   builtInIconIndex: SettingsBuiltInIconIndexController;
@@ -181,6 +186,7 @@ export function useSettingsFormController(): SettingsFormController {
     lastUpdated,
     refresh: refreshRates,
     error: ratesError,
+    errorDetails: ratesErrorDetails,
     getCurrencySymbol,
   } = useExchangeRates(savedSettings.exchangeRateProvider);
   const { toast } = useToast();
@@ -667,6 +673,7 @@ export function useSettingsFormController(): SettingsFormController {
     ratesLoading,
     lastUpdated,
     ratesError,
+    ratesErrorDetails,
     getCurrencySymbol,
     updateCategories,
     updateStatuses,
@@ -690,6 +697,9 @@ export function useSettingsFormController(): SettingsFormController {
     handleThemeCustomColorChange,
     testingChannel: notificationTest.testingChannel,
     handleTestConnection,
+    notificationTestErrorDetails: notificationTest.errorDetails,
+    notificationTestErrorDetailsOpen: notificationTest.errorDetailsOpen,
+    setNotificationTestErrorDetailsOpen: notificationTest.setErrorDetailsOpen,
     notificationHistory,
     calendarFeed: {
       data: calendarFeedStatus.data,

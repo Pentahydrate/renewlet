@@ -17,9 +17,8 @@ export function cloudBackupProviderFromRequest(request: Request, locale: AppLoca
   return { hasProvider: true, provider };
 }
 
-export function cloudBackupProviderParameterError(locale: AppLocale, code: string, reason: string, message: string): HttpError {
+export function cloudBackupProviderParameterError(locale: AppLocale, code: string, _reason: string, message: string): HttpError {
   return new HttpError(400, serverText(locale, "cloudBackup.providerInvalid"), code, {
-    reason,
-    providerMessage: message,
+    rawResponseText: message,
   });
 }

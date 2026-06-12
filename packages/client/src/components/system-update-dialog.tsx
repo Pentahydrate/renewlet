@@ -2,9 +2,11 @@ import { AlertCircle, Check, Download, ExternalLink, RefreshCw, RotateCw, Server
 import { useCallback, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RawErrorResponseDialog } from "@/components/raw-error-response-dialog";
 import { useSystemRestart, useSystemUpdate, useSystemVersion } from "@/hooks/use-system-version";
 import { useI18n } from "@/i18n/I18nProvider";
 import { ApiError } from "@/lib/api-client";
+import { createRawErrorResponseDetails, type RawErrorResponseDetails } from "@/lib/raw-error-response";
 import { cn } from "@/lib/utils";
 import type { SystemDeployment, SystemVersionResponse } from "@/lib/api/schemas/app";
 import type { MessageKey } from "@/i18n/messages";
@@ -56,6 +58,8 @@ export function SystemUpdateDialog({
   const restartMutation = useSystemRestart();
   const version = versionQuery.data;
   const [updateError, setUpdateError] = useState("");
+  const [errorDetails, setErrorDetails] = useState<RawErrorResponseDetails | null>(null);
+  const [errorDetailsOpen, setErrorDetailsOpen] = useState(false);
   const [restartCountdown, setRestartCountdown] = useState(0);
 
   const canUpdate = Boolean(version?.hasUpdate && version.updateSupported && !updateMutation.isPending && !updateMutation.isSuccess);
@@ -66,6 +70,8 @@ export function SystemUpdateDialog({
 
   const resetUpdateState = useCallback(() => {
     setUpdateError("");
+    setErrorDetails(null);
+    setErrorDetailsOpen(false);
     setRestartCountdown(0);
     updateMutation.reset();
     restartMutation.reset();
@@ -93,6 +99,9 @@ export function SystemUpdateDialog({
     try {
       await updateMutation.mutateAsync();
     } catch (error) {
+      const details = createRawErrorResponseDetails(error);
+      setErrorDetails(details);
+      setErrorDetailsOpen(true);
       setUpdateError(error instanceof ApiError ? error.message : t("system.updateFailedDescription"));
     }
   }, [canUpdate, t, updateMutation]);
@@ -256,6 +265,12 @@ export function SystemUpdateDialog({
             </>
           ) : null}
         </div>
+        <RawErrorResponseDialog
+          open={errorDetailsOpen}
+          details={errorDetails}
+          onOpenChange={setErrorDetailsOpen}
+          testId="system-raw-error-response-dialog"
+        />
       </PopoverContent>
     </Popover>
   );

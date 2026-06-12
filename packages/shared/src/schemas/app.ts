@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { okResponseSchema } from "./common";
+import { upstreamErrorDetailsSchema } from "./upstream";
 
 /** healthResponseSchema 是 Docker healthcheck、Cloudflare Worker 和前端存活探测的共同最小响应。 */
 export const healthResponseSchema = z.object({
@@ -74,6 +75,7 @@ export const systemVersionResponseSchema = z.object({
   releaseInfo: systemReleaseInfoSchema.nullable(),
   cached: z.boolean(),
   warning: z.string().optional(),
+  errorDetails: upstreamErrorDetailsSchema.optional(),
   build: systemBuildInfoSchema,
 }).strict();
 

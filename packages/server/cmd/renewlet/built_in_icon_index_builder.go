@@ -113,11 +113,15 @@ func fetchRegistryJSON(ctx context.Context, url string, label string, target any
 	req.Header.Set("Accept", "application/json")
 	res, err := builtInIconIndexHTTPClient.Do(req)
 	if err != nil {
-		return err
+		return createUpstreamNetworkError(label, err, nil)
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("%s HTTP %d", label, res.StatusCode)
+		providerResponse, _, captureErr := captureUpstreamProviderResponse(res, nil)
+		if captureErr != nil {
+			return captureErr
+		}
+		return createUpstreamHTTPError(label, res, providerResponse, fallbackText(upstreamProviderMessage(providerResponse), fmt.Sprintf("%s HTTP %d", label, res.StatusCode)))
 	}
 	data, err := io.ReadAll(io.LimitReader(res.Body, builtInIconRegistryJSONLimitBytes+1))
 	if err != nil {
@@ -131,14 +135,22 @@ func fetchRegistryJSON(ctx context.Context, url string, label string, target any
 
 func fetchRegistryJSONAny(ctx context.Context, urls []string, label string, target any) error {
 	failures := []string{}
+	var firstUpstreamDetails *upstreamErrorDetails
 	for _, url := range urls {
 		if err := fetchRegistryJSON(ctx, url, label, target); err != nil {
+			if firstUpstreamDetails == nil {
+				firstUpstreamDetails = upstreamErrorDetailsFromError(err)
+			}
 			failures = append(failures, err.Error())
 			continue
 		}
 		return nil
 	}
-	return fmt.Errorf("%s failed: %s", label, strings.Join(failures, "; "))
+	message := fmt.Sprintf("%s failed: %s", label, strings.Join(failures, "; "))
+	if firstUpstreamDetails != nil {
+		return newUpstreamOperationError(message, firstUpstreamDetails)
+	}
+	return errors.New(message)
 }
 
 func safeBuiltInIconPathPart(value string) bool {

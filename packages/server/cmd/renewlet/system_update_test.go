@@ -4,12 +4,7 @@ package main
 // fake client 隔离 GitHub 网络，重点锁住 /renewlet 稳定入口与 current 二进制替换契约。
 
 import (
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -197,6 +192,61 @@ func TestSystemVersionWarningDoesNotExposeGitHubStatus(t *testing.T) {
 	}
 	if !strings.Contains(warning, systemUpdateGitHubTokenEnv) {
 		t.Fatalf("warning should mention token fallback, got %q", warning)
+	}
+}
+
+func TestSystemVersionFailureIncludesOneShotUpstreamDetailsWithoutCachingRawBody(t *testing.T) {
+	t.Setenv(systemUpdateGitHubTokenEnv, "ghp_test")
+	oldVersion, oldBuildType := Version, BuildType
+	Version, BuildType = "0.1.0", "release"
+	t.Cleanup(func() {
+		Version, BuildType = oldVersion, oldBuildType
+	})
+
+	service := newSystemUpdateService(&fakeSystemReleaseClient{release: &githubRelease{
+		TagName:     "v0.1.0",
+		Name:        "Renewlet 0.1.0",
+		PublishedAt: "2026-06-04T00:00:00Z",
+		HTMLURL:     "https://github.com/zhiyingzzhou/renewlet/releases/tag/v0.1.0",
+		Assets:      []githubAsset{},
+	}})
+	service.now = func() time.Time { return time.Unix(1_779_820_800, 0) }
+	if _, err := service.CheckVersion(context.Background(), localeZhCN, true); err != nil {
+		t.Fatal(err)
+	}
+
+	service.client = &httpSystemReleaseClient{
+		apiClient: &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusForbidden,
+				Status:     "403 Forbidden",
+				Header:     http.Header{"Content-Type": []string{"text/plain"}},
+				Body:       io.NopCloser(strings.NewReader("rate limited ghp_test")),
+				Request:    request,
+			}, nil
+		})},
+	}
+
+	failed, err := service.CheckVersion(context.Background(), localeZhCN, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed.ErrorDetails == nil || failed.ErrorDetails.RawResponseText == nil {
+		t.Fatalf("expected one-shot upstream details, got %#v", failed.ErrorDetails)
+	}
+	if *failed.ErrorDetails.RawResponseText != "rate limited [redacted]" {
+		t.Fatalf("expected redacted upstream body, got %#v", failed.ErrorDetails.RawResponseText)
+	}
+	if payload, _ := json.Marshal(failed.ErrorDetails); strings.Contains(string(payload), "ghp_test") {
+		t.Fatalf("upstream details leaked GitHub token: %s", payload)
+	}
+
+	cached, err := service.CheckVersion(context.Background(), localeZhCN, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cached.ErrorDetails != nil {
+		t.Fatalf("cached version response must not keep raw upstream details: %#v", cached.ErrorDetails)
 	}
 }
 
@@ -704,68 +754,4 @@ func TestSystemRestartRejectedBeforeSuccessfulUpdate(t *testing.T) {
 	if !errors.Is(err, errSystemRestartNotPending) {
 		t.Fatalf("ConfirmRestart error = %v, want restart not pending", err)
 	}
-}
-
-func (service *systemUpdateService) downloadFnForTest(binaryContent string) {
-	if fake, ok := service.client.(*fakeSystemReleaseClient); ok {
-		fake.downloadFn = func(targetPath string) error {
-			if err := writeTarGz(targetPath, map[string]string{"renewlet": binaryContent}); err != nil {
-				return err
-			}
-			content, err := os.ReadFile(targetPath)
-			if err != nil {
-				return err
-			}
-			sum := sha256.Sum256(content)
-			fake.checksumTxt = []byte(hex.EncodeToString(sum[:]) + "  " + filepath.Base(targetPath) + "\n")
-			return nil
-		}
-	}
-}
-
-func writeTarGz(path string, files map[string]string) error {
-	var buffer bytes.Buffer
-	gzipWriter := gzip.NewWriter(&buffer)
-	tarWriter := tar.NewWriter(gzipWriter)
-	for name, content := range files {
-		if err := tarWriter.WriteHeader(&tar.Header{
-			Name: name,
-			Mode: 0o755,
-			Size: int64(len(content)),
-		}); err != nil {
-			return err
-		}
-		if _, err := tarWriter.Write([]byte(content)); err != nil {
-			return err
-		}
-	}
-	if err := tarWriter.Close(); err != nil {
-		return err
-	}
-	if err := gzipWriter.Close(); err != nil {
-		return err
-	}
-	return os.WriteFile(path, buffer.Bytes(), 0o644)
-}
-
-func releaseFixture(tag string, prerelease bool, draft bool) githubRelease {
-	version := strings.TrimPrefix(tag, "v")
-	return githubRelease{
-		TagName:     tag,
-		Name:        "Renewlet " + version,
-		PublishedAt: "2026-06-04T00:00:00Z",
-		HTMLURL:     "https://github.com/zhiyingzzhou/renewlet/releases/tag/" + tag,
-		Prerelease:  prerelease,
-		Draft:       draft,
-		Assets: []githubAsset{
-			{Name: systemArchiveName(version), BrowserDownloadURL: "https://github.com/zhiyingzzhou/renewlet/releases/download/" + tag + "/" + systemArchiveName(version)},
-			{Name: "checksums.txt", BrowserDownloadURL: "https://github.com/zhiyingzzhou/renewlet/releases/download/" + tag + "/checksums.txt"},
-		},
-	}
-}
-
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
-	return fn(request)
 }

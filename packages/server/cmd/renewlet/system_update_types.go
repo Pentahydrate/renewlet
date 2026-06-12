@@ -101,6 +101,7 @@ type githubAPIError struct {
 	message     string
 	rateLimited bool
 	retryAt     time.Time
+	details     *upstreamErrorDetails
 }
 
 func (e *githubAPIError) Error() string {

@@ -12,6 +12,7 @@
 import { useCallback, useState } from "react";
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { useToast } from "@/hooks/use-toast";
+import { createRawErrorResponseDetails, type RawErrorResponseDetails } from "@/lib/raw-error-response";
 import { CHANNEL_LABELS, type AppSettings, type NotificationChannel } from "@/types/subscription";
 import { useI18n } from "@/i18n/I18nProvider";
 import { notificationService } from "@/services/notification-service";
@@ -20,6 +21,8 @@ export function useNotificationTest(settings: AppSettings) {
   const { toast } = useToast();
   const { t, label } = useI18n();
   const [testingChannel, setTestingChannel] = useState<NotificationChannel | null>(null);
+  const [errorDetails, setErrorDetails] = useState<RawErrorResponseDetails | null>(null);
+  const [errorDetailsOpen, setErrorDetailsOpen] = useState(false);
 
   const testConnection = useCallback(
     async (channel: NotificationChannel) => {
@@ -34,6 +37,9 @@ export function useNotificationTest(settings: AppSettings) {
           description: `${t("notification.channel")}：${label(CHANNEL_LABELS[channel])}`,
         });
       } catch (e: unknown) {
+        const details = createRawErrorResponseDetails(e);
+        setErrorDetails(details);
+        setErrorDetailsOpen(true);
         toast({
           title: t("notification.testFailed"),
           description: getDisplayErrorMessage(e, t("notification.testFailedDescription")),
@@ -46,5 +52,11 @@ export function useNotificationTest(settings: AppSettings) {
     [label, settings, t, testingChannel, toast],
   );
 
-  return { testingChannel, testConnection };
+  return {
+    testingChannel,
+    testConnection,
+    errorDetails,
+    errorDetailsOpen,
+    setErrorDetailsOpen,
+  };
 }

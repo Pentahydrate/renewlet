@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -33,7 +32,7 @@ func sendToChannels(app core.App, channels []string, settings appSettings, messa
 	for _, channel := range channels {
 		// 串行发送牺牲一点延迟，换来确定性的 history 顺序，并降低同一分钟对多个外部服务的突发压力。
 		if err := sendToChannel(app, channel, settings, message); err != nil {
-			summary.Failed = append(summary.Failed, channelFailure{Channel: channel, Error: err.Error()})
+			summary.Failed = append(summary.Failed, channelFailure{Channel: channel, Error: err.Error(), Details: notificationChannelErrorDetails(err)})
 		} else {
 			summary.Succeeded = append(summary.Succeeded, channel)
 		}
@@ -86,16 +85,16 @@ func sendTelegram(settings appSettings, message notificationMessage) error {
 	}
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		resp, err := postJSON(endpoint, body, "Telegram Bot API", locale)
+		resp, err := postJSON(endpoint, body, "Telegram Bot API", locale, token, chatID)
 		if err == nil && responseOK(resp) {
 			return nil
 		}
 		if err != nil {
 			lastErr = err
 		} else {
-			text := readResponseText(resp)
-			lastErr = channelHTTPError(normalizeAppLocale(settings.Locale), "Telegram", resp.StatusCode, fallbackText(text, resp.Status))
-			if resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode < 500 {
+			statusCode := resp.StatusCode
+			lastErr = channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "Telegram", resp, token, chatID)
+			if statusCode != http.StatusTooManyRequests && statusCode < 500 {
 				// 配置错误类 4xx 不重试，避免每轮 cron 都重复打到外部 API。
 				break
 			}
@@ -117,15 +116,14 @@ func sendNotifyx(settings appSettings, message notificationMessage) error {
 		Title:       message.Title,
 		Content:     message.Content,
 		Description: message.Timestamp,
-	}, "NotifyX API", locale)
+	}, "NotifyX API", locale, apiKey)
 	if err != nil {
 		return err
 	}
 	if responseOK(resp) {
 		return nil
 	}
-	text := readResponseText(resp)
-	return channelHTTPError(normalizeAppLocale(settings.Locale), "NotifyX", resp.StatusCode, fallbackText(text, resp.Status))
+	return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "NotifyX", resp, apiKey)
 }
 
 // sendWebhook 发送用户自定义 Webhook。
@@ -152,15 +150,14 @@ func sendWebhook(settings appSettings, message notificationMessage) error {
 		q.Set("content", message.Content)
 		q.Set("timestamp", message.Timestamp)
 		u.RawQuery = q.Encode()
-		resp, err := sendHTTPRequest(http.MethodGet, u.String(), headers, nil, "Webhook", locale)
+		resp, err := sendHTTPRequest(http.MethodGet, u.String(), headers, nil, "Webhook", locale, webhookSecrets(safeURL.String(), headers)...)
 		if err != nil {
 			return err
 		}
 		if responseOK(resp) {
 			return nil
 		}
-		text := readResponseText(resp)
-		return channelHTTPError(normalizeAppLocale(settings.Locale), "Webhook", resp.StatusCode, fallbackText(text, resp.Status))
+		return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "Webhook", resp, webhookSecrets(safeURL.String(), headers)...)
 	}
 
 	body, err := json.Marshal(webhookDefaultPayload{
@@ -181,15 +178,14 @@ func sendWebhook(settings appSettings, message notificationMessage) error {
 	if _, ok := headers["content-type"]; !ok {
 		headers["content-type"] = "application/json"
 	}
-	resp, err := sendHTTPRequest(http.MethodPost, safeURL.String(), headers, body, "Webhook", locale)
+	resp, err := sendHTTPRequest(http.MethodPost, safeURL.String(), headers, body, "Webhook", locale, webhookSecrets(safeURL.String(), headers)...)
 	if err != nil {
 		return err
 	}
 	if responseOK(resp) {
 		return nil
 	}
-	text := readResponseText(resp)
-	return channelHTTPError(normalizeAppLocale(settings.Locale), "Webhook", resp.StatusCode, fallbackText(text, resp.Status))
+	return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "Webhook", resp, webhookSecrets(safeURL.String(), headers)...)
 }
 
 // sendWeChatWork 发送企业微信机器人消息。
@@ -211,15 +207,14 @@ func sendWeChatWork(settings appSettings, message notificationMessage) error {
 		resp, err := postJSON(safeURL.String(), wechatMarkdownRequest{
 			MsgType:  "markdown",
 			Markdown: wechatMarkdownMessage{Content: content},
-		}, serverText(locale, "service.wecomAPI"), locale)
+		}, serverText(locale, "service.wecomAPI"), locale, safeURL.String())
 		if err != nil {
 			return err
 		}
 		if responseOK(resp) {
 			return nil
 		}
-		text := readResponseText(resp)
-		return channelHTTPError(normalizeAppLocale(settings.Locale), "WeCom", resp.StatusCode, fallbackText(text, resp.Status))
+		return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "WeCom", resp, safeURL.String())
 	} else {
 		phones := splitList(settings.WechatAtPhones)
 		if settings.WechatAtAll {
@@ -231,15 +226,14 @@ func sendWeChatWork(settings appSettings, message notificationMessage) error {
 				Content:             content,
 				MentionedMobileList: phones,
 			},
-		}, serverText(locale, "service.wecomAPI"), locale)
+		}, serverText(locale, "service.wecomAPI"), locale, safeURL.String())
 		if err != nil {
 			return err
 		}
 		if responseOK(resp) {
 			return nil
 		}
-		text := readResponseText(resp)
-		return channelHTTPError(normalizeAppLocale(settings.Locale), "WeCom", resp.StatusCode, fallbackText(text, resp.Status))
+		return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "WeCom", resp, safeURL.String())
 	}
 }
 
@@ -254,15 +248,14 @@ func sendBark(settings appSettings, message notificationMessage) error {
 	if err != nil {
 		return err
 	}
-	resp, err := sendHTTPRequest(http.MethodGet, safeURL.String(), nil, nil, "Bark API", locale)
+	resp, err := sendHTTPRequest(http.MethodGet, safeURL.String(), nil, nil, "Bark API", locale, settings.BarkDeviceKey, safeURL.String())
 	if err != nil {
 		return err
 	}
 	if responseOK(resp) {
 		return nil
 	}
-	text := readResponseText(resp)
-	return channelHTTPError(locale, "Bark", resp.StatusCode, fallbackText(text, resp.Status))
+	return channelHTTPErrorFromResponse(locale, "Bark", resp, settings.BarkDeviceKey, safeURL.String())
 }
 
 // buildBarkRequestURL 构造 Bark GET 请求 URL。
@@ -338,14 +331,14 @@ func sendServerChan(settings appSettings, message notificationMessage) error {
 	resp, err := postServerChanJSON(endpoint, serverChanSendRequest{
 		Title: message.Title,
 		Desp:  message.Content + "\n\n" + message.Timestamp,
-	}, locale)
+	}, locale, sendKey)
 	if err != nil {
 		return err
 	}
 	return requireServerChanSuccess(resp, locale, sendKey)
 }
 
-func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale appLocale) (*http.Response, error) {
+func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale appLocale, sendKey string) (*http.Response, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
@@ -357,7 +350,11 @@ func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale a
 	req.Header.Set("content-type", "application/json")
 	resp, err := notificationHTTPClientFactory().Do(req)
 	if err != nil {
-		return nil, errors.New(serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": "ServerChan", "error": serverText(locale, "service.serverchanRequestFailed")}))
+		message := redactUpstreamSecrets(err.Error(), []string{sendKey})
+		return nil, newNotificationChannelError(
+			serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": "ServerChan", "error": message}),
+			createUpstreamErrorDetails(nil, message),
+		)
 	}
 	return resp, nil
 }
@@ -379,24 +376,37 @@ func requireServerChanSuccess(resp *http.Response, locale appLocale, sendKey str
 	if resp == nil {
 		return channelHTTPError(locale, "ServerChan", 0, "")
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 8192))
+	providerResponse, rawBody, err := captureUpstreamProviderResponse(resp, []string{sendKey})
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return channelHTTPError(locale, "ServerChan", resp.StatusCode, fallbackText(redactServerChanSecret(serverChanJSONErrorDetail(body), sendKey), serverText(locale, "service.serverchanResponseInvalid")))
+		detail := redactUpstreamSecrets(firstNonBlank(serverChanJSONErrorDetail([]byte(rawBody)), upstreamProviderMessage(providerResponse), serverText(locale, "service.serverchanResponseInvalid")), []string{sendKey})
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "ServerChan", resp.StatusCode, detail),
+			createUpstreamErrorDetails(providerResponse, detail),
+		)
 	}
 	var result serverChanSendResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return channelHTTPError(locale, "ServerChan", resp.StatusCode, serverText(locale, "service.serverchanResponseInvalid"))
+	if err := json.Unmarshal([]byte(rawBody), &result); err != nil {
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "ServerChan", resp.StatusCode, fallbackText(upstreamProviderMessage(providerResponse), serverText(locale, "service.serverchanResponseInvalid"))),
+			createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
+		)
 	}
 	// Server酱可能 HTTP 2xx 但业务 code 失败；历史摘要必须按 code 判断真实发送结果。
 	if result.Code == nil {
-		return channelHTTPError(locale, "ServerChan", resp.StatusCode, serverText(locale, "service.serverchanResponseInvalid"))
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "ServerChan", resp.StatusCode, serverText(locale, "service.serverchanResponseInvalid")),
+			createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
+		)
 	}
 	if *result.Code != 0 {
-		return channelHTTPError(locale, "ServerChan", resp.StatusCode, fallbackText(redactServerChanSecret(firstNonBlank(result.Message, result.Detail), sendKey), serverText(locale, "service.serverchanResponseInvalid")))
+		detail := fallbackText(redactUpstreamSecrets(firstNonBlank(result.Message, result.Detail), []string{sendKey}), serverText(locale, "service.serverchanResponseInvalid"))
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "ServerChan", resp.StatusCode, detail),
+			createUpstreamErrorDetails(providerResponse, detail),
+		)
 	}
 	return nil
 }
@@ -426,4 +436,20 @@ func redactServerChanSecret(value, sendKey string) string {
 		value = strings.ReplaceAll(value, url.PathEscape(sendKey), "[redacted]")
 	}
 	return trimLongText(value)
+}
+
+func webhookSecrets(endpoint string, headers map[string]string) []string {
+	secrets := []string{endpoint}
+	for key, value := range headers {
+		normalized := strings.ToLower(strings.TrimSpace(key))
+		if normalized == "authorization" ||
+			strings.Contains(normalized, "secret") ||
+			strings.Contains(normalized, "token") ||
+			strings.Contains(normalized, "signature") ||
+			strings.Contains(normalized, "credential") ||
+			strings.Contains(normalized, "api-key") {
+			secrets = append(secrets, value)
+		}
+	}
+	return secrets
 }

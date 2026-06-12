@@ -13,8 +13,8 @@ import (
 	"testing"
 )
 
-// 上游响应测试保护 status/header/body 回显与脱敏边界，raw response 不能泄露请求侧凭据。
-func TestS3CloudBackupListIncludesUpstreamResponse(t *testing.T) {
+// 上游响应测试保护 raw body 回显与脱敏边界，raw response 不能泄露请求侧凭据。
+func TestS3CloudBackupListIncludesRawResponseText(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if got := r.Header.Get("Authorization"); got == "" {
 			t.Fatalf("signed request missing Authorization header")
@@ -47,28 +47,16 @@ func TestS3CloudBackupListIncludesUpstreamResponse(t *testing.T) {
 	if remoteErr.code != "CLOUD_BACKUP_S3_LIST_FAILED" {
 		t.Fatalf("unexpected code: %s", remoteErr.code)
 	}
-	if remoteErr.details == nil || remoteErr.details.ProviderResponse == nil {
-		t.Fatalf("missing provider response: %#v", remoteErr.details)
+	if remoteErr.details == nil || remoteErr.details.RawResponseText == nil {
+		t.Fatalf("missing raw response text: %#v", remoteErr.details)
 	}
-	if remoteErr.details.ProviderResponse.Status == nil || *remoteErr.details.ProviderResponse.Status != http.StatusForbidden {
-		t.Fatalf("missing upstream status: %#v", remoteErr.details.ProviderResponse)
+	if !strings.Contains(*remoteErr.details.RawResponseText, "AccessDenied") {
+		t.Fatalf("missing upstream body: %#v", remoteErr.details)
 	}
-	if remoteErr.details.ProviderResponse.Body == nil || !strings.Contains(*remoteErr.details.ProviderResponse.Body, "AccessDenied") {
-		t.Fatalf("missing upstream body: %#v", remoteErr.details.ProviderResponse)
-	}
-	if _, ok := remoteErr.details.ProviderResponse.Headers["Authorization"]; ok {
-		t.Fatalf("sensitive response header should be filtered: %#v", remoteErr.details.ProviderResponse.Headers)
-	}
-	payload := ""
-	if remoteErr.details.ProviderResponse.Body != nil {
-		payload += *remoteErr.details.ProviderResponse.Body
-	}
-	for key, value := range remoteErr.details.ProviderResponse.Headers {
-		payload += key + value
-	}
+	payload := *remoteErr.details.RawResponseText
 	for _, leaked := range []string{"access-key", "secret-key", "should-not-echo"} {
 		if strings.Contains(payload, leaked) {
-			t.Fatalf("sensitive value %q leaked in provider response: %#v", leaked, remoteErr.details.ProviderResponse)
+			t.Fatalf("sensitive value %q leaked in raw response: %#v", leaked, remoteErr.details)
 		}
 	}
 }
@@ -241,11 +229,7 @@ func TestCloudBackupPersistedErrorMessageRedactsUpstreamBody(t *testing.T) {
 	err := &cloudBackupRemoteError{
 		code: "CLOUD_BACKUP_S3_LIST_FAILED",
 		details: &cloudBackupErrorDetails{
-			Reason: "http_403",
-			ProviderResponse: &cloudBackupProviderResponse{
-				Status: optionalCloudBackupStatusForTest(http.StatusForbidden),
-				Body:   &body,
-			},
+			RawResponseText: &body,
 		},
 	}
 
@@ -254,7 +238,7 @@ func TestCloudBackupPersistedErrorMessageRedactsUpstreamBody(t *testing.T) {
 	if strings.Contains(message, "AccessDenied") || strings.Contains(message, "missing list permission") {
 		t.Fatalf("persisted message leaked upstream body: %s", message)
 	}
-	if !strings.Contains(message, "CLOUD_BACKUP_S3_LIST_FAILED") || !strings.Contains(message, "status=403") {
+	if message != "CLOUD_BACKUP_S3_LIST_FAILED" {
 		t.Fatalf("persisted message lost useful summary: %s", message)
 	}
 }
@@ -262,14 +246,8 @@ func TestCloudBackupPersistedErrorMessageRedactsUpstreamBody(t *testing.T) {
 func TestCloudBackupLocalErrorDetails(t *testing.T) {
 	details := cloudBackupLocalErrorDetails(errors.New("Value out of range. Must be between -2147483648 and 2147483647 (inclusive)."))
 
-	if details.Reason != "local_sdk_error" {
-		t.Fatalf("unexpected local error reason: %#v", details)
-	}
-	if details.ProviderMessage == nil || !strings.Contains(*details.ProviderMessage, "Value out of range") {
-		t.Fatalf("missing provider message: %#v", details)
-	}
-	if details.ProviderResponse != nil {
-		t.Fatalf("local SDK error should not invent provider response: %#v", details.ProviderResponse)
+	if details.RawResponseText == nil || !strings.Contains(*details.RawResponseText, "Value out of range") {
+		t.Fatalf("missing raw local error: %#v", details)
 	}
 }
 
@@ -301,26 +279,14 @@ func TestS3CloudBackupLocalNetworkErrorIncludesAttemptedHost(t *testing.T) {
 		t.Fatalf("expected structured local S3 error, got %#v", err)
 	}
 	details := remoteErr.details
-	if details.ProviderMessage == nil || !strings.Contains(*details.ProviderMessage, "attempted host: https://cloud-storage-1234567890.cloud-storage.example.com") {
+	if details.RawResponseText == nil || !strings.Contains(*details.RawResponseText, "attempted host: https://cloud-storage-1234567890.cloud-storage.example.com") {
 		t.Fatalf("missing attempted host in local error: %#v", details)
-	}
-	if details.Diagnostics["signingRegion"] != "ap-shanghai" || details.Diagnostics["endpointMode"] != "serviceEndpoint" {
-		t.Fatalf("missing safe S3 diagnostics: %#v", details.Diagnostics)
-	}
-	if details.Diagnostics["configuredEndpoint"] != "https://cloud-storage.example.com" || details.Diagnostics["operation"] != "list" {
-		t.Fatalf("missing configured endpoint or operation diagnostics: %#v", details.Diagnostics)
-	}
-	if details.Diagnostics["attemptedHost"] != "https://cloud-storage-1234567890.cloud-storage.example.com" {
-		t.Fatalf("missing attempted host diagnostic: %#v", details.Diagnostics)
 	}
 	serialized := fmt.Sprintf("%#v", details)
 	for _, leaked := range []string{"access-key", "secret-key", "Authorization", "X-Amz-Signature"} {
 		if strings.Contains(serialized, leaked) {
-			t.Fatalf("sensitive value %q leaked in local diagnostics: %s", leaked, serialized)
+			t.Fatalf("sensitive value %q leaked in local raw response: %s", leaked, serialized)
 		}
-	}
-	if details.ProviderResponse != nil {
-		t.Fatalf("local network error should not invent provider response: %#v", details.ProviderResponse)
 	}
 }
 
@@ -429,34 +395,23 @@ func TestWebDAVCloudBackupProviderResponses(t *testing.T) {
 				t.Fatal("expected WebDAV provider error")
 			}
 			remoteErr := cloudBackupRemoteErrorFrom(err)
-			if remoteErr == nil || remoteErr.details == nil || remoteErr.details.ProviderResponse == nil {
-				t.Fatalf("expected provider response, got %#v", err)
-			}
-			response := remoteErr.details.ProviderResponse
-			if response.Status == nil || *response.Status != tt.status {
-				t.Fatalf("expected status %d, got %#v", tt.status, response)
-			}
-			if _, ok := response.Headers["Authorization"]; ok {
-				t.Fatalf("sensitive response header should be filtered: %#v", response.Headers)
+			if remoteErr == nil || remoteErr.details == nil || remoteErr.details.RawResponseText == nil {
+				t.Fatalf("expected raw response text, got %#v", err)
 			}
 			if tt.wantBody == "" {
-				if response.Body != nil {
-					t.Fatalf("expected empty upstream body, got %#v", response.Body)
+				if strings.TrimSpace(*remoteErr.details.RawResponseText) != http.StatusText(tt.status) {
+					t.Fatalf("expected status fallback, got %#v", remoteErr.details.RawResponseText)
 				}
 				return
 			}
-			if response.Body == nil || !strings.Contains(*response.Body, tt.wantBody) {
-				t.Fatalf("expected redacted upstream body %q, got %#v", tt.wantBody, response.Body)
+			if !strings.Contains(*remoteErr.details.RawResponseText, tt.wantBody) {
+				t.Fatalf("expected redacted upstream body %q, got %#v", tt.wantBody, remoteErr.details.RawResponseText)
 			}
-			if strings.Contains(*response.Body, "webdav-secret") {
-				t.Fatalf("WebDAV password leaked in provider response: %#v", response.Body)
+			if strings.Contains(*remoteErr.details.RawResponseText, "webdav-secret") {
+				t.Fatalf("WebDAV password leaked in raw response: %#v", remoteErr.details.RawResponseText)
 			}
 		})
 	}
-}
-
-func optionalCloudBackupStatusForTest(status int) *int {
-	return &status
 }
 
 type cloudBackupRoundTripFunc func(*http.Request) (*http.Response, error)

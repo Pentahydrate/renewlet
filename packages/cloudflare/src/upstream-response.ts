@@ -1,0 +1,240 @@
+import {
+  UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS,
+  upstreamErrorDetailsSchema,
+  type UpstreamErrorDetails,
+} from "@renewlet/shared/schemas/upstream";
+
+export type UpstreamResponseCaptureOptions = {
+  secrets?: readonly string[];
+  bodyLimitBytes?: number;
+};
+
+// 这个结构只在运行时内部保留 status/header/body 以便脱敏取 rawResponseText；公开 API 只暴露 shared 的 details.rawResponseText。
+export type UpstreamProviderResponse = {
+  status: number | null;
+  statusText: string | null;
+  headers: Record<string, string> | null;
+  body: string | null;
+  bodyTruncated: boolean;
+};
+
+const textEncoder = new TextEncoder();
+
+// 上游错误需要沿 cause/errors 嵌套向外冒泡；details 只能随当前失败响应返回，不进入 cron history 或缓存状态。
+export class UpstreamOperationError extends Error {
+  constructor(message: string, readonly details?: UpstreamErrorDetails) {
+    super(message);
+    this.name = "UpstreamOperationError";
+  }
+}
+
+export async function upstreamProviderResponseFromFetchResponse(
+  response: Response,
+  options: UpstreamResponseCaptureOptions = {},
+): Promise<UpstreamProviderResponse> {
+  const body = await readUpstreamResponseBody(response, options.bodyLimitBytes);
+  return upstreamProviderResponseFromBody(response, body.text, body.truncated, options.secrets ?? []);
+}
+
+export function upstreamProviderResponseFromBody(
+  response: Response,
+  body: string,
+  bodyTruncated: boolean,
+  secrets: readonly string[] = [],
+): UpstreamProviderResponse {
+  return {
+    status: response.status,
+    statusText: response.statusText || null,
+    headers: upstreamHeadersToObject(response.headers, secrets),
+    body: body ? redactUpstreamSecrets(body, secrets) : null,
+    bodyTruncated,
+  };
+}
+
+export function upstreamProviderResponseFromUnknown(
+  input: {
+    status?: unknown;
+    statusText?: unknown;
+    headers?: unknown;
+    body?: unknown;
+    bodyTruncated?: unknown;
+  },
+  secrets: readonly string[] = [],
+): UpstreamProviderResponse {
+  const body = typeof input.body === "string" ? redactUpstreamSecrets(input.body, secrets) : "";
+  return {
+    status: typeof input.status === "number" && input.status >= 100 && input.status <= 599 ? input.status : null,
+    statusText: typeof input.statusText === "string" && input.statusText.trim() ? input.statusText.trim() : null,
+    headers: recordToUpstreamHeaders(input.headers, secrets),
+    body: body || null,
+    bodyTruncated: input.bodyTruncated === true,
+  };
+}
+
+export function createUpstreamErrorDetails(input: {
+  responseText?: string | null;
+  providerResponse?: UpstreamProviderResponse | null;
+  fallbackText?: string | null;
+}): UpstreamErrorDetails | undefined {
+  // 弹窗只需要原始可见 body；status/headers/attempts 只参与内部取 message 和脱敏，不再成为前端展示契约。
+  const rawResponseText = input.providerResponse?.body || input.responseText || input.fallbackText || null;
+  return rawResponseText ? upstreamErrorDetailsSchema.parse({ rawResponseText }) : undefined;
+}
+
+export function createUpstreamHTTPError(input: {
+  provider: string;
+  response: Response;
+  providerResponse: UpstreamProviderResponse;
+  providerMessage?: string | null;
+}): UpstreamOperationError {
+  const providerMessage = input.providerMessage ?? providerMessageFromResponse(input.providerResponse);
+  const message = providerMessage
+    ? `${input.provider} HTTP ${input.response.status}: ${providerMessage}`
+    : `${input.provider} HTTP ${input.response.status}`;
+  return new UpstreamOperationError(message, createUpstreamErrorDetails({
+    responseText: providerMessage,
+    providerResponse: input.providerResponse,
+  }));
+}
+
+export function createUpstreamNetworkError(input: {
+  provider: string;
+  error: unknown;
+  secrets?: readonly string[];
+}): UpstreamOperationError {
+  const message = input.error instanceof Error
+    ? redactUpstreamSecrets(input.error.message, input.secrets ?? [])
+    : redactUpstreamSecrets(String(input.error), input.secrets ?? []);
+  return new UpstreamOperationError(message, createUpstreamErrorDetails({
+    responseText: message,
+  }));
+}
+
+export function upstreamErrorDetailsFromError(error: unknown): UpstreamErrorDetails | undefined {
+  const match = findUpstreamOperationError(error);
+  return match?.details;
+}
+
+export function providerMessageFromResponse(response: UpstreamProviderResponse | null | undefined): string | null {
+  return response?.body || response?.statusText || null;
+}
+
+export function upstreamHeadersToObject(headers: Headers, secrets: readonly string[] = []): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    // response header 也可能带 Set-Cookie、签名或临时 token；只保留排障有用且不含凭据的 header。
+    if (!safeUpstreamHeaderName(key)) return;
+    const text = redactUpstreamSecrets(value.trim(), secrets);
+    if (text) out[key] = text;
+  });
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+export function recordToUpstreamHeaders(value: unknown, secrets: readonly string[] = []): Record<string, string> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const out: Record<string, string> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item !== "string" || !safeUpstreamHeaderName(key)) continue;
+    const text = redactUpstreamSecrets(item.trim(), secrets);
+    if (text) out[key] = text;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+export function safeUpstreamHeaderName(key: string): boolean {
+  const normalized = key.toLowerCase().trim();
+  if (!normalized) return false;
+  if (normalized === "authorization" || normalized === "proxy-authorization" || normalized === "cookie" || normalized === "set-cookie") return false;
+  return !normalized.includes("secret")
+    && !normalized.includes("token")
+    && !normalized.includes("signature")
+    && !normalized.includes("credential")
+    && !normalized.includes("accesskey")
+    && !normalized.includes("access-key")
+    && !normalized.includes("api-key")
+    && !normalized.includes("apikey")
+    && !normalized.includes("auth-key")
+    && !normalized.includes("authkey");
+}
+
+export function redactUpstreamSecrets(value: string, secrets: readonly string[] = []): string {
+  let out = value;
+  for (const secret of normalizedUpstreamSecrets(secrets)) {
+    // 同时替换原文和 URL 编码形态，覆盖 SendKey/API key 出现在 HTML、JSON 或签名 URL 里的常见返回。
+    out = out.split(secret).join("[redacted]");
+    out = out.split(encodeURIComponent(secret)).join("[redacted]");
+  }
+  return redactSignedQueryValues(out);
+}
+
+// Worker 出站错误页可能是 HTML/大 JSON；只读取固定上限，避免 response.text() 把 isolate 内存打满。
+export async function readUpstreamResponseBody(response: Response, limitBytes = UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS): Promise<{ text: string; truncated: boolean }> {
+  if (!response.body) return { text: "", truncated: false };
+  const limit = Math.max(0, Math.floor(limitBytes));
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  let truncated = false;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const remaining = limit - total;
+    if (remaining <= 0) {
+      truncated = true;
+      await reader.cancel().catch(() => undefined);
+      break;
+    }
+    if (value.byteLength > remaining) {
+      chunks.push(value.slice(0, remaining));
+      total += remaining;
+      truncated = true;
+      await reader.cancel().catch(() => undefined);
+      break;
+    }
+    chunks.push(value);
+    total += value.byteLength;
+  }
+  return {
+    text: new TextDecoder().decode(concatUint8Arrays(chunks)),
+    truncated,
+  };
+}
+
+function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+function normalizedUpstreamSecrets(secrets: readonly string[]): string[] {
+  return Array.from(new Set(secrets.map((secret) => secret.trim()).filter((secret) => textEncoder.encode(secret).byteLength >= 4)));
+}
+
+function redactSignedQueryValues(value: string): string {
+  return value.replace(
+    /([?&](?:X-Amz-Signature|X-Amz-Credential|X-Amz-Security-Token|AWSAccessKeyId|Signature|Expires|access_key|accessKey|api_key|apikey|token|sendkey|sendKey|key)=)[^&\s"'<>]+/gi,
+    "$1[redacted]",
+  );
+}
+
+function findUpstreamOperationError(error: unknown, seen = new WeakSet<object>()): UpstreamOperationError | null {
+  if (!error || typeof error !== "object") return null;
+  if (seen.has(error)) return null;
+  seen.add(error);
+  if (error instanceof UpstreamOperationError) return error;
+  const cause = "cause" in error ? findUpstreamOperationError((error as { cause?: unknown }).cause, seen) : null;
+  if (cause) return cause;
+  const errors = "errors" in error ? (error as { errors?: unknown }).errors : undefined;
+  if (Array.isArray(errors)) {
+    for (const item of errors) {
+      const match = findUpstreamOperationError(item, seen);
+      if (match) return match;
+    }
+  }
+  return null;
+}

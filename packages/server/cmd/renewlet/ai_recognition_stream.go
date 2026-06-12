@@ -190,10 +190,7 @@ func aiRecognitionStreamErrorForError(locale appLocale, err error) aiRecognition
 	if diagnostics := aiRecognitionDiagnosticsFromError(err); diagnostics != nil {
 		cause := aiRecognitionCauseError(err)
 		details = &aiRecognitionErrorDetails{
-			Reason:           reason,
-			ProviderMessage:  safeAIRecognitionProviderMessage(cause),
-			ProviderResponse: aiProviderResponseFromError(cause),
-			Diagnostics:      *diagnostics,
+			RawResponseText: optionalUpstreamBody(firstNonBlank(aiProviderResponseBody(aiProviderResponseFromError(cause)), optionalStringValue(safeAIRecognitionProviderMessage(cause)), reason)),
 		}
 	}
 	return aiRecognitionStreamErrorEvent{

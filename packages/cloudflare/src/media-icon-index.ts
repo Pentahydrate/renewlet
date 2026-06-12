@@ -28,6 +28,15 @@ import { requireAdmin } from "./auth";
 import { nowIso } from "./db";
 import { HttpError, json, requireEmptyBody, requestLocale } from "./http";
 import type { Env, MediaIconIndexRow } from "./types";
+import {
+  UpstreamOperationError,
+  createUpstreamErrorDetails,
+  createUpstreamHTTPError,
+  createUpstreamNetworkError,
+  providerMessageFromResponse,
+  upstreamErrorDetailsFromError,
+  upstreamProviderResponseFromFetchResponse,
+} from "./upstream-response";
 
 const MEDIA_ICON_INDEX_KEY = "active";
 const MEDIA_ICON_INDEX_R2_PREFIX = "system/media-icon-index";
@@ -60,16 +69,6 @@ let resolverCache: { hash: string; resolver: MediaResolver } = {
   resolver: embeddedResolver,
 };
 let refreshingProviderInCurrentIsolate: BuiltInIconProvider | null = null;
-
-class GitHubVersionCheckError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "GitHubVersionCheckError";
-  }
-}
 
 /**
  * 读取当前 active resolver。
@@ -118,12 +117,17 @@ export async function checkBuiltInIconIndexProvider(request: Request, env: Env, 
     return json(builtInIconIndexProviderCheckResponseSchema.parse({ status, provider: providerStatus(status, parsedProvider) }));
   } catch (error) {
     const message = truncateText(error instanceof Error ? error.message : String(error), 2000);
+    const errorDetails = upstreamErrorDetailsFromError(error);
     await saveProviderFailure(env, parsedProvider, nowIso(), message);
     await finishRefreshOperation(env);
     operationActive = false;
     const status = await readBuiltInIconIndexStatus(env);
     // check 只是更新 provider 可见状态；GitHub 限流/断网时仍返回同形状 body，让前端展示失败 badge 而不是把弹层流程打断。
-    return json(builtInIconIndexProviderCheckResponseSchema.parse({ status, provider: providerStatus(status, parsedProvider) }));
+    return json(builtInIconIndexProviderCheckResponseSchema.parse({
+      status,
+      provider: providerStatus(status, parsedProvider),
+      ...(errorDetails ? { errorDetails } : {}),
+    }));
   } finally {
     if (operationActive) await finishRefreshOperation(env);
   }
@@ -176,11 +180,16 @@ export async function refreshBuiltInIconIndexProvider(request: Request, env: Env
     return json(builtInIconIndexProviderRefreshResponseSchema.parse({ status, provider: providerStatus(status, parsedProvider) }));
   } catch (error) {
     const message = truncateText(error instanceof Error ? error.message : String(error), 2000);
+    const errorDetails = upstreamErrorDetailsFromError(error);
     await saveProviderFailure(env, parsedProvider, nowIso(), message);
     await finishRefreshOperation(env);
     operationActive = false;
     const status = await readBuiltInIconIndexStatus(env);
-    return json(builtInIconIndexProviderRefreshResponseSchema.parse({ status, provider: providerStatus(status, parsedProvider) }), { status: 502 });
+    return json(builtInIconIndexProviderRefreshResponseSchema.parse({
+      status,
+      provider: providerStatus(status, parsedProvider),
+      ...(errorDetails ? { errorDetails } : {}),
+    }), { status: 502 });
   } finally {
     if (operationActive) await finishRefreshOperation(env);
   }
@@ -410,14 +419,24 @@ async function fetchGitHubJson<T>(
     "x-github-api-version": GITHUB_API_VERSION,
   };
   if (etag) headers["if-none-match"] = etag;
-  if (env.RENEWLET_GITHUB_TOKEN?.trim()) headers["authorization"] = `Bearer ${env.RENEWLET_GITHUB_TOKEN.trim()}`;
+  const token = env.RENEWLET_GITHUB_TOKEN?.trim();
+  if (token) headers["authorization"] = `Bearer ${token}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(url, { headers, signal: controller.signal });
+    let response: Response;
+    try {
+      response = await fetch(url, { headers, signal: controller.signal });
+    } catch (error) {
+      throw createUpstreamNetworkError({
+        provider: "GitHub",
+        error,
+        secrets: token ? [token] : [],
+      });
+    }
     const nextEtag = response.headers.get("etag") ?? "";
     if (response.status === 304) return { data: null, etag: nextEtag, notModified: true };
-    if (!response.ok) throw githubVersionCheckError(response);
+    if (!response.ok) throw await githubVersionCheckError(response, token ? [token] : []);
     return {
       data: JSON.parse(await readResponseTextUpToLimit(response, "GitHub version check")) as T,
       etag: nextEtag,
@@ -428,23 +447,38 @@ async function fetchGitHubJson<T>(
   }
 }
 
-function githubVersionCheckError(response: Response): GitHubVersionCheckError {
+async function githubVersionCheckError(response: Response, secrets: readonly string[]): Promise<UpstreamOperationError> {
   const status = response.status;
   const remaining = response.headers.get("x-ratelimit-remaining");
   const retryAfter = response.headers.get("retry-after");
   const resetAt = githubRateLimitResetTime(response.headers.get("x-ratelimit-reset"));
+  const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets });
+  const providerMessage = providerMessageFromResponse(providerResponse);
   if (status === 429 || (status === 403 && remaining === "0")) {
     const retryHint = retryAfter
       ? ` Retry after ${retryAfter}s.`
       : resetAt
         ? ` Retry after ${resetAt}.`
         : "";
-    return new GitHubVersionCheckError(status, `GitHub API rate limited (HTTP ${status}).${retryHint} Configure RENEWLET_GITHUB_TOKEN for a higher limit.`);
+    const message = `GitHub API rate limited (HTTP ${status}).${retryHint} Configure RENEWLET_GITHUB_TOKEN for a higher limit.`;
+    return new UpstreamOperationError(message, createUpstreamErrorDetails({
+      responseText: providerMessage || message,
+      providerResponse,
+    }));
   }
   if (status === 403) {
-    return new GitHubVersionCheckError(status, "GitHub API access denied (HTTP 403). Configure RENEWLET_GITHUB_TOKEN or retry later.");
+    const message = "GitHub API access denied (HTTP 403). Configure RENEWLET_GITHUB_TOKEN or retry later.";
+    return new UpstreamOperationError(message, createUpstreamErrorDetails({
+      responseText: providerMessage || message,
+      providerResponse,
+    }));
   }
-  return new GitHubVersionCheckError(status, `GitHub version check HTTP ${status}`);
+  return createUpstreamHTTPError({
+    provider: "GitHub",
+    response,
+    providerResponse,
+    providerMessage: providerMessage || `GitHub version check HTTP ${status}`,
+  });
 }
 
 function githubRateLimitResetTime(value: string | null): string {
@@ -458,11 +492,27 @@ const registryFetcher: BuiltInIconRegistryFetcher = async (url, label) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
-      headers: { accept: "application/json" },
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new HttpError(response.status, `${label} HTTP ${response.status}`);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { accept: "application/json" },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      throw createUpstreamNetworkError({
+        provider: label,
+        error,
+      });
+    }
+    if (!response.ok) {
+      const providerResponse = await upstreamProviderResponseFromFetchResponse(response);
+      throw createUpstreamHTTPError({
+        provider: label,
+        response,
+        providerResponse,
+        providerMessage: providerMessageFromResponse(providerResponse) || `${label} HTTP ${response.status}`,
+      });
+    }
     return JSON.parse(await readResponseTextUpToLimit(response, label));
   } finally {
     clearTimeout(timeout);

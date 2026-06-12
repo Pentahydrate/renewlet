@@ -167,78 +167,21 @@ describe("AI recognition diagnostics schema", () => {
 });
 
 describe("AI provider error response schema", () => {
-  it("keeps raw provider response body and accepts legacy details", () => {
+  it("keeps raw provider response text for model list failures", () => {
     const rawBody = "  {\"error\":\"invalid sk-test-secret\"}\n";
     expect(aiModelListErrorDetailsSchema.parse({
-      reason: "http_401",
-      providerMessage: rawBody,
-      providerResponse: {
-        status: 401,
-        statusText: "Unauthorized",
-        headers: { "content-type": "application/json" },
-        body: rawBody,
-        bodyTruncated: false,
-      },
-    }).providerResponse?.body).toBe(rawBody);
-
-    expect(aiModelListErrorDetailsSchema.parse({
-      reason: "provider_failed",
-      providerMessage: "network error",
-      providerResponse: {
-        status: null,
-        statusText: null,
-        headers: null,
-        body: "network error",
-        bodyTruncated: false,
-      },
-    }).providerResponse?.headers).toBeNull();
+      rawResponseText: rawBody,
+    }).rawResponseText).toBe(rawBody);
 
     expect(aiModelListErrorDetailsSchema.safeParse({
       reason: "http_401",
       providerMessage: "legacy provider message",
-    }).success).toBe(true);
+    }).success).toBe(false);
   });
 
-  it("allows AI recognition details with provider response and diagnostics", () => {
-    const diagnostics = {
-      schemaVersion: "1",
-      promptVersion: "test",
-      schemaName: "renewlet_ai_subscription_recognition",
-      prompt: {
-        system: { value: "system", truncated: false },
-        user: { value: "user", truncated: false },
-      },
-      output: {
-        rawModelText: null,
-        rawObjectJson: null,
-      },
-      request: {
-        providerType: "openai",
-        transportProtocol: "openai-chat",
-        model: "gpt-5.1",
-        thinkingControl: null,
-        maxOutputTokens: 12000,
-        textCharCount: 0,
-        images: [],
-      },
-      response: {
-        usage: null,
-        finishReason: null,
-        providerMetadata: null,
-      },
-    };
-
+  it("allows AI recognition errors to expose only raw response text", () => {
     expect(aiRecognitionErrorDetailsSchema.safeParse({
-      reason: "provider_failed",
-      providerMessage: "invalid model",
-      providerResponse: {
-        status: 400,
-        statusText: "Bad Request",
-        headers: null,
-        body: "{\"error\":\"invalid model\"}",
-        bodyTruncated: false,
-      },
-      diagnostics,
+      rawResponseText: "{\"error\":\"invalid model\"}",
     }).success).toBe(true);
   });
 });

@@ -311,25 +311,11 @@ func (client *s3CloudBackupClient) captureS3Error(code string, operation func() 
 	client.capture.reset()
 	if err := operation(); err != nil {
 		if response := client.capture.last(); response != nil {
-			return cloudBackupRemoteHTTPErrorFromProviderResponseWithDiagnostics(s3ErrorCodeForStatus(code, response), response, client.diagnostics(s3OperationFromCode(code)))
+			return cloudBackupRemoteHTTPErrorFromProviderResponse(s3ErrorCodeForStatus(code, response), response)
 		}
-		return client.capture.describeLocalError(err, client.diagnostics(s3OperationFromCode(code)))
+		return client.capture.describeLocalError(err)
 	}
 	return nil
-}
-
-func (client *s3CloudBackupClient) diagnostics(operation string) map[string]string {
-	// diagnostics 只暴露签名所需的非密配置摘要；不要把 access key、secret、Authorization 或预签名 query 带回浏览器。
-	diagnostics := map[string]string{
-		"configuredEndpoint": providerHostSummary(client.settings.Endpoint),
-		"signingRegion":     strings.TrimSpace(client.settings.Region),
-		"endpointMode":      string(resolveCloudBackupS3EndpointMode(client.settings)),
-		"operation":         operation,
-	}
-	if attemptedHost := client.capture.attemptedHostValue(); attemptedHost != "" {
-		diagnostics["attemptedHost"] = attemptedHost
-	}
-	return diagnostics
 }
 
 func (client *s3CaptureHTTPClient) Do(request *http.Request) (*http.Response, error) {
@@ -383,7 +369,7 @@ func (capture *s3ProviderResponseCapture) attemptedHostValue() string {
 	return capture.attemptedHost
 }
 
-func (capture *s3ProviderResponseCapture) describeLocalError(err error, diagnostics map[string]string) error {
+func (capture *s3ProviderResponseCapture) describeLocalError(err error) error {
 	attemptedHost := capture.attemptedHostValue()
 	var wrapped error
 	if err == nil {
@@ -395,7 +381,7 @@ func (capture *s3ProviderResponseCapture) describeLocalError(err error, diagnost
 	}
 	return &cloudBackupRemoteError{
 		code:    "CLOUD_BACKUP_S3_LOCAL_FAILED",
-		details: cloudBackupLocalErrorDetailsWithDiagnostics(wrapped, diagnostics),
+		details: cloudBackupLocalErrorDetails(wrapped),
 	}
 }
 
@@ -404,23 +390,6 @@ func s3ErrorCodeForStatus(fallback string, response *cloudBackupProviderResponse
 		return "CLOUD_BACKUP_S3_NOT_FOUND"
 	}
 	return fallback
-}
-
-func s3OperationFromCode(code string) string {
-	switch {
-	case strings.Contains(code, "_PUT_"):
-		return "put"
-	case strings.Contains(code, "_HEAD_"):
-		return "head"
-	case strings.Contains(code, "_GET_"):
-		return "get"
-	case strings.Contains(code, "_DELETE_"):
-		return "delete"
-	case strings.Contains(code, "_LIST_"):
-		return "list"
-	default:
-		return "s3"
-	}
 }
 
 func isS3NotFoundError(err error) bool {

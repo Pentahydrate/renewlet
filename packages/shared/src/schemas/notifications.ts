@@ -11,6 +11,7 @@ import {
 } from "../runtime";
 import { okResponseSchema } from "./common";
 import { settingsUpdateBodySchema } from "./settings";
+import { upstreamErrorDetailsSchema } from "./upstream";
 
 export const notificationChannelSchema = z.enum(NOTIFICATION_CHANNELS);
 
@@ -58,6 +59,7 @@ export const upcomingNotificationBatchResponseSchema = localScheduleOccurrenceRe
 export const channelFailureResponseSchema = z.object({
   channel: notificationChannelSchema,
   error: z.string(),
+  details: upstreamErrorDetailsSchema.optional(),
 }).strict();
 
 export const jobChannelsResponseSchema = z.object({

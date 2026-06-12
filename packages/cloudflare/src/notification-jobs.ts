@@ -1,6 +1,7 @@
 import { NOTIFICATION_CHANNELS } from "@renewlet/shared/runtime";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { NotificationEmailMessage } from "@renewlet/shared/email-template";
+import type { UpstreamErrorDetails } from "@renewlet/shared/schemas/upstream";
 import { NOTIFICATION_JOB_COLUMNS, newId, nowIso, parseJobResult } from "./db";
 import type { Env, NotificationJobRow } from "./types";
 import type { ScheduleOccurrence } from "./notification-schedule";
@@ -15,6 +16,7 @@ export type Channel = ApiAppSettings["enabledChannels"][number];
 export interface ChannelFailure {
   channel: Channel;
   error: string;
+  details?: UpstreamErrorDetails;
 }
 
 export interface JobChannels {
@@ -101,11 +103,33 @@ export async function finalizeNotificationJob(
     target = created.row;
   }
   const timestamp = nowIso();
+  const persistedResult = stripNotificationFailureDetails(result);
   // finalize 按调度唯一键更新而不是只按 id，确保 INSERT OR IGNORE 抢占后的同一窗口仍能幂等落最终态。
   await env.DB.prepare(`
     UPDATE notification_jobs SET status = ?, attempts = ?, last_error = ?, result_json = ?, updated_at = ?
     WHERE user_id = ? AND scheduled_local_date = ? AND scheduled_local_time = ? AND time_zone = ?
-  `).bind(status, Math.max(0, attempts), error, JSON.stringify(result), timestamp, userId, schedule.scheduledLocalDate, schedule.scheduledLocalTime, schedule.timeZone).run();
+  `).bind(status, Math.max(0, attempts), error, JSON.stringify(persistedResult), timestamp, userId, schedule.scheduledLocalDate, schedule.scheduledLocalTime, schedule.timeZone).run();
+}
+
+function stripNotificationFailureDetails(result: unknown): unknown {
+  if (!result || typeof result !== "object" || Array.isArray(result)) return result;
+  const record = result as Record<string, unknown>;
+  const channels = record["channels"];
+  if (!channels || typeof channels !== "object" || Array.isArray(channels)) return result;
+  const channelRecord = channels as Record<string, unknown>;
+  const failed = channelRecord["failed"];
+  if (!Array.isArray(failed)) return result;
+  return {
+    ...record,
+    channels: {
+      ...channelRecord,
+      failed: failed.map((item) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+        const { details: _details, ...rest } = item as Record<string, unknown>;
+        return rest;
+      }),
+    },
+  };
 }
 
 export function isNotificationJobTerminal(row: NotificationJobRow | null): boolean {

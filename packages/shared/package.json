@@ -21,6 +21,7 @@
     "./schemas/public-status": "./src/schemas/public-status.ts",
     "./schemas/settings": "./src/schemas/settings.ts",
     "./schemas/subscriptions": "./src/schemas/subscriptions.ts",
+    "./schemas/upstream": "./src/schemas/upstream.ts",
     "./schemas/uploads": "./src/schemas/uploads.ts",
     "./ai-recognition-notes": "./src/ai-recognition-notes.ts",
     "./ai-provider-endpoints": "./src/ai-provider-endpoints.ts",

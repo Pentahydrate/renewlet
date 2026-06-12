@@ -1,6 +1,6 @@
 // 系统更新弹窗测试保护 Docker 页面内更新的 pending restart 状态流和 Cloudflare/source 禁用分支。
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -64,6 +64,12 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "system.updating": "更新中...",
         "system.viewChangelog": "查看更新日志",
         "system.warningTitle": "检查提示",
+        "rawErrorResponse.title": "错误响应详情",
+        "rawErrorResponse.description": "接口返回的原始响应。",
+        "rawErrorResponse.copy": "复制错误详情",
+        "rawErrorResponse.copied": "已复制",
+        "rawErrorResponse.copyFailed": "复制失败",
+        "rawErrorResponse.responseUnavailable": "当前错误没有可回显的响应正文。",
       };
       let value = messages[key] ?? key;
       for (const [name, param] of Object.entries(params ?? {})) {
@@ -426,8 +432,10 @@ describe("SystemUpdateDialog", () => {
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
     await user.click(await screen.findByRole("button", { name: "立即更新" }));
 
+    const detailsDialog = await screen.findByRole("dialog", { name: "错误响应详情" });
+    expect(detailsDialog).toHaveTextContent("下载失败");
+    await user.click(within(detailsDialog).getByRole("button", { name: "关闭" }));
     expect(await screen.findByText("更新失败")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("更新失败");
     expect(screen.getByRole("button", { name: "重试" })).toBeInTheDocument();
   });
 

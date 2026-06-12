@@ -77,7 +77,8 @@ describe("Cloudflare media icon index", () => {
 
   it("records GitHub rate limits as provider status without breaking check responses", async () => {
     const env = createEnv();
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited", {
+    env.RENEWLET_GITHUB_TOKEN = "github-token";
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited github-token", {
       status: 403,
       headers: {
         "x-ratelimit-remaining": "0",
@@ -98,9 +99,13 @@ describe("Cloudflare media icon index", () => {
         refreshing: false,
         lastError: expect.stringContaining("RENEWLET_GITHUB_TOKEN"),
       },
+      errorDetails: {
+        rawResponseText: "rate limited [redacted]",
+      },
     });
     expect(env.testState.row?.hash).toBeNull();
     expect(env.testState.objects.size).toBe(0);
+    expect(env.testState.row?.provider_status_json).not.toContain("github-token");
   });
 
   it("refreshes one provider metadata and serves the runtime resolver from R2", async () => {
@@ -171,6 +176,9 @@ describe("Cloudflare media icon index", () => {
         provider: "thesvg",
         refreshing: false,
         lastError: expect.stringContaining("HTTP 500"),
+      },
+      errorDetails: {
+        rawResponseText: "failed",
       },
     });
     expect(env.testState.row?.hash).toBe(activeHash);

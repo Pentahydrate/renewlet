@@ -39,17 +39,13 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "aiRecognition.baseUrlPlaceholder": "默认地址",
         "aiRecognition.baseUrlRequired": "OpenAI Compatible 需要填写 Base URL。",
         "aiRecognition.defaultThinking": "默认思考控制",
-        "aiRecognition.errorDetailsCopied": "已复制",
-        "aiRecognition.errorDetailsCopy": "复制完整响应",
-        "aiRecognition.errorDetailsCopyFailed": "复制失败",
-        "aiRecognition.errorDetailsDescription": "第三方 provider 返回的原始响应。",
-        "aiRecognition.errorDetailsDiagnostics": "Diagnostics",
-        "aiRecognition.errorDetailsDiagnosticsUnavailable": "当前错误没有识别 diagnostics。",
-        "aiRecognition.errorDetailsMetadata": "元数据",
+        "aiRecognition.errorDetailsDescription": "接口返回的原始响应。",
         "aiRecognition.errorDetailsOpenLast": "查看上次响应",
-        "aiRecognition.errorDetailsResponse": "原始响应",
-        "aiRecognition.errorDetailsResponseUnavailable": "当前错误没有可回显的上游 response body。",
-        "aiRecognition.errorDetailsTitle": "AI 上游响应",
+        "aiRecognition.errorDetailsTitle": "AI 错误详情",
+        "rawErrorResponse.copy": "复制错误详情",
+        "rawErrorResponse.copied": "已复制",
+        "rawErrorResponse.copyFailed": "复制失败",
+        "rawErrorResponse.responseUnavailable": "当前错误没有可回显的响应正文。",
         "aiRecognition.model": "模型",
         "aiRecognition.modelListFailedDescription": "无法获取模型列表，请检查 Base URL 和 API Key，或手动输入模型 ID。",
         "aiRecognition.modelListLoading": "正在获取模型列表...",
@@ -83,6 +79,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
 }));
 
 function aiModelListApiError(body = "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}") {
+  const rawResponse = `{"message":"无法获取模型列表，请检查 Base URL 和 API Key，或手动输入模型 ID。","code":"AI_MODEL_LIST_FAILED","details":{"rawResponseText":${JSON.stringify(body)}}}`;
   return new ApiError(
     "无法获取模型列表，请检查 Base URL 和 API Key，或手动输入模型 ID。",
     401,
@@ -90,18 +87,11 @@ function aiModelListApiError(body = "{\"code\":\"INVALID_API_KEY\",\"message\":\
       message: "无法获取模型列表，请检查 Base URL 和 API Key，或手动输入模型 ID。",
       code: "AI_MODEL_LIST_FAILED",
       details: {
-        reason: "http_401",
-        providerMessage: body,
-        providerResponse: {
-          status: 401,
-          statusText: "Unauthorized",
-          headers: { "content-type": "application/json" },
-          body,
-          bodyTruncated: false,
-        },
+        rawResponseText: body,
       },
     },
     "AI_MODEL_LIST_FAILED",
+    rawResponse,
   );
 }
 
@@ -247,18 +237,14 @@ describe("AIRecognitionSettingsSection provider model layout", () => {
     const providerControlRow = screen.getByTestId("ai-provider-control-row");
     await user.click(screen.getByRole("button", { name: "选择模型" }));
 
-    const detailsDialog = await screen.findByRole("dialog", { name: "AI 上游响应" });
-    const fixedDialogClass = "h-[min(calc(var(--app-viewport-height)-2rem),46rem)]";
-    const initialDialogClassName = detailsDialog.className;
+    const detailsDialog = await screen.findByRole("dialog", { name: "AI 错误详情" });
+    const fixedDialogClass = "h-[min(calc(var(--app-viewport-height)-2rem),42rem)]";
     expect(detailsDialog).toHaveClass(fixedDialogClass);
     expect(detailsDialog).not.toHaveClass("h-fit");
-    expect(screen.getByText("{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}")).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "元数据" }));
-    expect(detailsDialog.className).toBe(initialDialogClassName);
-    expect(detailsDialog).toHaveTextContent("\"status\": 401");
-    await user.click(screen.getByRole("tab", { name: "原始响应" }));
-    expect(detailsDialog.className).toBe(initialDialogClassName);
-    expect(screen.getByText("{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}")).toBeInTheDocument();
+    expect(detailsDialog).toHaveTextContent("INVALID_API_KEY");
+    expect(detailsDialog).toHaveTextContent("Invalid API key");
+    expect(detailsDialog).not.toHaveTextContent("AI_MODEL_LIST_FAILED");
+    expect(detailsDialog).not.toHaveTextContent("rawResponseText");
     expect(providerControlRow).toHaveClass("self-start");
     expect(providerControlRow).toHaveClass("md:order-3");
   });
@@ -269,7 +255,7 @@ describe("AIRecognitionSettingsSection provider model layout", () => {
     renderAIRecognitionSection();
 
     await user.click(screen.getByRole("button", { name: "选择模型" }));
-    expect(await screen.findByRole("dialog", { name: "AI 上游响应" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "AI 错误详情" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "关闭" }));
 
     expect(screen.getByRole("button", { name: "查看上次响应" })).toBeInTheDocument();
@@ -289,25 +275,20 @@ describe("AIRecognitionSettingsSection provider model layout", () => {
         message: "AI 连接失败",
         code: "AI_RECOGNITION_TEST_FAILED",
         details: {
-          reason: "provider_failed",
-          providerMessage: "[redacted]",
-          providerResponse: {
-            status: 403,
-            statusText: "Forbidden",
-            headers: { "content-type": "application/json" },
-            body: "{\"error\":\"forbidden\"}",
-            bodyTruncated: false,
-          },
+          rawResponseText: "{\"error\":\"forbidden\"}",
         },
       },
       "AI_RECOGNITION_TEST_FAILED",
+      "{\"message\":\"AI 连接失败\",\"code\":\"AI_RECOGNITION_TEST_FAILED\",\"details\":{\"rawResponseText\":\"{\\\"error\\\":\\\"forbidden\\\"}\"}}",
     ));
     renderAIRecognitionSection();
 
     await user.click(screen.getByRole("button", { name: "测试连接" }));
 
-    expect(await screen.findByRole("dialog", { name: "AI 上游响应" })).toBeInTheDocument();
-    expect(screen.getByText("{\"error\":\"forbidden\"}")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "AI 错误详情" })).toBeInTheDocument();
+    expect(screen.getByText(/forbidden/)).toBeInTheDocument();
+    expect(screen.queryByText(/AI_RECOGNITION_TEST_FAILED/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/rawResponseText/)).not.toBeInTheDocument();
     expect(mocks.toast).not.toHaveBeenCalled();
   });
 });

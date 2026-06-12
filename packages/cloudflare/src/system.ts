@@ -10,6 +10,16 @@ import { requireAdmin } from "./auth";
 import { HttpError, json, requestLocale } from "./http";
 import { serverText } from "./server-i18n";
 import type { Env } from "./types";
+import {
+  UpstreamOperationError,
+  createUpstreamErrorDetails,
+  createUpstreamHTTPError,
+  createUpstreamNetworkError,
+  providerMessageFromResponse,
+  readUpstreamResponseBody,
+  upstreamErrorDetailsFromError,
+  upstreamProviderResponseFromBody,
+} from "./upstream-response";
 
 const DEV_VERSION = "0.0.0-dev";
 const GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/zhiyingzzhou/renewlet/releases/latest";
@@ -55,7 +65,7 @@ export async function systemVersion(request: Request, env: Env): Promise<Respons
   const commit = cloudflareBuildValue(env.RENEWLET_COMMIT, "");
   const buildTime = cloudflareBuildValue(env.RENEWLET_BUILD_TIME, "");
   const version = resolveCloudflareVersion(env.RENEWLET_VERSION);
-  const releaseCheck = await checkLatestStableRelease(version, locale);
+  const releaseCheck = await checkLatestStableRelease(version, locale, env);
   return json(systemVersionResponseSchema.parse({
     currentVersion: version,
     latestVersion: releaseCheck.latestVersion,
@@ -68,6 +78,7 @@ export async function systemVersion(request: Request, env: Env): Promise<Respons
     releaseInfo: releaseCheck.releaseInfo,
     cached: false,
     ...(releaseCheck.warning ? { warning: releaseCheck.warning } : {}),
+    ...(releaseCheck.errorDetails ? { errorDetails: releaseCheck.errorDetails } : {}),
     build: {
       version,
       commit,
@@ -115,9 +126,9 @@ function resolveCloudflareVersion(rawVersion: string | undefined): string {
   return rootPackageJson.version;
 }
 
-async function checkLatestStableRelease(currentVersion: string, locale: ReturnType<typeof requestLocale>) {
+async function checkLatestStableRelease(currentVersion: string, locale: ReturnType<typeof requestLocale>, env: Env) {
   try {
-    const release = await fetchLatestStableRelease();
+    const release = await fetchLatestStableRelease(env);
     if (!release || release.draft || release.prerelease) return releaseCheckDeferred(currentVersion, locale);
     const latest = parseStableVersion(release.tag_name);
     const current = parseComparableVersion(currentVersion);
@@ -131,33 +142,68 @@ async function checkLatestStableRelease(currentVersion: string, locale: ReturnTy
       checkSucceeded: true,
       releaseInfo: hasUpdate || currentIsStableRelease ? releaseInfoFromGitHub(release, latestVersion) : null,
       warning: undefined,
+      errorDetails: undefined,
     };
-  } catch {
-    return releaseCheckDeferred(currentVersion, locale);
+  } catch (error) {
+    return releaseCheckDeferred(currentVersion, locale, upstreamErrorDetailsFromError(error));
   }
 }
 
-function releaseCheckDeferred(currentVersion: string, locale: ReturnType<typeof requestLocale>) {
+function releaseCheckDeferred(currentVersion: string, locale: ReturnType<typeof requestLocale>, errorDetails?: ReturnType<typeof upstreamErrorDetailsFromError>) {
   return {
     latestVersion: currentVersion,
     hasUpdate: false,
     checkSucceeded: false,
     releaseInfo: null,
     warning: serverText(locale, "system.versionCheckUnavailableWarning"),
+    errorDetails,
   };
 }
 
-async function fetchLatestStableRelease(): Promise<GitHubRelease> {
-  const response = await fetch(GITHUB_LATEST_RELEASE_URL, {
-    headers: {
+async function fetchLatestStableRelease(env: Env): Promise<GitHubRelease> {
+  const headers: HeadersInit = {
       accept: "application/vnd.github+json",
       "x-github-api-version": GITHUB_API_VERSION,
       "user-agent": `Renewlet/${rootPackageJson.version}`,
-    },
-  });
-  if (!response.ok) throw new Error(`GitHub Release returned ${response.status}`);
-  const payload = await response.json();
-  return githubReleaseSchema.parse(payload);
+  };
+  const token = env.RENEWLET_GITHUB_TOKEN?.trim();
+  if (token) headers["authorization"] = `Bearer ${token}`;
+  let response: Response;
+  try {
+    response = await fetch(GITHUB_LATEST_RELEASE_URL, { headers });
+  } catch (error) {
+    throw createUpstreamNetworkError({
+      provider: "GitHub",
+      error,
+      secrets: token ? [token] : [],
+    });
+  }
+  const body = await readUpstreamResponseBody(response);
+  const providerResponse = upstreamProviderResponseFromBody(response, body.text, body.truncated, token ? [token] : []);
+  if (!response.ok) {
+    const providerMessage = providerMessageFromResponse(providerResponse);
+    throw createUpstreamHTTPError({
+      provider: "GitHub",
+      response,
+      providerResponse,
+      providerMessage,
+    });
+  }
+  let payload: unknown;
+  try {
+    payload = JSON.parse(body.text) as unknown;
+  } catch {
+    throw new UpstreamOperationError("GitHub Release response is not valid JSON", createUpstreamErrorDetails({
+      providerResponse,
+    }));
+  }
+  const parsed = githubReleaseSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new UpstreamOperationError("GitHub Release response shape is invalid", createUpstreamErrorDetails({
+      providerResponse,
+    }));
+  }
+  return parsed.data;
 }
 
 function releaseInfoFromGitHub(release: GitHubRelease, version: string) {

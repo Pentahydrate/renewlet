@@ -87,19 +87,21 @@ describe("api-client", () => {
 
   it("reads problem details and backend codes from non-2xx responses", async () => {
     const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+    const rawResponseText = JSON.stringify({
       error: "请先登录后再操作",
       code: "UNAUTHORIZED",
       title: "未登录",
       status: 401,
       detail: "请先登录后再操作",
-    }), { status: 401 }));
+    });
+    fetchMock.mockResolvedValue(new Response(rawResponseText, { status: 401 }));
 
     await expect(apiFetch("/api/example", okResponseSchema)).rejects.toMatchObject({
       name: "ApiError",
       message: "请先登录后再操作",
       status: 401,
       code: "UNAUTHORIZED",
+      rawResponseText,
     });
     expect(mocks.clearAuthSession).toHaveBeenCalledTimes(1);
   });
@@ -110,15 +112,7 @@ describe("api-client", () => {
       message: "无法获取模型列表，请检查 Base URL 和 API Key，或手动输入模型 ID。",
       code: "AI_MODEL_LIST_FAILED",
       details: {
-        reason: "http_401",
-        providerMessage: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
-        providerResponse: {
-          status: 401,
-          statusText: "Unauthorized",
-          headers: { "content-type": "application/json" },
-          body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
-          bodyTruncated: false,
-        },
+        rawResponseText: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
       },
     }), { status: 401 }));
 
@@ -157,6 +151,7 @@ describe("api-client", () => {
     await expect(apiFetch("/api/example", okResponseSchema)).rejects.toMatchObject({
       message: "Bad Gateway",
       status: 502,
+      rawResponseText: "not-json",
     });
   });
 

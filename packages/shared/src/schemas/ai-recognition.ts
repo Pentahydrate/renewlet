@@ -15,6 +15,10 @@ import {
   SUBSCRIPTION_STATUSES,
   isValidDateOnly,
 } from "../runtime";
+import {
+  UPSTREAM_RAW_RESPONSE_TEXT_MAX_CHARS,
+  upstreamErrorDetailsSchema,
+} from "./upstream";
 
 export const AI_RECOGNITION_MAX_TEXT_CHARS = 30_000;
 export const AI_RECOGNITION_MAX_IMAGES = 5;
@@ -23,7 +27,7 @@ export const AI_RECOGNITION_MAX_SUBSCRIPTIONS = 100;
 export const AI_RECOGNITION_DIAGNOSTIC_TEXT_MAX_CHARS = 32_000;
 export const AI_RECOGNITION_DIAGNOSTIC_JSON_MAX_CHARS = 32_000;
 export const AI_RECOGNITION_MAX_MODEL_LIST_MODELS = 300;
-export const AI_PROVIDER_RESPONSE_BODY_MAX_CHARS = 1 << 20;
+export const AI_PROVIDER_RESPONSE_BODY_MAX_CHARS = UPSTREAM_RAW_RESPONSE_TEXT_MAX_CHARS;
 
 /** Provider 类型是用户设置的存储值；transport protocol 必须由 provider canonical 派生，不能让历史字段反向影响运行时。 */
 export const aiRecognitionProviderTypeSchema = z.enum(["openai", "anthropic", "gemini", "openai-compatible"]);
@@ -189,22 +193,7 @@ export const aiRecognitionDiagnosticsSchema = z.object({
 }).strict();
 export type AiRecognitionDiagnostics = z.infer<typeof aiRecognitionDiagnosticsSchema>;
 
-export const aiProviderResponseSchema = z.object({
-  status: z.number().int().min(100).max(599).nullable(),
-  statusText: z.string().trim().max(200).nullable(),
-  headers: z.record(z.string().trim().min(1).max(160), z.string().max(4096)).nullable(),
-  body: z.string().max(AI_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  bodyTruncated: z.boolean(),
-}).strict();
-export type AiProviderResponse = z.infer<typeof aiProviderResponseSchema>;
-
-/** Provider 原始响应只随当前认证错误返回；diagnostics 仍保持脱敏，不承担 raw response 回显。 */
-export const aiRecognitionErrorDetailsSchema = z.object({
-  reason: z.string().trim().min(1).max(120),
-  providerMessage: z.string().trim().max(AI_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  providerResponse: aiProviderResponseSchema.nullable().optional(),
-  diagnostics: aiRecognitionDiagnosticsSchema,
-}).strict();
+export const aiRecognitionErrorDetailsSchema = upstreamErrorDetailsSchema;
 export type AiRecognitionErrorDetails = z.infer<typeof aiRecognitionErrorDetailsSchema>;
 
 const dateOnlyNullableSchema = z.string().refine(isValidDateOnly, "Invalid date").nullable();
@@ -414,9 +403,5 @@ export const aiModelListResponseSchema = z.object({
 }).strict();
 export type AiModelListResponse = z.infer<typeof aiModelListResponseSchema>;
 
-export const aiModelListErrorDetailsSchema = z.object({
-  reason: z.string().trim().min(1).max(120),
-  providerMessage: z.string().trim().max(AI_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  providerResponse: aiProviderResponseSchema.nullable().optional(),
-}).strict();
+export const aiModelListErrorDetailsSchema = upstreamErrorDetailsSchema;
 export type AiModelListErrorDetails = z.infer<typeof aiModelListErrorDetailsSchema>;

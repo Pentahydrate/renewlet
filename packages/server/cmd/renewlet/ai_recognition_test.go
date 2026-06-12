@@ -117,7 +117,7 @@ func TestAIRecognitionConnectionUsesMinimalTextGeneration(t *testing.T) {
 		t.Fatalf("expected raw API error from zero-retry connection test, got %#v", err)
 	}
 	providerResponse := aiProviderResponseFromError(err)
-	if providerResponse == nil || providerResponse.Body == nil || *providerResponse.Body != `{"error":"invalid sk-test-secret"}` {
+	if providerResponse == nil || providerResponse.Body == nil || *providerResponse.Body != `{"error":"invalid [redacted]"}` {
 		t.Fatalf("provider response body not captured: %#v", providerResponse)
 	}
 	if providerResponse.Status == nil || *providerResponse.Status != http.StatusTooManyRequests {
@@ -439,24 +439,21 @@ func TestAIRecognitionStreamErrorCodeForTimeout(t *testing.T) {
 	}
 }
 
-func TestAIRecognitionStreamErrorIncludesProviderResponse(t *testing.T) {
+func TestAIRecognitionStreamErrorIncludesRawResponseText(t *testing.T) {
 	streamErr := aiRecognitionStreamErrorForError(localeZhCN, &aiRecognitionRunError{
 		cause: fmt.Errorf("stream result: %w", &goai.APIError{
 			Message:         "provider failed",
 			StatusCode:      http.StatusUnauthorized,
-			ResponseBody:    `{"code":"INVALID_API_KEY","message":"bad key"}`,
+			ResponseBody:    `{"code":"INVALID_API_KEY","message":"bad sk-testsecret123"}`,
 			ResponseHeaders: map[string]string{"content-type": "application/json"},
 		}),
 		diagnostics: testAIRecognitionDiagnostics(),
 	})
-	if streamErr.Details == nil || streamErr.Details.ProviderResponse == nil {
-		t.Fatalf("stream error should include provider response: %#v", streamErr)
+	if streamErr.Details == nil || streamErr.Details.RawResponseText == nil {
+		t.Fatalf("stream error should include raw response text: %#v", streamErr)
 	}
-	if streamErr.Details.ProviderResponse.Body == nil || *streamErr.Details.ProviderResponse.Body != `{"code":"INVALID_API_KEY","message":"bad key"}` {
-		t.Fatalf("provider body mismatch: %#v", streamErr.Details.ProviderResponse)
-	}
-	if streamErr.Details.ProviderResponse.Status == nil || *streamErr.Details.ProviderResponse.Status != http.StatusUnauthorized {
-		t.Fatalf("provider status mismatch: %#v", streamErr.Details.ProviderResponse)
+	if *streamErr.Details.RawResponseText != `{"code":"INVALID_API_KEY","message":"bad [redacted]"}` {
+		t.Fatalf("raw response mismatch: %#v", streamErr.Details.RawResponseText)
 	}
 }
 

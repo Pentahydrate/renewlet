@@ -7,6 +7,14 @@ import type { NotificationEmailMessage } from "@renewlet/shared/email-template";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { AppLocale } from "./http";
 import { DEFAULT_SERVER_I18N_LOCALE, serverFormat, serverText } from "./server-i18n";
+import { NotificationChannelError } from "./notification-errors";
+import {
+  createUpstreamErrorDetails,
+  providerMessageFromResponse,
+  redactUpstreamSecrets,
+  upstreamProviderResponseFromBody,
+  upstreamProviderResponseFromFetchResponse,
+} from "./upstream-response";
 
 type ServerChanResponse = {
   code?: unknown;
@@ -16,9 +24,10 @@ type ServerChanResponse = {
 
 export async function sendServerChan(settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale): Promise<void> {
   const sendKey = required(settings.serverchanSendKey, serverText(locale, "service.serverchanSendKey"), locale);
+  const endpoint = serverChanEndpoint(sendKey, locale);
   let response: Response;
   try {
-    response = await fetch(serverChanEndpoint(sendKey, locale), {
+    response = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -26,13 +35,16 @@ export async function sendServerChan(settings: ApiAppSettings, message: Notifica
         desp: `${message.content}\n\n${message.timestamp}`,
       }),
     });
-  } catch {
-    throw new Error(serverFormat(locale, "notification.httpRequestFailed", {
+  } catch (error) {
+    const message = error instanceof Error ? redactUpstreamSecrets(error.message, [sendKey]) : serverText(locale, "service.serverchanRequestFailed");
+    throw new NotificationChannelError(serverFormat(locale, "notification.httpRequestFailed", {
       service: "ServerChan",
-      error: serverText(locale, "service.serverchanRequestFailed"),
+      error: message,
+    }), createUpstreamErrorDetails({
+      responseText: message,
     }));
   }
-  await requireServerChanSuccess(response, locale, sendKey);
+  await requireServerChanSuccess(response, locale, sendKey, endpoint);
 }
 
 export function serverChanEndpoint(sendKey: string, locale: AppLocale = DEFAULT_SERVER_I18N_LOCALE): string {
@@ -46,29 +58,66 @@ export function serverChanEndpoint(sendKey: string, locale: AppLocale = DEFAULT_
   return `https://sctapi.ftqq.com/${encodeURIComponent(trimmed)}.send`;
 }
 
-async function requireServerChanSuccess(response: Response, locale: AppLocale, sendKey: string): Promise<void> {
-  if (!response.ok) throw new Error(await serverChanHttpError(response, locale, sendKey));
-  let payload: ServerChanResponse;
+async function requireServerChanSuccess(response: Response, locale: AppLocale, sendKey: string, endpoint: string): Promise<void> {
+  if (!response.ok) throw await serverChanHTTPError(response, locale, sendKey, endpoint);
+  const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets: [sendKey] });
+  const rawBody = providerResponse.body ?? "";
+  let payload: ServerChanResponse | null = null;
   try {
-    payload = await response.json();
+    payload = JSON.parse(rawBody) as ServerChanResponse;
   } catch {
-    throw new Error(serverHttpError("ServerChan", response.status, serverText(locale, "service.serverchanResponseInvalid"), locale));
+    throw serverChanBusinessError(response, rawBody, locale, sendKey);
   }
   // Server酱可能 HTTP 2xx 但业务 code 失败；历史摘要必须按 code 判断真实发送结果。
-  if (payload.code === undefined) {
-    throw new Error(serverHttpError("ServerChan", response.status, serverText(locale, "service.serverchanResponseInvalid"), locale));
+  if (payload?.code === undefined) {
+    throw serverChanBusinessError(response, rawBody, locale, sendKey);
   }
   if (payload.code !== 0) {
-    throw new Error(serverHttpError("ServerChan", response.status, redactServerChanSecret(firstText(payload.message, payload.detail), sendKey) || serverText(locale, "service.serverchanResponseInvalid"), locale));
+    const detail = redactUpstreamSecrets(firstText(payload.message, payload.detail), [sendKey]) || serverText(locale, "service.serverchanResponseInvalid");
+    throw new NotificationChannelError(
+      serverHttpError("ServerChan", response.status, detail, locale),
+      createUpstreamErrorDetails({
+        responseText: detail,
+        providerResponse,
+      }),
+    );
   }
 }
 
-async function serverChanHttpError(response: Response, locale: AppLocale, sendKey: string): Promise<string> {
-  const payload = await response.clone().json().catch(() => null) as ServerChanResponse | null;
-  const detail = redactServerChanSecret(firstText(payload?.message, payload?.detail), sendKey);
-  if (detail) return serverHttpError("ServerChan", response.status, detail, locale);
-  await response.body?.cancel().catch(() => undefined);
-  return serverHttpError("ServerChan", response.status, serverText(locale, "service.serverchanResponseInvalid"), locale);
+async function serverChanHTTPError(response: Response, locale: AppLocale, sendKey: string, endpoint: string): Promise<NotificationChannelError> {
+  const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets: [sendKey] });
+  const parsed = parseServerChanPayload(providerResponse.body);
+  const detail = redactUpstreamSecrets(firstText(parsed?.message, parsed?.detail), [sendKey])
+    || providerMessageFromResponse(providerResponse)
+    || serverText(locale, "service.serverchanResponseInvalid");
+  return new NotificationChannelError(
+    serverHttpError("ServerChan", response.status, detail, locale),
+    createUpstreamErrorDetails({
+      responseText: detail,
+      providerResponse,
+    }),
+  );
+}
+
+function serverChanBusinessError(response: Response, rawBody: string, locale: AppLocale, sendKey: string): NotificationChannelError {
+  const providerResponse = upstreamProviderResponseFromBody(response, rawBody, false, [sendKey]);
+  const detail = providerMessageFromResponse(providerResponse) || serverText(locale, "service.serverchanResponseInvalid");
+  return new NotificationChannelError(
+    serverHttpError("ServerChan", response.status, detail, locale),
+    createUpstreamErrorDetails({
+      responseText: detail,
+      providerResponse,
+    }),
+  );
+}
+
+function parseServerChanPayload(value: string | null | undefined): ServerChanResponse | null {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as ServerChanResponse;
+  } catch {
+    return null;
+  }
 }
 
 function serverHttpError(channel: string, status: number, detail: string, locale: AppLocale): string {
@@ -84,15 +133,6 @@ function firstText(...values: unknown[]): string {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
-}
-
-function redactServerChanSecret(value: string, sendKey: string): string {
-  let detail = value.trim();
-  const secret = sendKey.trim();
-  if (secret) {
-    detail = detail.replaceAll(secret, "[redacted]").replaceAll(encodeURIComponent(secret), "[redacted]");
-  }
-  return detail.slice(0, 800);
 }
 
 function required(value: string, label: string, locale: AppLocale): string {

@@ -147,10 +147,7 @@ type aiRecognitionErrorResponse struct {
 }
 
 type aiRecognitionErrorDetails struct {
-	Reason           string                   `json:"reason"`
-	ProviderMessage  *string                  `json:"providerMessage"`
-	ProviderResponse *aiProviderResponse      `json:"providerResponse,omitempty"`
-	Diagnostics      aiRecognitionDiagnostics `json:"diagnostics"`
+	RawResponseText *string `json:"rawResponseText,omitempty"`
 }
 
 type aiRecognitionRunner interface {
@@ -230,7 +227,7 @@ func handleAIRecognizeSubscriptions(app core.App, e *core.RequestEvent) error {
 	)
 	if err != nil {
 		if diagnostics := aiRecognitionDiagnosticsFromError(err); diagnostics != nil {
-			// diagnostics 只随本次认证响应返回；不入库、不进导出，且构造阶段已脱敏 prompt/raw/provider metadata。
+			// 错误响应只回显 provider raw 文本；成功态 diagnostics 仍由正常响应返回，不混入错误详情。
 			if errors.Is(err, errAIRecognitionNoSubscriptions) {
 				return aiRecognitionJSONError(e, http.StatusBadRequest, serverText(runContext.Locale, "aiRecognition.noSubscriptions"), "AI_RECOGNITION_EMPTY", "empty", nil, diagnostics)
 			}
@@ -271,7 +268,7 @@ func handleAIRecognitionTestConnection(app core.App, e *core.RequestEvent) error
 	}
 	err = testAIRecognitionConnection(e.Request.Context(), settings)
 	if err != nil {
-		// 连接测试只做一次最小文本生成；没有订阅识别 diagnostics，但仍应把 SDK 暴露的 provider response 回显给当前用户排查。
+		// 连接测试只做一次最小文本生成；SDK 暴露的 provider body 只进入本次错误响应的 rawResponseText。
 		return aiRecognitionProviderResponseJSONError(e, http.StatusBadRequest, serverText(locale, "aiRecognition.testFailed"), "AI_RECOGNITION_TEST_FAILED", "provider_failed", err, aiProviderResponseFromError(err))
 	}
 	return e.JSON(http.StatusOK, aiRecognitionTestResponse{OK: true, ProviderType: settings.ProviderType, TransportProtocol: settings.TransportProtocol, Model: settings.Model})
@@ -362,15 +359,12 @@ func localizedAIRecognitionConfigLabel(labels customConfigLabels, locale appLoca
 	return labels.EnUS
 }
 
-func aiRecognitionJSONError(e *core.RequestEvent, status int, message string, code string, reason string, err error, diagnostics *aiRecognitionDiagnostics) error {
+func aiRecognitionJSONError(e *core.RequestEvent, status int, message string, code string, reason string, err error, _ *aiRecognitionDiagnostics) error {
 	return e.JSON(status, aiRecognitionErrorResponse{
 		Message: message,
 		Code:    code,
 		Details: aiRecognitionErrorDetails{
-			Reason:           reason,
-			ProviderMessage:  safeAIRecognitionProviderMessage(err),
-			ProviderResponse: aiProviderResponseFromError(err),
-			Diagnostics:      *diagnostics,
+			RawResponseText: optionalUpstreamBody(firstNonBlank(aiProviderResponseBody(aiProviderResponseFromError(err)), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason)),
 		},
 	})
 }
@@ -380,9 +374,7 @@ func aiRecognitionProviderResponseJSONError(e *core.RequestEvent, status int, me
 		"message": message,
 		"code":    code,
 		"details": map[string]interface{}{
-			"reason":           reason,
-			"providerMessage":  safeAIRecognitionProviderMessage(err),
-			"providerResponse": providerResponse,
+			"rawResponseText": firstNonBlank(aiProviderResponseBody(providerResponse), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason),
 		},
 	})
 }

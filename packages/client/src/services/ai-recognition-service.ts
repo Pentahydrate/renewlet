@@ -110,16 +110,16 @@ async function consumeRecognitionEventStream(
     try {
       payload = JSON.parse(data) as unknown;
     } catch {
-      throw new ApiError("Invalid stream response", response.status, data, "invalid_response");
+      throw new ApiError("Invalid stream response", response.status, data, "invalid_response", data);
     }
     const parsed = aiRecognitionStreamEventSchema.safeParse(payload);
     if (!parsed.success) {
-      throw new ApiError("Invalid stream response", response.status, parsed.error.flatten(), "invalid_response");
+      throw new ApiError("Invalid stream response", response.status, parsed.error.flatten(), "invalid_response", data);
     }
     const event = parsed.data;
     onEvent?.(event);
     if (event.type === "recognition/error") {
-      throw new ApiError(event.message, response.status, event.details, event.code);
+      throw new ApiError(event.message, response.status, event.details, event.code, data);
     }
     if (event.type === "recognition/final") {
       finalResponse = event.response;

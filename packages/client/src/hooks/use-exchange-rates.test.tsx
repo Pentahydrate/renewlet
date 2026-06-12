@@ -340,6 +340,23 @@ describe("useExchangeRates", () => {
     expect(result.current.rates["USD"]).toBe(1);
   });
 
+  it("keeps raw response text for exchange-rate HTTP failures", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response("<html>rate limited</html>", { status: 429, statusText: "Too Many Requests" }))
+      .mockRejectedValueOnce(new Error("exchange-api primary down"))
+      .mockRejectedValueOnce(new Error("exchange-api fallback down"));
+
+    const { result } = renderHook(() => useExchangeRates("floatrates"));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBe("网络请求失败");
+    expect(result.current.activeProvider).toBe("builtin");
+    expect(result.current.errorDetails).toMatchObject({
+      message: "Too Many Requests",
+      responseText: "<html>rate limited</html>",
+    });
+  });
+
   it("falls back to FloatRates when both exchange-api endpoints time out", async () => {
     vi.useFakeTimers();
     vi.mocked(fetch)
@@ -397,6 +414,7 @@ describe("useExchangeRates", () => {
     expect(result.current.error).toBe("请求超时，请稍后重试");
     expect(result.current.activeProvider).toBe("builtin");
     expect(result.current.rates["USD"]).toBe(1);
+    expect(result.current.errorDetails?.responseText).toBe("Exchange rate request timed out");
     exchangeRateLogs.expectWarning("exchange rates from floatrates");
     exchangeRateLogs.expectWarning("exchange rates from exchange-api");
     exchangeRateLogs.expectErrorSource("exchange-rates.fetch");

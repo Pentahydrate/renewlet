@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AlertCircle, Check, Clock3, Image as ImageIcon, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RawErrorResponseDialog } from '@/components/raw-error-response-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { BUILT_IN_ICON_PROVIDERS, type BuiltInIconProvider } from '@renewlet/shared/built-in-icons';
 import type { AppSettings } from '@/types/subscription';
 import type { BuiltInIconIndexProviderStatus, BuiltInIconIndexStatus, BuiltInIconProviderVersion } from '@/lib/api/schemas/media';
+import type { RawErrorResponseDetails } from '@/lib/raw-error-response';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey, MessageParams } from '@/i18n/messages';
@@ -26,6 +28,9 @@ interface BuiltInIconIndexController {
   isLoading: boolean;
   checkingProvider: BuiltInIconProvider | null;
   refreshingProvider: BuiltInIconProvider | null;
+  errorDetails: RawErrorResponseDetails | null;
+  errorDetailsOpen: boolean;
+  setErrorDetailsOpen: (open: boolean) => void;
   checkAllProviders: () => Promise<void>;
   checkProvider: (provider: BuiltInIconProvider) => Promise<void>;
   refreshProvider: (provider: BuiltInIconProvider) => Promise<void>;
@@ -141,6 +146,15 @@ export function BuiltInIconSourcesSection({ id, className, sources, onChange, ic
           </DialogContent>
         </Dialog>
       </div>
+
+      {iconIndex?.canManage ? (
+        <RawErrorResponseDialog
+          open={iconIndex.errorDetailsOpen}
+          details={iconIndex.errorDetails}
+          onOpenChange={iconIndex.setErrorDetailsOpen}
+          testId="built-in-icon-raw-error-response-dialog"
+        />
+      ) : null}
     </section>
   );
 }

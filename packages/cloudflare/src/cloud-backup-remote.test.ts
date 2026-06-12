@@ -95,7 +95,7 @@ describe("S3CloudBackupClient endpoint addressing", () => {
     expect(calls[0]).toContain("https://renewlet.storage.example.com/");
   });
 
-  it("returns upstream XML and safe S3 diagnostics for signature failures", async () => {
+  it("returns upstream XML for signature failures without leaking signed query values", async () => {
     const body = `<?xml version='1.0' encoding='utf-8'?><Error><Code>SignatureDoesNotMatch</Code><Message>bad signature</Message></Error>`;
     vi.stubGlobal("fetch", vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const { url: parsedUrl } = fetchCallFromArgs(url, init);
@@ -118,21 +118,7 @@ describe("S3CloudBackupClient endpoint addressing", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_S3_LIST_FAILED",
       details: {
-        reason: "http_403",
-        providerMessage: expect.stringContaining("<Code>SignatureDoesNotMatch</Code>"),
-        providerResponse: expect.objectContaining({
-          status: 403,
-          statusText: "Forbidden",
-          body: expect.stringContaining("<Code>SignatureDoesNotMatch</Code>"),
-          headers: expect.objectContaining({ server: "s3-compatible" }),
-        }),
-        diagnostics: expect.objectContaining({
-          configuredEndpoint: "https://storage.example.com",
-          signingRegion: "auto",
-          endpointMode: "serviceEndpoint",
-          operation: "list",
-          attemptedHost: "https://renewlet.storage.example.com",
-        }),
+        rawResponseText: expect.stringContaining("<Code>SignatureDoesNotMatch</Code>"),
       },
     } satisfies Partial<CloudBackupRemoteError>);
     expect(JSON.stringify(error?.details)).not.toContain("X-Amz-Signature");
@@ -156,18 +142,12 @@ describe("S3CloudBackupClient endpoint addressing", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_S3_LIST_FAILED",
       details: {
-        reason: "xml_parse_error",
-        providerMessage: expect.any(String),
-        providerResponse: expect.objectContaining({
-          status: 200,
-          statusText: "OK",
-          body: "not xml",
-        }),
+        rawResponseText: expect.any(String),
       },
     } satisfies Partial<CloudBackupRemoteError>);
   });
 
-  it("returns safe diagnostics for local S3 list failures without leaking credentials or signatures", async () => {
+  it("returns local S3 failures without leaking credentials or signatures", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new TypeError("Network connection lost.");
     }));
@@ -183,16 +163,7 @@ describe("S3CloudBackupClient endpoint addressing", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_S3_LOCAL_FAILED",
       details: {
-        reason: "local_sdk_error",
-        providerMessage: expect.stringContaining("attempted host: https://cloudstorage.iam.storage.dev"),
-        providerResponse: null,
-        diagnostics: expect.objectContaining({
-          configuredEndpoint: "https://iam.storage.dev",
-          signingRegion: "auto",
-          endpointMode: "serviceEndpoint",
-          operation: "list",
-          attemptedHost: "https://cloudstorage.iam.storage.dev",
-        }),
+        rawResponseText: expect.stringContaining("attempted host: https://cloudstorage.iam.storage.dev"),
       },
     } satisfies Partial<CloudBackupRemoteError>);
     const serialized = JSON.stringify(error?.details);
@@ -323,14 +294,7 @@ describe("WebDAVCloudBackupClient SDK adapter", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_WEBDAV_MKCOL_FAILED",
       details: {
-        reason: "http_401",
-        providerMessage: expect.any(String),
-        providerResponse: expect.objectContaining({
-          status: 401,
-          statusText: "Unauthorized",
-          body: null,
-          headers: expect.objectContaining({ server: "fake-webdav" }),
-        }),
+        rawResponseText: expect.any(String),
       },
     } satisfies Partial<CloudBackupRemoteError>);
     expect(JSON.stringify(error?.details)).not.toContain("webdav-secret");
@@ -352,7 +316,7 @@ describe("WebDAVCloudBackupClient SDK adapter", () => {
       else throw caught;
     }
 
-    expect(remoteError?.details?.providerResponse?.body).toContain("denied [redacted]");
+    expect(remoteError?.details?.rawResponseText).toContain("denied [redacted]");
     patchWebDAVFetch(() => {
       throw new TypeError("Network connection lost.");
     });

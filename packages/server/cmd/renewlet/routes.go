@@ -184,6 +184,13 @@ func registerRoutes(app core.App, router *router.Router[*core.RequestEvent]) {
 			case errors.Is(err, errSystemUpdateUnsupported), errors.Is(err, errSystemUpdateNoUpdate):
 				return e.BadRequestError(err.Error(), nil)
 			default:
+				if details := systemUpstreamErrorDetails(err); details != nil {
+					return e.JSON(http.StatusInternalServerError, map[string]interface{}{
+						"message": serverText(locale, "system.updateFailed"),
+						"code":    "SYSTEM_UPDATE_FAILED",
+						"details": details,
+					})
+				}
 				return e.InternalServerError(serverText(locale, "system.updateFailed"), err)
 			}
 		}

@@ -178,18 +178,9 @@ describe("aiRecognitionService", () => {
     ]);
   });
 
-  it("keeps provider response details from stream errors", async () => {
+  it("keeps raw response details from stream errors", async () => {
     const details = {
-      reason: "provider_failed",
-      providerMessage: "[redacted]",
-      providerResponse: {
-        status: 401,
-        statusText: null,
-        headers: { "content-type": "application/json; charset=utf-8" },
-        body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
-        bodyTruncated: false,
-      },
-      diagnostics: response.diagnostics,
+      rawResponseText: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
     };
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
@@ -215,10 +206,7 @@ describe("aiRecognitionService", () => {
       message: "AI 识别失败",
       code: "AI_RECOGNITION_FAILED",
       details: {
-        providerResponse: {
-          status: 401,
-          body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
-        },
+        rawResponseText: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
       },
     });
   });

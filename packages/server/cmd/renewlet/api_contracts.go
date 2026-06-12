@@ -223,6 +223,7 @@ type systemVersionResponse struct {
 	ReleaseInfo       *systemReleaseInfoDTO `json:"releaseInfo"`
 	Cached            bool                  `json:"cached"`
 	Warning           string                `json:"warning,omitempty"`
+	ErrorDetails      *upstreamErrorDetails `json:"errorDetails,omitempty"`
 	Build             systemBuildInfo       `json:"build"`
 }
 
@@ -275,13 +276,15 @@ type builtInIconIndexStatusResponse struct {
 }
 
 type builtInIconIndexProviderCheckResponse struct {
-	Status   builtInIconIndexStatusResponse         `json:"status"`
-	Provider builtInIconIndexProviderStatusResponse `json:"provider"`
+	Status       builtInIconIndexStatusResponse         `json:"status"`
+	Provider     builtInIconIndexProviderStatusResponse `json:"provider"`
+	ErrorDetails *upstreamErrorDetails                  `json:"errorDetails,omitempty"`
 }
 
 type builtInIconIndexProviderRefreshResponse struct {
-	Status   builtInIconIndexStatusResponse         `json:"status"`
-	Provider builtInIconIndexProviderStatusResponse `json:"provider"`
+	Status       builtInIconIndexStatusResponse         `json:"status"`
+	Provider     builtInIconIndexProviderStatusResponse `json:"provider"`
+	ErrorDetails *upstreamErrorDetails                  `json:"errorDetails,omitempty"`
 }
 
 // rateLimitedResponse 是简单限流响应。

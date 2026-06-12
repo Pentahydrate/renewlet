@@ -1,5 +1,9 @@
 import { APICallError } from "ai";
-import type { AiProviderResponse } from "@renewlet/shared/schemas/ai-recognition";
+import {
+  type UpstreamProviderResponse as AiProviderResponse,
+  upstreamProviderResponseFromBody,
+  upstreamProviderResponseFromUnknown,
+} from "./upstream-response";
 
 type APICallErrorLike = {
   statusCode?: unknown;
@@ -9,26 +13,21 @@ type APICallErrorLike = {
   errors?: unknown;
 };
 
-export function providerResponseFromFetchResponse(response: Response, body: string): AiProviderResponse {
-  return {
-    status: response.status,
-    statusText: response.statusText || null,
-    headers: headersToObject(response.headers),
-    body: body || null,
-    bodyTruncated: false,
-  };
+// AI SDK 会把 provider 响应藏在 APICallError/cause/errors 不同层级；这里统一转成上游 helper 的内部形状再取 rawResponseText。
+export function providerResponseFromFetchResponse(response: Response, body: string, bodyTruncated = false, secrets: readonly string[] = []): AiProviderResponse {
+  return upstreamProviderResponseFromBody(response, body, bodyTruncated, secrets);
 }
 
-export function providerResponseFromError(error: unknown): AiProviderResponse | null {
+export function providerResponseFromError(error: unknown, secrets: readonly string[] = []): AiProviderResponse | null {
   const apiError = findAPICallError(error);
   if (!apiError) return null;
-  return {
-    status: typeof apiError.statusCode === "number" ? apiError.statusCode : null,
+  return upstreamProviderResponseFromUnknown({
+    status: apiError.statusCode,
     statusText: null,
-    headers: recordToStringMap(apiError.responseHeaders),
-    body: typeof apiError.responseBody === "string" && apiError.responseBody.length > 0 ? apiError.responseBody : null,
+    headers: apiError.responseHeaders,
+    body: apiError.responseBody,
     bodyTruncated: false,
-  };
+  }, secrets);
 }
 
 function findAPICallError(error: unknown, seen = new WeakSet<object>()): APICallErrorLike | null {
@@ -37,6 +36,7 @@ function findAPICallError(error: unknown, seen = new WeakSet<object>()): APICall
   seen.add(error);
   let fallback: APICallErrorLike | null = null;
   if (isAPICallError(error)) {
+    // 优先返回带 responseBody 的层级；只有 status/header 的外层错误不应该遮住真正 provider body。
     if (hasProviderResponseBody(error)) return error;
     fallback = error;
   }
@@ -74,21 +74,4 @@ function isAPICallError(error: unknown): error is APICallErrorLike {
 
 function hasProviderResponseBody(error: APICallErrorLike): boolean {
   return typeof error.responseBody === "string" && error.responseBody.length > 0;
-}
-
-function headersToObject(headers: Headers): Record<string, string> | null {
-  const out: Record<string, string> = {};
-  headers.forEach((value, key) => {
-    if (key.trim() && value.trim()) out[key] = value;
-  });
-  return Object.keys(out).length > 0 ? out : null;
-}
-
-function recordToStringMap(value: unknown): Record<string, string> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const out: Record<string, string> = {};
-  for (const [key, item] of Object.entries(value)) {
-    if (typeof item === "string" && key.trim() && item.trim()) out[key] = item;
-  }
-  return Object.keys(out).length > 0 ? out : null;
 }

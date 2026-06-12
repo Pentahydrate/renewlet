@@ -84,14 +84,13 @@ type aiModelListErrorResponse struct {
 }
 
 type aiModelListErrorDetails struct {
-	Reason           string              `json:"reason"`
-	ProviderMessage  *string             `json:"providerMessage"`
-	ProviderResponse *aiProviderResponse `json:"providerResponse,omitempty"`
+	RawResponseText *string `json:"rawResponseText,omitempty"`
 }
 
 type aiModelListEndpoint struct {
 	URL               string
 	Headers           http.Header
+	Secrets           []string
 	ModelListShape    string
 	ProviderType      string
 	TransportProtocol string
@@ -103,6 +102,26 @@ type aiModelListHTTPError struct {
 	reason           string
 	message          *string
 	providerResponse *aiProviderResponse
+}
+
+func aiProviderResponseBody(response *aiProviderResponse) string {
+	if response == nil {
+		return ""
+	}
+	if response.Body != nil && strings.TrimSpace(*response.Body) != "" {
+		return *response.Body
+	}
+	if response.StatusText != nil {
+		return *response.StatusText
+	}
+	return ""
+}
+
+func optionalStringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func (e *aiModelListHTTPError) Error() string {
@@ -135,16 +154,14 @@ func handleAIModelsList(app core.App, e *core.RequestEvent) error {
 				Message: serverText(locale, "aiRecognition.modelListFailed"),
 				Code:    httpErr.code,
 				Details: aiModelListErrorDetails{
-					Reason:           httpErr.reason,
-					ProviderMessage:  httpErr.message,
-					ProviderResponse: httpErr.providerResponse,
+					RawResponseText: optionalUpstreamBody(firstNonBlank(aiProviderResponseBody(httpErr.providerResponse), optionalStringValue(httpErr.message), httpErr.reason)),
 				},
 			})
 		}
 		return e.JSON(http.StatusBadRequest, aiModelListErrorResponse{
 			Message: serverText(locale, "aiRecognition.modelListFailed"),
 			Code:    "AI_MODEL_LIST_FAILED",
-			Details: aiModelListErrorDetails{Reason: "provider_failed", ProviderMessage: optionalAIProviderBody(err.Error())},
+			Details: aiModelListErrorDetails{RawResponseText: optionalUpstreamBody(err.Error())},
 		})
 	}
 	return e.JSON(http.StatusOK, response)
@@ -186,6 +203,7 @@ func buildAIModelListEndpoint(input aiModelListRequest) (aiModelListEndpoint, er
 	return aiModelListEndpoint{
 		URL:               endpoint.ModelsURL,
 		Headers:           headers,
+		Secrets:           []string{input.APIKey},
 		ModelListShape:    endpoint.ModelListShape,
 		ProviderType:      endpoint.ProviderType,
 		TransportProtocol: endpoint.TransportProtocol,
@@ -218,24 +236,24 @@ func fetchAIModelListJSON(ctx context.Context, endpoint aiModelListEndpoint, loc
 		return nil, err
 	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		message := string(body)
+		message := redactAIModelListResponseText(string(body), endpoint.Secrets)
 		return nil, &aiModelListHTTPError{
 			status:           response.StatusCode,
 			code:             "AI_MODEL_LIST_FAILED",
 			reason:           fmt.Sprintf("http_%d", response.StatusCode),
-			message:          optionalAIProviderBody(message),
-			providerResponse: aiProviderResponseFromHTTPResponse(response, message),
+			message:          optionalUpstreamBody(message),
+			providerResponse: aiProviderResponseFromHTTPResponse(response, message, endpoint.Secrets...),
 		}
 	}
 	var raw map[string]interface{}
 	if err := json.Unmarshal(body, &raw); err != nil {
-		message := string(body)
+		message := redactAIModelListResponseText(string(body), endpoint.Secrets)
 		return nil, &aiModelListHTTPError{
 			status:           http.StatusBadRequest,
 			code:             "AI_MODEL_LIST_INVALID_JSON",
 			reason:           "invalid_json",
-			message:          optionalAIProviderBody(message),
-			providerResponse: aiProviderResponseFromHTTPResponse(response, message),
+			message:          optionalUpstreamBody(message),
+			providerResponse: aiProviderResponseFromHTTPResponse(response, message, endpoint.Secrets...),
 		}
 	}
 	return raw, nil
@@ -252,10 +270,14 @@ func readAIModelListResponseBody(reader io.Reader, locale appLocale) ([]byte, er
 			status:  http.StatusRequestEntityTooLarge,
 			code:    "AI_MODEL_LIST_RESPONSE_TOO_LARGE",
 			reason:  "response_too_large",
-			message: optionalAIProviderBody(serverText(locale, "common.requestBodyTooLarge")),
+			message: optionalUpstreamBody(serverText(locale, "common.requestBodyTooLarge")),
 		}
 	}
 	return data, nil
+}
+
+func redactAIModelListResponseText(value string, secrets []string) string {
+	return redactUpstreamSecrets(redactAIRecognitionSecrets(value), secrets)
 }
 
 func normalizeAIModelList(shape string, raw map[string]interface{}) []aiModelListItem {

@@ -74,7 +74,11 @@ func handleNotificationTest(app core.App, e *core.RequestEvent) error {
 	settings.Locale = string(locale)
 	message := buildTestNotification(time.Now(), settings)
 	if err := sendToChannel(app, body.Channel, settings, message); err != nil {
-		return e.BadRequestError(serverFormat(locale, "notification.testFailed", map[string]interface{}{"error": err.Error()}), nil)
+		return e.JSON(http.StatusBadRequest, notificationErrorResponse{
+			Message: serverFormat(locale, "notification.testFailed", map[string]interface{}{"error": err.Error()}),
+			Code:    "NOTIFICATION_TEST_FAILED",
+			Details: notificationChannelErrorDetails(err),
+		})
 	}
 	return e.JSON(http.StatusOK, newOKResponse())
 }

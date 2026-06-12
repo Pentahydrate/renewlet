@@ -10,7 +10,6 @@ export {
   aiModelListItemSchema,
   aiModelListRequestSchema,
   aiModelListResponseSchema,
-  aiProviderResponseSchema,
   aiRecognitionDiagnosticsSchema,
   aiRecognitionErrorDetailsSchema,
   aiRecognitionModelInputModeSchema,
@@ -51,5 +50,4 @@ export type {
   AiRecognitionTransportProtocol,
   AiRecognizeResponse,
   AiThinkingControl,
-  AiProviderResponse,
 } from "@renewlet/shared/schemas/ai-recognition";

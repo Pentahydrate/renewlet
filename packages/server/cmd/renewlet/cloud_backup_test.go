@@ -256,7 +256,7 @@ func TestCloudBackupRemoteTargetForProviderDoesNotInspectOtherProvider(t *testin
 	}
 }
 
-func TestDownloadCloudBackupSnapshotFromTargetsFallsBackAndAggregatesProviderAttempts(t *testing.T) {
+func TestDownloadCloudBackupSnapshotFromTargetsFallsBackAndAggregatesRawFailures(t *testing.T) {
 	id := "renewlet-export-v1-20260609T000000Z-abcd1234"
 	content := []byte("renewlet")
 	s3 := &fakeCloudBackupRemoteClient{
@@ -279,14 +279,14 @@ func TestDownloadCloudBackupSnapshotFromTargetsFallsBackAndAggregatesProviderAtt
 		{Provider: cloudBackupProviderS3, Client: &fakeCloudBackupRemoteClient{downloadErr: cloudBackupHTTPErrorForTest("CLOUD_BACKUP_S3_GET_FAILED", http.StatusForbidden, "<Error><Code>AccessDenied</Code></Error>")}},
 	}, id)
 	remoteErr := cloudBackupRemoteErrorFrom(err)
-	if remoteErr == nil || remoteErr.details == nil || len(remoteErr.details.ProviderAttempts) != 2 {
-		t.Fatalf("expected provider attempts, got %#v", err)
+	if remoteErr == nil || remoteErr.details == nil || remoteErr.details.RawResponseText == nil {
+		t.Fatalf("expected raw provider attempt summary, got %#v", err)
 	}
-	if remoteErr.details.ProviderAttempts[0].ProviderResponse == nil || *remoteErr.details.ProviderAttempts[0].ProviderResponse.Status != http.StatusNotFound {
-		t.Fatalf("expected WebDAV 404 attempt, got %#v", remoteErr.details.ProviderAttempts[0])
+	if !strings.Contains(*remoteErr.details.RawResponseText, "webdav: CLOUD_BACKUP_WEBDAV_NOT_FOUND") {
+		t.Fatalf("expected WebDAV failure summary, got %#v", *remoteErr.details.RawResponseText)
 	}
-	if remoteErr.details.ProviderAttempts[1].ProviderResponse == nil || *remoteErr.details.ProviderAttempts[1].ProviderResponse.Status != http.StatusForbidden {
-		t.Fatalf("expected S3 403 attempt, got %#v", remoteErr.details.ProviderAttempts[1])
+	if !strings.Contains(*remoteErr.details.RawResponseText, "s3: CLOUD_BACKUP_S3_GET_FAILED") || !strings.Contains(*remoteErr.details.RawResponseText, "AccessDenied") {
+		t.Fatalf("expected S3 failure summary, got %#v", *remoteErr.details.RawResponseText)
 	}
 }
 

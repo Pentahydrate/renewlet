@@ -1,6 +1,5 @@
 import {
   type CloudBackupProvider,
-  type CloudBackupProviderAttempt,
   type CloudBackupSnapshotManifest,
 } from "@renewlet/shared/schemas/cloud-backup";
 import {
@@ -14,8 +13,14 @@ export type CloudBackupTarget = {
   client: CloudBackupRemoteClient;
 };
 
+type CloudBackupProviderAttemptSummary = {
+  provider: CloudBackupProvider;
+  code: string;
+  message: string;
+};
+
 export async function downloadCloudBackupFromTargets(targets: CloudBackupTarget[], id: string): Promise<{ content: Uint8Array; manifest: CloudBackupSnapshotManifest }> {
-  const attempts: CloudBackupProviderAttempt[] = [];
+  const attempts: CloudBackupProviderAttemptSummary[] = [];
   for (const target of targets) {
     try {
       const result = await target.client.download(id);
@@ -32,14 +37,14 @@ export async function downloadCloudBackupFromTargets(targets: CloudBackupTarget[
   throw cloudBackupProviderAttemptsError(
     "CLOUD_BACKUP_DOWNLOAD_FAILED",
     "provider_attempts_failed",
-    "No configured cloud backup target returned a valid snapshot. Check providerAttempts for upstream responses.",
+    "No configured cloud backup target returned a valid snapshot.",
     attempts,
   );
 }
 
 export async function deleteCloudBackupFromTargets(targets: CloudBackupTarget[], id: string): Promise<void> {
   const matches: CloudBackupTarget[] = [];
-  const attempts: CloudBackupProviderAttempt[] = [];
+  const attempts: CloudBackupProviderAttemptSummary[] = [];
   let failedList = false;
   for (const target of targets) {
     try {
@@ -49,15 +54,13 @@ export async function deleteCloudBackupFromTargets(targets: CloudBackupTarget[],
         attempts.push({
           provider: target.provider,
           code: "CLOUD_BACKUP_SNAPSHOT_FOUND",
-          reason: "found",
-          providerMessage: "Snapshot exists in this provider.",
+          message: "Snapshot exists in this provider.",
         });
       } else {
         attempts.push({
           provider: target.provider,
           code: "CLOUD_BACKUP_SNAPSHOT_NOT_FOUND",
-          reason: "not_found",
-          providerMessage: "Snapshot was not listed by this provider.",
+          message: "Snapshot was not listed by this provider.",
         });
       }
     } catch (error) {
@@ -81,7 +84,7 @@ export async function deleteCloudBackupFromTargets(targets: CloudBackupTarget[],
   throw cloudBackupProviderAttemptsError(
     "CLOUD_BACKUP_DELETE_FAILED",
     "provider_attempts_failed",
-    "No configured cloud backup target listed this snapshot. Check providerAttempts for upstream responses.",
+    "No configured cloud backup target listed this snapshot.",
     attempts,
   );
 }
@@ -92,28 +95,23 @@ async function verifySnapshotBytes(content: Uint8Array, manifest: CloudBackupSna
   return (await sha256Hex(content)) === manifest.sha256.toLowerCase();
 }
 
-function cloudBackupProviderAttemptsError(code: string, reason: string, message: string, attempts: CloudBackupProviderAttempt[]): CloudBackupRemoteError {
+function cloudBackupProviderAttemptsError(code: string, _reason: string, message: string, attempts: CloudBackupProviderAttemptSummary[]): CloudBackupRemoteError {
   return new CloudBackupRemoteError(code, {
-    reason,
-    providerMessage: message,
-    providerAttempts: attempts,
+    rawResponseText: [message, ...attempts.map((attempt) => `${attempt.provider}: ${attempt.code} ${attempt.message}`)].join("\n"),
   });
 }
 
-function cloudBackupProviderAttemptFromError(provider: CloudBackupProvider, fallbackCode: string, fallbackReason: string, error: unknown): CloudBackupProviderAttempt {
+function cloudBackupProviderAttemptFromError(provider: CloudBackupProvider, fallbackCode: string, fallbackReason: string, error: unknown): CloudBackupProviderAttemptSummary {
   if (error instanceof CloudBackupRemoteError) {
     return {
       provider,
       code: error.code,
-      reason: error.details?.reason ?? fallbackReason,
-      providerMessage: error.details?.providerMessage ?? null,
-      providerResponse: error.details?.providerResponse ?? null,
+      message: error.details?.rawResponseText ?? fallbackReason,
     };
   }
   return {
     provider,
     code: fallbackCode,
-    reason: fallbackReason,
-    providerMessage: error instanceof Error ? error.message : String(error),
+    message: error instanceof Error ? error.message : String(error),
   };
 }

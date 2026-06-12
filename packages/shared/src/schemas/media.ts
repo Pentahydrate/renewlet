@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BUILT_IN_ICON_PROVIDERS } from "../built-in-icons";
+import { upstreamErrorDetailsSchema } from "./upstream";
 
 export const uploadKindSchema = z.enum(["logo", "icon"]);
 
@@ -129,11 +130,13 @@ export const builtInIconIndexStatusSchema = z.object({
 export const builtInIconIndexProviderCheckResponseSchema = z.object({
   status: builtInIconIndexStatusSchema,
   provider: builtInIconIndexProviderStatusSchema,
+  errorDetails: upstreamErrorDetailsSchema.optional(),
 }).strict();
 
 export const builtInIconIndexProviderRefreshResponseSchema = z.object({
   status: builtInIconIndexStatusSchema,
   provider: builtInIconIndexProviderStatusSchema,
+  errorDetails: upstreamErrorDetailsSchema.optional(),
 }).strict();
 
 export type UploadKind = z.infer<typeof uploadKindSchema>;

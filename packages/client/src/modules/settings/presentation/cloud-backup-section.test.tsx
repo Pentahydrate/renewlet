@@ -6,7 +6,7 @@ import { CloudBackupSection } from "./cloud-backup-section";
 import type { CloudBackupController, CloudBackupFormState } from "../application/use-cloud-backup-controller";
 import type { CloudBackupPolicy, CloudBackupSnapshot } from "@/lib/api/schemas/cloud-backup";
 
-// 设置页测试固定 provider 独立状态、完整上游响应和行级恢复 loading，防止 WebDAV/S3 通过展示层串值。
+// 设置页测试固定 provider 独立状态、原始错误响应和行级恢复 loading，防止 WebDAV/S3 通过展示层串值。
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({
     t: (key: string, params?: Record<string, string | number>) => {
@@ -81,14 +81,12 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "settings.cloudBackupDeleteTitle": "删除云端快照？",
         "settings.cloudBackupDeleteDescription": "该操作会删除远端 ZIP 和 manifest，删除后无法通过 Renewlet 恢复。",
         "settings.cloudBackupUpstreamTitle": "云存储错误详情",
-        "settings.cloudBackupUpstreamDescription": "当前错误的连接信息和远端 HTTP 响应。",
-        "settings.cloudBackupUpstreamResponse": "错误详情",
-        "settings.cloudBackupUpstreamMetadata": "元数据",
-        "settings.cloudBackupUpstreamResponseUnavailable": "当前错误没有收到上游 HTTP 响应。",
-        "settings.cloudBackupUpstreamCopy": "复制错误详情",
-        "settings.cloudBackupUpstreamCopied": "已复制",
-        "settings.cloudBackupUpstreamCopyFailed": "复制失败",
+        "settings.cloudBackupUpstreamDescription": "接口返回的原始响应。",
         "settings.cloudBackupUpstreamOpen": "查看错误详情",
+        "rawErrorResponse.copy": "复制错误详情",
+        "rawErrorResponse.copied": "已复制",
+        "rawErrorResponse.copyFailed": "复制失败",
+        "rawErrorResponse.responseUnavailable": "当前错误没有可回显的响应正文。",
       };
       const message = messages[key] ?? key;
       if (!params) return message;
@@ -724,7 +722,7 @@ describe("CloudBackupSection", () => {
     expect(screen.getByRole("button", { name: "删除" })).toBeDisabled();
   });
 
-  it("shows upstream response details for snapshot list failures", async () => {
+  it("shows raw response details for snapshot list failures", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -734,20 +732,7 @@ describe("CloudBackupSection", () => {
     const openSnapshotsErrorDetails = vi.fn();
     const cloudBackupErrorDetails = {
       message: "云端快照列表加载失败",
-      status: 400,
-      code: "CLOUD_BACKUP_S3_LIST_FAILED",
-      reason: "http_403",
-      providerMessage: "<Error><Code>AccessDenied</Code></Error>",
-      providerResponse: {
-        status: 403,
-        statusText: "Forbidden",
-        headers: { "content-type": "application/xml" },
-        body: "<Error><Code>AccessDenied</Code></Error>",
-        bodyTruncated: false,
-      },
-      providerAttempts: [],
-      diagnostics: null,
-      payload: null,
+      responseText: "<Error><Code>AccessDenied</Code></Error>",
     };
     const controller = createController({
       snapshotsErrorMessage: "云端快照列表加载失败",
@@ -768,17 +753,12 @@ describe("CloudBackupSection", () => {
     })} />);
 
     expect(screen.getByRole("dialog", { name: "云存储错误详情" })).toBeInTheDocument();
-    expect(screen.getByText(/HTTP 403 Forbidden/)).toBeInTheDocument();
-    expect(screen.getByText(/content-type: application\/xml/)).toBeInTheDocument();
-    expect(screen.getByText(/<Error><Code>AccessDenied<\/Code><\/Error>/)).toBeInTheDocument();
+    expect(screen.queryByText(/CLOUD_BACKUP_S3_LIST_FAILED/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/rawResponseText/)).not.toBeInTheDocument();
+    expect(screen.getByText(/AccessDenied/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "复制错误详情" }));
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("HTTP 403 Forbidden"));
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("<Error><Code>AccessDenied</Code></Error>"));
-
-    await user.click(screen.getByRole("tab", { name: "元数据" }));
-    expect(screen.getByText(/CLOUD_BACKUP_S3_LIST_FAILED/)).toBeInTheDocument();
-    expect(screen.getByText(/403/)).toBeInTheDocument();
   });
 
 });

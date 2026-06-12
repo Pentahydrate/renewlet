@@ -1,12 +1,15 @@
 import { z } from "zod";
+import {
+  UPSTREAM_RAW_RESPONSE_TEXT_MAX_CHARS,
+  upstreamErrorDetailsSchema,
+} from "./upstream";
 
 export const CLOUD_BACKUP_DEFAULT_RETENTION = 7;
 export const CLOUD_BACKUP_MAX_RETENTION = 30;
 export const CLOUD_BACKUP_MAX_SNAPSHOT_BYTES = 50 * 1024 * 1024;
-export const CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS = 64 * 1024;
+export const CLOUD_BACKUP_RAW_RESPONSE_TEXT_MAX_CHARS = UPSTREAM_RAW_RESPONSE_TEXT_MAX_CHARS;
 export const CLOUD_BACKUP_DEFAULT_SCHEDULE_TIME = "03:00";
 export const CLOUD_BACKUP_DEFAULT_SCHEDULE_WEEKDAY = "monday";
-export const CLOUD_BACKUP_ERROR_DIAGNOSTIC_MAX_CHARS = 512;
 
 const cloudBackupDefaultPolicy = {
   scheduleEnabled: false,
@@ -203,36 +206,5 @@ export const cloudBackupDeleteSnapshotResponseSchema = z.object({
 }).strict();
 export type CloudBackupDeleteSnapshotResponse = z.infer<typeof cloudBackupDeleteSnapshotResponseSchema>;
 
-export const cloudBackupProviderResponseSchema = z.object({
-  status: z.number().int().min(100).max(599).nullable(),
-  statusText: z.string().trim().max(200).nullable(),
-  headers: z.record(z.string().trim().min(1).max(160), z.string().max(4096)).nullable(),
-  body: z.string().max(CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  bodyTruncated: z.boolean(),
-}).strict();
-export type CloudBackupProviderResponse = z.infer<typeof cloudBackupProviderResponseSchema>;
-
-// providerResponse/providerAttempts 是一次性排障数据，只随当前认证错误返回；lastError、导出和备份包都不能持久化 raw body。
-export const cloudBackupProviderAttemptSchema = z.object({
-  provider: cloudBackupProviderSchema,
-  code: z.string().trim().min(1).max(160),
-  reason: z.string().trim().min(1).max(160),
-  providerMessage: z.string().trim().max(CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  providerResponse: cloudBackupProviderResponseSchema.nullable().optional(),
-}).strict();
-export type CloudBackupProviderAttempt = z.infer<typeof cloudBackupProviderAttemptSchema>;
-
-export const cloudBackupErrorDiagnosticsSchema = z.record(
-  z.string().trim().min(1).max(80),
-  z.string().trim().max(CLOUD_BACKUP_ERROR_DIAGNOSTIC_MAX_CHARS).nullable(),
-);
-export type CloudBackupErrorDiagnostics = z.infer<typeof cloudBackupErrorDiagnosticsSchema>;
-
-export const cloudBackupErrorDetailsSchema = z.object({
-  reason: z.string().trim().min(1).max(160),
-  providerMessage: z.string().trim().max(CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS).nullable(),
-  providerResponse: cloudBackupProviderResponseSchema.nullable().optional(),
-  providerAttempts: z.array(cloudBackupProviderAttemptSchema).optional(),
-  diagnostics: cloudBackupErrorDiagnosticsSchema.optional(),
-}).strict();
+export const cloudBackupErrorDetailsSchema = upstreamErrorDetailsSchema;
 export type CloudBackupErrorDetails = z.infer<typeof cloudBackupErrorDetailsSchema>;

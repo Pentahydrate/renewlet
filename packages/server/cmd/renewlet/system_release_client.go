@@ -34,14 +34,15 @@ func defaultSystemReleaseClient() systemReleaseClient {
 
 // FetchLatestRelease 读取官方仓库最新 Release，并把网络/限流错误归类为可展示的版本检查失败。
 func (client *httpSystemReleaseClient) FetchLatestRelease(ctx context.Context) (*githubRelease, error) {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/"+systemUpdateRepository+"/releases/latest", nil)
+	requestURL := "https://api.github.com/repos/" + systemUpdateRepository + "/releases/latest"
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	applyGitHubAPIHeaders(request)
 	response, err := client.apiClient.Do(request)
 	if err != nil {
-		return nil, classifyGitHubNetworkError(err)
+		return nil, classifyGitHubNetworkError(requestURL, err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -69,7 +70,7 @@ func (client *httpSystemReleaseClient) FetchReleases(ctx context.Context, page i
 	applyGitHubAPIHeaders(request)
 	response, err := client.apiClient.Do(request)
 	if err != nil {
-		return nil, classifyGitHubNetworkError(err)
+		return nil, classifyGitHubNetworkError(requestURL, err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -95,11 +96,15 @@ func (client *httpSystemReleaseClient) DownloadFile(ctx context.Context, sourceU
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
 	response, err := client.downloadClient.Do(request)
 	if err != nil {
-		return err
+		return createUpstreamNetworkError("GitHub", err, nil)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("download returned %s", response.Status)
+		providerResponse, _, captureErr := captureUpstreamProviderResponse(response, nil)
+		if captureErr != nil {
+			return captureErr
+		}
+		return createUpstreamHTTPError("GitHub", response, providerResponse, upstreamProviderMessage(providerResponse))
 	}
 	if response.ContentLength > maxBytes {
 		return fmt.Errorf("download is too large")
@@ -128,11 +133,15 @@ func (client *httpSystemReleaseClient) FetchText(ctx context.Context, sourceURL 
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
 	response, err := client.downloadClient.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, createUpstreamNetworkError("GitHub", err, nil)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("download returned %s", response.Status)
+		providerResponse, _, captureErr := captureUpstreamProviderResponse(response, nil)
+		if captureErr != nil {
+			return nil, captureErr
+		}
+		return nil, createUpstreamHTTPError("GitHub", response, providerResponse, upstreamProviderMessage(providerResponse))
 	}
 	return io.ReadAll(io.LimitReader(response.Body, maxBytes+1))
 }
@@ -166,14 +175,20 @@ func applyGitHubAPIHeaders(request *http.Request) {
 }
 
 func newGitHubAPIError(response *http.Response) error {
-	body, _ := io.ReadAll(io.LimitReader(response.Body, 64<<10))
-	message := githubErrorMessage(body)
+	token := strings.TrimSpace(os.Getenv(systemUpdateGitHubTokenEnv))
+	secrets := []string{}
+	if token != "" {
+		secrets = append(secrets, token)
+	}
+	providerResponse, rawBody, _ := captureUpstreamProviderResponse(response, secrets)
+	message := githubErrorMessage([]byte(rawBody))
 	apiError := &githubAPIError{
 		statusCode:  response.StatusCode,
 		status:      response.Status,
 		message:     message,
 		rateLimited: isGitHubRateLimited(response, message),
 		retryAt:     githubRetryAt(response.Header, time.Now()),
+		details:     createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
 	}
 	return apiError
 }
@@ -222,13 +237,17 @@ func githubRetryAt(header http.Header, now time.Time) time.Time {
 	return time.Time{}
 }
 
-func classifyGitHubNetworkError(err error) error {
+func classifyGitHubNetworkError(requestURL string, err error) error {
 	if err == nil {
 		return nil
 	}
 	var netError net.Error
 	if errors.Is(err, io.EOF) || errors.As(err, &netError) {
-		return &githubAPIError{message: err.Error()}
+		message := err.Error()
+		return &githubAPIError{
+			message: message,
+			details: createUpstreamErrorDetails(nil, message),
+		}
 	}
 	return err
 }

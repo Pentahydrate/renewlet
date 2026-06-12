@@ -23,9 +23,11 @@ import { aiRecognitionConfigContext } from "./ai-recognition-normalize";
 import { normalizeAIImageType } from "./ai-recognition-input";
 import {
   aiRecognitionErrorDetails,
+  redactAIRecognitionSecrets,
   safeAIRecognitionError,
 } from "./ai-recognition-diagnostics";
 import { providerResponseFromError } from "./ai-provider-response";
+import { redactUpstreamSecrets } from "./upstream-response";
 import {
   runAIRecognitionConnectionTest,
   thinkingControlMatchesSettings,
@@ -253,9 +255,7 @@ export async function testAIRecognitionConnection(request: Request, env: Env): P
       serverText(locale, "aiRecognition.testFailed"),
       "AI_RECOGNITION_TEST_FAILED",
       {
-        reason: "provider_failed",
-        providerMessage: safeAIRecognitionError(error),
-        providerResponse: providerResponseFromError(error),
+        rawResponseText: redactUpstreamSecrets(redactAIRecognitionSecrets(providerResponseFromError(error)?.body || ""), [settings.apiKey]) || safeAIRecognitionError(error),
       },
     );
   }

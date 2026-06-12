@@ -1,0 +1,242 @@
+import {
+  buildNotificationEmail,
+  type NotificationEmailMessage,
+} from "@renewlet/shared/email-template";
+import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
+import { notificationSmtpConfig, sendSmtpEmail } from "./smtp";
+import { assertSafeOutboundUrl } from "./outbound-url-policy";
+import { sendServerChan } from "./notification-serverchan";
+import { NotificationChannelError } from "./notification-errors";
+import {
+  createUpstreamErrorDetails,
+  providerMessageFromResponse,
+  redactUpstreamSecrets,
+  upstreamProviderResponseFromFetchResponse,
+} from "./upstream-response";
+import { serverFormat, serverText } from "./server-i18n";
+import type { Env } from "./types";
+import type { AppLocale } from "./http";
+import type { Channel, SendSummary } from "./notification-jobs";
+
+// 这里是 Worker 通知渠道唯一外发边界：请求侧 secret 只参与发送和脱敏，返回给前端的 details 只能是一份一次性 rawResponseText。
+export async function sendChannels(
+  env: Env,
+  channels: Channel[],
+  settings: ApiAppSettings,
+  message: NotificationEmailMessage,
+  locale: AppLocale,
+  appUrl?: string,
+): Promise<SendSummary> {
+  const summary: SendSummary = { attempted: channels, succeeded: [], failed: [] };
+  for (const channel of channels) {
+    try {
+      // 多渠道是“尽力发送”：一个渠道失败要进入 summary，不能吞掉其它渠道的成功。
+      await sendChannel(env, channel, settings, message, locale, appUrl);
+      summary.succeeded.push(channel);
+    } catch (error) {
+      const details = error instanceof NotificationChannelError ? error.details : null;
+      summary.failed.push({
+        channel,
+        error: error instanceof Error ? error.message : String(error),
+        ...(details ? { details } : {}),
+      });
+    }
+  }
+  return summary;
+}
+
+export async function sendChannel(
+  env: Env,
+  channel: Channel,
+  settings: ApiAppSettings,
+  message: NotificationEmailMessage,
+  locale: AppLocale,
+  appUrl?: string,
+): Promise<void> {
+  switch (channel) {
+    case "telegram": {
+      const token = required(settings.telegramBotToken, serverText(locale, "service.telegramBotToken"), locale);
+      const chatId = required(settings.telegramChatId, serverText(locale, "service.telegramChatID"), locale);
+      await postJson(`https://api.telegram.org/bot${token}/sendMessage`, {
+        chat_id: chatId,
+        text: textMessage(message),
+        disable_web_page_preview: true,
+      }, "Telegram", locale, undefined, { secrets: [token, chatId] });
+      return;
+    }
+    case "notifyx": {
+      const apiKey = required(settings.notifyxApiKey, serverText(locale, "service.notifyxAPIKey"), locale);
+      await postJson(`https://www.notifyx.cn/api/v1/send/${encodeURIComponent(apiKey)}`, {
+        title: message.title,
+        content: message.content,
+        description: message.timestamp,
+      }, "NotifyX", locale, undefined, { secrets: [apiKey] });
+      return;
+    }
+    case "webhook":
+      await sendWebhook(settings, message, locale);
+      return;
+    case "wechat": {
+      const rawUrl = required(settings.wechatWebhookUrl, serverText(locale, "service.wechatWebhookURL"), locale);
+      await postJson(await safeHttpsUrl(rawUrl, locale), {
+        msgtype: settings.wechatMessageType,
+        [settings.wechatMessageType]: settings.wechatMessageType === "markdown"
+          ? { content: textMessage(message) }
+          : {
+              content: textMessage(message),
+              mentioned_mobile_list: settings.wechatAtAll ? ["@all"] : splitList(settings.wechatAtPhones),
+            },
+      }, "WeCom", locale, undefined, { secrets: [rawUrl] });
+      return;
+    }
+    case "bark": {
+      const deviceKey = required(settings.barkDeviceKey, serverText(locale, "service.barkDeviceKey"), locale);
+      await fetchOk(await barkUrl(settings, message, locale), { method: "GET" }, "Bark", locale, { secrets: [deviceKey, settings.barkServerUrl] });
+      return;
+    }
+    case "email":
+      await sendEmail(env, settings, message, locale, appUrl);
+      return;
+    case "serverchan":
+      await sendServerChan(settings, message, locale);
+      return;
+  }
+}
+
+async function sendWebhook(settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale): Promise<void> {
+  const rawEndpoint = required(settings.webhookUrl, serverText(locale, "service.webhookURL"), locale);
+  const endpoint = await safeHttpsUrl(rawEndpoint, locale);
+  const headers = parseHeaders(settings.webhookHeaders);
+  const secrets = [rawEndpoint, ...headersSecrets(headers)];
+  if (settings.webhookMethod === "GET") {
+    // GET webhook 只能把模板字段放 query，避免对方服务忽略 body 导致测试“成功但无内容”。
+    const url = new URL(endpoint);
+    url.searchParams.set("title", message.title);
+    url.searchParams.set("content", message.content);
+    url.searchParams.set("timestamp", message.timestamp);
+    await fetchOk(url, { method: "GET", headers }, "Webhook", locale, { secrets });
+    return;
+  }
+  headers.set("content-type", headers.get("content-type") ?? "application/json");
+  const body = settings.webhookPayload.trim()
+    ? applyTemplate(settings.webhookPayload, message)
+    : JSON.stringify({ title: message.title, content: message.content, timestamp: message.timestamp });
+  await fetchOk(endpoint, { method: "POST", headers, body }, "Webhook", locale, { secrets });
+}
+
+async function sendEmail(env: Env, settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale, appUrl?: string): Promise<void> {
+  let to = splitList(settings.recipientEmail);
+  if (!settings.notifyMultipleAddresses && to.length > 1) to = to.slice(0, 1);
+  if (to.length === 0) throw new Error(serverText(locale, "smtp.recipientEmpty"));
+  const email = buildNotificationEmail(settings, message, appUrl ? { appUrl } : {});
+  const smtpConfig = notificationSmtpConfig(settings, locale);
+  try {
+    await sendSmtpEmail(smtpConfig, { to, subject: email.subject, text: email.text, html: email.html }, locale);
+  } catch (error) {
+    const message = error instanceof Error ? redactUpstreamSecrets(error.message, [smtpConfig.password, smtpConfig.username]) : serverText(locale, "smtp.deliveryFailed");
+    throw new NotificationChannelError(message, createUpstreamErrorDetails({
+      responseText: message,
+    }));
+  }
+}
+
+async function postJson(
+  url: string | URL,
+  payload: unknown,
+  channel: string,
+  locale: AppLocale,
+  headers?: Record<string, string>,
+  options: { secrets?: readonly string[] } = {},
+): Promise<void> {
+  await fetchOk(url, { method: "POST", headers: { "content-type": "application/json", ...(headers ?? {}) }, body: JSON.stringify(payload) }, channel, locale, options);
+}
+
+async function fetchOk(url: string | URL, init: RequestInit, channel: string, locale: AppLocale, options: { secrets?: readonly string[] } = {}): Promise<void> {
+  const secrets = options.secrets ?? [];
+  let response: Response;
+  try {
+    response = await fetch(url, init);
+  } catch (error) {
+    const message = error instanceof Error ? redactUpstreamSecrets(error.message, secrets) : serverText(locale, "common.internalError");
+    throw new NotificationChannelError(
+      serverFormat(locale, "notification.httpRequestFailed", { service: channel, error: message }),
+      createUpstreamErrorDetails({
+        responseText: message,
+      }),
+    );
+  }
+  if (!response.ok) {
+    // 非 2xx 必须先有界读取 body，再生成用户可复制的 rawResponseText；Server酱 429 text/plain 不能再被改写丢失。
+    const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets });
+    const providerMessage = providerMessageFromResponse(providerResponse) ?? response.statusText;
+    throw new NotificationChannelError(
+      externalHttpError(channel, response.status, providerMessage, locale),
+      createUpstreamErrorDetails({
+        responseText: providerMessage,
+        providerResponse,
+      }),
+    );
+  }
+  if (response.body) await response.body.cancel().catch(() => undefined);
+}
+
+function externalHttpError(channel: string, status: number, providerMessage: string, locale: AppLocale): string {
+  const detail = providerMessage.trim().slice(0, 800);
+  return serverFormat(locale, "notification.httpSendFailed", {
+    channel,
+    status,
+    detail,
+  });
+}
+
+async function safeHttpsUrl(raw: string, locale: AppLocale): Promise<string> {
+  // Worker 没有 Go 的 DialContext 钩子；发送前先解析并拒绝内网/本机地址，避免用户配置的通知 URL 变成 SSRF 跳板。
+  const url = await assertSafeOutboundUrl(raw, locale);
+  return url.toString();
+}
+
+async function barkUrl(settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale): Promise<string> {
+  const server = (await safeHttpsUrl(settings.barkServerUrl || "https://api.day.app", locale)).replace(/\/+$/, "");
+  const key = required(settings.barkDeviceKey, serverText(locale, "service.barkDeviceKey"), locale);
+  const url = new URL(`${server}/${encodeURIComponent(key)}/${encodeURIComponent(message.title)}/${encodeURIComponent(message.content)}`);
+  if (settings.barkSilentPush) url.searchParams.set("isArchive", "1");
+  return url.toString();
+}
+
+function parseHeaders(value: string): Headers {
+  const headers = new Headers();
+  if (!value.trim()) return headers;
+  // headers 是高级配置，保持 JSON 对象语义；解析失败应让测试发送显式失败。
+  const parsed = JSON.parse(value) as Record<string, string>;
+  for (const [key, item] of Object.entries(parsed)) headers.set(key, item);
+  return headers;
+}
+
+function headersSecrets(headers: Headers): string[] {
+  const out: string[] = [];
+  headers.forEach((value, key) => {
+    const name = key.toLowerCase();
+    // 自定义 webhook header 由用户输入，名称命中敏感词时按请求侧 secret 处理，避免 provider 原样回显。
+    if (name === "authorization" || name.includes("secret") || name.includes("token") || name.includes("signature") || name.includes("credential") || name.includes("api-key")) {
+      out.push(value);
+    }
+  });
+  return out;
+}
+
+function required(value: string, label: string, locale: AppLocale): string {
+  if (value.trim()) return value.trim();
+  throw new Error(serverFormat(locale, "common.requiredField", { label }));
+}
+
+function textMessage(message: NotificationEmailMessage): string {
+  return `${message.title}\n\n${message.content}\n\n${message.timestamp}`;
+}
+
+function applyTemplate(template: string, message: NotificationEmailMessage): string {
+  return template.replaceAll("{title}", message.title).replaceAll("{content}", message.content).replaceAll("{timestamp}", message.timestamp);
+}
+
+function splitList(input: string): string[] {
+  return input.split(/[,\n;]/).map((item) => item.trim()).filter(Boolean);
+}

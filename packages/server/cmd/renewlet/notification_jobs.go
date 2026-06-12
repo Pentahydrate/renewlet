@@ -141,6 +141,7 @@ func normalizeJobChannels(channels jobChannels) jobChannels {
 	}
 	failed := make([]channelFailure, 0, len(failedByChannel))
 	for channel, errText := range failedByChannel {
+		// notification_jobs 是 cron 审计数据，只保存短摘要；上游 raw response 只能留在手动 API 的当前响应里。
 		failed = append(failed, channelFailure{Channel: channel, Error: errText})
 	}
 	sort.Slice(failed, func(i, j int) bool { return failed[i].Channel < failed[j].Channel })
@@ -217,6 +218,7 @@ func mergeChannelResults(previous jobChannels, summary sendSummary, enabled []st
 	}
 	failed := make([]channelFailure, 0, len(failures))
 	for channel, errText := range failures {
+		// merge 结果会进入 cron history，必须丢弃手动/本轮发送捕获的 raw details。
 		failed = append(failed, channelFailure{Channel: channel, Error: errText})
 	}
 	sort.Slice(failed, func(i, j int) bool { return failed[i].Channel < failed[j].Channel })

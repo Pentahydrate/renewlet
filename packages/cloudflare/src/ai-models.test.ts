@@ -159,14 +159,7 @@ describe("Cloudflare AI model list proxy", () => {
       status: 401,
       code: "AI_MODEL_LIST_FAILED",
       details: {
-        reason: "http_401",
-        providerMessage: "invalid sk-test-secret",
-        providerResponse: {
-          status: 401,
-          headers: expect.objectContaining({ "content-type": "text/plain" }),
-          body: "invalid sk-test-secret",
-          bodyTruncated: false,
-        },
+        rawResponseText: "invalid [redacted]",
       },
     });
   });
@@ -182,8 +175,7 @@ describe("Cloudflare AI model list proxy", () => {
       status: 429,
       code: "AI_MODEL_LIST_FAILED",
       details: {
-        reason: "http_429",
-        providerResponse: expect.objectContaining({ body: "slow down", status: 429 }),
+        rawResponseText: "slow down",
       },
     });
   });
@@ -199,8 +191,7 @@ describe("Cloudflare AI model list proxy", () => {
       status: 503,
       code: "AI_MODEL_LIST_FAILED",
       details: {
-        reason: "http_503",
-        providerResponse: expect.objectContaining({ body: "provider down", status: 503 }),
+        rawResponseText: "provider down",
       },
     });
   });
@@ -216,8 +207,7 @@ describe("Cloudflare AI model list proxy", () => {
       status: 400,
       code: "AI_MODEL_LIST_INVALID_JSON",
       details: {
-        reason: "invalid_json",
-        providerResponse: expect.objectContaining({ body: "not-json", status: 200 }),
+        rawResponseText: "not-json",
       },
     });
   });
@@ -232,7 +222,7 @@ describe("Cloudflare AI model list proxy", () => {
     }), envFixture())).rejects.toMatchObject({
       status: 413,
       code: "AI_MODEL_LIST_RESPONSE_TOO_LARGE",
-      details: { reason: "response_too_large" },
+      details: { rawResponseText: "response_too_large" },
     });
   });
 
@@ -246,7 +236,7 @@ describe("Cloudflare AI model list proxy", () => {
     }), envFixture())).rejects.toMatchObject({
       status: 408,
       code: "AI_MODEL_LIST_TIMEOUT",
-      details: { reason: "timeout" },
+      details: { rawResponseText: "timeout" },
     });
   });
 });

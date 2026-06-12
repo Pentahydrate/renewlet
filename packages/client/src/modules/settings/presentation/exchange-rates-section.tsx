@@ -5,14 +5,17 @@
  *
  * 注意： 默认货币和启用货币会影响全站金额换算，展示层不能绕过 controller 直接修改配置。
  */
+import { useState } from "react";
 import { ExternalLink, RefreshCw, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RawErrorResponseDialog } from "@/components/raw-error-response-dialog";
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { SearchableSelectOption } from '@/components/ui/searchable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { ExchangeRateProvider, ExchangeRates } from '@/lib/api/schemas/exchange-rates';
+import type { RawErrorResponseDetails } from "@/lib/raw-error-response";
 import { cn } from '@/lib/utils';
 import type { CustomConfig } from '@/types/config';
 import type { AppSettings } from '@/types/subscription';
@@ -30,6 +33,7 @@ export interface ExchangeRatesSectionProps {
   activeRateProvider: ExchangeRateProvider | "builtin";
   ratesLoading: boolean;
   ratesError: string | null;
+  ratesErrorDetails: RawErrorResponseDetails | null;
   lastUpdated: Date | null;
   defaultCurrencyOptions: SearchableSelectOption[];
   handleRefreshRates: () => void | Promise<void>;
@@ -47,6 +51,7 @@ export function ExchangeRatesSection({
   activeRateProvider,
   ratesLoading,
   ratesError,
+  ratesErrorDetails,
   lastUpdated,
   defaultCurrencyOptions,
   handleRefreshRates,
@@ -55,6 +60,7 @@ export function ExchangeRatesSection({
   getCurrencySymbol,
 }: ExchangeRatesSectionProps) {
   const { t, formatDateTime, formatNumber } = useI18n();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const previewCurrencies = getExchangeRatePreviewCurrencies(customConfig.currencies, settings.defaultCurrency);
   const providerLabel = activeRateProvider === "builtin"
     ? t("settings.exchangeRateProvider.builtin")
@@ -87,8 +93,19 @@ export function ExchangeRatesSection({
                 </div>
     
                 {ratesError && (
-                  <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 text-sm">
-                    {t("settings.ratesError", { error: ratesError })}
+                  <div className="mb-4 flex flex-col gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-600 sm:flex-row sm:items-center sm:justify-between">
+                    <span>{t("settings.ratesError", { error: ratesError })}</span>
+                    {ratesErrorDetails ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="w-full border-amber-500/30 bg-transparent text-amber-700 hover:bg-amber-500/10 dark:text-amber-300 sm:w-auto"
+                        onClick={() => setDetailsOpen(true)}
+                      >
+                        {t("rawErrorResponse.open")}
+                      </Button>
+                    ) : null}
                   </div>
                 )}
     
@@ -215,6 +232,12 @@ export function ExchangeRatesSection({
                     {t("settings.ratesInfo")}
                   </p>
                 </div>
+                <RawErrorResponseDialog
+                  open={detailsOpen}
+                  details={ratesErrorDetails}
+                  onOpenChange={setDetailsOpen}
+                  testId="exchange-rates-raw-error-response-dialog"
+                />
               </section>
     
   );

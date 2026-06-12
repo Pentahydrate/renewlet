@@ -97,7 +97,11 @@ func fetchGitHubJSON(ctx context.Context, url string, etag string, target any) (
 	client := &http.Client{Timeout: builtInIconGitHubFetchTimeout}
 	res, err := client.Do(req)
 	if err != nil {
-		return "", false, err
+		secrets := []string{}
+		if token := strings.TrimSpace(os.Getenv("RENEWLET_GITHUB_TOKEN")); token != "" {
+			secrets = append(secrets, token)
+		}
+		return "", false, createUpstreamNetworkError("GitHub", err, secrets)
 	}
 	defer res.Body.Close()
 	nextETag := res.Header.Get("ETag")
@@ -121,16 +125,27 @@ func fetchGitHubJSON(ctx context.Context, url string, etag string, target any) (
 }
 
 func gitHubVersionCheckHTTPError(res *http.Response) error {
+	secrets := []string{}
+	if token := strings.TrimSpace(os.Getenv("RENEWLET_GITHUB_TOKEN")); token != "" {
+		secrets = append(secrets, token)
+	}
+	providerResponse, _, err := captureUpstreamProviderResponse(res, secrets)
+	if err != nil {
+		return err
+	}
+	providerMessage := upstreamProviderMessage(providerResponse)
 	if res.StatusCode == http.StatusTooManyRequests || (res.StatusCode == http.StatusForbidden && res.Header.Get("X-RateLimit-Remaining") == "0") {
+		message := fmt.Sprintf("GitHub API rate limited (HTTP %d). Configure RENEWLET_GITHUB_TOKEN for a higher limit", res.StatusCode)
 		if retryHint := gitHubRateLimitRetryHint(res); retryHint != "" {
-			return fmt.Errorf("GitHub API rate limited (HTTP %d). %s Configure RENEWLET_GITHUB_TOKEN for a higher limit", res.StatusCode, retryHint)
+			message = fmt.Sprintf("GitHub API rate limited (HTTP %d). %s Configure RENEWLET_GITHUB_TOKEN for a higher limit", res.StatusCode, retryHint)
 		}
-		return fmt.Errorf("GitHub API rate limited (HTTP %d). Configure RENEWLET_GITHUB_TOKEN for a higher limit", res.StatusCode)
+		return newUpstreamOperationError(message, createUpstreamErrorDetails(providerResponse, fallbackText(providerMessage, message)))
 	}
 	if res.StatusCode == http.StatusForbidden {
-		return errors.New("GitHub API access denied (HTTP 403). Configure RENEWLET_GITHUB_TOKEN or retry later")
+		message := "GitHub API access denied (HTTP 403). Configure RENEWLET_GITHUB_TOKEN or retry later"
+		return newUpstreamOperationError(message, createUpstreamErrorDetails(providerResponse, fallbackText(providerMessage, message)))
 	}
-	return fmt.Errorf("GitHub version check HTTP %d", res.StatusCode)
+	return createUpstreamHTTPError("GitHub", res, providerResponse, fallbackText(providerMessage, fmt.Sprintf("GitHub version check HTTP %d", res.StatusCode)))
 }
 
 func gitHubRateLimitRetryHint(res *http.Response) string {

@@ -35,6 +35,11 @@ import {
   type ExchangeRates,
 } from '@/lib/api/schemas/exchange-rates';
 import {
+  createRawErrorResponseDetails,
+  createRawErrorResponseDetailsFromText,
+  type RawErrorResponseDetails,
+} from "@/lib/raw-error-response";
+import {
   SUPPORTED_EXCHANGE_RATE_CURRENCIES,
   getIntlCurrencySymbol,
   isSupportedExchangeRateCurrency,
@@ -87,7 +92,10 @@ type InFlightRatesRequest = {
 };
 
 class ExchangeRateContractError extends Error {
-  constructor(message = "Invalid exchange rate response") {
+  constructor(
+    message = "Invalid exchange rate response",
+    readonly errorDetails: RawErrorResponseDetails | null = null,
+  ) {
     super(message);
     this.name = "ExchangeRateContractError";
   }
@@ -105,9 +113,20 @@ class ExchangeRateProviderError extends Error {
     readonly provider: ExchangeRateProvider,
     readonly kind: ExchangeRateErrorKind,
     readonly originalCause: unknown,
+    readonly errorDetails: RawErrorResponseDetails | null = exchangeRateErrorDetailsFromError(originalCause),
   ) {
     super(`Exchange rate provider ${provider} failed: ${kind}`);
     this.name = "ExchangeRateProviderError";
+  }
+}
+
+class ExchangeRateUpstreamError extends Error {
+  constructor(
+    message: string,
+    readonly errorDetails: RawErrorResponseDetails,
+  ) {
+    super(message);
+    this.name = "ExchangeRateUpstreamError";
   }
 }
 
@@ -189,7 +208,37 @@ function getErrorMessageKey(kind: ExchangeRateErrorKind) {
   return "error.network";
 }
 
-async function fetchJsonWithTimeout(url: string, parentSignal: AbortSignal): Promise<unknown> {
+function exchangeRateErrorDetailsFromError(error: unknown): RawErrorResponseDetails | null {
+  if (error instanceof ExchangeRateProviderError) return error.errorDetails;
+  if (error instanceof ExchangeRateUpstreamError) return error.errorDetails;
+  if (error instanceof ExchangeRateContractError) return error.errorDetails;
+  if (error instanceof Error || typeof error === "string") return createRawErrorResponseDetails(error);
+  return null;
+}
+
+function exchangeRateErrorLogContext(error: unknown): Record<string, unknown> {
+  if (error instanceof ExchangeRateProviderError) {
+    return {
+      name: error.name,
+      message: error.message,
+      provider: error.provider,
+      kind: error.kind,
+      cause: exchangeRateErrorLogContext(error.originalCause),
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+  return { message: typeof error === "string" ? error : String(error) };
+}
+
+async function fetchJsonWithTimeout(url: string, parentSignal: AbortSignal): Promise<{
+  payload: unknown;
+  responseText: string;
+}> {
   const controller = new AbortController();
   let timedOut = false;
 
@@ -210,12 +259,32 @@ async function fetchJsonWithTimeout(url: string, parentSignal: AbortSignal): Pro
     const response = await fetch(url, {
       signal: controller.signal,
     });
+    const responseText = await response.text();
 
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      const code = `HTTP ${response.status}`;
+      throw new ExchangeRateUpstreamError(
+        `HTTP error: ${response.status}`,
+        createRawErrorResponseDetailsFromText({
+          code,
+          message: response.statusText || code,
+          responseText,
+        }),
+      );
     }
 
-    return await response.json();
+    try {
+      return { payload: JSON.parse(responseText) as unknown, responseText };
+    } catch {
+      throw new ExchangeRateContractError(
+        "Invalid exchange rate JSON",
+        createRawErrorResponseDetailsFromText({
+          code: "INVALID_RESPONSE",
+          message: "Invalid exchange rate JSON",
+          responseText,
+        }),
+      );
+    }
   } catch (e) {
     if (timedOut) throw new ExchangeRateTimeoutError();
     throw e;
@@ -229,15 +298,24 @@ async function fetchExchangeApiRates(signal: AbortSignal): Promise<ExchangeRateD
   const failures: unknown[] = [];
   for (const url of [EXCHANGE_API_PRIMARY_USD_FEED, EXCHANGE_API_FALLBACK_USD_FEED]) {
     try {
-      const payload = await fetchJsonWithTimeout(url, signal);
+      const { payload, responseText } = await fetchJsonWithTimeout(url, signal);
       const data = normalizeExchangeApiUsdResponse(payload);
-      if (!data) throw new ExchangeRateContractError();
+      if (!data) {
+        throw new ExchangeRateContractError(
+          "Invalid exchange-api response",
+          createRawErrorResponseDetailsFromText({
+            code: "INVALID_RESPONSE",
+            message: "Invalid exchange-api response",
+            responseText,
+          }),
+        );
+      }
       return data;
     } catch (e) {
       if (signal.aborted && !(e instanceof ExchangeRateTimeoutError)) throw e;
       failures.push(e);
       // exchange-api 的两个 URL 是同一数据源的 CDN 兜底；记录具体端点便于排查区域性 CDN 故障。
-      console.warn(`Failed to fetch exchange rates from exchange-api endpoint ${url}:`, e);
+      console.warn(`Failed to fetch exchange rates from exchange-api endpoint ${url}:`, exchangeRateErrorLogContext(e));
     }
   }
 
@@ -253,9 +331,18 @@ async function fetchProviderRates(
       return await fetchExchangeApiRates(signal);
     }
 
-    const payload = await fetchJsonWithTimeout(FLOATRATES_USD_FEED, signal);
+    const { payload, responseText } = await fetchJsonWithTimeout(FLOATRATES_USD_FEED, signal);
     const data = normalizeFloatRatesResponse(payload);
-    if (!data) throw new ExchangeRateContractError();
+    if (!data) {
+      throw new ExchangeRateContractError(
+        "Invalid FloatRates response",
+        createRawErrorResponseDetailsFromText({
+          code: "INVALID_RESPONSE",
+          message: "Invalid FloatRates response",
+          responseText,
+        }),
+      );
+    }
     return data;
   } catch (e) {
     if (signal.aborted && !(e instanceof ExchangeRateTimeoutError)) throw e;
@@ -269,6 +356,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
   const [activeProvider, setActiveProvider] = useState<ExchangeRateSource>("builtin");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<RawErrorResponseDetails | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const mountedRef = useRef(false);
   const inFlightRef = useRef<InFlightRatesRequest | null>(null);
@@ -339,6 +427,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
 
     setLoading(true);
     setError(null);
+    setErrorDetails(null);
 
     if (!forceRefresh) {
       const cached = getCachedRates(requestedProvider);
@@ -370,6 +459,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
             setActiveProvider(provider);
             setLastUpdated(new Date());
             setError(null);
+            setErrorDetails(null);
             setCachedRates({ ...data, rates: ratesWithBase }, provider, requestedProvider);
             return;
           } catch (e) {
@@ -378,7 +468,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
               ? e
               : new ExchangeRateProviderError(provider, errorKindFromProviderError(e), e);
             providerFailures.push(providerError);
-            console.warn(`Failed to fetch exchange rates from ${provider}:`, e);
+            console.warn(`Failed to fetch exchange rates from ${provider}:`, exchangeRateErrorLogContext(providerError));
           }
         }
 
@@ -386,12 +476,16 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
       } catch (e) {
         if (controller.signal.aborted) return;
         if (!mountedRef.current || inFlightRef.current?.controller !== controller) return;
-        reportClientError(e, { source: "exchange-rates.fetch" });
+        reportClientError(new Error("Exchange rate fetch failed"), {
+          source: "exchange-rates.fetch",
+          ...exchangeRateErrorLogContext(e),
+        });
         const kind = errorKindFromProviderError(e);
         setError(translate(
           getApiLocale(),
           getErrorMessageKey(kind),
         ));
+        setErrorDetails(exchangeRateErrorDetailsFromError(e));
         // 汇率失败不能拖垮仪表盘；内置快照牺牲实时性，保留跨币种统计的可解释性。
         setRates(FALLBACK_RATES);
         setBaseRate('USD');
@@ -460,6 +554,7 @@ export const useExchangeRates = (preferredProvider: ExchangeRateProvider = DEFAU
     activeProvider,
     loading,
     error,
+    errorDetails,
     lastUpdated,
     convert,
     getCurrencySymbol,

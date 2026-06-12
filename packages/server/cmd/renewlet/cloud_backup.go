@@ -576,8 +576,7 @@ func cloudBackupProviderParameterError(e *core.RequestEvent, locale appLocale, c
 		Message: serverText(locale, "cloudBackup.providerInvalid"),
 		Code:    code,
 		Details: &cloudBackupErrorDetails{
-			Reason:          reason,
-			ProviderMessage: optionalCloudBackupString(message),
+			RawResponseText: optionalCloudBackupString(message),
 		},
 	})
 }
@@ -600,15 +599,7 @@ func cloudBackupOperationError(e *core.RequestEvent, locale appLocale, messageKe
 
 func persistedCloudBackupErrorMessage(err error) string {
 	if remoteErr := cloudBackupRemoteErrorFrom(err); remoteErr != nil {
-		status := ""
-		reason := ""
-		if remoteErr.details != nil {
-			reason = remoteErr.details.Reason
-			if remoteErr.details.ProviderResponse != nil && remoteErr.details.ProviderResponse.Status != nil {
-				status = fmt.Sprintf("status=%d", *remoteErr.details.ProviderResponse.Status)
-			}
-		}
-		return strings.Join(filterNonEmpty([]string{remoteErr.code, status, reason}), " ")
+		return remoteErr.code
 	}
 	return "local_sdk_error"
 }

@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useBuiltInIconIndexStatus, useCheckBuiltInIconIndexProvider, useRefreshBuiltInIconIndexProvider } from "@/hooks/use-built-in-icon-index";
 import { useToast } from "@/hooks/use-toast";
 import { getDisplayErrorMessage } from "@/lib/display-error";
+import { createRawErrorResponseDetails, type RawErrorResponseDetails } from "@/lib/raw-error-response";
 import type { BuiltInIconIndexStatus } from "@/lib/api/schemas/media";
 import { useI18n } from "@/i18n/I18nProvider";
 import { BUILT_IN_ICON_PROVIDERS, type BuiltInIconProvider } from "@renewlet/shared/built-in-icons";
@@ -12,6 +13,9 @@ export interface SettingsBuiltInIconIndexController {
   isLoading: boolean;
   checkingProvider: BuiltInIconProvider | null;
   refreshingProvider: BuiltInIconProvider | null;
+  errorDetails: RawErrorResponseDetails | null;
+  errorDetailsOpen: boolean;
+  setErrorDetailsOpen: (open: boolean) => void;
   checkAllProviders: () => Promise<void>;
   checkProvider: (provider: BuiltInIconProvider) => Promise<void>;
   refreshProvider: (provider: BuiltInIconProvider) => Promise<void>;
@@ -25,12 +29,17 @@ export function useSettingsBuiltInIconIndexController(canManage: boolean): Setti
   const refreshProvider = useRefreshBuiltInIconIndexProvider();
   const [checkingProvider, setCheckingProvider] = useState<BuiltInIconProvider | null>(null);
   const [refreshingProvider, setRefreshingProvider] = useState<BuiltInIconProvider | null>(null);
+  const [errorDetails, setErrorDetails] = useState<RawErrorResponseDetails | null>(null);
+  const [errorDetailsOpen, setErrorDetailsOpen] = useState(false);
 
   const runProviderCheck = useCallback(async (provider: BuiltInIconProvider) => {
     setCheckingProvider(provider);
     try {
       await checkProvider.mutateAsync(provider);
-    } catch {
+    } catch (error) {
+      const details = createRawErrorResponseDetails(error);
+      setErrorDetails(details);
+      setErrorDetailsOpen(true);
       await status.refetch();
     } finally {
       setCheckingProvider((current) => current === provider ? null : current);
@@ -62,6 +71,9 @@ export function useSettingsBuiltInIconIndexController(canManage: boolean): Setti
         }),
       });
     } catch (error) {
+      const details = createRawErrorResponseDetails(error);
+      setErrorDetails(details);
+      setErrorDetailsOpen(true);
       await status.refetch();
       toast({
         title: t("settings.builtInIconIndexRefreshFailed"),
@@ -81,6 +93,9 @@ export function useSettingsBuiltInIconIndexController(canManage: boolean): Setti
     isLoading: status.isLoading,
     checkingProvider,
     refreshingProvider,
+    errorDetails,
+    errorDetailsOpen,
+    setErrorDetailsOpen,
     checkAllProviders: handleCheckAllProviders,
     checkProvider: handleCheckProvider,
     refreshProvider: handleRefreshProvider,

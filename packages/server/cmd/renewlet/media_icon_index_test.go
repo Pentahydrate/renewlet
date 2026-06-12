@@ -103,11 +103,12 @@ func TestMediaIconIndexCheckProviderRecordsGitHubRateLimitWithoutSwitchingActive
 		t.Fatal(err)
 	}
 	_, adminToken := createRouteTestUser(t, app, "admin")
+	t.Setenv("RENEWLET_GITHUB_TOKEN", "github-token")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-RateLimit-Remaining", "0")
 		w.Header().Set("X-RateLimit-Reset", "1781190000")
-		http.Error(w, "rate limited", http.StatusForbidden)
+		http.Error(w, "rate limited github-token", http.StatusForbidden)
 	}))
 	defer server.Close()
 	withBuiltInIconGitHubAPIBase(t, server.URL)
@@ -123,12 +124,25 @@ func TestMediaIconIndexCheckProviderRecordsGitHubRateLimitWithoutSwitchingActive
 	if response.Provider.LastError == nil || !strings.Contains(*response.Provider.LastError, "RENEWLET_GITHUB_TOKEN") {
 		t.Fatalf("expected rate limit guidance in lastError, got %#v", response.Provider.LastError)
 	}
+	if response.ErrorDetails == nil || response.ErrorDetails.RawResponseText == nil {
+		t.Fatalf("expected one-shot upstream details, got %#v", response.ErrorDetails)
+	}
+	if !strings.Contains(*response.ErrorDetails.RawResponseText, "rate limited [redacted]") {
+		t.Fatalf("expected redacted upstream body, got %#v", response.ErrorDetails.RawResponseText)
+	}
+	if payload, _ := json.Marshal(response.ErrorDetails); strings.Contains(string(payload), "github-token") {
+		t.Fatalf("errorDetails leaked GitHub token: %s", payload)
+	}
 	record, err := findMediaIconIndexRecord(app)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if record == nil || record.GetString("hash") != "" || record.GetString("indexGzipBase64") != "" {
 		t.Fatalf("expected failed check to keep active index empty, got %#v", record)
+	}
+	providerStatusPayload, _ := json.Marshal(record.Get("providerStatus"))
+	if strings.Contains(string(providerStatusPayload), "github-token") || strings.Contains(string(providerStatusPayload), "rate limited github-token") {
+		t.Fatalf("provider status persisted raw upstream details: %s", providerStatusPayload)
 	}
 }
 
@@ -204,6 +218,12 @@ func TestMediaIconIndexRefreshSuccessAndFailureKeepsPreviousRuntimeIndex(t *test
 	}
 	if failure.Provider.LastError == nil || *failure.Provider.LastError == "" {
 		t.Fatalf("expected failure status to expose last error, got %#v", failure.Status)
+	}
+	if failure.ErrorDetails == nil || failure.ErrorDetails.RawResponseText == nil {
+		t.Fatalf("expected current response to include upstream details, got %#v", failure.ErrorDetails)
+	}
+	if !strings.Contains(*failure.ErrorDetails.RawResponseText, "registry failed") {
+		t.Fatalf("expected upstream body in refresh failure details, got %#v", failure.ErrorDetails.RawResponseText)
 	}
 	if failure.Provider.Current == nil || failure.Provider.Current.CommitSHA == nil || *failure.Provider.Current.CommitSHA != *success.Provider.Current.CommitSHA {
 		t.Fatalf("expected failed refresh to keep previous current version, got %#v", failure.Provider.Current)

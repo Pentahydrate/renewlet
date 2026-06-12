@@ -138,7 +138,7 @@ func handleBuiltInIconIndexProviderCheck(app core.App, e *core.RequestEvent) err
 		operationActive = false
 		status := builtInIconIndexStatus(app)
 		// check 只更新 provider 可见状态；GitHub 限流/断网时仍返回同形状 body，让前端展示失败 badge 而不是把弹层流程打断。
-		return e.JSON(http.StatusOK, builtInIconIndexProviderCheckResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusOK, builtInIconIndexProviderCheckResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	if err := saveMediaIconProviderLatest(app, provider, checkedAt, version, etag); err != nil {
 		return e.InternalServerError(serverText(locale, "common.internalError"), err)
@@ -179,14 +179,15 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		releaseBuiltInIconIndexOperation()
 		operationActive = false
 		status := builtInIconIndexStatus(app)
-		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	if version == nil || version.CommitSHA == nil || *version.CommitSHA == "" {
-		saveMediaIconProviderFailure(app, provider, checkedAt, errors.New("latest provider commit is unavailable"))
+		err := errors.New("latest provider commit is unavailable")
+		saveMediaIconProviderFailure(app, provider, checkedAt, err)
 		releaseBuiltInIconIndexOperation()
 		operationActive = false
 		status := builtInIconIndexStatus(app)
-		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	sourceRef := builtInIconProviderSourceRef{
 		Provider: provider,
@@ -198,7 +199,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		releaseBuiltInIconIndexOperation()
 		operationActive = false
 		status := builtInIconIndexStatus(app)
-		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	activeIcons := activeBuiltInIconIndex(app)
 	icons, err := replaceBuiltInIconProviderIndex(activeIcons, provider, providerIcons)
@@ -207,7 +208,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		releaseBuiltInIconIndexOperation()
 		operationActive = false
 		status := builtInIconIndexStatus(app)
-		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	hash, gzipBase64, err := encodeBuiltInIconIndex(icons)
 	if err != nil {
@@ -215,7 +216,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		releaseBuiltInIconIndexOperation()
 		operationActive = false
 		status := builtInIconIndexStatus(app)
-		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider)})
+		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
 	if err := saveMediaIconProviderRefreshSuccess(app, provider, checkedAt, hash, gzipBase64, icons, version, etag); err != nil {
 		return e.InternalServerError(serverText(locale, "common.internalError"), err)

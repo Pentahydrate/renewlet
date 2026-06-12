@@ -366,6 +366,7 @@ describe("useCloudBackupController provider drafts", () => {
 
     expect(result.current.restoringSnapshotKey).toBe("s3:failed-restore-id");
 
+    const rawResponse = "{\"code\":\"CLOUD_BACKUP_S3_GET_FAILED\",\"details\":{\"rawResponseText\":\"<Error><Code>AccessDenied</Code></Error>\"}}";
     await act(async () => {
       rejectDownload(new ApiError(
         "云端快照恢复失败",
@@ -373,18 +374,11 @@ describe("useCloudBackupController provider drafts", () => {
         {
           code: "CLOUD_BACKUP_S3_GET_FAILED",
           details: {
-            reason: "http_403",
-            providerMessage: "<Error><Code>AccessDenied</Code></Error>",
-            providerResponse: {
-              status: 403,
-              statusText: "Forbidden",
-              headers: { "content-type": "application/xml" },
-              body: "<Error><Code>AccessDenied</Code></Error>",
-              bodyTruncated: false,
-            },
+            rawResponseText: "<Error><Code>AccessDenied</Code></Error>",
           },
         },
         "CLOUD_BACKUP_S3_GET_FAILED",
+        rawResponse,
       ));
       await restorePromise;
     });
@@ -392,8 +386,8 @@ describe("useCloudBackupController provider drafts", () => {
     expect(result.current.restoringSnapshotKey).toBeNull();
     expect(result.current.cloudBackupErrorDetailsOpen).toBe(true);
     expect(result.current.cloudBackupErrorDetails).toMatchObject({
-      code: "CLOUD_BACKUP_S3_GET_FAILED",
-      reason: "http_403",
+      message: "云端快照恢复失败",
+      responseText: "<Error><Code>AccessDenied</Code></Error>",
     });
   });
 
@@ -450,6 +444,7 @@ describe("useCloudBackupController provider drafts", () => {
 
     expect(result.current.deletingSnapshotKey).toBe("s3:failed-delete-id");
 
+    const rawResponse = "{\"code\":\"CLOUD_BACKUP_S3_DELETE_FAILED\",\"details\":{\"rawResponseText\":\"<Error><Code>AccessDenied</Code></Error>\"}}";
     await act(async () => {
       rejectDelete(new ApiError(
         "云端快照删除失败",
@@ -457,18 +452,11 @@ describe("useCloudBackupController provider drafts", () => {
         {
           code: "CLOUD_BACKUP_S3_DELETE_FAILED",
           details: {
-            reason: "http_403",
-            providerMessage: "<Error><Code>AccessDenied</Code></Error>",
-            providerResponse: {
-              status: 403,
-              statusText: "Forbidden",
-              headers: { "content-type": "application/xml" },
-              body: "<Error><Code>AccessDenied</Code></Error>",
-              bodyTruncated: false,
-            },
+            rawResponseText: "<Error><Code>AccessDenied</Code></Error>",
           },
         },
         "CLOUD_BACKUP_S3_DELETE_FAILED",
+        rawResponse,
       ));
       await deletePromise;
     });
@@ -476,25 +464,25 @@ describe("useCloudBackupController provider drafts", () => {
     expect(result.current.deletingSnapshotKey).toBeNull();
     expect(result.current.cloudBackupErrorDetailsOpen).toBe(true);
     expect(result.current.cloudBackupErrorDetails).toMatchObject({
-      code: "CLOUD_BACKUP_S3_DELETE_FAILED",
-      reason: "http_403",
+      message: "云端快照删除失败",
+      responseText: "<Error><Code>AccessDenied</Code></Error>",
     });
   });
 
   it("opens upstream details for local SDK cloud backup test errors", async () => {
     const { result } = await renderController();
+    const rawResponse = "{\"code\":\"CLOUD_BACKUP_TEST_FAILED\",\"details\":{\"rawResponseText\":\"Value out of range. Must be between -2147483648 and 2147483647 (inclusive).\"}}";
     mocks.testMutateAsync.mockRejectedValueOnce(new ApiError(
       "云备份连接测试失败",
       400,
       {
         code: "CLOUD_BACKUP_TEST_FAILED",
         details: {
-          reason: "local_sdk_error",
-          providerMessage: "Value out of range. Must be between -2147483648 and 2147483647 (inclusive).",
-          providerResponse: null,
+          rawResponseText: "Value out of range. Must be between -2147483648 and 2147483647 (inclusive).",
         },
       },
       "CLOUD_BACKUP_TEST_FAILED",
+      rawResponse,
     ));
 
     await act(async () => {
@@ -502,10 +490,8 @@ describe("useCloudBackupController provider drafts", () => {
     });
 
     expect(result.current.cloudBackupErrorDetailsOpen).toBe(true);
-    expect(result.current.cloudBackupErrorDetails?.code).toBe("CLOUD_BACKUP_TEST_FAILED");
-    expect(result.current.cloudBackupErrorDetails?.reason).toBe("local_sdk_error");
-    expect(result.current.cloudBackupErrorDetails?.providerMessage).toContain("Value out of range");
-    expect(result.current.cloudBackupErrorDetails?.providerResponse).toBeNull();
+    expect(result.current.cloudBackupErrorDetails?.message).toBe("云备份连接测试失败");
+    expect(result.current.cloudBackupErrorDetails?.responseText).toBe("Value out of range. Must be between -2147483648 and 2147483647 (inclusive).");
   });
 
   it("queries snapshots for the active provider only", async () => {
@@ -537,12 +523,11 @@ describe("useCloudBackupController provider drafts", () => {
       {
         code: "CLOUD_BACKUP_LIST_FAILED",
         details: {
-          reason: "local_sdk_error",
-          providerMessage: "internal error",
-          providerResponse: null,
+          rawResponseText: "internal error",
         },
       },
       "CLOUD_BACKUP_LIST_FAILED",
+      "{\"code\":\"CLOUD_BACKUP_LIST_FAILED\",\"details\":{\"rawResponseText\":\"internal error\"}}",
     );
 
     const { result } = await renderController();
@@ -552,6 +537,6 @@ describe("useCloudBackupController provider drafts", () => {
       result.current.openSnapshotsErrorDetails();
     });
     expect(result.current.cloudBackupErrorDetails?.message).toBe("Failed to load cloud backups");
-    expect(result.current.cloudBackupErrorDetails?.code).toBe("CLOUD_BACKUP_LIST_FAILED");
+    expect(result.current.cloudBackupErrorDetails?.responseText).toBe("internal error");
   });
 });

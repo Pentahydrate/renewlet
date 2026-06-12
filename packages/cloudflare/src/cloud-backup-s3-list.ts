@@ -2,17 +2,18 @@ import { type ListObjectsV2Command, type S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   type CloudBackupErrorDetails,
-  CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS,
-  type CloudBackupProviderResponse,
 } from "@renewlet/shared/schemas/cloud-backup";
+import { UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS } from "@renewlet/shared/schemas/upstream";
+import type { UpstreamProviderResponse } from "./upstream-response";
 import { XMLParser } from "fast-xml-parser";
+
+type CloudBackupProviderResponse = UpstreamProviderResponse;
 
 type S3ListObjectsRequest = {
   client: S3Client;
   command: ListObjectsV2Command;
   secrets: readonly string[];
   setAttemptedHost: (host: string) => void;
-  diagnostics: () => Record<string, string>;
 };
 
 type S3ListObjectsPage = {
@@ -47,15 +48,12 @@ export async function listS3ObjectsV2ViaSignedFetch(request: S3ListObjectsReques
   if (!response.ok) {
     throw new S3ListObjectsError(
       s3ErrorCodeForStatus("CLOUD_BACKUP_S3_LIST_FAILED", providerResponse),
-      s3ListErrorDetailsFromProviderResponse("CLOUD_BACKUP_S3_LIST_FAILED", providerResponse, request.diagnostics()),
+      s3ListErrorDetailsFromProviderResponse("CLOUD_BACKUP_S3_LIST_FAILED", providerResponse),
     );
   }
   if (providerResponse.bodyTruncated) {
     throw new S3ListObjectsError("CLOUD_BACKUP_S3_LIST_FAILED", {
-      reason: "list_response_too_large",
-      providerMessage: providerResponse.body,
-      providerResponse,
-      diagnostics: sanitizeCloudBackupDiagnostics(request.diagnostics()),
+      rawResponseText: providerResponse.body || "CLOUD_BACKUP_S3_LIST_FAILED",
     });
   }
   try {
@@ -63,21 +61,13 @@ export async function listS3ObjectsV2ViaSignedFetch(request: S3ListObjectsReques
     return s3ListObjectsPageFromXml(providerResponse.body ?? "");
   } catch (error) {
     throw new S3ListObjectsError("CLOUD_BACKUP_S3_LIST_FAILED", {
-      reason: "xml_parse_error",
-      providerMessage: error instanceof Error ? error.message : String(error),
-      providerResponse,
-      diagnostics: sanitizeCloudBackupDiagnostics(request.diagnostics()),
+      rawResponseText: error instanceof Error ? error.message : String(error),
     });
   }
 }
 
-function s3ListErrorDetailsFromProviderResponse(code: string, providerResponse: CloudBackupProviderResponse, diagnostics: Record<string, string>): CloudBackupErrorDetails {
-  return {
-    reason: `http_${providerResponse.status ?? 0}`,
-    providerMessage: providerResponse.body || providerResponse.statusText || code,
-    providerResponse,
-    diagnostics: sanitizeCloudBackupDiagnostics(diagnostics),
-  };
+function s3ListErrorDetailsFromProviderResponse(code: string, providerResponse: CloudBackupProviderResponse): CloudBackupErrorDetails {
+  return { rawResponseText: providerResponse.body || providerResponse.statusText || code };
 }
 
 async function s3ListProviderResponse(response: Response, secrets: readonly string[]): Promise<CloudBackupProviderResponse> {
@@ -101,8 +91,8 @@ async function readS3ListProviderResponseBody(response: Response): Promise<{ tex
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS) {
-      const remaining = Math.max(0, CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS - text.length);
+    if (total > UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS) {
+      const remaining = Math.max(0, UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS - text.length);
       if (remaining > 0) text += decoder.decode(value.slice(0, remaining), { stream: true });
       await reader.cancel().catch(() => undefined);
       return { text: text + decoder.decode(), truncated: true };
@@ -173,17 +163,6 @@ function safeProviderResponseHeader(key: string): boolean {
     && !normalized.includes("signature")
     && !normalized.includes("accesskey")
     && !normalized.includes("access-key");
-}
-
-function sanitizeCloudBackupDiagnostics(values: Record<string, string>): Record<string, string> | undefined {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(values)) {
-    const name = key.trim();
-    const text = value.trim();
-    if (!name || !text || !safeProviderResponseHeader(name)) continue;
-    out[name] = text.length > 512 ? text.slice(0, 512) : text;
-  }
-  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function s3ErrorCodeForStatus(fallback: string, response: CloudBackupProviderResponse): string {

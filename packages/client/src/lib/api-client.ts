@@ -29,22 +29,25 @@ import { translate } from "@/i18n/messages";
 import { z } from "zod";
 
 export class ApiError extends Error {
-  // status/details/code 是 UI 错误展示和表单字段定位的唯一结构化通道。
+  // rawResponseText 只服务当前错误详情回显；不要把它持久化或拿来驱动业务分支。
   status: number;
   details: unknown;
   code: "timeout" | "aborted" | "network" | (string & {}) | undefined;
+  rawResponseText: string;
 
   constructor(
     message: string,
     status: number,
     details?: unknown,
     code?: "timeout" | "aborted" | "network" | (string & {}),
+    rawResponseText = "",
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.details = details;
     this.code = code;
+    this.rawResponseText = rawResponseText;
   }
 }
 
@@ -181,13 +184,13 @@ function responseWithStreamActivity(response: Response, onChunk: () => void, sig
   });
 }
 
-async function parseJsonSafely(response: Response): Promise<unknown> {
+async function readResponsePayload(response: Response): Promise<{ json: unknown; text: string }> {
   const text = await response.text();
-  if (!text) return null;
+  if (!text) return { json: null, text };
   try {
-    return JSON.parse(text) as unknown;
+    return { json: JSON.parse(text) as unknown, text };
   } catch {
-    return null;
+    return { json: null, text };
   }
 }
 
@@ -346,14 +349,15 @@ export async function apiFetch<Schema extends z.ZodType>(
 ): Promise<z.infer<Schema>> {
   const { abort, response: res } = await fetchWithApiBoundary(input, init);
   try {
-    const json = await parseJsonSafely(res);
+    const payload = await readResponsePayload(res);
+    const json = payload.json;
 
     if (!res.ok) {
       const message = getErrorMessage(json) || res.statusText || "Request failed";
       if (shouldClearAuthSession(res.status, json)) {
         clearAuthSession();
       }
-      throw new ApiError(message, res.status, json, getErrorCode(json));
+      throw new ApiError(message, res.status, json, getErrorCode(json), payload.text);
     }
 
     const parsed = responseSchema.safeParse(json);
@@ -365,6 +369,7 @@ export async function apiFetch<Schema extends z.ZodType>(
         res.status,
         parsed.error.flatten(),
         "invalid_response",
+        payload.text,
       );
     }
 
@@ -379,12 +384,13 @@ export async function apiFetchBlob(input: RequestInfo, init?: ApiFetchInit): Pro
   const { abort, response } = await fetchWithApiBoundary(input, init);
   try {
     if (!response.ok) {
-      const json = await parseJsonSafely(response);
+      const payload = await readResponsePayload(response);
+      const json = payload.json;
       const message = getErrorMessage(json) || response.statusText || "Request failed";
       if (shouldClearAuthSession(response.status, json)) {
         clearAuthSession();
       }
-      throw new ApiError(message, response.status, json, getErrorCode(json));
+      throw new ApiError(message, response.status, json, getErrorCode(json), payload.text);
     }
     return await response.blob();
   } finally {
@@ -403,12 +409,13 @@ export async function apiFetchStream<T>(
   const idleWatchdog = createStreamIdleWatchdog(abort, init.streamIdleTimeoutMs);
   try {
     if (!response.ok) {
-      const json = await parseJsonSafely(response);
+      const payload = await readResponsePayload(response);
+      const json = payload.json;
       const message = getErrorMessage(json) || response.statusText || "Request failed";
       if (shouldClearAuthSession(response.status, json)) {
         clearAuthSession();
       }
-      throw new ApiError(message, response.status, json, getErrorCode(json));
+      throw new ApiError(message, response.status, json, getErrorCode(json), payload.text);
     }
     idleWatchdog.reset();
     const responseForConsume = responseWithStreamActivity(response, idleWatchdog.reset, abort.signal);

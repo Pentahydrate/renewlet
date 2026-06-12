@@ -38,6 +38,7 @@ import { SearchableSelect, type SearchableSelectOption } from '@/components/ui/s
 import { TimePicker } from '@/components/ui/time-picker';
 import { ConfigManagerDialog } from '@/modules/custom-config/presentation/config-manager-dialog';
 import { ThemeSelector } from '@/components/theme-selector';
+import { RawErrorResponseDialog } from '@/components/raw-error-response-dialog';
 import { NotificationHistoryPanel } from './notification-history-panel';
 import { Settings2, FolderKanban, Activity, CreditCard, Coins, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,7 @@ export function SettingsScreen() {
     ratesLoading,
     lastUpdated,
     ratesError,
+    ratesErrorDetails,
     getCurrencySymbol,
     updateCategories,
     updateStatuses,
@@ -107,6 +109,9 @@ export function SettingsScreen() {
     handleThemeCustomColorChange,
     testingChannel,
     handleTestConnection,
+    notificationTestErrorDetails,
+    notificationTestErrorDetailsOpen,
+    setNotificationTestErrorDetailsOpen,
     isSavingSettings,
     notificationHistory,
     calendarFeed,
@@ -423,6 +428,7 @@ export function SettingsScreen() {
                 activeRateProvider={activeRateProvider}
                 ratesLoading={ratesLoading}
                 ratesError={ratesError}
+                ratesErrorDetails={ratesErrorDetails}
                 lastUpdated={lastUpdated}
                 defaultCurrencyOptions={defaultCurrencyOptions}
                 handleRefreshRates={handleRefreshRates}
@@ -653,6 +659,15 @@ export function SettingsScreen() {
         config={customConfig}
         initialFile={cloudBackupRestoreFile}
         onInitialFileConsumed={() => setCloudBackupRestoreFile(null)}
+      />
+
+      <RawErrorResponseDialog
+        open={notificationTestErrorDetailsOpen}
+        details={notificationTestErrorDetails}
+        onOpenChange={setNotificationTestErrorDetailsOpen}
+        title={t("rawErrorResponse.title")}
+        description={t("rawErrorResponse.description")}
+        testId="notification-test-raw-error-response-dialog"
       />
     </div>
   );

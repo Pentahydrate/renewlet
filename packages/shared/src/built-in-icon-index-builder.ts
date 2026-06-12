@@ -144,14 +144,16 @@ function selfhstVariants(reference: string, item: JsonRecord): BuiltInIconVarian
 
 async function fetchJsonAny(context: BuildContext, urls: readonly string[], label: string): Promise<unknown> {
   const errors: string[] = [];
+  const rawErrors: unknown[] = [];
   for (const url of urls) {
     try {
       return await context.fetchJson(url, label);
     } catch (error) {
+      rawErrors.push(error);
       errors.push(error instanceof Error ? error.message : String(error));
     }
   }
-  throw new Error(`${label} failed: ${errors.join("; ")}`);
+  throw new AggregateError(rawErrors, `${label} failed: ${errors.join("; ")}`);
 }
 
 function githubRawBase(context: BuildContext, provider: BuiltInIconProvider): string {

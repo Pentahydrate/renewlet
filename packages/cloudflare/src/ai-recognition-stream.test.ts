@@ -345,15 +345,9 @@ describe("Cloudflare AI recognition stream", () => {
 
     expect(response.status).toBe(200);
     expect(error?.code).toBe("AI_RECOGNITION_FAILED");
-    expect(error?.details?.providerMessage).toContain("[redacted]");
-    expect(error?.details?.providerResponse).toMatchObject({
-      status: 401,
-      headers: { "content-type": "application/json" },
-      body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"bad sk-stream-secret123\"}",
-      bodyTruncated: false,
-    });
+    expect(error?.details?.rawResponseText).toBe("{\"code\":\"INVALID_API_KEY\",\"message\":\"bad [redacted]\"}");
     expect(payload).not.toContain("sk-test");
-    expect(payload).toContain("sk-stream-secret123");
+    expect(payload).not.toContain("sk-stream-secret123");
   });
 
   it("prefers full stream provider response body over structured output wrapper errors", async () => {
@@ -386,15 +380,7 @@ describe("Cloudflare AI recognition stream", () => {
 
     expect(response.status).toBe(200);
     expect(error?.code).toBe("AI_RECOGNITION_FAILED");
-    expect(error?.details?.providerResponse).toMatchObject({
-      status: 401,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "x-request-id": "94e04705-c718-498c-ae12-bb9af83647bb",
-      },
-      body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}",
-      bodyTruncated: false,
-    });
+    expect(error?.details?.rawResponseText).toBe("{\"code\":\"INVALID_API_KEY\",\"message\":\"Invalid API key\"}");
     expect(payload).not.toContain("requestBodyValues");
     expect(payload).not.toContain("claude-sonnet-4-6");
   });

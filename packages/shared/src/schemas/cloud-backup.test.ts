@@ -1,7 +1,7 @@
 // 云备份 schema 测试保护 Docker/Worker/前端三端共用契约，尤其是 write-only 凭据和 ZIP 快照完整性边界。
 import { describe, expect, it } from "vitest";
 import {
-  CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS,
+  CLOUD_BACKUP_RAW_RESPONSE_TEXT_MAX_CHARS,
   cloudBackupCreateSnapshotRequestSchema,
   cloudBackupCreateSnapshotResponseSchema,
   cloudBackupConfigResponseSchema,
@@ -308,82 +308,21 @@ describe("cloud backup schemas", () => {
     }).success).toBe(false);
   });
 
-  it("validates upstream provider error details without accepting oversized bodies", () => {
+  it("validates raw upstream error details without accepting oversized bodies", () => {
     const parsed = cloudBackupErrorDetailsSchema.parse({
-      reason: "http_403",
-      providerMessage: "<Error><Code>AccessDenied</Code></Error>",
-      providerResponse: {
-        status: 403,
-        statusText: "Forbidden",
-        headers: { "content-type": "application/xml" },
-        body: "<Error><Code>AccessDenied</Code></Error>",
-        bodyTruncated: false,
-      },
-      diagnostics: {
-        signingRegion: "auto",
-        endpointMode: "serviceEndpoint",
-        attemptedHost: "https://bucket.storage.example.com",
-      },
+      rawResponseText: "<Error><Code>AccessDenied</Code></Error>",
     });
 
-    expect(parsed.providerResponse?.status).toBe(403);
-    expect(parsed.providerResponse?.body).toContain("AccessDenied");
-    expect(parsed.diagnostics?.["signingRegion"]).toBe("auto");
+    expect(parsed.rawResponseText).toContain("AccessDenied");
 
     const local = cloudBackupErrorDetailsSchema.parse({
-      reason: "local_sdk_error",
-      providerMessage: "Value out of range. Must be between -2147483648 and 2147483647 (inclusive).",
-      providerResponse: null,
+      rawResponseText: "Value out of range. Must be between -2147483648 and 2147483647 (inclusive).",
     });
 
-    expect(local.providerResponse).toBeNull();
-    expect(local.providerMessage).toContain("Value out of range");
-
-    const attempts = cloudBackupErrorDetailsSchema.parse({
-      reason: "provider_attempts_failed",
-      providerMessage: "No configured cloud backup target contains this snapshot.",
-      providerAttempts: [
-        {
-          provider: "webdav",
-          code: "CLOUD_BACKUP_WEBDAV_NOT_FOUND",
-          reason: "http_404",
-          providerMessage: "<d:error>not found</d:error>",
-          providerResponse: {
-            status: 404,
-            statusText: "Not Found",
-            headers: { "content-type": "application/xml" },
-            body: "<d:error>not found</d:error>",
-            bodyTruncated: false,
-          },
-        },
-        {
-          provider: "s3",
-          code: "CLOUD_BACKUP_S3_GET_FAILED",
-          reason: "http_403",
-          providerMessage: "<Error><Code>AccessDenied</Code></Error>",
-          providerResponse: {
-            status: 403,
-            statusText: "Forbidden",
-            headers: null,
-            body: "<Error><Code>AccessDenied</Code></Error>",
-            bodyTruncated: false,
-          },
-        },
-      ],
-    });
-
-    expect(attempts.providerAttempts?.map((attempt) => attempt.provider)).toEqual(["webdav", "s3"]);
+    expect(local.rawResponseText).toContain("Value out of range");
 
     expect(cloudBackupErrorDetailsSchema.safeParse({
-      reason: "http_403",
-      providerMessage: "x".repeat(CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS + 1),
-      providerResponse: {
-        status: 403,
-        statusText: "Forbidden",
-        headers: null,
-        body: "x".repeat(CLOUD_BACKUP_PROVIDER_RESPONSE_BODY_MAX_CHARS + 1),
-        bodyTruncated: true,
-      },
+      rawResponseText: "x".repeat(CLOUD_BACKUP_RAW_RESPONSE_TEXT_MAX_CHARS + 1),
     }).success).toBe(false);
   });
 });

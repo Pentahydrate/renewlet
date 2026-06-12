@@ -195,9 +195,10 @@ describe("Cloudflare system update contract", () => {
   });
 
   it("keeps the dialog usable when GitHub release checks fail", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited", { status: 403 })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited github-secret", { status: 403 })));
 
     const env = envFixture();
+    env.RENEWLET_GITHUB_TOKEN = "github-secret";
     delete env.RENEWLET_VERSION;
     delete env.RENEWLET_COMMIT;
 
@@ -220,7 +221,11 @@ describe("Cloudflare system update contract", () => {
         commit: "",
         buildType: "cloudflare",
       },
+      errorDetails: {
+        rawResponseText: "rate limited [redacted]",
+      },
     });
+    expect(JSON.stringify(body)).not.toContain("github-secret");
   });
 
   it("rejects executable updates in the Worker runtime", async () => {

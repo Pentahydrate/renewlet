@@ -236,8 +236,7 @@ function fakeCloudBackupTarget(provider: CloudBackupProvider, manifests: CloudBa
     upload: async () => undefined,
     download: async () => {
       throw new CloudBackupRemoteError("CLOUD_BACKUP_DOWNLOAD_FAILED", {
-        reason: "not_implemented",
-        providerMessage: null,
+        rawResponseText: "not implemented",
       });
     },
     delete: async () => {
@@ -413,7 +412,7 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_PROVIDER_INVALID",
       details: {
-        reason: "provider_invalid",
+        rawResponseText: expect.stringContaining("\"provider\":\"webdav\""),
       },
     });
   });
@@ -497,13 +496,11 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_DOWNLOAD_FAILED",
       details: {
-        reason: "provider_attempts_failed",
-        providerAttempts: [
-          expect.objectContaining({ provider: "webdav", code: "CLOUD_BACKUP_WEBDAV_NOT_FOUND" }),
-          expect.objectContaining({ provider: "s3", code: "CLOUD_BACKUP_S3_GET_FAILED" }),
-        ],
+        rawResponseText: expect.stringContaining("webdav: CLOUD_BACKUP_WEBDAV_NOT_FOUND"),
       },
     } satisfies Partial<HttpError>);
+    const rawResponseText = (error?.details as { rawResponseText?: string } | undefined)?.rawResponseText ?? "";
+    expect(rawResponseText).toContain("s3: CLOUD_BACKUP_S3_GET_FAILED");
     expect(JSON.stringify(error?.details)).toContain("AccessDenied");
   });
 
@@ -519,8 +516,7 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_PROVIDER_INVALID",
       details: {
-        reason: "provider_invalid",
-        providerMessage: "Use provider=webdav or provider=s3.",
+        rawResponseText: "Use provider=webdav or provider=s3.",
       },
     });
   });
@@ -545,12 +541,7 @@ describe("Cloudflare cloud backup", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_PROVIDER_REQUIRED",
       details: {
-        reason: "provider_required",
-        providerMessage: "Snapshot may exist in multiple cloud backup targets. Use provider=webdav or provider=s3.",
-        providerAttempts: [
-          expect.objectContaining({ provider: "webdav", reason: "found" }),
-          expect.objectContaining({ provider: "s3", reason: "found" }),
-        ],
+        rawResponseText: expect.stringContaining("Snapshot may exist in multiple cloud backup targets."),
       },
     } satisfies Partial<CloudBackupRemoteError>);
     expect(deletedProviders).toEqual([]);
@@ -570,8 +561,7 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_PROVIDER_REQUIRED",
       details: {
-        reason: "provider_required",
-        providerMessage: "Use provider=webdav or provider=s3.",
+        rawResponseText: "Use provider=webdav or provider=s3.",
       },
     } satisfies Partial<HttpError>);
   });
@@ -627,13 +617,7 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_LIST_FAILED",
       details: {
-        reason: "http_403",
-        providerResponse: expect.objectContaining({
-          status: 403,
-          statusText: "Forbidden",
-          body: expect.stringContaining("AccessDenied"),
-          headers: expect.not.objectContaining({ authorization: expect.any(String) }),
-        }),
+        rawResponseText: expect.stringContaining("AccessDenied"),
       },
     } satisfies Partial<HttpError>);
     expect(JSON.stringify(error?.details)).not.toContain("access-key");
@@ -642,7 +626,7 @@ describe("Cloudflare cloud backup", () => {
     expect(JSON.stringify(error?.details)).not.toContain("X-Amz-Signature");
   });
 
-  it("returns structured local SDK details when S3 test fails before an upstream response exists", async () => {
+  it("returns local SDK raw details when S3 test fails before an upstream response exists", async () => {
     const env = fakeEnvForRows([]);
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new RangeError("Value out of range. Must be between -2147483648 and 2147483647 (inclusive).");
@@ -679,20 +663,11 @@ describe("Cloudflare cloud backup", () => {
       status: 400,
       code: "CLOUD_BACKUP_TEST_FAILED",
       details: {
-        reason: "local_sdk_error",
-        providerMessage: expect.stringContaining("Value out of range"),
-        providerResponse: null,
-        diagnostics: expect.objectContaining({
-          configuredEndpoint: "https://storage.example.com",
-          signingRegion: "us-east-1",
-          endpointMode: "serviceEndpoint",
-          operation: "put",
-        }),
+        rawResponseText: expect.stringContaining("Value out of range"),
       },
     } satisfies Partial<HttpError>);
-    const details = error?.details as { providerMessage?: string | null; diagnostics?: Record<string, string> } | undefined;
-    expect(details?.providerMessage).toContain("attempted host: https://renewlet.storage.example.com");
-    expect(details?.diagnostics?.["attemptedHost"]).toBe("https://renewlet.storage.example.com");
+    const details = error?.details as { rawResponseText?: string | null } | undefined;
+    expect(details?.rawResponseText).toContain("attempted host: https://renewlet.storage.example.com");
     expect(JSON.stringify(error?.details)).not.toContain("secret-key");
     expect(JSON.stringify(error?.details)).not.toContain("X-Amz-Signature");
   });

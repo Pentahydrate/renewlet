@@ -1,6 +1,7 @@
 // 通知测试 hook 测试保护“未保存设置临时传入服务端”的流程，避免要求用户先保存再测试。
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api-client";
 import { DEFAULT_SETTINGS } from "@/types/subscription";
 import { useNotificationTest } from "./use-notification-test";
 
@@ -73,5 +74,31 @@ describe("useNotificationTest", () => {
       description: "网络错误",
       variant: "destructive",
     });
+  });
+
+  it("opens raw response details when a notification test fails", async () => {
+    const rawResponse = "{\"message\":\"ServerChan 发送失败\",\"code\":\"NOTIFICATION_TEST_FAILED\",\"details\":{\"rawResponseText\":\"too many requests\"}}";
+    mocks.apiFetch.mockRejectedValue(new ApiError("ServerChan 发送失败", 400, {
+      message: "ServerChan 发送失败",
+      code: "NOTIFICATION_TEST_FAILED",
+      details: {
+        rawResponseText: "too many requests",
+      },
+    }, "NOTIFICATION_TEST_FAILED", rawResponse));
+    const { result } = renderHook(() => useNotificationTest(DEFAULT_SETTINGS));
+
+    await act(async () => {
+      await result.current.testConnection("serverchan");
+    });
+
+    expect(result.current.errorDetailsOpen).toBe(true);
+    expect(result.current.errorDetails).toMatchObject({
+      message: "ServerChan 发送失败",
+      responseText: "too many requests",
+    });
+    expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({
+      title: "测试通知发送失败",
+      variant: "destructive",
+    }));
   });
 });

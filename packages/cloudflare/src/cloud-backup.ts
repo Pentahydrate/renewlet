@@ -762,15 +762,13 @@ function cloudBackupOperationError(locale: AppLocale, messageKey: ServerTextKey,
 
 function persistedCloudBackupErrorMessage(error: unknown): string {
   if (error instanceof CloudBackupRemoteError) {
-    const status = error.details?.providerResponse?.status;
-    const reason = error.details?.reason;
-    return [error.code, status ? `status=${status}` : "", reason ? `reason=${reason}` : ""].filter(Boolean).join(" ");
+    return error.code;
   }
   return "local_sdk_error";
 }
 
 function cloudBackupLocalErrorDetails(error: unknown): CloudBackupErrorDetails {
-  return { reason: "local_sdk_error", providerMessage: errorMessage(error), providerResponse: null };
+  return { rawResponseText: errorMessage(error) };
 }
 
 function errorMessage(error: unknown): string {

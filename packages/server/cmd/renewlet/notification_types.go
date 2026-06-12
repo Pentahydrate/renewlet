@@ -145,8 +145,9 @@ type notificationMessage struct {
 }
 
 type channelFailure struct {
-	Channel string `json:"channel"`
-	Error   string `json:"error"`
+	Channel string                `json:"channel"`
+	Error   string                `json:"error"`
+	Details *upstreamErrorDetails `json:"details,omitempty"`
 }
 
 type sendSummary struct {
@@ -258,6 +259,12 @@ type notificationRunSentResponse struct {
 	OK      bool        `json:"ok"`
 	Sent    bool        `json:"sent"`
 	Summary sendSummary `json:"summary"`
+}
+
+type notificationErrorResponse struct {
+	Message string                `json:"message"`
+	Code    string                `json:"code"`
+	Details *upstreamErrorDetails `json:"details,omitempty"`
 }
 
 type notificationHistorySummaryResponse struct {

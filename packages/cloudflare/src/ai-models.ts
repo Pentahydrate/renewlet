@@ -9,7 +9,6 @@ import {
   aiModelListErrorDetailsSchema,
   aiModelListRequestSchema,
   aiModelListResponseSchema,
-  type AiProviderResponse,
   type AiModelListItem,
   type AiModelListRequest,
   type AiRecognitionTransportProtocol,
@@ -20,6 +19,7 @@ import { HttpError, json, readJson, requestLocale } from "./http";
 import { serverText, type AppLocale } from "./server-i18n";
 import type { Env } from "./types";
 import { providerResponseFromFetchResponse } from "./ai-provider-response";
+import type { UpstreamProviderResponse as AiProviderResponse } from "./upstream-response";
 
 const AI_MODEL_LIST_TIMEOUT_MS = 15_000;
 const AI_MODEL_LIST_RESPONSE_BYTES = 1 << 20;
@@ -27,6 +27,7 @@ const AI_MODEL_LIST_RESPONSE_BYTES = 1 << 20;
 type ModelListEndpoint = {
   url: string;
   headers: Headers;
+  secrets: readonly string[];
   modelListShape: AIModelListResponseShape;
   providerType: AiModelListRequest["providerType"];
   transportProtocol: AiRecognitionTransportProtocol;
@@ -34,6 +35,11 @@ type ModelListEndpoint = {
 
 type NormalizedModelList = {
   models: AiModelListItem[];
+  truncated: boolean;
+};
+
+type AIModelListResponseText = {
+  text: string;
   truncated: boolean;
 };
 
@@ -98,6 +104,7 @@ function buildAIModelListEndpoint(input: AiModelListRequest): ModelListEndpoint 
   return {
     url: endpoint.modelsUrl,
     headers,
+    secrets: input.apiKey ? [input.apiKey] : [],
     modelListShape: endpoint.modelListShape,
     providerType: endpoint.providerType,
     transportProtocol: endpoint.transportProtocol,
@@ -129,31 +136,31 @@ async function fetchAIModelListJSON(endpoint: ModelListEndpoint, locale: AppLoca
     clearTimeout(timeout);
   }
 
-  const text = await readAIModelListResponseText(response, locale);
+  const body = await readAIModelListResponseText(response, locale);
   if (!response.ok) {
     throw new HttpError(
       response.status,
       serverText(locale, "aiRecognition.modelListFailed"),
       "AI_MODEL_LIST_FAILED",
-      aiModelListErrorDetails(`http_${response.status}`, text, providerResponseFromFetchResponse(response, text)),
+      aiModelListErrorDetails(`http_${response.status}`, body.text, providerResponseFromFetchResponse(response, body.text, body.truncated, endpoint.secrets)),
     );
   }
 
   try {
-    return JSON.parse(text) as unknown;
+    return JSON.parse(body.text) as unknown;
   } catch {
     throw new HttpError(
       400,
       serverText(locale, "aiRecognition.modelListFailed"),
       "AI_MODEL_LIST_INVALID_JSON",
-      aiModelListErrorDetails("invalid_json", text, providerResponseFromFetchResponse(response, text)),
+      aiModelListErrorDetails("invalid_json", body.text, providerResponseFromFetchResponse(response, body.text, body.truncated, endpoint.secrets)),
     );
   }
 }
 
-async function readAIModelListResponseText(response: Response, locale: AppLocale): Promise<string> {
+async function readAIModelListResponseText(response: Response, locale: AppLocale): Promise<AIModelListResponseText> {
   const reader = response.body?.getReader();
-  if (!reader) return "";
+  if (!reader) return { text: "", truncated: false };
   const decoder = new TextDecoder();
   let total = 0;
   let text = "";
@@ -173,7 +180,7 @@ async function readAIModelListResponseText(response: Response, locale: AppLocale
     }
     text += decoder.decode(value, { stream: true });
   }
-  return text + decoder.decode();
+  return { text: text + decoder.decode(), truncated: false };
 }
 
 function normalizeAIModelList(shape: AIModelListResponseShape, raw: unknown): NormalizedModelList {
@@ -334,9 +341,7 @@ function aiModelListErrorDetails(reason: string, providerMessage: unknown, provi
       ? providerMessage
       : null;
   return aiModelListErrorDetailsSchema.parse({
-    reason,
-    providerMessage: message || null,
-    providerResponse,
+    rawResponseText: providerResponse?.body || message || reason,
   });
 }
 

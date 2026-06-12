@@ -208,47 +208,34 @@ describe("AIRecognizeSubscriptionDialog stream overlay", () => {
       configurable: true,
       value: { writeText },
     });
+    const rawResponse = "{\"code\":\"INVALID_API_KEY\",\"message\":\"bad key\"}";
+    const prettyResponse = JSON.stringify(JSON.parse(rawResponse), null, 2);
     mocks.recognizeSubscriptionsStream.mockRejectedValue(new ApiError(
       "AI 识别失败",
       400,
       {
-        reason: "provider_failed",
-        providerMessage: "[redacted]",
-        providerResponse: {
-          status: 401,
-          statusText: "Unauthorized",
-          headers: { "content-type": "application/json" },
-          body: "{\"code\":\"INVALID_API_KEY\",\"message\":\"bad key\"}",
-          bodyTruncated: false,
-        },
-        diagnostics: makeResponse([]).diagnostics,
+        rawResponseText: rawResponse,
       },
       "AI_RECOGNITION_FAILED",
+      rawResponse,
     ));
     renderDialog();
 
     await enterTextAndGenerate(user, "apple 50刀 1年");
 
-    const detailsDialog = await screen.findByRole("dialog", { name: "AI 上游响应" });
-    const fixedDialogClass = "h-[min(calc(var(--app-viewport-height)-2rem),46rem)]";
-    const initialDialogClassName = detailsDialog.className;
+    const detailsDialog = await screen.findByRole("dialog", { name: "AI 错误详情" });
+    const fixedDialogClass = "h-[min(calc(var(--app-viewport-height)-2rem),42rem)]";
     expect(detailsDialog).toHaveClass(fixedDialogClass);
     expect(detailsDialog).not.toHaveClass("h-fit");
-    expect(within(detailsDialog).getByText("{\"code\":\"INVALID_API_KEY\",\"message\":\"bad key\"}")).toBeInTheDocument();
-    await user.click(within(detailsDialog).getByRole("tab", { name: "元数据" }));
-    expect(detailsDialog.className).toBe(initialDialogClassName);
-    expect(detailsDialog).toHaveTextContent("\"status\": 401");
-    await user.click(within(detailsDialog).getByRole("tab", { name: "原始响应" }));
-    expect(detailsDialog.className).toBe(initialDialogClassName);
-    expect(within(detailsDialog).getByText("{\"code\":\"INVALID_API_KEY\",\"message\":\"bad key\"}")).toBeInTheDocument();
-    await user.click(within(detailsDialog).getByRole("button", { name: "复制完整响应" }));
-    expect(writeText).toHaveBeenCalledWith("{\"code\":\"INVALID_API_KEY\",\"message\":\"bad key\"}");
+    expect(within(detailsDialog).getByText(/INVALID_API_KEY/)).toBeInTheDocument();
+    await user.click(within(detailsDialog).getByRole("button", { name: "复制错误详情" }));
+    expect(writeText).toHaveBeenCalledWith(prettyResponse);
     await user.click(within(detailsDialog).getByRole("button", { name: "关闭" }));
 
     const panel = within(await screen.findByTestId("ai-recognition-stream-overlay")).getByTestId("ai-recognition-stream-panel");
     expect(panel).toHaveTextContent("出错");
     expect(panel).toHaveTextContent(/用时 \d+ 秒/);
-    expect(within(panel).getByRole("button", { name: "查看上游响应" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "查看错误响应" })).toBeInTheDocument();
     expect(within(panel).queryByRole("alert")).not.toBeInTheDocument();
     expect(within(panel).queryByRole("button", { name: "重新生成草稿" })).not.toBeInTheDocument();
 
@@ -262,47 +249,35 @@ describe("AIRecognizeSubscriptionDialog stream overlay", () => {
     expect(mocks.recognizeSubscriptionsStream).toHaveBeenCalledTimes(1);
   });
 
-  it("识别 schema 失败时原始响应显示模型原文而不是封装摘要", async () => {
+  it("识别 schema 失败时原始响应显示接口 body", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: { writeText },
     });
-    const diagnostics = makeResponse([]).diagnostics;
-    diagnostics.output.rawModelText = {
-      value: "not json from provider",
-      truncated: false,
-    };
+    const rawResponse = "{\"code\":\"AI_RECOGNITION_SCHEMA_MISMATCH\",\"message\":\"schema mismatch\"}";
+    const prettyResponse = JSON.stringify(JSON.parse(rawResponse), null, 2);
     mocks.recognizeSubscriptionsStream.mockRejectedValue(new ApiError(
       "AI 返回内容无法整理成订阅草稿",
       400,
       {
-        reason: "schema_mismatch",
-        providerMessage: "{\"status\":200,\"code\":\"AI_RECOGNITION_FAILED\",\"reason\":\"provider_failed\"}",
-        providerResponse: {
-          status: 200,
-          statusText: null,
-          headers: null,
-          body: null,
-          bodyTruncated: false,
-        },
-        diagnostics,
+        rawResponseText: rawResponse,
       },
       "AI_RECOGNITION_SCHEMA_MISMATCH",
+      rawResponse,
     ));
     renderDialog();
 
     await enterTextAndGenerate(user, "bad model output");
 
-    const detailsDialog = await screen.findByRole("dialog", { name: "AI 上游响应" });
-    expect(within(detailsDialog).getByText("not json from provider")).toBeInTheDocument();
-    expect(within(detailsDialog).queryByText("{\"status\":200,\"code\":\"AI_RECOGNITION_FAILED\",\"reason\":\"provider_failed\"}")).not.toBeInTheDocument();
-    await user.click(within(detailsDialog).getByRole("button", { name: "复制完整响应" }));
-    expect(writeText).toHaveBeenCalledWith("not json from provider");
+    const detailsDialog = await screen.findByRole("dialog", { name: "AI 错误详情" });
+    expect(detailsDialog.querySelector("pre")?.textContent).toBe(prettyResponse);
+    await user.click(within(detailsDialog).getByRole("button", { name: "复制错误详情" }));
+    expect(writeText).toHaveBeenCalledWith(prettyResponse);
   });
 
-  it("没有 provider body 和模型原文时原始响应不可复制", async () => {
+  it("没有 response body 时显示错误 message", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -312,28 +287,17 @@ describe("AIRecognizeSubscriptionDialog stream overlay", () => {
     mocks.recognizeSubscriptionsStream.mockRejectedValue(new ApiError(
       "AI 识别失败",
       400,
-      {
-        reason: "provider_failed",
-        providerMessage: "{\"status\":200,\"code\":\"AI_RECOGNITION_FAILED\"}",
-        providerResponse: {
-          status: 200,
-          statusText: null,
-          headers: null,
-          body: null,
-          bodyTruncated: false,
-        },
-        diagnostics: makeResponse([]).diagnostics,
-      },
+      undefined,
       "AI_RECOGNITION_FAILED",
     ));
     renderDialog();
 
     await enterTextAndGenerate(user, "empty provider response");
 
-    const detailsDialog = await screen.findByRole("dialog", { name: "AI 上游响应" });
-    expect(within(detailsDialog).getByText("当前错误没有可回显的上游 response body。")).toBeInTheDocument();
-    expect(within(detailsDialog).getByRole("button", { name: "复制完整响应" })).toBeDisabled();
-    expect(writeText).not.toHaveBeenCalled();
+    const detailsDialog = await screen.findByRole("dialog", { name: "AI 错误详情" });
+    expect(within(detailsDialog).getAllByText("AI 识别失败").length).toBeGreaterThan(0);
+    await user.click(within(detailsDialog).getByRole("button", { name: "复制错误详情" }));
+    expect(writeText).toHaveBeenCalledWith("AI 识别失败");
   });
 
   it("识别错误后通过 footer 重新生成，避免遮罩内重复操作", async () => {
@@ -352,7 +316,7 @@ describe("AIRecognizeSubscriptionDialog stream overlay", () => {
     const overlay = await screen.findByTestId("ai-recognition-stream-overlay");
     // 错误态遮罩只解释本次失败；重新生成必须回到 footer，保证新 runId/AbortController 重新建立。
     expect(within(overlay).queryByRole("button", { name: "重新生成草稿" })).not.toBeInTheDocument();
-    const detailsDialog = await screen.findByRole("dialog", { name: "AI 上游响应" });
+    const detailsDialog = await screen.findByRole("dialog", { name: "AI 错误详情" });
     await user.click(within(detailsDialog).getByRole("button", { name: "关闭" }));
     await user.click(within(overlay).getByRole("button", { name: "关闭" }));
     await user.click(screen.getByRole("button", { name: "重新生成草稿" }));

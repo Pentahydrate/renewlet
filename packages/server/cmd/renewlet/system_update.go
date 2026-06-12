@@ -49,9 +49,11 @@ func (service *systemUpdateService) CheckVersion(ctx context.Context, locale app
 		if cached := service.cachedVersion(); cached != nil {
 			// 版本检查是管理页体验能力，不应因 GitHub 短暂失败阻断管理员查看上次可信结果。
 			cached.Warning = service.versionCheckWarning(locale, err)
+			cached.ErrorDetails = service.versionCheckDetails(err)
 			return cached, nil
 		}
 		response.Warning = service.versionCheckWarning(locale, err)
+		response.ErrorDetails = service.versionCheckDetails(err)
 		return response, nil
 	}
 	response.CheckSucceeded = true
@@ -301,7 +303,12 @@ func (service *systemUpdateService) cachedVersion() *systemVersionResponse {
 func (service *systemUpdateService) storeVersion(response *systemVersionResponse) {
 	service.cacheMu.Lock()
 	defer service.cacheMu.Unlock()
-	service.cacheValue = cloneSystemVersionResponse(response, false)
+	cached := cloneSystemVersionResponse(response, false)
+	if cached != nil {
+		// GitHub raw response 只随当前管理员操作返回；版本缓存只保存可信 release 结果和短 warning。
+		cached.ErrorDetails = nil
+	}
+	service.cacheValue = cached
 	service.cacheExpiry = service.now().Add(systemUpdateCacheTTL)
 }
 
@@ -330,6 +337,18 @@ func (service *systemUpdateService) versionCheckWarning(locale appLocale, err er
 		}
 	}
 	return serverText(locale, "system.versionCheckUnavailableWarning")
+}
+
+func (service *systemUpdateService) versionCheckDetails(err error) *upstreamErrorDetails {
+	return systemUpstreamErrorDetails(err)
+}
+
+func systemUpstreamErrorDetails(err error) *upstreamErrorDetails {
+	var githubErr *githubAPIError
+	if errors.As(err, &githubErr) && githubErr.details != nil {
+		return githubErr.details
+	}
+	return upstreamErrorDetailsFromError(err)
 }
 
 func (service *systemUpdateService) versionCheckRateLimitWarning(locale appLocale, retryAt time.Time) string {

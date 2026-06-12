@@ -66,14 +66,18 @@ func sendEmail(settings appSettings, message notificationMessage) error {
 	if err != nil {
 		return err
 	}
-	return client.Send(&mailer.Message{
+	if err := client.Send(&mailer.Message{
 		From:    *from,
 		To:      to,
 		Subject: message.Title,
 		HTML:    htmlBody,
 		Text:    buildEmailTextBody(message),
 		Headers: headers,
-	})
+	}); err != nil {
+		message := redactUpstreamSecrets(err.Error(), []string{config.Username, config.Password})
+		return newNotificationChannelError(message, createUpstreamErrorDetails(nil, message))
+	}
+	return nil
 }
 
 type smtpConfig struct {
