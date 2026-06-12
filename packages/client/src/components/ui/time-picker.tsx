@@ -31,6 +31,7 @@ const VISIBLE_ITEMS = 5;
 const PADDING_ITEMS = Math.floor(VISIBLE_ITEMS / 2);
 const DRAG_THRESHOLD_PX = 4;
 const SCROLL_END_DEBOUNCE_MS = 120;
+const WHEEL_LINE_HEIGHT_PX = 16;
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) => i);
 
@@ -54,6 +55,17 @@ function formatTimePart(value: number) {
 function parseTimePart(value: string | undefined, max: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 && parsed <= max ? parsed : 0;
+}
+
+function normalizeWheelDelta(delta: number, deltaMode: number, viewportHeight: number) {
+  switch (deltaMode) {
+    case 1:
+      return delta * WHEEL_LINE_HEIGHT_PX;
+    case 2:
+      return delta * viewportHeight;
+    default:
+      return delta;
+  }
 }
 
 function WheelColumn({ 
@@ -168,6 +180,30 @@ function WheelColumn({
       container.removeEventListener('scrollend', handleScrollEnd);
     };
   }, [clearScrollEndTimer, snapToNearest]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey) return;
+
+      const viewportHeight = container.clientHeight || ITEM_HEIGHT * VISIBLE_ITEMS;
+      const deltaX = normalizeWheelDelta(event.deltaX, event.deltaMode, viewportHeight);
+      const deltaY = normalizeWheelDelta(event.deltaY, event.deltaMode, viewportHeight);
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // 桌面触摸板会给纵向轮盘带横向 wheel；只吞横向主导输入，避免破坏原生纵向滚动手感。
+        event.preventDefault();
+        container.scrollLeft = 0;
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   useEffect(() => clearScrollEndTimer, [clearScrollEndTimer]);
 
@@ -294,7 +330,7 @@ function WheelColumn({
           onPointerCancel={finishPointerDrag}
           onKeyDown={handleKeyDown}
           className={cn(
-            "relative w-16 overflow-y-auto scrollbar-hide outline-none select-none",
+            "relative w-16 overflow-x-hidden overflow-y-auto scrollbar-hide outline-none select-none",
             "cursor-grab rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
             isDragging && "cursor-grabbing",
           )}
@@ -302,6 +338,7 @@ function WheelColumn({
             scrollSnapType: 'y mandatory',
             scrollPaddingTop: ITEM_HEIGHT * PADDING_ITEMS,
             scrollPaddingBottom: ITEM_HEIGHT * PADDING_ITEMS,
+            overscrollBehaviorX: 'none',
             overscrollBehaviorY: 'contain',
             touchAction: 'pan-y',
             height: ITEM_HEIGHT * VISIBLE_ITEMS,
@@ -327,7 +364,7 @@ function WheelColumn({
 
                   commitValue(option);
                 }}
-                style={{ height: ITEM_HEIGHT, scrollSnapAlign: 'center' }}
+                style={{ height: ITEM_HEIGHT, scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
                 className={cn(
                   "w-full flex items-center justify-center text-lg font-medium tabular-nums transition-all",
                   isSelected 
@@ -364,6 +401,7 @@ export function TimePicker({
     const [, m] = value.split(':');
     return parseTimePart(m, 59);
   });
+  const displayTime = `${formatTimePart(hours)}:${formatTimePart(minutes)}`;
 
   useEffect(() => {
     const [h, m] = value.split(':');
@@ -388,10 +426,6 @@ export function TimePicker({
     setIsOpen(disabled ? false : open);
   }, [disabled]);
 
-  const formatDisplayTime = () => {
-    return `${formatTimePart(hours)}:${formatTimePart(minutes)}`;
-  };
-
   const quickTimes = [
     { label: '08:00', desc: t("time.morning") },
     { label: '12:00', desc: t("time.noon") },
@@ -399,7 +433,6 @@ export function TimePicker({
     { label: '21:00', desc: t("time.night") },
   ];
   const isCompact = density === 'compact';
-  const displayTime = formatDisplayTime();
   const buttonAriaLabel = ariaLabel ? `${ariaLabel} ${displayTime}` : t("time.notificationAria", { time: displayTime });
   useAppRootScrollLock(isOpen);
 

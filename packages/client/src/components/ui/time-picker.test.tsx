@@ -63,6 +63,7 @@ describe("TimePicker", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     document.getElementById("root")?.remove();
   });
 
@@ -132,6 +133,59 @@ describe("TimePicker", () => {
 
     expect(onChange).toHaveBeenLastCalledWith("08:16");
     expect(minuteColumn.scrollTop).toBe(640);
+  });
+
+  it("keeps the picker as the original wheel-only surface", async () => {
+    const { hourColumn } = await openPicker("08:12");
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "小时加一" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "小时减一" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "分钟加一" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "分钟减一" })).not.toBeInTheDocument();
+    expect(within(hourColumn).getByText("08")).toHaveStyle({ scrollSnapStop: "always" });
+  });
+
+  it("blocks horizontal trackpad wheel without changing the selected time", async () => {
+    const onChange = vi.fn();
+    const { hourColumn } = await openPicker("08:12", onChange);
+    const wheelEvent = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      deltaX: 72,
+      deltaY: 4,
+    });
+
+    fireEvent(hourColumn, wheelEvent);
+
+    expect(wheelEvent.defaultPrevented).toBe(true);
+    expect(hourColumn.scrollLeft).toBe(0);
+    expect(hourColumn).toHaveAttribute("aria-valuenow", "8");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps vertical wheel input on the native scroll and snap path", async () => {
+    const onChange = vi.fn();
+    const { hourColumn } = await openPicker("08:12", onChange);
+    const nextHourEvent = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      deltaY: 40,
+    });
+
+    fireEvent(hourColumn, nextHourEvent);
+
+    expect(nextHourEvent.defaultPrevented).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+
+    vi.useFakeTimers();
+    hourColumn.scrollTop = 9 * 40;
+    fireEvent.scroll(hourColumn);
+
+    vi.advanceTimersByTime(120);
+
+    expect(onChange).toHaveBeenLastCalledWith("09:12");
+    expect(hourColumn.scrollTop).toBe(360);
   });
 
   it("suppresses the click that follows a drag", async () => {
