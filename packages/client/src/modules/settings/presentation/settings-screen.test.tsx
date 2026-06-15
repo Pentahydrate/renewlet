@@ -11,6 +11,7 @@ import {
 import { NotificationChannelConfigPanel } from "./notification-channel-config-panel";
 import {
   createControllerState,
+  createUploadedAssetsManagerState,
   mocks,
   renderSettingsScreen,
 } from "./settings-screen.test-utils";
@@ -78,6 +79,7 @@ describe("SettingsScreen SMTP email settings", () => {
       dispatchEvent: vi.fn(),
     })));
     mocks.useSettingsFormController.mockReturnValue(createControllerState());
+    mocks.useUploadedAssetsManager.mockReturnValue(createUploadedAssetsManagerState());
   });
 
   afterEach(() => {

@@ -17,6 +17,7 @@ const SETTINGS_SECTIONS = [
   { id: "settings-appearance", labelKey: "settings.sectionNav.appearance" },
   { id: "settings-display", labelKey: "settings.sectionNav.display" },
   { id: "settings-icon-sources", labelKey: "settings.sectionNav.iconSources" },
+  { id: "settings-uploaded-icons", labelKey: "settings.sectionNav.uploadedIcons" },
   { id: "settings-ai-recognition", labelKey: "settings.sectionNav.aiRecognition" },
   { id: "settings-budget", labelKey: "settings.sectionNav.budget" },
   { id: "settings-data-config", labelKey: "settings.sectionNav.dataConfig" },

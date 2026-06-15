@@ -55,12 +55,14 @@ import { NotificationChannelConfigPanel } from './notification-channel-config-pa
 import { NotificationChannelList } from './notification-channel-list';
 import { ExchangeRatesSection } from './exchange-rates-section';
 import { BuiltInIconSourcesSection } from './built-in-icon-sources-section';
+import { UploadedIconsSection } from './uploaded-icons-section';
 import { AIRecognitionSettingsSection } from './ai-recognition-settings-section';
 import { CalendarFeedSection } from './calendar-feed-section';
 import { PublicStatusPageSection } from './public-status-page-section';
 import { CloudBackupSection } from './cloud-backup-section';
 import { CheckboxSettingRow, LoadingButtonContent } from './settings-shared-controls';
 import { useCloudBackupController } from '../application/use-cloud-backup-controller';
+import { useUploadedAssetsManager } from '../application/use-uploaded-assets-manager';
 import {
   DesktopSettingsSectionNav,
   MobileSettingsPageHeader,
@@ -175,6 +177,7 @@ export function SettingsScreen() {
     setCloudBackupRestoreFile(file);
     setCloudBackupImportOpen(true);
   });
+  const uploadedAssets = useUploadedAssetsManager();
   const activeNotificationChannel = selectedNotificationChannel ?? settings.enabledChannels[0] ?? 'telegram';
   const handleNotificationChannelToggle = (channel: NotificationChannel) => {
     setSelectedNotificationChannel(channel);
@@ -292,6 +295,12 @@ export function SettingsScreen() {
                 sources={settings.builtInIconSources}
                 onChange={(sources) => updateSetting('builtInIconSources', sources)}
                 iconIndex={builtInIconIndex}
+              />
+
+              <UploadedIconsSection
+                id="settings-uploaded-icons"
+                className={SETTINGS_SECTION_SCROLL_CLASS}
+                controller={uploadedAssets}
               />
 
               <AIRecognitionSettingsSection

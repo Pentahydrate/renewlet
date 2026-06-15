@@ -275,6 +275,7 @@ func registerRoutes(app core.App, router *router.Router[*core.RequestEvent]) {
 	auth.POST("/assets", func(e *core.RequestEvent) error { return handleAssetUpload(app, e) })
 	// 私有资产读取必须经过 handler 的 record.user 校验，不能直接暴露 PocketBase protected file URL。
 	auth.GET("/assets/{id}", func(e *core.RequestEvent) error { return handleAssetRead(app, e) })
+	auth.DELETE("/assets/{id}", func(e *core.RequestEvent) error { return handleAssetDelete(app, e) })
 	// Feed 管理 API 只服务登录用户；公开 ICS route 另走 token bearer secret，不复用 session。
 	auth.GET("/calendar-feed", func(e *core.RequestEvent) error { return handleCalendarFeedStatus(app, e) })
 	auth.POST("/calendar-feed", func(e *core.RequestEvent) error { return handleCalendarFeedCreate(app, e) })

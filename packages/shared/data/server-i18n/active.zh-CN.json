@@ -13,6 +13,7 @@
   "asset.idInvalid": "资产 ID 无效",
   "asset.invalidImageSize": "图片大小无效",
   "asset.invalidImageType": "图片类型无效",
+  "asset.inUse": "该上传资产仍被订阅使用，无法删除",
   "asset.missing": "资产不存在",
   "asset.uploadChooseImage": "请选择要上传的图片",
   "aiRecognition.apiKeyRequired": "请先填写 AI API Key",

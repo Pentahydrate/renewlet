@@ -13,7 +13,7 @@ import {
   session,
   setupStatus,
 } from "./auth";
-import { listUploadedAssets, readAsset, uploadAsset } from "./assets";
+import { deleteAsset, listUploadedAssets, readAsset, uploadAsset } from "./assets";
 import {
   calendarFeedIcs,
   createCalendarFeed,
@@ -236,7 +236,10 @@ async function routeApp(request: Request, env: Env, url: URL): Promise<Response>
     GET: () => listUploadedAssets(request, env),
     POST: () => uploadAsset(request, env),
   });
-  if (head === "assets" && second) return routeMethods(request, { GET: () => readAsset(request, env, second) });
+  if (head === "assets" && second) return routeMethods(request, {
+    GET: () => readAsset(request, env, second),
+    DELETE: () => deleteAsset(request, env, second),
+  });
 
   if (head === "calendar-feed" && !second) return routeMethods(request, {
     GET: () => readCalendarFeed(request, env),

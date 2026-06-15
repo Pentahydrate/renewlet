@@ -11,10 +11,12 @@ import { DEFAULT_SETTINGS, type AppSettings, type NotificationChannel } from "@/
 import type { ThemeMode } from "@/types/theme";
 import { BUILT_IN_ICON_PROVIDERS, type BuiltInIconProvider } from "@renewlet/shared/built-in-icons";
 import { SettingsScreen } from "./settings-screen";
+import type { UploadedAssetsManagerController } from "../application/use-uploaded-assets-manager";
 
 const mocks = vi.hoisted(() => ({
   useSettingsFormController: vi.fn(),
   useCloudBackupController: vi.fn(),
+  useUploadedAssetsManager: vi.fn(),
 }));
 
 export { mocks };
@@ -24,6 +26,7 @@ export const SETTINGS_SECTION_IDS = [
   "settings-appearance",
   "settings-display",
   "settings-icon-sources",
+  "settings-uploaded-icons",
   "settings-ai-recognition",
   "settings-budget",
   "settings-data-config",
@@ -194,6 +197,35 @@ vi.mock("../application/use-settings-form-controller", () => ({
 vi.mock("../application/use-cloud-backup-controller", () => ({
   useCloudBackupController: mocks.useCloudBackupController,
 }));
+
+vi.mock("../application/use-uploaded-assets-manager", () => ({
+  useUploadedAssetsManager: mocks.useUploadedAssetsManager,
+}));
+
+export function createUploadedAssetsManagerState(
+  overrides: Partial<UploadedAssetsManagerController> = {},
+): UploadedAssetsManagerController {
+  const refresh = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  const loadMore = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  const emptyKind = {
+    assets: [],
+    error: null,
+    hasLoaded: true,
+    hasMore: false,
+    isLoading: false,
+    isLoadingMore: false,
+    refresh,
+    loadMore,
+  };
+  return {
+    logo: emptyKind,
+    icon: emptyKind,
+    deleteError: null,
+    deletingAssetId: null,
+    deleteAsset: vi.fn<UploadedAssetsManagerController["deleteAsset"]>().mockResolvedValue(true),
+    ...overrides,
+  };
+}
 
 export function createCloudBackupControllerState() {
   const fn = vi.fn();
@@ -443,6 +475,9 @@ function RouteProbe() {
 
 export function renderSettingsScreen(initialEntries = ["/settings"]) {
   mocks.useCloudBackupController.mockReturnValue(createCloudBackupControllerState());
+  if (mocks.useUploadedAssetsManager.getMockImplementation() === undefined) {
+    mocks.useUploadedAssetsManager.mockReturnValue(createUploadedAssetsManagerState());
+  }
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },

@@ -65,16 +65,27 @@ describe("product API services", () => {
         items: [{ id: "asset_1", url: "/api/app/assets/asset_1", kind: "logo" }],
         page: 1,
         totalPages: 1,
-      });
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: "asset_2", url: "/api/app/assets/asset_2", kind: "icon" }],
+        page: 2,
+        totalPages: 3,
+      })
+      .mockResolvedValueOnce({ ok: true });
 
     await assetService.create(new Blob(["logo"], { type: "image/png" }), "logo", "logo.png");
     await assetService.listLogos(1);
+    await assetService.list("icon", 2);
+    await assetService.delete("asset_1");
 
     const uploadInit = mocks.apiFetch.mock.calls[0]?.[2] as RequestInit | undefined;
     expect(mocks.apiFetch.mock.calls[0]?.[0]).toBe("/api/app/assets");
     expect(uploadInit).toMatchObject({ method: "POST" });
     expect(uploadInit?.body).toBeInstanceOf(FormData);
     expect(mocks.apiFetch.mock.calls[1]?.[0]).toBe("/api/app/assets?kind=logo&page=1&perPage=48");
+    expect(mocks.apiFetch.mock.calls[2]?.[0]).toBe("/api/app/assets?kind=icon&page=2&perPage=48");
+    expect(mocks.apiFetch.mock.calls[3]?.[0]).toBe("/api/app/assets/asset_1");
+    expect(mocks.apiFetch.mock.calls[3]?.[2]).toMatchObject({ method: "DELETE" });
     for (const [url] of mocks.apiFetch.mock.calls) {
       expect(String(url)).not.toContain("/api/collections/assets/records");
     }

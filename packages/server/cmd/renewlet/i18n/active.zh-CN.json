@@ -26,6 +26,7 @@
   "asset.fileMissing": "资产文件不存在",
   "asset.fileSystemOpenFailed": "无法打开文件系统",
   "asset.idInvalid": "资产 ID 无效",
+  "asset.inUse": "该上传资产仍被订阅使用，无法删除",
   "asset.invalidImageSize": "图片大小无效",
   "asset.invalidImageType": "图片类型无效",
   "asset.missing": "资产不存在",

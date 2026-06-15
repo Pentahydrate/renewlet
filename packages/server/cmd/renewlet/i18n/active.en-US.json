@@ -26,6 +26,7 @@
   "asset.fileMissing": "Asset file not found",
   "asset.fileSystemOpenFailed": "Could not open file storage",
   "asset.idInvalid": "Invalid asset ID",
+  "asset.inUse": "This uploaded asset is still used by subscriptions and cannot be deleted",
   "asset.invalidImageSize": "Invalid image size",
   "asset.invalidImageType": "Invalid image type",
   "asset.missing": "Asset not found",

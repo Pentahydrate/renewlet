@@ -61,6 +61,10 @@ type uploadAssetResponse struct {
 	URL string `json:"url"`
 }
 
+type assetInUseDetails struct {
+	UsageCount int64 `json:"usageCount"`
+}
+
 type subscriptionWriteRequest struct {
 	Name                         optionalJSONField[string]                 `json:"name"`
 	Logo                         optionalJSONField[string]                 `json:"logo"`
@@ -371,6 +375,38 @@ func handleAssetsList(app core.App, e *core.RequestEvent) error {
 		Page:       page,
 		TotalPages: int((total + int64(perPage) - 1) / int64(perPage)),
 	})
+}
+
+func handleAssetDelete(app core.App, e *core.RequestEvent) error {
+	locale := requestLocale(e.Request)
+	id := strings.TrimSpace(e.Request.PathValue("id"))
+	if id == "" {
+		return e.BadRequestError(serverText(locale, "asset.idInvalid"), nil)
+	}
+	record, err := app.FindRecordById("assets", id)
+	if err != nil || record.GetString("user") != e.Auth.Id {
+		// 删除和读取一样对越权返回 404，避免资产 ID 被拿来枚举其他用户上传记录。
+		return e.NotFoundError(serverText(locale, "asset.missing"), err)
+	}
+
+	assetURL := "/api/app/assets/" + record.Id
+	usageCount, err := app.CountRecords("subscriptions", dbx.HashExp{"user": e.Auth.Id, "logo": assetURL})
+	if err != nil {
+		return e.InternalServerError(serverText(locale, "common.internalError"), err)
+	}
+	if usageCount > 0 {
+		// 订阅 logo 是唯一持久引用入口；先阻止删除，让用户显式替换引用，避免公开页和备份出现坏图片。
+		return e.JSON(http.StatusConflict, map[string]interface{}{
+			"message": serverText(locale, "asset.inUse"),
+			"code":    "ASSET_IN_USE",
+			"details": assetInUseDetails{UsageCount: usageCount},
+		})
+	}
+
+	if err := app.Delete(record); err != nil {
+		return e.BadRequestError(serverText(locale, "common.invalidRequestParameters"), err)
+	}
+	return e.JSON(http.StatusOK, newOKResponse())
 }
 
 func readLimitedJSONBody(reader io.Reader) (json.RawMessage, error) {

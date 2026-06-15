@@ -53,6 +53,7 @@ describe("SettingsScreen section navigation", () => {
       ["settings-appearance", "外观"],
       ["settings-display", "显示"],
       ["settings-icon-sources", "图标来源"],
+      ["settings-uploaded-icons", "上传图标"],
       ["settings-ai-recognition", "AI 识别"],
       ["settings-budget", "预算"],
       ["settings-data-config", "数据配置"],

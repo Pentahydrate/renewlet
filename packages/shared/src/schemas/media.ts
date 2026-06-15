@@ -8,6 +8,27 @@ export const uploadImageResponseSchema = z.object({
   url: z.string().min(1),
 }).strict();
 
+export const uploadedAssetSchema = z.object({
+  id: z.string().min(1),
+  url: z.string().min(1),
+  kind: uploadKindSchema,
+  originalName: z.string().min(1).optional(),
+  mimeType: z.string().min(1).optional(),
+  sizeBytes: z.number().int().nonnegative().optional(),
+  created: z.string().min(1).optional(),
+  updated: z.string().min(1).optional(),
+}).strict();
+
+export const uploadedAssetsPageSchema = z.object({
+  items: z.array(uploadedAssetSchema),
+  page: z.number().int().positive(),
+  totalPages: z.number().int().nonnegative(),
+}).strict();
+
+export const assetInUseDetailsSchema = z.object({
+  usageCount: z.number().int().positive(),
+}).strict();
+
 export const mediaCandidateKindSchema = uploadKindSchema;
 
 export const mediaCandidateModeSchema = z.enum(["auto", "search"]);
@@ -141,6 +162,9 @@ export const builtInIconIndexProviderRefreshResponseSchema = z.object({
 
 export type UploadKind = z.infer<typeof uploadKindSchema>;
 export type ApiUploadImageResponse = z.infer<typeof uploadImageResponseSchema>;
+export type UploadedAsset = z.infer<typeof uploadedAssetSchema>;
+export type UploadedAssetsPage = z.infer<typeof uploadedAssetsPageSchema>;
+export type AssetInUseDetails = z.infer<typeof assetInUseDetailsSchema>;
 export type MediaCandidateKind = z.infer<typeof mediaCandidateKindSchema>;
 export type MediaCandidateMode = z.infer<typeof mediaCandidateModeSchema>;
 export type MediaCandidateSource = z.infer<typeof mediaCandidateSourceSchema>;

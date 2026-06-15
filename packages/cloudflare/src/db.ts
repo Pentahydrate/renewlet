@@ -346,6 +346,18 @@ export async function listAssets(env: Env, userId: string, kind: string, page: n
   return { items: rows.results, total: totalRow?.count ?? 0 };
 }
 
+export async function countAssetReferences(env: Env, userId: string, assetId: string): Promise<number> {
+  const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM subscriptions WHERE user_id = ? AND logo = ? LIMIT 1")
+    .bind(userId, `/api/app/assets/${assetId}`)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+export async function deleteAssetMetadata(env: Env, userId: string, id: string): Promise<void> {
+  // R2 object 删除和 D1 metadata 删除不在同一事务；metadata 带 owner 条件，避免失败重试时误删他人记录。
+  await env.DB.prepare("DELETE FROM assets WHERE user_id = ? AND id = ?").bind(userId, id).run();
+}
+
 export async function listSubscriptionTags(env: Env, userId: string, limit = 200): Promise<string[]> {
   // 这些标签名会进入第三方 AI prompt；只传用户已经持久化的标签文本，不带历史订阅名称、金额或备注。
   const rows = await env.DB.prepare("SELECT tags_json FROM subscriptions WHERE user_id = ? AND tags_json != '[]' ORDER BY updated_at DESC LIMIT 1000")

@@ -1,52 +1,31 @@
 import { apiFetch } from "@/lib/api-client";
-import { uploadImageResponseSchema, type ApiUploadImageResponse, type UploadKind } from "@/lib/api/schemas/media";
+import { okResponseSchema } from "@/lib/api/schemas/common";
+import {
+  uploadImageResponseSchema,
+  uploadedAssetsPageSchema,
+  type ApiUploadImageResponse,
+  type UploadedAsset,
+  type UploadedAssetsPage,
+  type UploadKind,
+} from "@/lib/api/schemas/media";
 import { getApiLocale } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
 import { getCurrentUserId } from "@/lib/pocketbase";
-import { z } from "zod";
 
 /**
  * UploadedAsset 是 Logo 选择器可复用的私有资产视图。
  *
  * `url` 始终是 `/api/app/assets/{id}` 受控代理路径；调用方不应依赖 PocketBase 文件名或 Cloudflare R2 key。
  */
-export interface UploadedAsset {
-  id: string;
-  url: string;
-  kind: "logo";
-  originalName?: string | undefined;
-  mimeType?: string | undefined;
-  sizeBytes?: number | undefined;
-  created?: string | undefined;
-  updated?: string | undefined;
-}
+export type { UploadedAsset, UploadedAssetsPage };
 
 /**
  * UploadedAssetPage 描述上传资产分页结果。
  *
  * 两种运行面都返回同一页码契约，前端 hook 才能用同一套“加载更多 + 去重”状态机。
  */
-export interface UploadedAssetPage {
-  items: UploadedAsset[];
-  page: number;
-  totalPages: number;
-}
-
 const UPLOADED_LOGOS_PAGE_SIZE = 48;
-const uploadedAssetPageSchema = z.object({
-  items: z.array(z.object({
-    id: z.string(),
-    url: z.string(),
-    kind: z.literal("logo"),
-    originalName: z.string().optional(),
-    mimeType: z.string().optional(),
-    sizeBytes: z.number().optional(),
-    created: z.string().optional(),
-    updated: z.string().optional(),
-  }).strict()),
-  page: z.number().int().positive(),
-  totalPages: z.number().int().nonnegative(),
-}).strict();
+const UPLOADED_ASSETS_PAGE_SIZE = 48;
 
 /**
  * assetService 统一走 Renewlet 产品 API 上传和列出资产。
@@ -79,8 +58,25 @@ export const assetService = {
    *
    * @param page 从 1 开始的页码；调用方负责防止重复并发加载。
    */
-  async listLogos(page: number): Promise<UploadedAssetPage> {
+  async listLogos(page: number): Promise<UploadedAssetsPage> {
     const params = new URLSearchParams({ kind: "logo", page: String(page), perPage: String(UPLOADED_LOGOS_PAGE_SIZE) });
-    return await apiFetch(`/api/app/assets?${params.toString()}`, uploadedAssetPageSchema);
+    return await apiFetch(`/api/app/assets?${params.toString()}`, uploadedAssetsPageSchema);
+  },
+
+  /**
+   * 分页列出当前用户上传的指定类型资产，用于设置页上传图标管理。
+   */
+  async list(kind: UploadKind, page: number): Promise<UploadedAssetsPage> {
+    const params = new URLSearchParams({ kind, page: String(page), perPage: String(UPLOADED_ASSETS_PAGE_SIZE) });
+    return await apiFetch(`/api/app/assets?${params.toString()}`, uploadedAssetsPageSchema);
+  },
+
+  /**
+   * 删除当前用户拥有的上传资产。
+   *
+   * 后端会阻止删除仍被订阅 logo 引用的资产；前端只负责展示该业务错误，不做本地级联清空。
+   */
+  async delete(id: string): Promise<void> {
+    await apiFetch(`/api/app/assets/${encodeURIComponent(id)}`, okResponseSchema, { method: "DELETE" });
   },
 };
