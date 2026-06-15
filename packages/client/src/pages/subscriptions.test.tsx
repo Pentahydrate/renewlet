@@ -62,6 +62,12 @@ vi.mock("@/contexts/CustomConfigContext", () => ({
           labels: { "zh-CN": "生产力", "en-US": "Productivity" },
           color: "hsl(200 80% 50%)",
         },
+        {
+          id: "finance",
+          value: "finance",
+          labels: { "zh-CN": "财务", "en-US": "Finance" },
+          color: "hsl(160 84% 45%)",
+        },
       ],
       statuses: [
         {
@@ -298,17 +304,19 @@ function manySubscriptions(count: number) {
   );
 }
 
+function installPointerCaptureMocks() {
+  Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+  Element.prototype.setPointerCapture ??= vi.fn();
+  Element.prototype.releasePointerCapture ??= vi.fn();
+  Element.prototype.scrollIntoView ??= vi.fn();
+}
+
 beforeEach(() => {
   mocks.renderHeaderActions = false;
 });
 
 describe("Subscriptions page sorting", () => {
-  beforeAll(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    Element.prototype.scrollIntoView ??= vi.fn();
-  });
+  beforeAll(installPointerCaptureMocks);
 
   beforeEach(() => {
     mockMobileTagFilterMatch(false);
@@ -510,12 +518,7 @@ describe("Subscriptions page sorting", () => {
 });
 
 describe("Subscriptions page desktop tag filters", () => {
-  beforeAll(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    Element.prototype.scrollIntoView ??= vi.fn();
-  });
+  beforeAll(installPointerCaptureMocks);
 
   beforeEach(() => {
     mockMobileTagFilterMatch(false);
@@ -590,12 +593,7 @@ describe("Subscriptions page desktop tag filters", () => {
 });
 
 describe("Subscriptions page mobile tag filters", () => {
-  beforeAll(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    Element.prototype.scrollIntoView ??= vi.fn();
-  });
+  beforeAll(installPointerCaptureMocks);
 
   beforeEach(() => {
     mockMobileTagFilterMatch(true);
@@ -688,12 +686,7 @@ describe("Subscriptions page mobile tag filters", () => {
 });
 
 describe("Subscriptions page virtualization", () => {
-  beforeAll(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    Element.prototype.scrollIntoView ??= vi.fn();
-  });
+  beforeAll(installPointerCaptureMocks);
 
   beforeEach(() => {
     mockMobileTagFilterMatch(false, 1280);

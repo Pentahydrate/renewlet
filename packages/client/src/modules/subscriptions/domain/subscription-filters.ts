@@ -13,7 +13,7 @@ import { getEffectiveSubscriptionStatus } from "./subscription-status";
 
 export interface SubscriptionFilterState {
   searchQuery: string;
-  categoryFilter: Category | "all";
+  selectedCategories: Category[];
   statusFilter: SubscriptionStatus | "all";
   renewalFilter: SubscriptionRenewalFilter;
   selectedTags: string[];
@@ -78,7 +78,11 @@ export function filterSubscriptions(
       if (!matches) return false;
     }
 
-    if (filters.categoryFilter !== "all" && subscription.category !== filters.categoryFilter) {
+    // 订阅本身仍是单分类，多选筛选只能用 OR：命中任一已选分类即可保留。
+    if (
+      filters.selectedCategories.length > 0 &&
+      !filters.selectedCategories.includes(subscription.category)
+    ) {
       return false;
     }
 
@@ -190,7 +194,7 @@ export function sortSubscriptions(
 export function hasActiveSubscriptionFilters(filters: SubscriptionFilterState): boolean {
   return Boolean(
     filters.searchQuery ||
-      filters.categoryFilter !== "all" ||
+      filters.selectedCategories.length > 0 ||
       filters.statusFilter !== "all" ||
       filters.renewalFilter !== "all" ||
       filters.selectedTags.length > 0,

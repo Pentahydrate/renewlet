@@ -1,7 +1,7 @@
 // 订阅卡片测试保护有效状态、菜单操作和日历入口，避免列表页展示与 domain 状态计算分叉。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,11 +42,13 @@ const mocks = vi.hoisted(() => {
   const longCategoryLabel = "生产力平台和开发者基础设施";
   const shortCategoryLabel = "生产力";
   const creditCardLabel = "信用卡";
+  const longPaymentMethodLabel = "Google Pay 企业共享付款方式";
 
   return {
     longCategoryLabel,
     shortCategoryLabel,
     creditCardLabel,
+    longPaymentMethodLabel,
     categories: [
       {
         id: "developer-tools",
@@ -67,6 +69,12 @@ const mocks = vi.hoisted(() => {
         value: "credit_card",
         labels: { "zh-CN": creditCardLabel, "en-US": creditCardLabel },
         icon: "/icons/payment-methods/credit_card.svg",
+      },
+      {
+        id: "google-pay",
+        value: "google_pay",
+        labels: { "zh-CN": longPaymentMethodLabel, "en-US": longPaymentMethodLabel },
+        icon: "/icons/payment-methods/google_pay.svg",
       },
     ],
     createSubscriptionCalendarFeed: vi.fn(),
@@ -193,6 +201,21 @@ function openMoreActionsMenu() {
   const menuButton = screen.getByRole("button", { name: "更多操作" });
   fireEvent.pointerDown(menuButton, { button: 0, ctrlKey: false });
   fireEvent.click(menuButton);
+}
+
+function expectMetaFlowItemsInOrder(...texts: string[]) {
+  const metaFlow = screen.getByTestId("subscription-card-meta-flow");
+  const metaText = metaFlow.textContent ?? "";
+
+  for (const text of texts) {
+    expect(within(metaFlow).getByText(text)).toBeInTheDocument();
+  }
+
+  for (let index = 0; index < texts.length - 1; index += 1) {
+    expect(metaText.indexOf(texts[index]!)).toBeLessThan(metaText.indexOf(texts[index + 1]!));
+  }
+
+  return metaFlow;
 }
 
 function mockUserAgent(userAgent: string) {
@@ -645,6 +668,63 @@ describe("SubscriptionCard", () => {
     expect(screen.queryByText("自定义")).not.toBeInTheDocument();
   });
 
+  it("renders future recurring subscriptions with remaining days and the target date", () => {
+    renderSubscriptionCard({ nextBillingDate: assertDateOnly("2026-06-15") });
+
+    expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/6/15", "28 天后续费");
+  });
+
+  it("keeps start date, billing date, payment method, and relative days in the intended order", () => {
+    renderSubscriptionCard({
+      paymentMethod: "credit_card",
+      nextBillingDate: assertDateOnly("2026-06-15"),
+    });
+
+    expectMetaFlowItemsInOrder(
+      "开始: 2026/5/15",
+      "到期: 2026/6/15",
+      mocks.creditCardLabel,
+      "28 天后续费",
+    );
+  });
+
+  it("keeps long payment methods after the billing date without hiding either value", () => {
+    renderSubscriptionCard({
+      paymentMethod: "google_pay",
+      nextBillingDate: assertDateOnly("2026-06-02"),
+    });
+
+    expectMetaFlowItemsInOrder("到期: 2026/6/2", mocks.longPaymentMethodLabel, "15 天后续费");
+  });
+
+  it("keeps relative billing after the billing date when there is no payment method", () => {
+    renderSubscriptionCard({ paymentMethod: undefined, nextBillingDate: assertDateOnly("2026-06-02") });
+
+    const metaFlow = expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/6/2", "15 天后续费");
+
+    expect(within(metaFlow).queryByText(mocks.creditCardLabel)).not.toBeInTheDocument();
+  });
+
+  it("renders future one-time fixed terms with remaining days and the expiry date", () => {
+    renderSubscriptionCard({
+      billingCycle: "one-time",
+      oneTimeTermCount: 6,
+      oneTimeTermUnit: "month",
+      nextBillingDate: assertDateOnly("2026-08-01"),
+    });
+
+    expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/8/1", "75 天后到期");
+  });
+
+  it("renders buyout purchase dates without relative renewal days", () => {
+    renderSubscriptionCard({ billingCycle: "one-time" });
+
+    const metaFlow = expectMetaFlowItemsInOrder("开始: 2026/5/15", "购买日期: 2026/5/15");
+
+    expect(within(metaFlow).queryByText("28 天后续费")).not.toBeInTheDocument();
+    expect(within(metaFlow).queryByText("到期: 2026/6/15")).not.toBeInTheDocument();
+  });
+
   it("renders overdue active subscriptions with the expired status treatment", () => {
     renderSubscriptionCard({ status: "active", nextBillingDate: assertDateOnly("2026-05-15") });
 
@@ -655,7 +735,27 @@ describe("SubscriptionCard", () => {
     expect(statusBadge).toHaveClass("bg-destructive/10", "text-destructive", "border-destructive/20");
     expect(expiredDateText.closest("div")).toHaveClass("text-destructive");
     expect(card).toHaveClass("border-destructive/40");
-    expect(screen.queryByText("到期: 2026/5/15")).not.toBeInTheDocument();
+    expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/5/15", "已过期 3 天");
+  });
+
+  it("does not render relative renewal days for overdue paused subscriptions", () => {
+    renderSubscriptionCard({ status: "paused", nextBillingDate: assertDateOnly("2026-05-12") });
+    const metaFlow = screen.getByTestId("subscription-card-meta-flow");
+
+    expect(screen.getByText("已暂停")).toBeInTheDocument();
+    expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/5/12");
+    expect(within(metaFlow).queryByText("-6 天后续费")).not.toBeInTheDocument();
+    expect(within(metaFlow).queryByText("已过期 6 天")).not.toBeInTheDocument();
+  });
+
+  it("does not render relative renewal days for overdue cancelled subscriptions", () => {
+    renderSubscriptionCard({ status: "cancelled", nextBillingDate: assertDateOnly("2026-05-12") });
+    const metaFlow = screen.getByTestId("subscription-card-meta-flow");
+
+    expect(screen.getByText("已取消")).toBeInTheDocument();
+    expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/5/12");
+    expect(within(metaFlow).queryByText("-6 天后续费")).not.toBeInTheDocument();
+    expect(within(metaFlow).queryByText("已过期 6 天")).not.toBeInTheDocument();
   });
 
   it("renders inherited reminder days with the current global setting", () => {

@@ -192,7 +192,7 @@ describe("subscription sorting", () => {
 describe("subscription filter state", () => {
   const emptyFilters: SubscriptionFilterState = {
     searchQuery: "",
-    categoryFilter: "all",
+    selectedCategories: [],
     statusFilter: "all",
     renewalFilter: "all",
     selectedTags: [],
@@ -204,6 +204,29 @@ describe("subscription filter state", () => {
     expect(hasActiveSubscriptionControls(emptyFilters, "monthly_cost_desc")).toBe(true);
 
     expect(hasActiveSubscriptionFilters({ ...emptyFilters, searchQuery: "cloud" })).toBe(true);
+    expect(hasActiveSubscriptionFilters({ ...emptyFilters, selectedCategories: ["finance"] })).toBe(true);
+  });
+
+  it("filters multiple categories with OR semantics", () => {
+    const subscriptions = [
+      subscription({ id: "docs", category: "productivity" }),
+      subscription({ id: "budget", category: "finance" }),
+      subscription({ id: "music", category: "music" }),
+    ];
+    const context = { today: assertDateOnly("2026-05-18") };
+
+    expect(filterSubscriptions(subscriptions, emptyFilters, context).map((item) => item.id)).toEqual([
+      "docs",
+      "budget",
+      "music",
+    ]);
+    expect(
+      filterSubscriptions(
+        subscriptions,
+        { ...emptyFilters, selectedCategories: ["productivity", "finance"] },
+        context,
+      ).map((item) => item.id),
+    ).toEqual(["docs", "budget"]);
   });
 
   it("filters by effective expired status for legacy active subscriptions", () => {

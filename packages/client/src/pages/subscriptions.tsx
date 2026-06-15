@@ -22,12 +22,13 @@ import { EditSubscriptionDialog } from '@/components/edit-subscription-dialog';
 import { ImportDataDialog } from '@/components/import-data-dialog';
 import { AIRecognizeSubscriptionDialog } from '@/components/ai-recognize-subscription-dialog';
 import { SubscriptionsPageSkeleton } from '@/components/loading-skeleton';
+import { SubscriptionCategoryFilter } from '@/components/subscription-category-filter';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Category, Subscription, SubscriptionStatus } from '@/types/subscription';
+import type { Subscription, SubscriptionStatus } from '@/types/subscription';
 import { DEFAULT_NOTIFICATION_REMINDER_DAYS, DEFAULT_SETTINGS } from '@/types/subscription';
 import { Search, Plus, Grid, List as ListIcon, Download, Upload, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -211,8 +212,8 @@ function SubscriptionGrid({
   const {
     searchQuery,
     setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
+    selectedCategories,
+    setSelectedCategories,
     statusFilter,
     setStatusFilter,
     renewalFilter,
@@ -225,6 +226,8 @@ function SubscriptionGrid({
     filteredSubscriptions,
     hasActiveFilters,
     hasActiveControls,
+    toggleCategory,
+    clearSelectedCategories,
     toggleTag,
     clearFilters,
   } = useSubscriptionFilters(subscriptions, { defaultCurrency, convert, locale, timeZone });
@@ -241,13 +244,6 @@ function SubscriptionGrid({
       // 详情弹窗关闭动画期间仍要保留内容快照，避免 Dialog/Drawer fade-out 时标题和备注闪空。
       setDetailSubscriptionId(null);
     });
-  // 筛选标签来自用户配置，可能被删除或禁用；找不到配置时仍显示原始值，避免筛选状态变成空白。
-  const categoryFilterLabel =
-    categoryFilter === "all"
-      ? t("subscriptions.allCategories")
-      : config.categories.find((category) => category.value === categoryFilter)?.labels
-        ? label(config.categories.find((category) => category.value === categoryFilter)!.labels)
-        : categoryFilter;
   const statusFilterLabel =
     statusFilter === "all"
       ? t("subscriptions.allStatuses")
@@ -388,19 +384,14 @@ function SubscriptionGrid({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as Category | 'all')}>
-                  <SelectTrigger className="h-11 min-w-0 border-border bg-secondary" tooltipContent={categoryFilterLabel}>
-                    <SelectValue placeholder={t("subscription.field.category")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("subscriptions.allCategories")}</SelectItem>
-                    {config.categories.map((category) => (
-                      <SelectItem key={category.id} value={category.value}>
-                        {label(category.labels)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SubscriptionCategoryFilter
+                  categories={config.categories}
+                  selectedCategories={selectedCategories}
+                  onToggleCategory={toggleCategory}
+                  onClearCategories={clearSelectedCategories}
+                  onApply={setSelectedCategories}
+                  mode="drawer"
+                />
 
                 <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SubscriptionStatus | 'all')}>
                   <SelectTrigger className="h-11 min-w-0 border-border bg-secondary" tooltipContent={statusFilterLabel}>
@@ -486,19 +477,14 @@ function SubscriptionGrid({
                   />
                 </div>
 
-                <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as Category | 'all')}>
-                  <SelectTrigger className="w-[140px] border-border bg-secondary" tooltipContent={categoryFilterLabel}>
-                    <SelectValue placeholder={t("subscription.field.category")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("subscriptions.allCategories")}</SelectItem>
-                    {config.categories.map((category) => (
-                      <SelectItem key={category.id} value={category.value}>
-                        {label(category.labels)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SubscriptionCategoryFilter
+                  categories={config.categories}
+                  selectedCategories={selectedCategories}
+                  onToggleCategory={toggleCategory}
+                  onClearCategories={clearSelectedCategories}
+                  onApply={setSelectedCategories}
+                  mode="popover"
+                />
 
                 <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SubscriptionStatus | 'all')}>
                   <SelectTrigger className="w-[140px] border-border bg-secondary" tooltipContent={statusFilterLabel}>

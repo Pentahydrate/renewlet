@@ -10,7 +10,7 @@
  * 需要把 label/color view model 从上层传入。
  */
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ConfigItem } from '@/types/config';
 import {
   DEFAULT_NOTIFICATION_REMINDER_DAYS,
@@ -87,6 +87,38 @@ interface SubscriptionCardProps {
 
 const DEFAULT_BADGE_COLOR = "hsl(var(--primary))";
 
+type SubscriptionCardMetaTone = "muted" | "warning" | "destructive";
+
+type SubscriptionCardMetaItem = {
+  key: string;
+  icon: ReactNode;
+  text: string;
+  tone: SubscriptionCardMetaTone;
+  truncate?: boolean;
+};
+
+const metaToneClassNames = {
+  muted: "text-muted-foreground",
+  warning: "text-warning",
+  destructive: "text-destructive",
+} satisfies Record<SubscriptionCardMetaTone, string>;
+
+function SubscriptionCardMetaFlow({ items }: { items: readonly SubscriptionCardMetaItem[] }) {
+  return (
+    <div data-testid="subscription-card-meta-flow" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4">
+      {items.map((item) => (
+        <div
+          key={item.key}
+          className={cn("inline-flex max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap text-xs", metaToneClassNames[item.tone])}
+        >
+          {item.icon}
+          <span className={cn(item.truncate ? "block max-w-24 truncate sm:max-w-32" : "whitespace-nowrap")}>{item.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** 订阅卡片。 */
 export function SubscriptionCard({
   subscription,
@@ -135,6 +167,74 @@ export function SubscriptionCard({
   const isRenewingSoon = !isExpired && !isBuyout && daysUntilRenewal <= 7 && daysUntilRenewal >= 0;
   const isTrialEndingSoon = !isExpired && subscription.status === 'trial' && daysUntilTrialEnd !== null &&
     daysUntilTrialEnd <= 3 && daysUntilTrialEnd >= 0;
+  const billingDateText = isBuyout
+    ? t("subscription.card.oneTimeDate", { date: formatDateOnly(subscription.startDate) })
+    : isFixedTermOneTime
+      ? t("subscription.card.expiresPrefix", { date: formatDateOnly(subscription.nextBillingDate) })
+      : t("subscription.card.duePrefix", { date: formatDateOnly(subscription.nextBillingDate) });
+  const relativeBillingText = (() => {
+    if (isBuyout || effectiveStatus === "paused" || effectiveStatus === "cancelled") {
+      return null;
+    }
+
+    if (isExpired) {
+      return daysUntilRenewal < 0
+        ? t("subscription.card.expiredDays", { days: Math.abs(daysUntilRenewal) })
+        : t("subscription.card.expired");
+    }
+
+    if (isFixedTermOneTime) {
+      return daysUntilRenewal === 0
+        ? t("subscription.card.expiresToday")
+        : t("subscription.card.expiresInDays", { days: daysUntilRenewal });
+    }
+
+    return daysUntilRenewal === 0
+      ? t("subscription.card.renewsToday")
+      : t("subscription.card.renewsInDays", { days: daysUntilRenewal });
+  })();
+  const billingStatusTone: SubscriptionCardMetaTone = isExpired ? "destructive" : isRenewingSoon ? "warning" : "muted";
+  const paymentConfig = subscription.paymentMethod ? paymentMethodByValue.get(subscription.paymentMethod) : undefined;
+  const paymentMethodLabel = subscription.paymentMethod
+    ? paymentConfig
+      ? label(paymentConfig.labels)
+      : subscription.paymentMethod
+    : null;
+  const metaItems: SubscriptionCardMetaItem[] = [
+    {
+      key: "start-date",
+      icon: <CalendarClock className="h-3.5 w-3.5 shrink-0" />,
+      text: `${t("subscription.card.startPrefix")} ${formatDateOnly(subscription.startDate)}`,
+      tone: "muted",
+    },
+    {
+      key: "billing-date",
+      icon: <Calendar className="h-3.5 w-3.5 shrink-0" />,
+      text: billingDateText,
+      tone: "muted",
+    },
+    ...(paymentMethodLabel
+      ? [{
+          key: "payment-method",
+          icon: paymentConfig?.icon ? (
+            <AuthorizedImage src={paymentConfig.icon} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
+          ) : (
+            <CreditCard className="h-3.5 w-3.5 shrink-0" />
+          ),
+          text: paymentMethodLabel,
+          tone: "muted" as const,
+          truncate: true,
+        }]
+      : []),
+    ...(relativeBillingText
+      ? [{
+          key: "relative-billing",
+          icon: null,
+          text: relativeBillingText,
+          tone: billingStatusTone,
+        }]
+      : []),
+  ];
 
   const handleDeleteConfirm = () => {
     // 删除写入交给页面 mutation；卡片只关闭本地确认框，避免 mutation 失败后留下二次确认遮罩。
@@ -268,62 +368,13 @@ export function SubscriptionCard({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <CalendarClock className="h-3.5 w-3.5" />
-              <span className="text-xs">
-                {t("subscription.card.startPrefix")} {formatDateOnly(subscription.startDate)}
-              </span>
-            </div>
-            
-            <div className={cn(
-              "flex items-center gap-1.5",
-              isExpired ? "text-destructive" : isRenewingSoon ? "text-warning" : "text-muted-foreground"
-            )}>
-              <Calendar className="h-3.5 w-3.5" />
-              <span className="text-xs">
-                {isBuyout ? (
-                  t("subscription.card.oneTimeDate", { date: formatDateOnly(subscription.startDate) })
-                ) : isFixedTermOneTime ? (
-                  isExpired
-                    ? daysUntilRenewal < 0
-                      ? t("subscription.card.expiredDays", { days: Math.abs(daysUntilRenewal) })
-                      : t("subscription.card.expired")
-                    : daysUntilRenewal === 0
-                      ? t("subscription.card.expiresToday")
-                      : daysUntilRenewal <= 7
-                        ? t("subscription.card.expiresInDays", { days: daysUntilRenewal })
-                        : t("subscription.card.expiresPrefix", { date: formatDateOnly(subscription.nextBillingDate) })
-                ) : isExpired ? (
-                  daysUntilRenewal < 0
-                    ? t("subscription.card.expiredDays", { days: Math.abs(daysUntilRenewal) })
-                    : t("subscription.card.expired")
-                ) : isRenewingSoon ? (
-                  daysUntilRenewal === 0 ? t("subscription.card.renewsToday") : t("subscription.card.renewsInDays", { days: daysUntilRenewal })
-                ) : (
-                  t("subscription.card.duePrefix", { date: formatDateOnly(subscription.nextBillingDate) })
-                )}
-              </span>
-            </div>
-
-            {subscription.paymentMethod && (() => {
-              const paymentConfig = paymentMethodByValue.get(subscription.paymentMethod);
-              return (
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  {paymentConfig?.icon ? (
-                    <AuthorizedImage src={paymentConfig.icon} alt="" className="h-3.5 w-3.5 object-contain" />
-                  ) : (
-                    <CreditCard className="h-3.5 w-3.5" />
-                  )}
-                  <span className="text-xs">{paymentConfig ? label(paymentConfig.labels) : subscription.paymentMethod}</span>
-                </div>
-              );
-            })()}
+          <div className="grid min-w-0 gap-y-1.5 text-sm">
+            <SubscriptionCardMetaFlow items={metaItems} />
 
             {viewMode === 'list' && !isBuyout && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Bell className="h-3.5 w-3.5" />
-                <span className="text-xs">
+              <div className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                <Bell className="h-3.5 w-3.5 shrink-0" />
+                <span className="max-w-36 truncate text-xs">
                   {subscription.reminderDays === DISABLED_REMINDER_DAYS
                     ? t("subscription.card.reminderDisabled")
                     : subscription.reminderDays === INHERIT_REMINDER_DAYS

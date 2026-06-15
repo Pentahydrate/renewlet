@@ -42,15 +42,15 @@ export function useSubscriptionFilters(
   }: UseSubscriptionFiltersOptions = {},
 ) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<Category | "all">("all");
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | "all">("all");
   const [renewalFilter, setRenewalFilter] = useState<SubscriptionRenewalFilter>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState<SubscriptionSortOption>("default");
 
   const filters: SubscriptionFilterState = useMemo(
-    () => ({ searchQuery, categoryFilter, statusFilter, renewalFilter, selectedTags }),
-    [categoryFilter, renewalFilter, searchQuery, selectedTags, statusFilter],
+    () => ({ searchQuery, selectedCategories, statusFilter, renewalFilter, selectedTags }),
+    [renewalFilter, searchQuery, selectedCategories, selectedTags, statusFilter],
   );
   const today = useMemo(() => todayDateOnlyInTimeZone(new Date(), timeZone), [timeZone]);
   const allTags = useMemo(() => collectSubscriptionTags(subscriptions), [subscriptions]);
@@ -70,10 +70,18 @@ export function useSubscriptionFilters(
       prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
     );
   };
+  const toggleCategory = (category: Category) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category],
+    );
+  };
+  const clearSelectedCategories = () => {
+    setSelectedCategories([]);
+  };
 
   const clearFilters = () => {
     setSearchQuery("");
-    setCategoryFilter("all");
+    setSelectedCategories([]);
     setStatusFilter("all");
     setRenewalFilter("all");
     setSelectedTags([]);
@@ -83,8 +91,8 @@ export function useSubscriptionFilters(
   return {
     searchQuery,
     setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
+    selectedCategories,
+    setSelectedCategories,
     statusFilter,
     setStatusFilter,
     renewalFilter,
@@ -97,6 +105,8 @@ export function useSubscriptionFilters(
     filteredSubscriptions: sortedSubscriptions,
     hasActiveFilters,
     hasActiveControls,
+    toggleCategory,
+    clearSelectedCategories,
     toggleTag,
     clearFilters,
   };
