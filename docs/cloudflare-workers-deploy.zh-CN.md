@@ -318,8 +318,7 @@ Renewlet 部署在 Cloudflare Workers 后，Server酱请求由 Worker 发出；S
 
 - 立刻停止连续测试，等 24 小时后再试。
 - 急用通知时，先切到 SMTP、Telegram、Bark 或 Webhook。
-- 使用 Server酱³ SendKey 时，优先使用 [Server酱³ 官方 API 入口](https://doc2.ft07.com/zh/serverchan3/server/api)；[SCT 转发](https://doc2.ft07.com/zh/serverchan3/compatibility/sct-forward)只是官方临时兼容入口，不能当长期最佳路径。
-- 不建议接公共代理绕过限流；SendKey 会经过代理，等于把通知密钥交给代理。
+- Renewlet 会按 SendKey 自动选择入口：`sctp...` 会发到 [Server酱³ 官方 API 入口](https://doc2.ft07.com/zh/serverchan3/server/api) `https://<uid>.push.ft07.com/send/<sendkey>.send`；`SCT...` 会发到 Server酱 Turbo 的 `https://sctapi.ftqq.com/<sendkey>.send`。如果你填的是 `sctp...` SendKey，这里已经不是 [SCT 转发](https://doc2.ft07.com/zh/serverchan3/compatibility/sct-forward)入口；继续返回 429，原因仍是 Server酱对 Cloudflare 出站来源 IP 的 24 小时限流。
 
 **旧 `pb_data`？**
 

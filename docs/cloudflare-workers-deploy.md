@@ -318,8 +318,7 @@ Use these fixes:
 
 - Stop repeated tests immediately, then try again after 24 hours.
 - If notifications are urgent, switch to SMTP, Telegram, Bark, or Webhook first.
-- If you use a ServerChan³ SendKey, prefer the [official ServerChan³ API endpoint](https://doc2.ft07.com/zh/serverchan3/server/api). [SCT forwarding](https://doc2.ft07.com/zh/serverchan3/compatibility/sct-forward) is only an official temporary compatibility path, not the long-term best path.
-- Do not route this through a public proxy to bypass the limit. Your SendKey would pass through that proxy, which means handing the notification secret to it.
+- Renewlet chooses the endpoint from the SendKey automatically: `sctp...` is sent to the [official ServerChan³ API endpoint](https://doc2.ft07.com/zh/serverchan3/server/api), `https://<uid>.push.ft07.com/send/<sendkey>.send`; `SCT...` is sent to ServerChan Turbo at `https://sctapi.ftqq.com/<sendkey>.send`. If you entered an `sctp...` SendKey, Renewlet is already using the ServerChan³ endpoint instead of [SCT forwarding](https://doc2.ft07.com/zh/serverchan3/compatibility/sct-forward). A continued 429 still means ServerChan has rate-limited the Cloudflare egress source IP for 24 hours.
 
 **Old `pb_data`?**
 

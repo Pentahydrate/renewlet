@@ -35,6 +35,8 @@ import {
   lastErrorFromChannels,
   markNotificationJobSending,
   mergeChannelResults,
+  normalizeNotificationJobResultForHistory,
+  publicScheduleOccurrence,
   readJobChannels,
   type JobChannels,
   type SendSummary,
@@ -205,7 +207,7 @@ async function runScheduledForUser(env: Env, userId: string): Promise<void> {
   const subscriptions = (await listSubscriptions(env, userId)).map(toApiSubscription);
   const decision = getNotificationScheduleDecision(now, settings, subscriptions, NOTIFICATION_CRON_WINDOW_MINUTES, false);
   if (!decision.due) return;
-  const occurrence: ScheduleOccurrence = decision;
+  const occurrence = publicScheduleOccurrence(decision);
   // Cron 没有 request origin；邮件 CTA 只在手动请求能确定公开域名时生成。
   await runCronForUser(env, userId, settings, subscriptions, occurrence, now, DEFAULT_SERVER_I18N_LOCALE);
 }
@@ -599,7 +601,7 @@ function toHistoryJob(row: NotificationJobRow) {
     status: row.status,
     attempts: row.attempts,
     lastError: row.last_error,
-    result: parseJobResult(row),
+    result: normalizeNotificationJobResultForHistory(parseJobResult(row)),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

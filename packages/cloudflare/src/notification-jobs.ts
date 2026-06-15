@@ -2,6 +2,7 @@ import { NOTIFICATION_CHANNELS } from "@renewlet/shared/runtime";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { NotificationEmailMessage } from "@renewlet/shared/email-template";
 import type { UpstreamErrorDetails } from "@renewlet/shared/schemas/upstream";
+import { notificationJobResultResponseSchema } from "@renewlet/shared/schemas/notifications";
 import { NOTIFICATION_JOB_COLUMNS, newId, nowIso, parseJobResult } from "./db";
 import type { Env, NotificationJobRow } from "./types";
 import type { ScheduleOccurrence } from "./notification-schedule";
@@ -211,6 +212,22 @@ export function lastErrorFromChannels(channels: JobChannels): string | null {
   return channels.failed.map((failure) => `${failure.channel}: ${failure.error}`).join(" | ");
 }
 
+export function publicScheduleOccurrence(schedule: ScheduleOccurrence): ScheduleOccurrence {
+  // due/reason 只属于 Cron 内存决策；notification_jobs.result_json 必须落 shared 公开 occurrence 契约。
+  return {
+    scheduledLocalDate: schedule.scheduledLocalDate,
+    scheduledLocalTime: schedule.scheduledLocalTime,
+    timeZone: schedule.timeZone,
+    scheduledInstantUtc: schedule.scheduledInstantUtc,
+  };
+}
+
+export function normalizeNotificationJobResultForHistory(result: unknown): unknown {
+  const normalized = normalizeCronJobResultForHistory(result);
+  const parsed = notificationJobResultResponseSchema.safeParse(normalized);
+  return parsed.success ? parsed.data : {};
+}
+
 export function createCronJobResult(input: {
   reason: string | null;
   force: boolean;
@@ -228,7 +245,7 @@ export function createCronJobResult(input: {
     force: input.force,
     windowMinutes: input.windowMinutes,
     triggeredAtUtc: input.triggeredAtUtc,
-    schedule: input.schedule,
+    schedule: publicScheduleOccurrence(input.schedule),
     settings: {
       timezone: input.settings.timezone,
       locale: input.settings.locale,
@@ -239,6 +256,54 @@ export function createCronJobResult(input: {
     message: input.message,
     channels: normalizeJobChannels(input.channels),
   };
+}
+
+function normalizeCronJobResultForHistory(result: unknown): unknown {
+  if (!isRecord(result) || result["source"] !== "cron") return result;
+  const schedule = scheduleOccurrenceFromUnknown(result["schedule"]);
+  const settings = isRecord(result["settings"]) ? result["settings"] : {};
+  const message = isRecord(result["message"]) ? result["message"] : {};
+  if (!schedule) return result;
+  return {
+    source: "cron",
+    reason: typeof result["reason"] === "string" ? result["reason"] : null,
+    force: result["force"] === true,
+    windowMinutes: typeof result["windowMinutes"] === "number" ? result["windowMinutes"] : 0,
+    triggeredAtUtc: typeof result["triggeredAtUtc"] === "string" ? result["triggeredAtUtc"] : "",
+    schedule,
+    settings: {
+      timezone: typeof settings["timezone"] === "string" ? settings["timezone"] : "",
+      locale: typeof settings["locale"] === "string" ? settings["locale"] : "",
+      notificationTimeLocal: typeof settings["notificationTimeLocal"] === "string" ? settings["notificationTimeLocal"] : "",
+      enabledChannels: uniqueValidChannels(Array.isArray(settings["enabledChannels"]) ? settings["enabledChannels"] : []),
+      showExpired: settings["showExpired"] === true,
+    },
+    message: {
+      title: typeof message["title"] === "string" ? message["title"] : "",
+      content: typeof message["content"] === "string" ? message["content"] : "",
+      timestamp: typeof message["timestamp"] === "string" ? message["timestamp"] : "",
+      hasPayload: message["hasPayload"] === true,
+      items: Array.isArray(message["items"]) ? message["items"] : [],
+    },
+    channels: normalizeJobChannels(result["channels"]),
+  };
+}
+
+function scheduleOccurrenceFromUnknown(value: unknown): ScheduleOccurrence | null {
+  if (!isRecord(value)) return null;
+  const scheduledLocalDate = value["scheduledLocalDate"];
+  const scheduledLocalTime = value["scheduledLocalTime"];
+  const timeZone = value["timeZone"];
+  const scheduledInstantUtc = value["scheduledInstantUtc"];
+  if (
+    typeof scheduledLocalDate !== "string"
+    || typeof scheduledLocalTime !== "string"
+    || typeof timeZone !== "string"
+    || typeof scheduledInstantUtc !== "string"
+  ) {
+    return null;
+  }
+  return publicScheduleOccurrence({ scheduledLocalDate, scheduledLocalTime, timeZone, scheduledInstantUtc });
 }
 
 function uniqueValidChannels(values: unknown[]): Channel[] {
