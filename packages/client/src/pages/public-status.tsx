@@ -1,25 +1,58 @@
 import { useEffect, type ReactNode } from "react";
-import { Activity, AlertCircle, CalendarClock, Clock3, CreditCard, Eye, EyeOff, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  CalendarClock,
+  Clock3,
+  CreditCard,
+  Eye,
+  EyeOff,
+  Monitor,
+  Moon,
+  Sun,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { useParams } from "react-router-dom";
 import { SubscriptionLogo } from "@/components/subscription-logo";
 import { SubscriptionStatusBadge } from "@/components/subscription-status-badge";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
 import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import { ApiError } from "@/lib/api-client";
 import { colorWithAlpha } from "@/lib/color";
+import { useTheme } from "@/lib/theme-provider";
 import { daysBetweenDateOnly, todayDateOnlyInTimeZone } from "@/lib/time/date-only";
 import { usePublicStatus } from "@/hooks/use-public-status-page";
 import { useExchangeRates } from "@/hooks/use-exchange-rates";
 import { useI18n } from "@/i18n/I18nProvider";
 import { localizedLabel, type Locale } from "@/i18n/locales";
-import { translate } from "@/i18n/messages";
+import { translate, type MessageKey } from "@/i18n/messages";
 import { customCycleUnitLabelKey, toMonthlyAmount } from "@/lib/subscription-billing";
 import type { PublicStatusResponse } from "@/lib/api/schemas/public-status";
 import { CYCLE_LABELS } from "@/types/subscription";
+import type { ThemeMode } from "@/types/theme";
 
 type PublicStatusSubscription = PublicStatusResponse["subscriptions"][number];
+
+const PUBLIC_STATUS_THEME_OPTIONS: Array<{
+  value: ThemeMode;
+  labelKey: MessageKey;
+  Icon: LucideIcon;
+}> = [
+  { value: "light", labelKey: "theme.light", Icon: Sun },
+  { value: "dark", labelKey: "theme.dark", Icon: Moon },
+  { value: "system", labelKey: "theme.system", Icon: Monitor },
+];
 
 function useNoIndexMeta() {
   useEffect(() => {
@@ -81,17 +114,57 @@ function PublicStatusLoading() {
   );
 }
 
+function PublicStatusThemeMenu() {
+  const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
+  const currentOption = PUBLIC_STATUS_THEME_OPTIONS.find((option) => option.value === theme)
+    ?? PUBLIC_STATUS_THEME_OPTIONS[1]!;
+  const CurrentIcon = currentOption.Icon;
+
+  const handleThemeChange = (value: string) => {
+    if (value === "light" || value === "dark" || value === "system") {
+      setTheme(value);
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label={t("header.toggleTheme")}
+          className="h-9 w-9 shrink-0 border border-border bg-card/80 text-muted-foreground hover:bg-card-hover hover:text-foreground focus-visible:ring-ring"
+          size="icon"
+          variant="ghost"
+        >
+          <CurrentIcon className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
+          {PUBLIC_STATUS_THEME_OPTIONS.map(({ value, labelKey, Icon }) => (
+            <DropdownMenuRadioItem key={value} value={value} className="gap-2">
+              <Icon className="h-4 w-4 text-muted-foreground" />
+              <span>{t(labelKey)}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function PublicStatusHeader({ data }: { data: PublicStatusResponse }) {
   const { t, formatDateTime } = useI18n();
 
   return (
-    <header className="mb-8 flex items-center justify-between">
+    <header className="mb-8 flex items-start justify-between gap-4">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold text-foreground">{t("publicStatus.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t("publicStatus.headerMeta", { time: formatDateTime(data.page.generatedAt) })}
         </p>
       </div>
+      <PublicStatusThemeMenu />
     </header>
   );
 }

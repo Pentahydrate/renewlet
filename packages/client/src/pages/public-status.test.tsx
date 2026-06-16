@@ -1,11 +1,14 @@
 // 公开展示页测试保护无需登录的只读渲染、金额开关和 noindex meta。
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-client";
 import type { PublicStatusResponse } from "@/lib/api/schemas/public-status";
 import PublicStatusPage from "./public-status";
 
 const mocks = vi.hoisted(() => ({
+  setTheme: vi.fn(),
+  theme: "dark" as "light" | "dark" | "system",
   usePublicStatus: vi.fn(),
 }));
 
@@ -21,6 +24,13 @@ vi.mock("@/hooks/use-exchange-rates", () => ({
   useExchangeRates: () => ({
     convert: (amount: number) => amount,
     loading: false,
+  }),
+}));
+
+vi.mock("@/lib/theme-provider", () => ({
+  useTheme: () => ({
+    theme: mocks.theme,
+    setTheme: mocks.setTheme,
   }),
 }));
 
@@ -40,6 +50,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "publicStatus.activeCount": "活跃/试用",
         "publicStatus.activeSubtitle": "状态正常运行",
         "publicStatus.annualTotal": "年化总价",
+        "header.toggleTheme": "切换主题",
         "publicStatus.emptyDescription": "当前公开链接没有可见订阅。",
         "publicStatus.emptyTitle": "暂无可展示订阅",
         "publicStatus.errorDescription": "请稍后刷新重试。",
@@ -66,6 +77,9 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "publicStatus.visibleSubtitle": "当前公开可见",
         "subscription.billingCycle.annual": "每年",
         "subscription.billingCycle.monthly": "每月",
+        "theme.dark": "深色",
+        "theme.light": "浅色",
+        "theme.system": "跟随系统",
       };
       return messages[key] ?? key;
     },
@@ -118,6 +132,8 @@ function renderPage() {
 
 afterEach(() => {
   document.querySelector('meta[name="robots"]')?.remove();
+  mocks.setTheme.mockReset();
+  mocks.theme = "dark";
 });
 
 describe("PublicStatusPage", () => {
@@ -149,6 +165,32 @@ describe("PublicStatusPage", () => {
     expect(screen.queryByText("隐藏金额")).not.toBeInTheDocument();
     expect(screen.queryByText("显示金额")).not.toBeInTheDocument();
     expect(screen.queryByText("USD 12")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "切换主题" })).toBeInTheDocument();
+  });
+
+  it("opens a compact theme menu with light, dark, and system choices", async () => {
+    const user = userEvent.setup();
+    mocks.usePublicStatus.mockReturnValue({ isPending: false, isError: false, data: baseResponse });
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "切换主题" }));
+
+    expect(screen.getByRole("menuitemradio", { name: /浅色/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitemradio", { name: /深色/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("menuitemradio", { name: /跟随系统/ })).toBeInTheDocument();
+  });
+
+  it("switches the public page theme mode to system from the menu", async () => {
+    const user = userEvent.setup();
+    mocks.usePublicStatus.mockReturnValue({ isPending: false, isError: false, data: baseResponse });
+
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "切换主题" }));
+    await user.click(screen.getByRole("menuitemradio", { name: /跟随系统/ }));
+
+    expect(mocks.setTheme).toHaveBeenCalledWith("system");
   });
 
   it("shows monthly and annual totals when the public response includes amount fields", () => {
