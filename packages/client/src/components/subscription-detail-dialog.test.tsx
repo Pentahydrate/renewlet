@@ -90,11 +90,13 @@ function renderDetailDialog({
   open = true,
   onOpenChange = vi.fn(),
   onEditSubscription,
+  onRenewSubscription,
 }: {
   subscription?: Subscription | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onEditSubscription?: (subscription: Subscription) => void;
+  onRenewSubscription?: (id: string) => void;
 } = {}) {
   return {
     onOpenChange,
@@ -106,6 +108,7 @@ function renderDetailDialog({
           subscription={subscription}
           today={assertDateOnly("2026-05-18")}
           {...(onEditSubscription ? { onEditSubscription } : {})}
+          {...(onRenewSubscription ? { onRenewSubscription } : {})}
         />
       </TooltipProvider>,
     ),
@@ -162,6 +165,26 @@ describe("SubscriptionDetailDialog", () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onEditSubscription).toHaveBeenCalledWith(baseSubscription);
+  });
+
+  it("uses a compact desktop footer for detail actions", () => {
+    const onEditSubscription = vi.fn();
+    const onRenewSubscription = vi.fn();
+    renderDetailDialog({ onEditSubscription, onRenewSubscription });
+
+    const dialog = screen.getByRole("dialog", { name: "Fastmail" });
+    const editButton = within(dialog).getByRole("button", { name: "编辑" });
+    const actions = editButton.parentElement;
+    if (!actions) throw new Error("Missing subscription detail action footer");
+
+    expect(actions).toHaveClass("flex", "flex-col", "border-t", "sm:flex-row", "sm:justify-end");
+    expect(actions).not.toHaveClass("sm:grid-cols-2");
+    expect(within(actions).getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "关闭",
+      "添加到日历",
+      "续订",
+      "编辑",
+    ]);
   });
 
   it("renders concrete custom billing cycle labels", () => {

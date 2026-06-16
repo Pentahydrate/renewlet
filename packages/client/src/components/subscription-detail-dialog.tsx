@@ -88,7 +88,6 @@ function SubscriptionDetailContent({
   const isFixedTermOneTime = isOneTimeFixedTerm(subscription);
   const isOneTime = subscription.billingCycle === "one-time";
   const canManualRenew = Boolean(onRenewSubscription) && isManualRenewEligible(subscription);
-  const hasMultipleActions = !isBuyout || canManualRenew || Boolean(onEditSubscription);
   const renewalLabel = isOneTime
     ? t("subscription.renewal.oneTime")
     : subscription.autoRenew
@@ -209,24 +208,24 @@ function SubscriptionDetailContent({
         ) : null}
       </div>
 
-      <div className={cn("grid gap-2 pt-1", hasMultipleActions && "sm:grid-cols-2")}>
-        <Button variant="outline" className="border-border" onClick={onClose}>
+      <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+        <Button variant="outline" className="w-full justify-center border-border sm:w-auto" onClick={onClose}>
           {t("common.close")}
         </Button>
         {!isBuyout ? (
-          <Button variant="outline" className="border-border" onClick={onAddToCalendar}>
+          <Button variant="outline" className="w-full justify-center border-border sm:w-auto" onClick={onAddToCalendar}>
             <CalendarPlus className="h-4 w-4" />
             {t("subscription.addToCalendar")}
           </Button>
         ) : null}
         {canManualRenew ? (
-          <Button variant="outline" className="border-border" onClick={() => onRenewSubscription?.(subscription.id)}>
+          <Button variant="outline" className="w-full justify-center border-border sm:w-auto" onClick={() => onRenewSubscription?.(subscription.id)}>
             <RotateCw className="h-4 w-4" />
             {t("subscription.renew")}
           </Button>
         ) : null}
         {onEditSubscription ? (
-          <Button className="bg-primary text-primary-foreground hover:bg-primary-glow" onClick={handleEdit}>
+          <Button className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary-glow sm:w-auto" onClick={handleEdit}>
             <Edit2 className="h-4 w-4" />
             {t("common.edit")}
           </Button>
