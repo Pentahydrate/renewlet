@@ -12,6 +12,7 @@ const AI_BLOCKING_IMPORT_WARNING_CODES = new Set<string>([
   IMPORT_MESSAGE_CODES.aiPriceDefaulted,
 ]);
 
+// thinking 控件的选项 id 由领域层生成，避免 UI 组件把 provider/model 差异硬编码到表单状态里。
 export function thinkingOptionIdOrNull(control: AiThinkingControl | null): string | null {
   return control ? thinkingOptionId(control) : null;
 }
@@ -44,6 +45,7 @@ export function revokeImageItems(images: readonly AIRecognitionImageItem[]) {
 export function appendLimitedText(current: string, delta: string, maxChars: number): string {
   const next = `${current}${delta}`;
   const chars = [...next];
+  // SSE 文本预览保留尾部窗口即可排障，不能把 provider 的完整输出长期堆在 React 状态里。
   if (chars.length <= maxChars) return next;
   return `...${chars.slice(chars.length - maxChars).join("")}`;
 }
@@ -62,6 +64,7 @@ export function isAbortedApiError(error: unknown): boolean {
 }
 
 export function hasBlockingAIImportWarnings(warnings: readonly string[]): boolean {
+  // 导入 preview 的 warning 可能按 “多 code 合并” 返回；AI 入口只拦截会改变核心账单字段的默认值。
   return warnings.some((warning) => (
     warning.split("|").some((part) => AI_BLOCKING_IMPORT_WARNING_CODES.has(part))
   ));

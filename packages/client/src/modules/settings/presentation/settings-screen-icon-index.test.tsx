@@ -2,6 +2,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import type { BuiltInIconProvider } from "@renewlet/shared/built-in-icons";
 import {
   createControllerState,
   mocks,
@@ -75,8 +76,11 @@ describe("SettingsScreen built-in icon index controls", () => {
         },
       },
     });
-    const check = vi.fn().mockResolvedValue(undefined);
-    const refresh = vi.fn().mockResolvedValue(undefined);
+    const check = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>().mockResolvedValue(undefined);
+    const openProviderStatus = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>()
+      .mockImplementation((provider) => check(provider));
+    const refresh = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>().mockResolvedValue(undefined);
+    controller.builtInIconIndex.openProviderStatus = openProviderStatus;
     controller.builtInIconIndex.checkProvider = check;
     controller.builtInIconIndex.refreshProvider = refresh;
     mocks.useSettingsFormController.mockReturnValue(controller);
@@ -96,6 +100,9 @@ describe("SettingsScreen built-in icon index controls", () => {
     const updateSettingCallsBeforeRefresh = controller.updateSetting.mock.calls.length;
     await user.click(statusBadge);
 
+    expect(openProviderStatus).toHaveBeenCalledWith("thesvg");
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(check).toHaveBeenCalledWith("thesvg");
     expect(await screen.findByText("图标数量")).toBeInTheDocument();
     const portalHost = screen.getByText("图标数量").closest("[data-mobile-overlay-portal]");
     expect(portalHost).toHaveClass("contents");
@@ -106,6 +113,7 @@ describe("SettingsScreen built-in icon index controls", () => {
     expect(screen.queryByText("手动更新")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "检查 TheSVG 最新版本" }));
+    expect(check).toHaveBeenCalledTimes(2);
     expect(check).toHaveBeenCalledWith("thesvg");
 
     await user.click(screen.getByRole("button", { name: "更新" }));
@@ -116,11 +124,37 @@ describe("SettingsScreen built-in icon index controls", () => {
     expect(screen.queryByRole("button", { name: "保存更改" })).not.toBeInTheDocument();
   });
 
+  it("automatically checks a provider when admins open its status popover", async () => {
+    const user = userEvent.setup();
+    const check = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>().mockResolvedValue(undefined);
+    const openProviderStatus = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>()
+      .mockImplementation((provider) => check(provider));
+    const controller = createControllerState({
+      builtInIconIndex: {
+        openProviderStatus,
+        checkProvider: check,
+      },
+    });
+    mocks.useSettingsFormController.mockReturnValue(controller);
+
+    renderSettingsScreen();
+    await user.click(screen.getByRole("button", { name: "配置" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "配置内置图标来源" });
+    await user.click(within(dialog).getByRole("button", { name: "查看 Dashboard Icons 图标索引状态：未检查" }));
+
+    expect(openProviderStatus).toHaveBeenCalledWith("dashboardIcons");
+    expect(check).toHaveBeenCalledWith("dashboardIcons");
+    expect(controller.updateSetting).not.toHaveBeenCalled();
+  });
+
   it("hides the icon index refresh panel from non-admin controllers", async () => {
     const user = userEvent.setup();
+    const openProviderStatus = vi.fn<(provider: BuiltInIconProvider) => Promise<void>>().mockResolvedValue(undefined);
     mocks.useSettingsFormController.mockReturnValue(createControllerState({
       builtInIconIndex: {
         canManage: false,
+        openProviderStatus,
       },
     }));
 
@@ -130,6 +164,7 @@ describe("SettingsScreen built-in icon index controls", () => {
     const dialog = await screen.findByRole("dialog", { name: "配置内置图标来源" });
     expect(within(dialog).queryByRole("button", { name: /图标索引状态/ })).not.toBeInTheDocument();
     expect(within(dialog).queryByRole("button", { name: "更新" })).not.toBeInTheDocument();
+    expect(openProviderStatus).not.toHaveBeenCalled();
   });
 
   it("shows unknown instead of source labels when current provider version has no commit metadata", async () => {

@@ -80,6 +80,7 @@ export function AIDraftReviewPanel({
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   useEffect(() => {
+    // 筛选条件变化后要把选中项钉回可见集合，否则右侧编辑器会指向已被隐藏的草稿。
     if (filteredDrafts.length === 0) {
       if (selectedDraftId) onSelectedDraftIdChange(null);
       return;

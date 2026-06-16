@@ -3,6 +3,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS, type SubscriptionStatus } from "@/types/subscription";
 
+// 状态色只表达账本语义，不参与续订算法；expired/cancelled 都用风险色提醒用户需要处理。
 const statusBadgeClassNames = {
   trial: "border-warning/20 bg-warning/10 text-warning",
   active: "border-success/20 bg-success/10 text-success",

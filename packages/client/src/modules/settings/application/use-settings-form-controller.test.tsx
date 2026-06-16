@@ -1,4 +1,4 @@
-// Settings controller 测试保护远端设置、本地草稿、主题/i18n 预览和保存副作用的唯一写入口。
+// Settings controller 测试保护远端设置、本地草稿、主题/i18n 预览和保存副作用的唯一应用层写入口。
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_CUSTOM_CONFIG, type CustomConfig } from "@/types/config";

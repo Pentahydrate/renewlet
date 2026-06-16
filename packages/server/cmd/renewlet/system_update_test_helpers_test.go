@@ -4,17 +4,71 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
+	"time"
 )
+
+// fake client 隔离 GitHub 网络和真实下载，同时暴露计数器给拆分后的测试断言缓存与 probe 行为。
+type fakeSystemReleaseClient struct {
+	release     *systemRelease
+	releases    []systemRelease
+	fetchDelay  time.Duration
+	fetchCount  int32
+	probeCount  int32
+	downloadFn  func(targetPath string) error
+	checksumTxt []byte
+	probeAssets []systemReleaseAsset
+}
+
+func (client *fakeSystemReleaseClient) FetchReleases(ctx context.Context) ([]systemRelease, error) {
+	atomic.AddInt32(&client.fetchCount, 1)
+	if client.fetchDelay > 0 {
+		select {
+		case <-time.After(client.fetchDelay):
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	if client.releases != nil {
+		return append([]systemRelease(nil), client.releases...), nil
+	}
+	if client.release == nil {
+		return nil, errors.New("missing release")
+	}
+	return []systemRelease{*client.release}, nil
+}
+
+func (client *fakeSystemReleaseClient) ProbeReleaseAssets(_ context.Context, _ string, _ string) []systemReleaseAsset {
+	atomic.AddInt32(&client.probeCount, 1)
+	if client.probeAssets != nil {
+		return append([]systemReleaseAsset(nil), client.probeAssets...)
+	}
+	return nil
+}
+
+func (client *fakeSystemReleaseClient) DownloadFile(_ context.Context, _ string, targetPath string, _ int64) error {
+	if client.downloadFn != nil {
+		return client.downloadFn(targetPath)
+	}
+	return errors.New("download not configured")
+}
+
+func (client *fakeSystemReleaseClient) FetchText(_ context.Context, _ string, _ int64) ([]byte, error) {
+	return client.checksumTxt, nil
+}
 
 func (service *systemUpdateService) downloadFnForTest(binaryContent string) {
 	if fake, ok := service.client.(*fakeSystemReleaseClient); ok {
 		fake.downloadFn = func(targetPath string) error {
+			// 页面内更新下载的是 Release tar.gz，测试同时生成 checksum，覆盖真实校验链路而不是裸写二进制。
 			if err := writeTarGz(targetPath, map[string]string{"renewlet": binaryContent}); err != nil {
 				return err
 			}
@@ -30,6 +84,7 @@ func (service *systemUpdateService) downloadFnForTest(binaryContent string) {
 }
 
 func writeTarGz(path string, files map[string]string) error {
+	// 自更新包必须保留可执行权限，避免测试通过但容器重启后 /opt/renewlet/current/renewlet 无法执行。
 	var buffer bytes.Buffer
 	gzipWriter := gzip.NewWriter(&buffer)
 	tarWriter := tar.NewWriter(gzipWriter)
@@ -54,16 +109,15 @@ func writeTarGz(path string, files map[string]string) error {
 	return os.WriteFile(path, buffer.Bytes(), 0o644)
 }
 
-func releaseFixture(tag string, prerelease bool, draft bool) githubRelease {
+func releaseFixture(tag string) systemRelease {
 	version := strings.TrimPrefix(tag, "v")
-	return githubRelease{
+	// fixture 固定 Release 资产命名，保护 Docker 页面内更新对 archive/checksums 的查找契约。
+	return systemRelease{
 		TagName:     tag,
 		Name:        "Renewlet " + version,
 		PublishedAt: "2026-06-04T00:00:00Z",
 		HTMLURL:     "https://github.com/zhiyingzzhou/renewlet/releases/tag/" + tag,
-		Prerelease:  prerelease,
-		Draft:       draft,
-		Assets: []githubAsset{
+		Assets: []systemReleaseAsset{
 			{Name: systemArchiveName(version), BrowserDownloadURL: "https://github.com/zhiyingzzhou/renewlet/releases/download/" + tag + "/" + systemArchiveName(version)},
 			{Name: "checksums.txt", BrowserDownloadURL: "https://github.com/zhiyingzzhou/renewlet/releases/download/" + tag + "/checksums.txt"},
 		},
@@ -74,4 +128,16 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return fn(request)
+}
+
+func systemReleaseAtomFixture(tag string, updated string) string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <updated>` + updated + `</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/zhiyingzzhou/renewlet/releases/tag/` + tag + `"/>
+    <title>` + tag + `</title>
+    <content type="html">&lt;p&gt;Release notes&lt;/p&gt;</content>
+  </entry>
+</feed>`
 }

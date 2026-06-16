@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Check, Clock3, Image as ImageIcon, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RawErrorResponseDialog } from '@/components/raw-error-response-dialog';
@@ -31,6 +31,8 @@ interface BuiltInIconIndexController {
   errorDetails: RawErrorResponseDetails | null;
   errorDetailsOpen: boolean;
   setErrorDetailsOpen: (open: boolean) => void;
+  openProviderStatus: (provider: BuiltInIconProvider) => Promise<void>;
+  closeProviderStatus: (provider: BuiltInIconProvider) => void;
   checkAllProviders: () => Promise<void>;
   checkProvider: (provider: BuiltInIconProvider) => Promise<void>;
   refreshProvider: (provider: BuiltInIconProvider) => Promise<void>;
@@ -251,6 +253,8 @@ interface BuiltInIconProviderStatusView {
 
 function BuiltInIconProviderStatusPopover({ provider, status, iconIndex, t }: BuiltInIconProviderStatusPopoverProps) {
   const { formatDateTime, formatNumber } = useI18n();
+  const [open, setOpen] = useState(false);
+  const { closeProviderStatus, openProviderStatus } = iconIndex;
   const checking = iconIndex.checkingProvider === provider;
   const refreshing = iconIndex.refreshingProvider === provider || Boolean(status?.refreshing);
   const busy = iconIndex.isLoading || checking || refreshing;
@@ -258,8 +262,25 @@ function BuiltInIconProviderStatusPopover({ provider, status, iconIndex, t }: Bu
   const statusView = getBuiltInIconProviderStatusView({ checking, iconIndex, refreshing, status, t });
   const canRefresh = Boolean(status && (status.updateAvailable || status.lastError) && !busy);
 
+  useEffect(() => {
+    return () => {
+      // Dialog 关闭会直接卸载 provider 卡片；这里只释放打开周期锁，不取消已经发出的检查请求。
+      closeProviderStatus(provider);
+    };
+  }, [closeProviderStatus, provider]);
+
   return (
-    <Popover>
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          void openProviderStatus(provider);
+        } else {
+          closeProviderStatus(provider);
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <button
           type="button"

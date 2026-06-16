@@ -17,6 +17,7 @@ export const NO_THINKING_CONTROL_ID = "no-explicit-thinking";
 
 export type AIRecognitionStep = { label: string; active: boolean; done: boolean };
 
+// provider 类型展示必须跟设置页模型能力保持同步，避免生成入口暗示浏览器会直连第三方。
 const AI_PROVIDER_TYPE_LABEL_KEYS: Record<AiRecognitionProviderType, MessageKey> = {
   openai: "aiRecognition.providerType.openai",
   anthropic: "aiRecognition.providerType.anthropic",
@@ -101,6 +102,7 @@ export function AIRecognitionFooterActions({
           >
             {t("aiRecognition.backToInput")}
           </Button>
+          {/* 草稿失效或存在阻塞字段时禁止进入导入预览，确保 AI 入口仍复用 import preview/apply 的契约。 */}
           <Button
             type="button"
             className={primaryButtonClassName}
@@ -122,6 +124,7 @@ export function AIRecognitionFooterActions({
           >
             {t("aiRecognition.backToDraft")}
           </Button>
+          {/* 导入层的 error/warning 是最后一道业务门，不能因为 AI 已生成草稿就绕过 preview 结果。 */}
           <Button
             type="button"
             className={primaryButtonClassName}
@@ -249,6 +252,7 @@ export function AIRecognitionRunSettingsPanel({
   const inputSummary = mode === "text"
     ? `${textLength}/${AI_RECOGNITION_MAX_TEXT_CHARS}`
     : t("aiRecognition.imageCount", { count: imageCount, max: AI_RECOGNITION_MAX_IMAGES });
+  // thinking 能力由 provider/model 决定；不支持时只展示原因，不把占位值写入 AI 请求。
   const thinkingHelp = thinkingOptions.length > 0
     ? t("aiRecognition.thinkingHelp")
     : t(providerType === "openai-compatible" ? "aiRecognition.thinkingUnsupportedCompatible" : "aiRecognition.thinkingUnsupportedModel");

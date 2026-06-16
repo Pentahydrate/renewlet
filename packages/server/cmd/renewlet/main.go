@@ -52,6 +52,9 @@ func main() {
 	if err := validatePBEncryptionKeyEnv(); err != nil {
 		log.Fatal(err)
 	}
+	if err := validateCustomHeadScriptEnv(); err != nil {
+		log.Fatal(err)
+	}
 
 	app := pocketbase.New()
 	if err := registerSubscriptionRenewalCron(app); err != nil {
@@ -164,7 +167,7 @@ func runHealthcheck() {
 // staticWithSecurityHeaders 为嵌入式前端静态资源补安全响应头。
 // 注意： CSP connect-src 需要覆盖前端直接访问的第三方 API；新增外部 fetch 时要同步这里。
 func staticWithSecurityHeaders(staticFS fs.FS) func(*core.RequestEvent) error {
-	handler := apis.Static(staticFS, true)
+	handler := apis.Static(customHeadScriptFS{FS: staticFS}, true)
 	return func(e *core.RequestEvent) error {
 		headers := e.Response.Header()
 		headers.Set("X-Content-Type-Options", "nosniff")
@@ -176,14 +179,23 @@ func staticWithSecurityHeaders(staticFS fs.FS) func(*core.RequestEvent) error {
 }
 
 func staticContentSecurityPolicy(request *http.Request) string {
+	scriptSources := []string{"'self'", "'wasm-unsafe-eval'"}
+	connectSources := []string{"'self'", "https://cdn.jsdelivr.net", "https://latest.currency-api.pages.dev", "https://www.floatrates.com"}
+	if script, ok := customHeadScriptFromEnv(); ok {
+		// 自定义 head 脚本是部署者显式打开的外部执行边界；注入和 CSP 必须从同一份校验结果派生。
+		scriptSources = appendUniqueString(scriptSources, script.ScriptOrigin)
+		for _, origin := range script.ConnectOrigins {
+			connectSources = appendUniqueString(connectSources, origin)
+		}
+	}
 	directives := []string{
 		"default-src 'self'",
 		// wasm-unsafe-eval 只给前端 Worker 内 sql.js 解析用户本地 Wallos DB；不允许后端代请求 Wallos URL。
-		"script-src 'self' 'wasm-unsafe-eval'",
+		"script-src " + strings.Join(scriptSources, " "),
 		"style-src 'self' 'unsafe-inline'",
 		"font-src 'self' data:",
 		"img-src 'self' data: blob: " + staticImageSources(request),
-		"connect-src 'self' https://cdn.jsdelivr.net https://latest.currency-api.pages.dev https://www.floatrates.com",
+		"connect-src " + strings.Join(connectSources, " "),
 		"object-src 'none'",
 		"base-uri 'self'",
 		"frame-ancestors 'none'",

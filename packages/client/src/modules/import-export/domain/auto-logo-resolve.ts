@@ -23,6 +23,7 @@ export async function resolveAutoLogosForPreparedImport(nextPrepared: PreparedIm
   try {
     for (let index = 0; index < items.length; index += AUTO_LOGO_RESOLVE_BATCH_SIZE) {
       const chunk = items.slice(index, index + AUTO_LOGO_RESOLVE_BATCH_SIZE);
+      // 批量上限保护 Docker/Worker 两个运行面的媒体候选预算，自动匹配失败不能阻塞用户导入正文。
       const response = await mediaCandidateService.resolve({
         kind: "logo",
         mode: "auto",
@@ -49,6 +50,7 @@ export async function resolveAutoLogosForPreparedImport(nextPrepared: PreparedIm
 }
 
 function isAutoAssignableImportLogo(candidate: MediaCandidate | null | undefined): candidate is MediaCandidate {
+  // 只有内置图标的 exact/strong 命中可以自动写入预览，favicon/domain URL 仍需要用户手动确认。
   return Boolean(
     candidate?.autoAssignable
       && candidate.source === "builtIn"

@@ -37,6 +37,7 @@ export function useSubscriptionFormAutoDates(
   } = formData;
 
   useEffect(() => {
+    // 这个 effect 只根据账单字段生成最小 patch；避免 setFormData 回写同值导致表单状态链反复触发。
     const patch = getSubscriptionFormAutoDatePatch({
       autoCalculate,
       billingCycle,
@@ -72,6 +73,7 @@ export function getSubscriptionFormAutoDatePatch(
   billingReferenceDate: DateOnly,
 ): SubscriptionFormAutoDatePatch | null {
   if (formData.billingCycle === "one-time") {
+    // 一次性固定服务期的到期日来自 startDate + term；买断/长期有效则保留 startDate 并关闭自动日期语义。
     const oneTimeTermCount = formData.oneTimeMode === "term" ? parsePositiveIntegerInput(formData.oneTimeTermCount) : null;
     const nextBillingDate = formData.startDate && oneTimeTermCount
       ? calculateOneTimeTermEndDate(formData.startDate, oneTimeTermCount, formData.oneTimeTermUnit)
@@ -82,6 +84,7 @@ export function getSubscriptionFormAutoDatePatch(
     });
   }
   if (formData.autoCalculate && formData.startDate) {
+    // 自定义周期缺天数时沿用历史表单默认 30 天，保持手动输入为空时仍能给用户一个可预览日期。
     const customDays = formData.billingCycle === "custom" ? parsePositiveIntegerInput(formData.customDays) ?? 30 : undefined;
     const customCycleUnit = formData.billingCycle === "custom" ? formData.customCycleUnit : "day";
     return compactAutoDatePatch(formData, {

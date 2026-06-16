@@ -12,11 +12,17 @@ import "embed"
 //go:embed all:public
 var Files embed.FS
 
-// BuiltInIconsIndex 是内置图标离线索引。
+// BuiltInIconsSearchIndexGzip 是普通 Logo/Icon 搜索使用的压缩热索引。
 // 该文件由 scripts/update-built-in-icons-index.mjs 同步生成，不应手写修改。
 //
-//go:embed data/built-in-icons-index.json
-var BuiltInIconsIndex []byte
+//go:embed data/built-in-icons-search-index.json.gz
+var BuiltInIconsSearchIndexGzip []byte
+
+// BuiltInIconsDetailIndexGzip 是管理员刷新时合并 provider 使用的压缩完整索引。
+// 普通搜索路径不能解析它，避免冷字段进入 Docker 常驻内存。
+//
+//go:embed data/built-in-icons-detail-index.json.gz
+var BuiltInIconsDetailIndexGzip []byte
 
 // BuiltInIconsIndexMetadata 是内置图标 seed 的 provider 级真实 GitHub 版本。
 // 当前版本展示依赖这里的 commit 元数据，不能退回到 embedded/runtime 这类索引来源词。

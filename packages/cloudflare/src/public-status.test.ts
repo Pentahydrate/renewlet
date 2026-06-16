@@ -69,6 +69,7 @@ function createEnv(overrides: Partial<PublicStatusTestState> = {}): Env {
   };
   return {
     DB: new PublicStatusTestDB(state) as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {
       get: vi.fn(async (key: string) => state.objects.get(key) ?? null),
     } as unknown as R2Bucket,

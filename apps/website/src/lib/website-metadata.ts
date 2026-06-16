@@ -13,6 +13,7 @@ function normalizeBasePath(rawBasePath: string | undefined) {
   const trimmed = rawBasePath?.trim() ?? ''
   if (!trimmed || trimmed === '/') return ''
 
+  // basePath 用于 Vite asset 前缀，只保留 path 段，避免环境变量里多余斜杠影响静态资源 URL。
   const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
   return withLeadingSlash.replace(/\/+$/, '')
 }
@@ -24,6 +25,7 @@ function normalizeBaseUrl(rawBaseUrl: string | undefined) {
   if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
     url.protocol = 'https:'
   }
+  // sitemap/OG URL 必须是稳定 origin + path，不继承预览链接里的 query/hash。
   url.hash = ''
   url.search = ''
   return url.toString().replace(/\/+$/, '')
@@ -36,6 +38,7 @@ export function resolveWebsiteDeployment(env: WebsiteEnv = {}): WebsiteDeploymen
   return {
     basePath,
     baseUrl,
+    // Vite base 需要尾随斜杠；空子路径必须回到根路径，否则 build 后资源会变成相对路径。
     viteBase: basePath ? `${basePath}/` : '/',
   }
 }
@@ -82,6 +85,7 @@ export function renderSitemapXml(deployment: WebsiteDeployment) {
 }
 
 export function replaceWebsiteMetadataPlaceholders(html: string, deployment: WebsiteDeployment) {
+  // HTML 模板里的占位符由构建脚本一次性替换，避免运行时 JS 才补 SEO/分享元数据。
   const replacements: Record<string, string> = {
     '%RENEWLET_WEBSITE_URL%': websiteUrl(deployment),
     '%RENEWLET_WEBSITE_EN_URL%': websiteUrl(deployment, 'en/'),

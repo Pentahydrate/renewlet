@@ -64,6 +64,7 @@ describe("AppearanceSync theme mode precedence", () => {
   });
 
   it("does not let remote theme mode overwrite a local device override", () => {
+    // 本地设备覆盖优先于远端 settings，防止登录后立即打断用户在当前设备上的主题选择。
     localStorage.setItem(THEME_MODE_OVERRIDE_STORAGE_KEY, "1");
 
     renderAppearanceSync();
@@ -73,6 +74,7 @@ describe("AppearanceSync theme mode precedence", () => {
   });
 
   it("uses remote theme mode when no local device override exists", () => {
+    // 没有本地覆盖时才同步账号设置，保证跨设备主题仍能恢复。
     renderAppearanceSync();
 
     expect(mocks.setTheme).toHaveBeenCalledWith("dark", { localOverride: false });

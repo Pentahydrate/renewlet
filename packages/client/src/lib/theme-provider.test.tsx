@@ -19,6 +19,7 @@ describe("ThemeProvider local override", () => {
   });
 
   it("marks direct theme changes as a local device override", () => {
+    // 用户在当前设备直接切换主题时写入 override，后续账号 settings 同步不能覆盖它。
     const { result } = renderHook(() => useTheme(), { wrapper });
 
     act(() => {
@@ -30,6 +31,7 @@ describe("ThemeProvider local override", () => {
   });
 
   it("can sync account theme without writing a local override", () => {
+    // AppearanceSync 使用 localOverride=false 同步远端主题，避免把账号主题误标为设备偏好。
     const { result } = renderHook(() => useTheme(), { wrapper });
 
     act(() => {

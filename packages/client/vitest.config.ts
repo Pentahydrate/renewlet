@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "vite/**/*.{test,spec}.ts"],
     clearMocks: true,
     restoreMocks: true,
     // jsdom/Radix 弹层测试在默认吃满 CPU worker 时会互相争抢事件循环，固定低并发让全量前端基线稳定可复现。

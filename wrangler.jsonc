@@ -12,6 +12,8 @@
   },
   "assets": {
     "directory": "./packages/client/dist",
+    // ASSETS binding 供 Worker 读取内置图标 seed gzip；大静态数据不能重新打进 Worker bundle。
+    "binding": "ASSETS",
     // 静态资源使用 SPA fallback；产品 API 和公开 ICS 必须先交给 Worker 做认证/Token 校验。
     "not_found_handling": "single-page-application",
     // 只让精确 ICS feed 路径进 Worker；React 的 /calendar 页面继续走静态资源 SPA fallback。

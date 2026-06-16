@@ -24,11 +24,13 @@ interface AIDraftFormContext {
 type SuggestedField = AiRecognizedSubscriptionDraft["website"];
 type AIDraftFormSourceFields = Pick<AiRecognizedSubscriptionDraft, "website" | "notes" | "trialEndDate">;
 
+// AI 草稿复用订阅表单状态，保证用户确认前走同一套日期、提醒和分类校验，而不是绕过导入链路直写。
 export function aiDraftToSubscriptionFormState(
   draft: AiRecognizedSubscriptionDraft,
   context: AIDraftFormContext,
 ): SubscriptionFormState {
   const isOneTimeBuyout = draft.billingCycle === "one-time" && !draft.oneTimeTermCount;
+  // 买断/长期有效没有下一次提醒语义，AI 返回的提醒字段也不能覆盖该业务规则。
   const reminderState = isOneTimeBuyout
     ? disabledReminderState()
     : reminderStateFromDraft(draft, context.settings.notificationReminderDays);
@@ -84,6 +86,7 @@ export function subscriptionFormStateToAIDraftPatch(
     paymentMethod: formData.paymentMethod.trim() || null,
     startDate: formData.startDate ?? null,
     nextBillingDate: formData.nextBillingDate ?? null,
+    // one-time 无自动续订推进算法；这里把表单自动日期语义截断，避免导入 payload 混入周期订阅字段。
     autoCalculateNextBillingDate: formData.billingCycle === "one-time" ? false : formData.autoCalculate,
     trialEndDate: formData.status === "trial" ? previousDraft.trialEndDate ?? null : null,
     website: suggestedFieldFromFormValue(formData.website, previousDraft.website),
@@ -114,6 +117,7 @@ function reminderStateFromDraft(
   if (REMINDER_DAYS_OPTIONS.some((option) => option.value === reminderDays)) {
     return { reminderType: "preset", reminderDays: String(reminderDays), customReminderDays: "" };
   }
+  // 非预设提前天数落到 custom 输入，默认选项仍保持全局值，避免隐藏用户自定义提醒窗口。
   return {
     reminderType: "custom",
     reminderDays: String(defaultReminderDays),
@@ -131,6 +135,7 @@ function reminderDaysFromFormState(formData: SubscriptionFormState): number | nu
 function suggestedFieldFromFormValue(value: string, previous: SuggestedField): SuggestedField {
   const trimmed = value.trim();
   if (!trimmed) return null;
+  // 用户手动改过的网站/备注要改成 input 来源，避免后续 UI 还把它当作 AI/provider 建议。
   return {
     value: trimmed,
     source: previous?.value === trimmed ? previous.source : "input",

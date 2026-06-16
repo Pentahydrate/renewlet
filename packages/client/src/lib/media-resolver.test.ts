@@ -1,18 +1,25 @@
 // media-resolver 测试保护内置图标索引与 shared resolver 配置的匹配口径，避免自动候选排序漂移。
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
   clampMediaCandidateLimit,
   createMediaResolver,
+  createMediaResolverFromSearchIndex,
   resolveMediaCandidateItem,
   type BuiltInIcon,
+  type BuiltInIconSearchIndex,
 } from "@renewlet/shared/media-resolver";
 import { DEFAULT_BUILT_IN_ICON_SOURCES } from "@renewlet/shared/built-in-icons";
 import { mediaResolverConfig } from "@renewlet/shared/media-resolver-config";
 import { mediaResolverFixtures } from "@renewlet/shared/media-resolver-fixtures";
 import { mediaCandidateResolveResponseSchema } from "@/lib/api/schemas/media";
-import builtInIconsIndex from "@/lib/built-in-icons-index.json";
 
-const resolver = createMediaResolver(builtInIconsIndex as BuiltInIcon[], mediaResolverConfig);
+const builtInIconSearchIndex = JSON.parse(
+  gunzipSync(readFileSync(path.resolve(process.cwd(), "public/built-in-icons/search-index.json.gz"))).toString("utf8"),
+) as BuiltInIconSearchIndex;
+const resolver = createMediaResolverFromSearchIndex(builtInIconSearchIndex, mediaResolverConfig);
 
 describe("shared media resolver", () => {
   it("matches fixture expectations and keeps responses inside the shared schema", () => {

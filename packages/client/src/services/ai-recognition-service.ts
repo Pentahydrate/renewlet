@@ -13,6 +13,12 @@ import {
   type AiThinkingControl,
 } from "@/lib/api/schemas/ai-recognition";
 
+/**
+ * AI 识别订阅服务层。
+ *
+ * 这里是浏览器与 Go/Worker AI 代理的唯一入口；图片和文本只发送给用户在设置页配置的 provider，
+ * 返回结果仍必须先转成导入 preview/apply，不允许服务层直接创建订阅。
+ */
 const AI_RECOGNITION_STREAM_RESPONSE_TIMEOUT_MS = 30_000;
 const AI_RECOGNITION_STREAM_IDLE_TIMEOUT_MS = 120_000;
 
@@ -32,6 +38,7 @@ interface RecognizeSubscriptionsStreamOptions {
 
 export const aiRecognitionService = {
   async listModels(input: AiModelListRequest): Promise<AiModelListResponse> {
+    // 模型列表由后端代理访问第三方 /models；前端不能带 API key 直连 provider。
     return await apiFetch("/api/app/ai/models/list", aiModelListResponseSchema, {
       method: "POST",
       body: JSON.stringify(input),
@@ -86,6 +93,12 @@ function createRecognizeSubscriptionsFormData(input: RecognizeSubscriptionsInput
   return formData;
 }
 
+/**
+ * 消费 AI 识别 SSE 流并返回最终结构化响应。
+ *
+ * progress/partial/text-delta 只用于界面状态反馈；只有 recognition/final 能成为后续导入草稿，
+ * recognition/error 则保留后端脱敏后的 rawResponseText 给统一错误详情弹窗。
+ */
 async function consumeRecognitionEventStream(
   response: Response,
   onEvent: ((event: AiRecognitionStreamEvent) => void) | undefined,
@@ -119,6 +132,7 @@ async function consumeRecognitionEventStream(
     const event = parsed.data;
     onEvent?.(event);
     if (event.type === "recognition/error") {
+      // SSE 错误事件已经是后端脱敏后的产品错误；这里不要再包装丢失 details.rawResponseText。
       throw new ApiError(event.message, response.status, event.details, event.code, data);
     }
     if (event.type === "recognition/final") {
@@ -149,6 +163,7 @@ async function consumeRecognitionEventStream(
   const tail = buffer.trim();
   if (tail) readFrame(tail);
   if (!finalResponse) {
+    // 流中没有 final 说明 provider/代理中断，不能把进度事件或 partial 内容伪装成可导入结果。
     throw new ApiError("Invalid stream response", response.status, undefined, "invalid_response");
   }
   return finalResponse;

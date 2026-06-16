@@ -10,6 +10,7 @@ import {
 
 describe('resolveWebsiteDeployment', () => {
   it('uses root asset paths for a GitHub Pages custom domain', () => {
+    // 自定义域部署时资产从根路径读取，不能继续带 GitHub Pages 仓库名前缀。
     const deployment = resolveWebsiteDeployment({
       RENEWLET_WEBSITE_BASE_URL: 'https://renewlet.olyq.org',
       RENEWLET_WEBSITE_BASE_PATH: '',
@@ -23,6 +24,7 @@ describe('resolveWebsiteDeployment', () => {
   })
 
   it('uses repository asset paths for the default GitHub Pages project URL', () => {
+    // 默认 project page 仍需要 /renewlet/ 作为 Vite base，否则刷新和截图资源会 404。
     const deployment = resolveWebsiteDeployment({
       RENEWLET_WEBSITE_BASE_URL: 'https://zhiyingzzhou.github.io/renewlet',
       RENEWLET_WEBSITE_BASE_PATH: '/renewlet',
@@ -89,6 +91,7 @@ describe('website metadata rendering', () => {
   })
 
   it('replaces HTML placeholders with configured absolute URLs', () => {
+    // SEO/OG 占位符在 build 阶段替换为绝对 URL，避免社交抓取器依赖客户端 JS。
     const html = [
       '%RENEWLET_WEBSITE_URL%',
       '%RENEWLET_WEBSITE_EN_URL%',

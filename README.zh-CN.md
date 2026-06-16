@@ -127,9 +127,22 @@ docker compose down
 | `PB_ENCRYPTION_KEY` | PocketBase 敏感设置加密密钥，部署后不要随意更换。 |
 | `CRON_SECRET` | 外部 Cron 调用 `/api/cron/notifications` 时使用的 Bearer 密钥。 |
 | `RENEWLET_DEMO_MODE` | Docker Demo Mode 开关，默认 `false`。 |
+| `RENEWLET_CUSTOM_HEAD_SCRIPT` | 可选外部 `<script>` 注入，适合自管统计、客服组件或站点监控。 |
 | `NOTIFICATION_SCHEDULER_ENABLED` | 内置通知调度器开关，默认 `true`。 |
 
 完整 Docker 环境变量模板见 `.env.example`。
+
+### 自定义 Head 脚本
+
+Renewlet 可以通过 `RENEWLET_CUSTOM_HEAD_SCRIPT` 向 SPA `<head>` 注入一个外部 `<script>` 标签：
+
+```env
+RENEWLET_CUSTOM_HEAD_SCRIPT='<script defer src="https://analytics.example.com/script.js" data-website-id="site-id"></script>'
+```
+
+Renewlet 只接受单个带 `src`、无内联内容的外链 script。脚本 origin 会自动加入 `script-src` 和 `connect-src`；如果提供 `data-host-url`，该 origin 也会加入 `connect-src`。
+
+Docker/Go 部署在运行时注入，修改环境变量后只需重启 Renewlet。本地 `pnpm dev` 由 Vite 注入。Cloudflare Static Assets 在 `pnpm build:cloudflare` 构建时读取该变量并注入，修改后需要重新构建和部署。
 
 ## 截图
 

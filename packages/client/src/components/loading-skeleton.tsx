@@ -64,6 +64,7 @@ function PageShellSkeleton({
   testId: string;
 }) {
   return (
+    // 路由级 lazy fallback 复刻真实页面壳，避免 chunk 加载期间 header/nav 高度跳变。
     <div className="app-page bg-background" aria-busy="true" data-testid={testId}>
       <HeaderSkeleton showAddAction={showAddAction} />
       <main className={cn("app-main mx-auto", maxWidthClassName)}>
@@ -170,6 +171,7 @@ function SubscriptionsContentSkeleton() {
     <>
       <PageTitleSkeleton withActions subtitleWidth="w-56" />
 
+      {/* 订阅页骨架同时覆盖移动筛选抽屉入口和桌面筛选条，防止断点切换时首屏布局漂移。 */}
       <div className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-5 md:gap-4">
         <div className="grid gap-3 md:hidden">
           <SkeletonBox className="h-11 w-full rounded-md" />

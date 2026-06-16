@@ -9,22 +9,26 @@ import (
 
 type cloudBackupProviderResponse = upstreamProviderResponse
 
+// cloudBackupErrorDetails 复用 shared upstream 口径，只暴露 rawResponseText 给当前操作者。
 type cloudBackupErrorDetails struct {
 	RawResponseText *string `json:"rawResponseText,omitempty"`
 }
 
+// cloudBackupProviderAttempt 描述一次 provider 尝试结果，用于“缺 provider 时自动查找”的失败汇总。
 type cloudBackupProviderAttempt struct {
 	Provider string
 	Code     string
 	Message  string
 }
 
+// cloudBackupErrorResponse 保持云备份接口稳定错误 envelope，前端详情弹窗只读取 details.rawResponseText。
 type cloudBackupErrorResponse struct {
 	Message string                   `json:"message"`
 	Code    string                   `json:"code"`
 	Details *cloudBackupErrorDetails `json:"details,omitempty"`
 }
 
+// cloudBackupRemoteError 标记远端 WebDAV/S3 失败，区别于本地 ZIP/manifest 校验错误。
 type cloudBackupRemoteError struct {
 	code    string
 	details *cloudBackupErrorDetails

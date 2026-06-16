@@ -36,6 +36,7 @@ describe("useSetupStatus app status", () => {
   });
 
   it("falls back to hidden setup and non-demo status when the payload is invalid", async () => {
+    // app status 是认证前能力开关；契约异常时测试保守 fallback，避免登录页误显示 setup 入口。
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({

@@ -618,6 +618,7 @@ export const MESSAGE_KEYS = [
   "legal.privacy.intro",
   "legal.privacy.subtitle",
   "legal.privacy.thirdParty.ai",
+  "legal.privacy.thirdParty.customScript",
   "legal.privacy.thirdParty.icons",
   "legal.privacy.thirdParty.notifications",
   "legal.privacy.thirdParty.rates",

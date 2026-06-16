@@ -57,6 +57,22 @@ func upstreamErrorDetailsFromError(err error) *upstreamErrorDetails {
 	return nil
 }
 
+func persistentUpstreamErrorMessage(err error) string {
+	if err == nil {
+		return ""
+	}
+	message := err.Error()
+	var upstreamErr *upstreamOperationError
+	if errors.As(err, &upstreamErr) && upstreamErr.details != nil && upstreamErr.details.RawResponseText != nil {
+		raw := strings.TrimSpace(*upstreamErr.details.RawResponseText)
+		if raw != "" {
+			message = strings.ReplaceAll(message, raw, "")
+			message = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(message), ":"))
+		}
+	}
+	return message
+}
+
 func captureUpstreamProviderResponse(resp *http.Response, secrets []string) (*upstreamProviderResponse, string, error) {
 	if resp == nil {
 		return nil, "", nil

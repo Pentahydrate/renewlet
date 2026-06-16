@@ -16,6 +16,12 @@ import {
   type SubscriptionStatus,
 } from "../runtime";
 
+/**
+ * 订阅 API schema 是 Docker Go、Cloudflare Worker 和前端表单的共享边界。
+ *
+ * 这里表达的是 wire shape，不是 UI domain model；任何字段新增、默认值或互斥关系变化，
+ * 都必须同步 PocketBase schema/hooks、D1 mapper、前端 service normalize 和契约测试。
+ */
 const maxLogoReferenceLength = 2048;
 const privateAssetPathPattern = /^\/api\/app\/assets\/[A-Za-z0-9_-]+$/;
 
@@ -82,6 +88,7 @@ function oneTimeTermFieldsAreConsistent(value: {
 }): boolean {
   const hasCount = value.oneTimeTermCount !== undefined && value.oneTimeTermCount !== null;
   const hasUnit = value.oneTimeTermUnit !== undefined && value.oneTimeTermUnit !== null;
+  // 固定服务期必须 count/unit 成对出现；非 one-time 周期带服务期字段会污染统计摊销和到期提醒。
   if (value.billingCycle !== "one-time") return !hasCount && !hasUnit;
   return hasCount === hasUnit;
 }

@@ -6,7 +6,6 @@ import { CloudBackupSection } from "./cloud-backup-section";
 import type { CloudBackupController, CloudBackupFormState } from "../application/use-cloud-backup-controller";
 import type { CloudBackupPolicy, CloudBackupSnapshot } from "@/lib/api/schemas/cloud-backup";
 
-// 设置页测试固定 provider 独立状态、原始错误响应和行级恢复 loading，防止 WebDAV/S3 通过展示层串值。
 vi.mock("@/i18n/I18nProvider", () => ({
   useI18n: () => ({
     t: (key: string, params?: Record<string, string | number>) => {

@@ -63,6 +63,7 @@ export function ImportPreviewPanel({
             {preview.summary.errors > 0 ? t("import.summaryError") : t("import.ready")}
           </Badge>
           {assetProgress && assetProgress.total > 0 ? (
+            // Logo/图标资产是导入确认前的延迟上传任务，进度只展示本轮 apply 状态，不写回 preview。
             <Badge variant="outline">{t("import.assetProgress", assetProgress)}</Badge>
           ) : null}
           {applyProgress && applyProgress.total > 0 ? (
@@ -90,6 +91,7 @@ export function ImportPreviewPanel({
             {hasWallosUsers ? (
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">{t("import.wallosUser")}</label>
+                {/* Wallos 备份可能包含多个用户，切换用户必须回到预览层重算冲突，不能在列表里局部过滤。 */}
                 <Select value={selectedWallosUser} onValueChange={(value) => onWallosUserChange?.(value)}>
                   <SelectTrigger className="h-9 min-w-44 border-border bg-background">
                     <SelectValue />

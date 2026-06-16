@@ -36,6 +36,7 @@ export interface UploadedAssetsManagerController {
   deleteAsset: (asset: UploadedAsset) => Promise<boolean>;
 }
 
+// 设置页资产管理器只编排 UI 状态和 React Query 缓存；owner 校验、引用阻止和底层文件清理由服务端负责。
 export function useUploadedAssetsManager(): UploadedAssetsManagerController {
   const { t } = useI18n();
   const { toast } = useToast();
@@ -51,6 +52,7 @@ export function useUploadedAssetsManager(): UploadedAssetsManagerController {
     setDeleteError(null);
     try {
       await assetService.delete(asset.id);
+      // 后端已确认删除成功后再做本地缓存剔除；ASSET_IN_USE 不做乐观更新，避免隐藏仍被引用的资产。
       removeUploadedAssetFromQueryCache(queryClient, asset);
       await invalidateUploadedAssetsQueries(queryClient, asset.kind);
       toast({
@@ -85,6 +87,7 @@ export function useUploadedAssetsManager(): UploadedAssetsManagerController {
 function assetInUseDetails(error: unknown): AssetInUseDetails | null {
   if (!(error instanceof ApiError) || error.code !== "ASSET_IN_USE") return null;
   const payload = error.details;
+  // Go 和 Cloudflare 都把引用计数包在稳定 details 里；解析失败时回落通用错误，不猜测阻塞来源。
   const parsed = assetInUseDetailsSchema.safeParse(isApiErrorBody(payload) ? payload.details : null);
   return parsed.success ? parsed.data : null;
 }

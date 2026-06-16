@@ -43,6 +43,7 @@ function createEnv(overrides: Partial<AssetTestState> = {}) {
   const r2Delete = vi.fn(async () => undefined);
   const env = {
     DB: new AssetTestDB(state) as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {
       delete: r2Delete,
     } as unknown as R2Bucket,

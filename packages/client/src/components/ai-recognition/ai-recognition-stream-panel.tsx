@@ -31,6 +31,7 @@ const STAGE_ORDER: AiRecognitionStreamStage[] = [
   "finalizing",
 ];
 
+// 阶段顺序来自 shared SSE contract；partial/reasoning 事件只驱动进度反馈，不能当成可导入草稿。
 const STAGE_LABEL_KEYS: Record<AiRecognitionStreamStage, MessageKey> = {
   "input-read": "aiRecognition.streamStage.inputRead",
   "model-start": "aiRecognition.streamStage.modelStart",
@@ -66,6 +67,7 @@ export function AIRecognitionStreamPanel({
   const hasReasoning = reasoningText.trim().length > 0;
   const canDismiss = status !== "running" && Boolean(onDismiss);
   const stageLabel = stage ? t(STAGE_LABEL_KEYS[stage]) : t("aiRecognition.streamWaiting");
+  // 运行中耗时对屏幕阅读器隐藏，避免每秒刷新打断用户；终态耗时再作为稳定文本暴露。
   const elapsedLabel = elapsedSeconds === null
     ? null
     : t(status === "running" ? "aiRecognition.elapsedRunning" : "aiRecognition.elapsedFinal", { seconds: elapsedSeconds });

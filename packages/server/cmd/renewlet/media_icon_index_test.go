@@ -68,6 +68,30 @@ func TestMediaIconIndexStatusUsesSeedProviderVersions(t *testing.T) {
 	assertSeedProviderVersions(t, status, nil)
 }
 
+func TestMediaIconIndexStatusDoesNotLoadEmbeddedSearchIndex(t *testing.T) {
+	_, _ = loadEmbeddedBuiltInResolver()
+	embeddedBuiltInResolverCache.Lock()
+	embeddedBuiltInResolverCache.hash = ""
+	embeddedBuiltInResolverCache.resolver = builtInResolverIndex{}
+	embeddedBuiltInResolverCache.loaded = false
+	embeddedBuiltInResolverCache.Unlock()
+
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	status := builtInIconIndexStatus(app)
+	if status.Source != "embedded" || status.IconCount == 0 || status.ProviderCounts.TheSVG == 0 {
+		t.Fatalf("expected metadata-backed embedded status, got %#v", status)
+	}
+	embeddedBuiltInResolverCache.RLock()
+	loaded := embeddedBuiltInResolverCache.loaded
+	embeddedBuiltInResolverCache.RUnlock()
+	if loaded {
+		t.Fatal("expected status read to avoid loading embedded search index")
+	}
+}
+
 func TestMediaIconIndexCheckProviderDoesNotSwitchActive(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {
@@ -76,7 +100,7 @@ func TestMediaIconIndexCheckProviderDoesNotSwitchActive(t *testing.T) {
 	_, adminToken := createRouteTestUser(t, app, "admin")
 
 	server := newMediaIconRegistryServer(t, http.StatusOK)
-	withBuiltInIconGitHubAPIBase(t, server.URL)
+	withBuiltInIconGitHubBase(t, server.URL)
 	res := serveTestRequest(t, app, http.MethodPost, "/api/app/admin/media/icon-index/providers/thesvg/check", "", adminToken)
 	if res.Code != http.StatusOK {
 		t.Fatalf("expected check success 200, got %d: %s", res.Code, res.Body.String())
@@ -85,96 +109,115 @@ func TestMediaIconIndexCheckProviderDoesNotSwitchActive(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Status.Source != "embedded" || response.Status.Refreshing || response.Provider.Refreshing || response.Provider.Latest == nil || response.Provider.Latest.CommitSHA == nil {
+	if response.Status.Source != "embedded" || response.Status.Refreshing || response.Provider.Refreshing || response.Provider.Latest == nil || response.Provider.Latest.CommitSHA == nil || response.Provider.Latest.ReleaseTag == nil {
 		t.Fatalf("unexpected check status: %#v", response.Status)
+	}
+	if *response.Provider.Latest.ReleaseTag != "thesvg@9.9.9" {
+		t.Fatalf("expected TheSVG release tag from Atom feed, got %#v", response.Provider.Latest.ReleaseTag)
 	}
 	record, err := findMediaIconIndexRecord(app)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record == nil || record.GetString("hash") != "" || record.GetString("indexGzipBase64") != "" {
+	if record == nil || record.GetString("hash") != "" || record.GetString("searchIndexGzipBase64") != "" || record.GetString("detailIndexGzipBase64") != "" {
 		t.Fatalf("expected check to keep active index empty, got %#v", record)
 	}
 }
 
-func TestMediaIconIndexCheckProviderRecordsGitHubRateLimitWithoutSwitchingActive(t *testing.T) {
+func TestMediaIconIndexCheckProviderRecordsAtomFailureWithoutSwitchingActive(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {
 		t.Fatal(err)
 	}
 	_, adminToken := createRouteTestUser(t, app, "admin")
-	t.Setenv("RENEWLET_GITHUB_TOKEN", "github-token")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-RateLimit-Remaining", "0")
-		w.Header().Set("X-RateLimit-Reset", "1781190000")
-		http.Error(w, "rate limited github-token", http.StatusForbidden)
+		http.Error(w, "atom feed unavailable", http.StatusTooManyRequests)
 	}))
 	defer server.Close()
-	withBuiltInIconGitHubAPIBase(t, server.URL)
+	withBuiltInIconGitHubBase(t, server.URL)
 
 	res := serveTestRequest(t, app, http.MethodPost, "/api/app/admin/media/icon-index/providers/selfhst/check", "", adminToken)
 	if res.Code != http.StatusOK {
-		t.Fatalf("expected rate limited check to keep a usable 200 response, got %d: %s", res.Code, res.Body.String())
+		t.Fatalf("expected failed check to keep a usable 200 response, got %d: %s", res.Code, res.Body.String())
 	}
 	var response builtInIconIndexProviderCheckResponse
 	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Provider.LastError == nil || !strings.Contains(*response.Provider.LastError, "RENEWLET_GITHUB_TOKEN") {
-		t.Fatalf("expected rate limit guidance in lastError, got %#v", response.Provider.LastError)
+	if response.Provider.LastError == nil || !strings.Contains(*response.Provider.LastError, "GitHub commit feed HTTP 429") {
+		t.Fatalf("expected Atom feed failure in lastError, got %#v", response.Provider.LastError)
 	}
 	if response.ErrorDetails == nil || response.ErrorDetails.RawResponseText == nil {
 		t.Fatalf("expected one-shot upstream details, got %#v", response.ErrorDetails)
 	}
-	if !strings.Contains(*response.ErrorDetails.RawResponseText, "rate limited [redacted]") {
+	if !strings.Contains(*response.ErrorDetails.RawResponseText, "atom feed unavailable") {
 		t.Fatalf("expected redacted upstream body, got %#v", response.ErrorDetails.RawResponseText)
-	}
-	if payload, _ := json.Marshal(response.ErrorDetails); strings.Contains(string(payload), "github-token") {
-		t.Fatalf("errorDetails leaked GitHub token: %s", payload)
 	}
 	record, err := findMediaIconIndexRecord(app)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record == nil || record.GetString("hash") != "" || record.GetString("indexGzipBase64") != "" {
+	if record == nil || record.GetString("hash") != "" || record.GetString("searchIndexGzipBase64") != "" || record.GetString("detailIndexGzipBase64") != "" {
 		t.Fatalf("expected failed check to keep active index empty, got %#v", record)
 	}
 	providerStatusPayload, _ := json.Marshal(record.Get("providerStatus"))
-	if strings.Contains(string(providerStatusPayload), "github-token") || strings.Contains(string(providerStatusPayload), "rate limited github-token") {
+	if strings.Contains(string(providerStatusPayload), "atom feed unavailable") {
 		t.Fatalf("provider status persisted raw upstream details: %s", providerStatusPayload)
 	}
 }
 
-func TestMediaIconIndexGitHubRequestUsesTokenAndUserAgent(t *testing.T) {
+func TestMediaIconIndexCheckUsesAtomETagWithoutCallingRestAPI(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {
 		t.Fatal(err)
 	}
 	_, adminToken := createRouteTestUser(t, app, "admin")
-	t.Setenv("RENEWLET_GITHUB_TOKEN", "github-token")
+	cached := providerVersionForTest("abc1234567890abcdef")
+	record, err := mediaIconIndexRecord(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	states := emptyProviderStates()
+	state := states["selfhst"]
+	state.Latest = cached
+	state.ETag = `"cached"`
+	states["selfhst"] = state
+	record.Set("providerStatus", states)
+	if err := app.Save(record); err != nil {
+		t.Fatal(err)
+	}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "Bearer github-token" {
-			t.Fatalf("expected GitHub token authorization header, got %q", r.Header.Get("Authorization"))
+		if strings.HasPrefix(r.URL.Path, "/repos/") {
+			t.Fatalf("provider check must not call GitHub REST path %s", r.URL.Path)
+		}
+		if r.Header.Get("If-None-Match") != `"cached"` {
+			t.Fatalf("expected Atom ETag conditional request, got %q", r.Header.Get("If-None-Match"))
 		}
 		if r.Header.Get("User-Agent") == "" {
-			t.Fatal("expected GitHub request user agent")
+			t.Fatal("expected Atom request user agent")
 		}
-		w.Header().Set("content-type", "application/json")
-		switch r.URL.Path {
-		case "/repos/selfhst/icons/commits/main":
-			_, _ = w.Write([]byte(`{"sha":"abc1234567890abcdef","commit":{"committer":{"date":"2026-06-11T00:00:00Z"}}}`))
-		default:
+		if r.URL.Path != "/selfhst/icons/commits/main.atom" {
 			http.NotFound(w, r)
+			return
 		}
+		w.Header().Set("ETag", `"cached"`)
+		w.WriteHeader(http.StatusNotModified)
 	}))
 	defer server.Close()
-	withBuiltInIconGitHubAPIBase(t, server.URL)
+	withBuiltInIconGitHubBase(t, server.URL)
 
 	res := serveTestRequest(t, app, http.MethodPost, "/api/app/admin/media/icon-index/providers/selfhst/check", "", adminToken)
 	if res.Code != http.StatusOK {
 		t.Fatalf("expected check success 200, got %d: %s", res.Code, res.Body.String())
+	}
+	var response builtInIconIndexProviderCheckResponse
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Provider.Latest == nil || response.Provider.Latest.CommitSHA == nil || *response.Provider.Latest.CommitSHA != "abc1234567890abcdef" {
+		t.Fatalf("expected cached latest on Atom 304, got %#v", response.Provider.Latest)
 	}
 }
 
@@ -187,7 +230,7 @@ func TestMediaIconIndexRefreshSuccessAndFailureKeepsPreviousRuntimeIndex(t *test
 
 	successServer := newMediaIconRegistryServer(t, http.StatusOK)
 	withMediaResolverProviderBase(t, successServer.URL)
-	withBuiltInIconGitHubAPIBase(t, successServer.URL)
+	withBuiltInIconGitHubBase(t, successServer.URL)
 	res := serveTestRequest(t, app, http.MethodPost, "/api/app/admin/media/icon-index/providers/thesvg/refresh", "", adminToken)
 	if res.Code != http.StatusOK {
 		t.Fatalf("expected refresh success 200, got %d: %s", res.Code, res.Body.String())
@@ -204,7 +247,7 @@ func TestMediaIconIndexRefreshSuccessAndFailureKeepsPreviousRuntimeIndex(t *test
 
 	failingServer := newMediaIconRegistryServer(t, http.StatusInternalServerError)
 	withMediaResolverProviderBase(t, failingServer.URL)
-	withBuiltInIconGitHubAPIBase(t, failingServer.URL)
+	withBuiltInIconGitHubBase(t, failingServer.URL)
 	res = serveTestRequest(t, app, http.MethodPost, "/api/app/admin/media/icon-index/providers/thesvg/refresh", "", adminToken)
 	if res.Code != http.StatusBadGateway {
 		t.Fatalf("expected refresh failure 502, got %d: %s", res.Code, res.Body.String())
@@ -266,7 +309,7 @@ func TestMediaCandidatesUseRuntimeIconIndex(t *testing.T) {
 		Title:    "Runtime Only",
 		Variants: []builtInIconVariant{{Name: "default", Path: "/public/icons/runtime-only/default.svg"}},
 	})}
-	hash, gzipBase64, err := encodeBuiltInIconIndex(icons)
+	encoded, err := encodeBuiltInIconIndex(icons)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +324,7 @@ func TestMediaCandidatesUseRuntimeIconIndex(t *testing.T) {
 		ReleaseTag:         nil,
 		ReleasePublishedAt: nil,
 	}
-	if err := saveMediaIconProviderRefreshSuccess(app, "thesvg", "2026-06-11T00:00:00Z", hash, gzipBase64, icons, version, ""); err != nil {
+	if err := saveMediaIconProviderRefreshSuccess(app, "thesvg", "2026-06-11T00:00:00Z", encoded, icons, version, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -329,10 +372,12 @@ func newMediaIconRegistryServer(t *testing.T, statusCode int) *httptest.Server {
 		}
 		w.Header().Set("content-type", "application/json")
 		switch r.URL.Path {
-		case "/repos/glincker/thesvg/commits/main", "/repos/selfhst/icons/commits/main", "/repos/homarr-labs/dashboard-icons/commits/main":
-			_, _ = w.Write([]byte(`{"sha":"abc1234567890abcdef","commit":{"committer":{"date":"2026-06-11T00:00:00Z"}}}`))
-		case "/repos/glincker/thesvg/releases/latest":
-			_, _ = w.Write([]byte(`{"tag_name":"thesvg@9.9.9","published_at":"2026-06-11T00:00:00Z"}`))
+		case "/glincker/thesvg/commits/main.atom", "/selfhst/icons/commits/main.atom", "/homarr-labs/dashboard-icons/commits/main.atom":
+			w.Header().Set("content-type", "application/atom+xml")
+			_, _ = w.Write([]byte(gitHubCommitAtomFixture("abc1234567890abcdef", "2026-06-11T00:00:00Z")))
+		case "/glincker/thesvg/releases.atom":
+			w.Header().Set("content-type", "application/atom+xml")
+			_, _ = w.Write([]byte(gitHubReleaseAtomFixture("thesvg@9.9.9", "2026-06-11T00:00:00Z")))
 		case "/src/data/icons.json":
 			_, _ = w.Write([]byte(`[{"slug":"go-registry","title":"Go Registry","variants":{"default":"/icons/go-registry/default.svg"}}]`))
 		case "/index.json":
@@ -347,6 +392,41 @@ func newMediaIconRegistryServer(t *testing.T, statusCode int) *httptest.Server {
 	}))
 	t.Cleanup(server.Close)
 	return server
+}
+
+func gitHubCommitAtomFixture(sha string, updated string) string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>tag:github.com,2008:Grit::Commit/` + sha + `</id>
+    <updated>` + updated + `</updated>
+  </entry>
+</feed>`
+}
+
+func gitHubReleaseAtomFixture(tag string, updated string) string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <link type="text/html" rel="alternate" href="https://github.com/glincker/thesvg/releases/tag/` + strings.ReplaceAll(tag, "@", "%40") + `"/>
+    <updated>` + updated + `</updated>
+  </entry>
+</feed>`
+}
+
+func providerVersionForTest(commit string) *builtInIconProviderVersionResponse {
+	short := commit
+	if len(short) > 7 {
+		short = short[:7]
+	}
+	updated := "2026-06-11T00:00:00Z"
+	return &builtInIconProviderVersionResponse{
+		SourceRef:      commit,
+		DisplayVersion: short,
+		CommitSHA:      &commit,
+		CommitShortSHA: &short,
+		CommitDate:     &updated,
+	}
 }
 
 func withMediaResolverProviderBase(t *testing.T, base string) {
@@ -373,11 +453,11 @@ func withMediaResolverProviderBase(t *testing.T, base string) {
 	})
 }
 
-func withBuiltInIconGitHubAPIBase(t *testing.T, base string) {
+func withBuiltInIconGitHubBase(t *testing.T, base string) {
 	t.Helper()
-	previous := builtInIconGitHubAPIBase
-	builtInIconGitHubAPIBase = base
+	previous := builtInIconGitHubBase
+	builtInIconGitHubBase = base
 	t.Cleanup(func() {
-		builtInIconGitHubAPIBase = previous
+		builtInIconGitHubBase = previous
 	})
 }

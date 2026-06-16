@@ -5,12 +5,9 @@ package main
 // 架构位置：索引数据来自 embedded static 包，resolver 只返回统一 media candidate DTO，
 // 避免客户端 bundle 持有完整索引和第三方 CDN 拼接规则。
 import (
-	"encoding/json"
 	"regexp"
 	"sort"
 	"strings"
-
-	appstatic "github.com/zhiyingzzhou/renewlet/packages/server/internal/static"
 )
 
 var mediaTermSeparatorRE = regexp.MustCompile(`[^\pL\pN]+`)
@@ -41,14 +38,29 @@ type builtInIconVariant struct {
 	Path string `json:"path"`
 }
 
+type builtInIconSearchEntry struct {
+	Provider string               `json:"p"`
+	Slug     string               `json:"s"`
+	Title    string               `json:"t"`
+	Variants []builtInIconVariant `json:"v"`
+	Terms    []string             `json:"q"`
+}
+
+type builtInIconSearchIndex struct {
+	Version        int                      `json:"version"`
+	Entries        []builtInIconSearchEntry `json:"entries"`
+	CanonicalExact map[string][]int         `json:"canonicalExact"`
+	TokenExact     map[string][]int         `json:"tokenExact"`
+}
+
 type builtInResolverIcon struct {
-	icon          builtInIcon
-	providerRank  int
-	cdnBase       string
-	terms         []string
-	compactTerms  []string
-	canonicalKeys []string
-	tokenKeys     []string
+	provider     string
+	slug         string
+	title        string
+	variants     []builtInIconVariant
+	providerRank int
+	cdnBase      string
+	terms        []string
 }
 
 type builtInResolverIndex struct {
@@ -84,65 +96,42 @@ type builtInIconSourceSettingPatch struct {
 	VariantsEnabled *bool `json:"variantsEnabled"`
 }
 
-var embeddedBuiltInIcons = loadBuiltInIconIndex()
-var embeddedBuiltInResolver = buildBuiltInResolverIndex(embeddedBuiltInIcons)
-
-func loadBuiltInIconIndex() []builtInIcon {
-	var icons []builtInIcon
-	if err := json.Unmarshal(appstatic.BuiltInIconsIndex, &icons); err != nil {
-		// embedded 索引损坏时降级为空结果，让服务仍可启动，便于通过健康检查发现问题后修复镜像。
-		return []builtInIcon{}
-	}
-	return icons
-}
-
 func buildBuiltInResolverIndex(icons []builtInIcon) builtInResolverIndex {
-	return buildBuiltInResolverIndexWithProviderBases(icons, nil)
+	return buildBuiltInResolverIndexFromSearchIndex(createBuiltInIconSearchIndex(icons), nil)
 }
 
 func buildBuiltInResolverIndexWithProviderBases(icons []builtInIcon, providerBases map[string]string) builtInResolverIndex {
+	return buildBuiltInResolverIndexFromSearchIndex(createBuiltInIconSearchIndex(icons), providerBases)
+}
+
+func buildBuiltInResolverIndexFromSearchIndex(searchIndex builtInIconSearchIndex, providerBases map[string]string) builtInResolverIndex {
 	rankByProvider := mediaResolverBuiltInProviderRank()
 	resolver := builtInResolverIndex{
-		icons:          make([]builtInResolverIcon, 0, len(icons)),
+		icons:          make([]builtInResolverIcon, 0, len(searchIndex.Entries)),
 		canonicalExact: map[string][]int{},
 		tokenExact:     map[string][]int{},
 	}
-	for _, icon := range icons {
+	indexMap := map[int]int{}
+	for sourceIndex, icon := range searchIndex.Entries {
 		providerRank, ok := rankByProvider[icon.Provider]
 		if !ok || len(icon.Variants) == 0 {
 			continue
 		}
 		entry := builtInResolverIcon{
-			icon:          icon,
-			providerRank:  providerRank,
-			cdnBase:       builtInResolverProviderBase(icon.Provider, providerBases),
-			terms:         normalizedTerms(builtInIconTermValues(icon)),
-			compactTerms:  compactTerms([]string{icon.Slug, icon.Title}),
-			canonicalKeys: normalizedTerms(append([]string{icon.Slug, icon.Title}, icon.Aliases...)),
-			tokenKeys:     exactTokenKeys(append([]string{icon.Slug, icon.Title}, icon.Aliases...)),
-		}
-		if len(icon.Terms) > 0 {
-			entry.terms = normalizedTerms(icon.Terms)
-		}
-		if len(icon.CompactTerms) > 0 {
-			entry.compactTerms = compactTerms(icon.CompactTerms)
-		}
-		if len(icon.ExactKeys) > 0 {
-			entry.canonicalKeys = normalizedTerms(icon.ExactKeys)
-		}
-		if len(icon.TokenKeys) > 0 {
-			entry.tokenKeys = normalizedTerms(icon.TokenKeys)
+			provider:     icon.Provider,
+			slug:         icon.Slug,
+			title:        icon.Title,
+			variants:     icon.Variants,
+			providerRank: providerRank,
+			cdnBase:      builtInResolverProviderBase(icon.Provider, providerBases),
+			terms:        icon.Terms,
 		}
 
-		index := len(resolver.icons)
+		indexMap[sourceIndex] = len(resolver.icons)
 		resolver.icons = append(resolver.icons, entry)
-		for _, key := range uniqueStrings(append(entry.canonicalKeys, entry.compactTerms...)) {
-			resolver.canonicalExact[key] = append(resolver.canonicalExact[key], index)
-		}
-		for _, key := range entry.tokenKeys {
-			resolver.tokenExact[key] = append(resolver.tokenExact[key], index)
-		}
 	}
+	resolver.canonicalExact = remapBuiltInIconExactIndex(searchIndex.CanonicalExact, indexMap)
+	resolver.tokenExact = remapBuiltInIconExactIndex(searchIndex.TokenExact, indexMap)
 	return resolver
 }
 
@@ -158,6 +147,60 @@ func builtInIconTermValues(icon builtInIcon) []string {
 	values = append(values, icon.Aliases...)
 	values = append(values, icon.Categories...)
 	return values
+}
+
+func createBuiltInIconSearchIndex(icons []builtInIcon) builtInIconSearchIndex {
+	index := builtInIconSearchIndex{
+		Version:        1,
+		Entries:        make([]builtInIconSearchEntry, 0, len(icons)),
+		CanonicalExact: map[string][]int{},
+		TokenExact:     map[string][]int{},
+	}
+	for _, icon := range icons {
+		entryIndex := len(index.Entries)
+		terms := icon.Terms
+		if len(terms) == 0 {
+			terms = normalizedTerms(builtInIconTermValues(icon))
+		}
+		exactKeys := icon.ExactKeys
+		if len(exactKeys) == 0 {
+			exactKeys = normalizedTerms(append([]string{icon.Slug, icon.Title}, icon.Aliases...))
+		}
+		compactKeys := icon.CompactTerms
+		if len(compactKeys) == 0 {
+			compactKeys = compactTerms(append([]string{icon.Slug, icon.Title}, icon.Aliases...))
+		}
+		tokenKeys := icon.TokenKeys
+		if len(tokenKeys) == 0 {
+			tokenKeys = exactTokenKeys(append([]string{icon.Slug, icon.Title}, icon.Aliases...))
+		}
+		for _, key := range uniqueStrings(append(exactKeys, compactKeys...)) {
+			index.CanonicalExact[key] = append(index.CanonicalExact[key], entryIndex)
+		}
+		for _, key := range tokenKeys {
+			index.TokenExact[key] = append(index.TokenExact[key], entryIndex)
+		}
+		index.Entries = append(index.Entries, builtInIconSearchEntry{
+			Provider: icon.Provider,
+			Slug:     icon.Slug,
+			Title:    icon.Title,
+			Variants: icon.Variants,
+			Terms:    terms,
+		})
+	}
+	return index
+}
+
+func remapBuiltInIconExactIndex(source map[string][]int, indexMap map[int]int) map[string][]int {
+	out := map[string][]int{}
+	for key, indexes := range source {
+		for _, sourceIndex := range indexes {
+			if resolverIndex, ok := indexMap[sourceIndex]; ok {
+				out[key] = append(out[key], resolverIndex)
+			}
+		}
+	}
+	return out
 }
 
 func defaultBuiltInIconSourceSettings() builtInIconSourceSettings {
@@ -212,7 +255,7 @@ func (resolver builtInResolverIndex) candidatesForExactMatches(kind string, matc
 		baseConfidence string
 	}{}
 	for index, baseConfidence := range strongestByIndex {
-		if index >= 0 && index < len(resolver.icons) && builtInProviderEnabled(sources, resolver.icons[index].icon.Provider) {
+		if index >= 0 && index < len(resolver.icons) && builtInProviderEnabled(sources, resolver.icons[index].provider) {
 			enabled = append(enabled, struct {
 				entry          builtInResolverIcon
 				baseConfidence string
@@ -229,7 +272,7 @@ func (resolver builtInResolverIndex) candidatesForExactMatches(kind string, matc
 		if confidenceRank(enabled[i].baseConfidence) != confidenceRank(enabled[j].baseConfidence) {
 			return confidenceRank(enabled[i].baseConfidence) < confidenceRank(enabled[j].baseConfidence)
 		}
-		return enabled[i].entry.icon.Title < enabled[j].entry.icon.Title
+		return enabled[i].entry.title < enabled[j].entry.title
 	})
 	confidence := enabled[0].baseConfidence
 	if queryIndex > 0 || confidence == "strong" {
@@ -272,7 +315,7 @@ func searchBuiltInCandidatesForQuery(resolver builtInResolverIndex, kind string,
 	}
 	scored := make([]builtInScoredIcon, 0, len(resolver.icons))
 	for index, entry := range resolver.icons {
-		if !builtInProviderEnabled(sources, entry.icon.Provider) {
+		if !builtInProviderEnabled(sources, entry.provider) {
 			continue
 		}
 		score := scoreBuiltInIcon(entry, normalized)
@@ -290,7 +333,7 @@ func searchBuiltInCandidatesForQuery(resolver builtInResolverIndex, kind string,
 		if scored[i].score != scored[j].score {
 			return scored[i].score > scored[j].score
 		}
-		return leftEntry.icon.Title < rightEntry.icon.Title
+		return leftEntry.title < rightEntry.title
 	})
 	for _, item := range scored {
 		confidence := confidenceFromScore(item.score)
@@ -308,9 +351,8 @@ func searchBuiltInCandidatesForQuery(resolver builtInResolverIndex, kind string,
 }
 
 func (entry builtInResolverIcon) toCandidates(kind string, confidence string, autoAssignable bool, matchedQuery string, rank int, mode string, sources builtInIconSourceSettings) []mediaCandidate {
-	icon := entry.icon
-	variants := preferredBuiltInVariants(icon)
-	if (mode == "auto" || !sources[icon.Provider].VariantsEnabled) && len(variants) > 1 {
+	variants := preferredBuiltInVariants(entry)
+	if (mode == "auto" || !sources[entry.provider].VariantsEnabled) && len(variants) > 1 {
 		variants = variants[:1]
 	}
 
@@ -319,11 +361,11 @@ func (entry builtInResolverIcon) toCandidates(kind string, confidence string, au
 	for _, variant := range variants {
 		variantName := variant.Name
 		candidates = append(candidates, mediaCandidate{
-			ID:             "builtin:" + icon.Provider + ":" + icon.Slug + ":" + variantName,
+			ID:             "builtin:" + entry.provider + ":" + entry.slug + ":" + variantName,
 			Kind:           kind,
 			Source:         "builtIn",
-			Provider:       icon.Provider,
-			Label:          icon.Title,
+			Provider:       entry.provider,
+			Label:          entry.title,
 			Variant:        &variantName,
 			URL:            entry.cdnBase + variant.Path,
 			Confidence:     confidence,
@@ -335,10 +377,10 @@ func (entry builtInResolverIcon) toCandidates(kind string, confidence string, au
 	return candidates
 }
 
-func preferredBuiltInVariants(icon builtInIcon) []builtInIconVariant {
-	preferredNames := mediaResolverPreferredVariants(icon.Provider)
+func preferredBuiltInVariants(icon builtInResolverIcon) []builtInIconVariant {
+	preferredNames := mediaResolverPreferredVariants(icon.provider)
 	byName := map[string]builtInIconVariant{}
-	for _, variant := range icon.Variants {
+	for _, variant := range icon.variants {
 		byName[variant.Name] = variant
 	}
 	out := []builtInIconVariant{}
@@ -349,7 +391,7 @@ func preferredBuiltInVariants(icon builtInIcon) []builtInIconVariant {
 			used[name] = struct{}{}
 		}
 	}
-	for _, variant := range icon.Variants {
+	for _, variant := range icon.variants {
 		if _, ok := used[variant.Name]; ok {
 			continue
 		}
@@ -379,22 +421,13 @@ func scoreBuiltInIcon(entry builtInResolverIcon, query string) float64 {
 			best = maxFloat(best, mediaResolverCfg.Scores.Subsequence)
 		}
 	}
-	for _, value := range entry.compactTerms {
-		if value == compactQuery {
-			best = maxFloat(best, mediaResolverCfg.Scores.Exact)
-		} else if strings.HasPrefix(value, compactQuery) {
-			best = maxFloat(best, mediaResolverCfg.Scores.Prefix)
-		} else if strings.Contains(value, compactQuery) {
-			best = maxFloat(best, mediaResolverCfg.Scores.Contains)
-		}
-	}
 	if best == 0 {
 		return 0
 	}
-	if normalizeMediaTerm(entry.icon.Slug) == query || normalizeMediaTerm(entry.icon.Title) == query {
+	if normalizeMediaTerm(entry.slug) == query || normalizeMediaTerm(entry.title) == query {
 		return best + mediaResolverCfg.Scores.SlugExactBoost
 	}
-	if strings.HasPrefix(normalizeMediaTerm(entry.icon.Slug), query) {
+	if strings.HasPrefix(normalizeMediaTerm(entry.slug), query) {
 		return best + mediaResolverCfg.Scores.SlugPrefixBoost
 	}
 	return best

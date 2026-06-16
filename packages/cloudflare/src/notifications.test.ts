@@ -1,4 +1,3 @@
-// Worker 通知测试保护 Cron/手动运行共享的内容收集口径，避免 D1 reminder_days 哨兵和 Go 后端分叉。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDefaultAppSettings } from "@renewlet/shared/settings-defaults";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
@@ -46,6 +45,7 @@ function fakeEnv(handler: (query: FakeD1Query) => unknown | Promise<unknown>): E
         } as D1PreparedStatement;
       },
     } as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {} as R2Bucket,
   };
 }

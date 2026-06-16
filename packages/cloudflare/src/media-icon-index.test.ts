@@ -1,4 +1,5 @@
 // Worker 图标索引测试保护 D1 metadata、R2 gzip blob、provider 刷新锁和失败不切 active 的运行面契约。
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveMediaCandidateItem } from "@renewlet/shared/media-resolver";
 import type { BuiltInIconIndexProviderRefreshResponse, BuiltInIconIndexStatus } from "@renewlet/shared/schemas/media";
@@ -37,7 +38,7 @@ describe("Cloudflare media icon index", () => {
     expectSeedProviderVersions(body);
   });
 
-  it("checks one provider latest version with ETag without switching active", async () => {
+  it("checks one provider latest version with Atom ETag without switching active", async () => {
     const env = createEnv(mediaIconIndexRow({
       provider_status_json: JSON.stringify({
         thesvg: {
@@ -46,7 +47,6 @@ describe("Cloudflare media icon index", () => {
         },
       }),
     }));
-    env.RENEWLET_GITHUB_TOKEN = "github-token";
     env.RENEWLET_VERSION = "1.2.3";
     const fetchMock = vi.fn(async () => new Response(null, { status: 304, headers: { etag: "\"cached\"" } }));
     vi.stubGlobal("fetch", fetchMock);
@@ -67,24 +67,18 @@ describe("Cloudflare media icon index", () => {
     expect(env.testState.row?.hash).toBeNull();
     expect(env.testState.objects.size).toBe(0);
     const calls = fetchMock.mock.calls as unknown as Array<[RequestInfo | URL, RequestInit?]>;
+    expect(String(calls[0]?.[0])).toBe("https://github.com/glincker/thesvg/commits/main.atom");
     const init = calls[0]?.[1];
     expect(init?.headers).toMatchObject({
-      authorization: "Bearer github-token",
+      accept: "application/atom+xml",
       "if-none-match": "\"cached\"",
       "user-agent": "Renewlet/1.2.3",
     });
   });
 
-  it("records GitHub rate limits as provider status without breaking check responses", async () => {
+  it("records GitHub Atom failures as provider status without breaking check responses", async () => {
     const env = createEnv();
-    env.RENEWLET_GITHUB_TOKEN = "github-token";
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited github-token", {
-      status: 403,
-      headers: {
-        "x-ratelimit-remaining": "0",
-        "x-ratelimit-reset": "1781190000",
-      },
-    })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("atom feed unavailable", { status: 429 })));
 
     const response = await checkBuiltInIconIndexProvider(requestFixture("POST"), env, "selfhst");
 
@@ -97,15 +91,15 @@ describe("Cloudflare media icon index", () => {
       provider: {
         provider: "selfhst",
         refreshing: false,
-        lastError: expect.stringContaining("RENEWLET_GITHUB_TOKEN"),
+        lastError: expect.stringContaining("GitHub commit feed HTTP 429"),
       },
       errorDetails: {
-        rawResponseText: "rate limited [redacted]",
+        rawResponseText: "atom feed unavailable",
       },
     });
     expect(env.testState.row?.hash).toBeNull();
     expect(env.testState.objects.size).toBe(0);
-    expect(env.testState.row?.provider_status_json).not.toContain("github-token");
+    expect(env.testState.row?.provider_status_json).not.toContain("atom feed unavailable");
   });
 
   it("refreshes one provider metadata and serves the runtime resolver from R2", async () => {
@@ -130,8 +124,9 @@ describe("Cloudflare media icon index", () => {
       },
     });
     expectSeedProviderVersions(body.status as BuiltInIconIndexStatus, ["thesvg"]);
-    expect(env.testState.row?.r2_key).toMatch(/^system\/media-icon-index\/[a-f0-9]{64}\.json\.gz$/);
-    expect(env.testState.objects.size).toBe(1);
+    expect(env.testState.row?.search_r2_key).toMatch(/^system\/media-icon-index\/[a-f0-9]{64}\.search\.json\.gz$/);
+    expect(env.testState.row?.detail_r2_key).toMatch(/^system\/media-icon-index\/[a-f0-9]{64}\.detail\.json\.gz$/);
+    expect(env.testState.objects.size).toBe(2);
 
     const resolver = await getActiveBuiltInMediaResolver(env);
     const item = resolveMediaCandidateItem(
@@ -232,9 +227,29 @@ function createEnv(row: MediaIconIndexRow | null = null): TestEnv {
 
   return {
     DB: createD1(state),
+    ASSETS: createStaticAssets(),
     ASSETS_BUCKET: createR2(state),
     testState: state,
   };
+}
+
+function createStaticAssets(): Fetcher {
+  const assets = new Map<string, Uint8Array | string>([
+    ["/built-in-icons/metadata.json", readFileSync(new URL("../../client/public/built-in-icons/metadata.json", import.meta.url), "utf8")],
+    ["/built-in-icons/search-index.json.gz", readFileSync(new URL("../../client/public/built-in-icons/search-index.json.gz", import.meta.url))],
+    ["/built-in-icons/detail-index.json.gz", readFileSync(new URL("../../client/public/built-in-icons/detail-index.json.gz", import.meta.url))],
+  ]);
+  return {
+    fetch: async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      const asset = assets.get(url.pathname);
+      if (!asset) return new Response("not found", { status: 404 });
+      if (typeof asset === "string") return new Response(asset, { status: 200 });
+      const body = new ArrayBuffer(asset.byteLength);
+      new Uint8Array(body).set(asset);
+      return new Response(body, { status: 200 });
+    },
+  } as Fetcher;
 }
 
 function createD1(state: TestState): D1Database {
@@ -274,13 +289,14 @@ function createD1(state: TestState): D1Database {
             state.row = {
               ...mediaIconIndexRow(state.row ?? {}),
               hash: stringArg(args, 0),
-              r2_key: stringArg(args, 1),
-              icon_count: numberArg(args, 2),
-              provider_counts_json: stringArg(args, 3),
-              provider_status_json: stringArg(args, 4),
-              checked_at: stringArg(args, 5),
-              index_updated_at: stringArg(args, 6),
-              updated_at: stringArg(args, 7),
+              search_r2_key: stringArg(args, 1),
+              detail_r2_key: stringArg(args, 2),
+              icon_count: numberArg(args, 3),
+              provider_counts_json: stringArg(args, 4),
+              provider_status_json: stringArg(args, 5),
+              checked_at: stringArg(args, 6),
+              index_updated_at: stringArg(args, 7),
+              updated_at: stringArg(args, 8),
             };
             return d1Result(1);
           }
@@ -337,7 +353,8 @@ function mediaIconIndexRow(overrides: Partial<MediaIconIndexRow>): MediaIconInde
   return {
     key: "active",
     hash: null,
-    r2_key: null,
+    search_r2_key: null,
+    detail_r2_key: null,
     icon_count: 0,
     provider_counts_json: "{}",
     provider_status_json: "{}",
@@ -369,17 +386,17 @@ function requestFixture(method: string, body?: string): Request {
 function stubRegistryFetch(registries: Record<string, unknown>) {
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
-    if (url.includes("/repos/glincker/thesvg/commits/main")) {
-      return jsonResponse({
-        sha: "abc1234567890abcdef",
-        commit: { committer: { date: "2026-06-11T00:00:00Z" } },
-      }, { etag: "\"commit-etag\"" });
+    if (url.includes("/glincker/thesvg/commits/main.atom")) {
+      return atomResponse(gitHubCommitAtomFixture("abc1234567890abcdef", "2026-06-11T00:00:00Z"), { etag: "\"commit-etag\"" });
     }
-    if (url.includes("/repos/glincker/thesvg/releases/latest")) {
-      return jsonResponse({
-        tag_name: "thesvg@9.9.9",
-        published_at: "2026-06-11T00:00:00Z",
-      });
+    if (url.includes("/glincker/thesvg/releases.atom")) {
+      return atomResponse(gitHubReleaseAtomFixture("thesvg@9.9.9", "2026-06-11T00:00:00Z"));
+    }
+    if (url.includes("/selfhst/icons/commits/main.atom")) {
+      return atomResponse(gitHubCommitAtomFixture("def1234567890abcdef", "2026-06-11T00:00:00Z"), { etag: "\"commit-etag\"" });
+    }
+    if (url.includes("/homarr-labs/dashboard-icons/commits/main.atom")) {
+      return atomResponse(gitHubCommitAtomFixture("fed1234567890abcdef", "2026-06-11T00:00:00Z"), { etag: "\"commit-etag\"" });
     }
     if (url.endsWith("/src/data/icons.json")) return jsonResponse(registries["thesvg"]);
     if (url.endsWith("/index.json")) return jsonResponse(registries["selfhst"]);
@@ -430,6 +447,32 @@ function jsonResponse(value: unknown, headers: Record<string, string> = {}): Res
   return new Response(JSON.stringify(value), {
     headers: { "content-type": "application/json", ...headers },
   });
+}
+
+function atomResponse(value: string, headers: Record<string, string> = {}): Response {
+  return new Response(value, {
+    headers: { "content-type": "application/atom+xml", ...headers },
+  });
+}
+
+function gitHubCommitAtomFixture(sha: string, updated: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>tag:github.com,2008:Grit::Commit/${sha}</id>
+    <updated>${updated}</updated>
+  </entry>
+</feed>`;
+}
+
+function gitHubReleaseAtomFixture(tag: string, updated: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <link type="text/html" rel="alternate" href="https://github.com/glincker/thesvg/releases/tag/${tag.replace("@", "%40")}"/>
+    <updated>${updated}</updated>
+  </entry>
+</feed>`;
 }
 
 function stringArg(args: readonly unknown[], index: number): string {

@@ -127,9 +127,22 @@ Common `.env` values:
 | `PB_ENCRYPTION_KEY` | Encryption key for sensitive PocketBase settings. Do not rotate it casually after deployment. |
 | `CRON_SECRET` | Bearer secret for external Cron calls to `/api/cron/notifications`. |
 | `RENEWLET_DEMO_MODE` | Docker Demo Mode switch, `false` by default. |
+| `RENEWLET_CUSTOM_HEAD_SCRIPT` | Optional external `<script>` injection for self-managed analytics, chat widgets, or site monitoring. |
 | `NOTIFICATION_SCHEDULER_ENABLED` | Built-in notification scheduler switch, `true` by default. |
 
 The full Docker environment template is in `.env.example`.
+
+### Custom Head Script
+
+Renewlet can inject one external `<script>` tag into the SPA `<head>` with `RENEWLET_CUSTOM_HEAD_SCRIPT`:
+
+```env
+RENEWLET_CUSTOM_HEAD_SCRIPT='<script defer src="https://analytics.example.com/script.js" data-website-id="site-id"></script>'
+```
+
+Renewlet accepts only a single external script tag with `src` and no inline content. The script origin is automatically added to `script-src` and `connect-src`; when `data-host-url` is present, its origin is also added to `connect-src`.
+
+Docker/Go deployments inject this at runtime, so changing the environment variable only requires restarting Renewlet. Local `pnpm dev` injects through Vite. Cloudflare Static Assets injects it at build time when the variable is present during `pnpm build:cloudflare`, so changes require rebuilding and redeploying.
 
 ## Screenshots
 

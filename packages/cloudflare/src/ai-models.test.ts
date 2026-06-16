@@ -26,7 +26,7 @@ const authUser = {
 };
 
 function envFixture(): Env {
-  return { DB: {} as D1Database, ASSETS_BUCKET: {} as R2Bucket };
+  return { DB: {} as D1Database, ASSETS: {} as Fetcher, ASSETS_BUCKET: {} as R2Bucket };
 }
 
 function requestFor(body: unknown): Request {

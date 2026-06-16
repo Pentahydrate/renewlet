@@ -7,7 +7,7 @@ export const systemVersionQueryKey = ["system-version"] as const;
  * 读取管理员版本状态。
  *
  * `force=true` 会绕过后端缓存；小弹窗打开时使用它，后台 badge 保持普通缓存，
- * 避免每次页面渲染都打 GitHub Release API。
+ * 避免每次页面渲染都请求 GitHub Release Atom feed。
  */
 export function useSystemVersion(enabled: boolean, force = false) {
   return useQuery({

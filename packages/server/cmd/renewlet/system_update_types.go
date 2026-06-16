@@ -1,6 +1,6 @@
 package main
 
-// system_update_types.go 定义 Docker 页面内自更新的状态与 GitHub Release 数据形状。
+// system_update_types.go 定义 Docker 页面内自更新的状态与 Release feed 数据形状。
 //
 // 这里的锁、缓存和 pending restart 是进程内状态；真正持久化边界仍是 /opt/renewlet/current/renewlet
 // 与备份目录，不能把 Cloudflare/source 部署也纳入可执行更新。
@@ -14,20 +14,17 @@ import (
 )
 
 const (
-	systemUpdateRepository       = "zhiyingzzhou/renewlet"
-	systemUpdateGitHubAPIVersion = "2026-03-10"
-	systemUpdateGitHubTokenEnv   = "RENEWLET_GITHUB_TOKEN"
-	systemUpdateChannelStable    = "stable"
-	systemUpdateChannelRC        = "rc"
-	systemUpdateCacheTTL         = 20 * time.Minute
-	systemUpdateAPITimeout       = 15 * time.Second
-	systemUpdateDownloadTimeout  = 2 * time.Minute
-	systemUpdateReleaseListPages = 2
-	systemUpdateReleaseListSize  = 30
-	systemUpdateMaxArchiveBytes  = 200 * 1024 * 1024
-	systemUpdateMaxChecksumBytes = 2 * 1024 * 1024
-	defaultSelfUpdateBinaryPath  = "/opt/renewlet/current/renewlet"
-	defaultSelfUpdateBackupDir   = "/opt/renewlet/backups"
+	systemUpdateRepository            = "zhiyingzzhou/renewlet"
+	systemUpdateChannelStable         = "stable"
+	systemUpdateChannelRC             = "rc"
+	systemUpdateCacheTTL              = 20 * time.Minute
+	systemUpdateCheckTimeout          = 15 * time.Second
+	systemUpdateDownloadTimeout       = 2 * time.Minute
+	systemUpdateReleaseFeedLimitBytes = 512 * 1024
+	systemUpdateMaxArchiveBytes       = 200 * 1024 * 1024
+	systemUpdateMaxChecksumBytes      = 2 * 1024 * 1024
+	defaultSelfUpdateBinaryPath       = "/opt/renewlet/current/renewlet"
+	defaultSelfUpdateBackupDir        = "/opt/renewlet/backups"
 )
 
 var (
@@ -54,9 +51,9 @@ func (e systemUpdateError) Is(target error) bool {
 }
 
 type systemReleaseClient interface {
-	// Release client 是系统更新测试的隔离点；生产实现负责 GitHub API header、token 和下载限额。
-	FetchLatestRelease(ctx context.Context) (*githubRelease, error)
-	FetchReleases(ctx context.Context, page int, perPage int) ([]githubRelease, error)
+	// Release client 是系统更新测试的隔离点；生产实现只读 GitHub Web Release feed，不再依赖 REST/token。
+	FetchReleases(ctx context.Context) ([]systemRelease, error)
+	ProbeReleaseAssets(ctx context.Context, tagName string, version string) []systemReleaseAsset
 	DownloadFile(ctx context.Context, sourceURL string, targetPath string, maxBytes int64) error
 	FetchText(ctx context.Context, sourceURL string, maxBytes int64) ([]byte, error)
 }
@@ -78,42 +75,38 @@ type systemUpdateService struct {
 	restartPending bool
 }
 
-type githubRelease struct {
-	TagName     string        `json:"tag_name"`
-	Name        string        `json:"name"`
-	Body        string        `json:"body"`
-	PublishedAt string        `json:"published_at"`
-	HTMLURL     string        `json:"html_url"`
-	Prerelease  bool          `json:"prerelease"`
-	Draft       bool          `json:"draft"`
-	Assets      []githubAsset `json:"assets"`
+type systemRelease struct {
+	TagName     string
+	Name        string
+	Body        string
+	PublishedAt string
+	HTMLURL     string
+	Assets      []systemReleaseAsset
 }
 
-type githubAsset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
-	Size               int64  `json:"size"`
+type systemReleaseAsset struct {
+	Name               string
+	BrowserDownloadURL string
+	Size               int64
 }
 
-type githubAPIError struct {
-	statusCode  int
-	status      string
-	message     string
-	rateLimited bool
-	retryAt     time.Time
-	details     *upstreamErrorDetails
+type systemReleaseCheckError struct {
+	statusCode int
+	status     string
+	message    string
+	details    *upstreamErrorDetails
 }
 
-func (e *githubAPIError) Error() string {
+func (e *systemReleaseCheckError) Error() string {
 	if strings.TrimSpace(e.message) == "" {
-		return "GitHub release API returned " + e.status
+		return "GitHub Release check failed: " + e.status
 	}
-	return "GitHub release API returned " + e.status + ": " + e.message
+	return "GitHub Release check failed: " + e.status + ": " + e.message
 }
 
 type fetchedSystemRelease struct {
 	dto    *systemReleaseInfoDTO
-	assets []githubAsset
+	assets []systemReleaseAsset
 }
 
 type systemUpdateCapability struct {
@@ -134,6 +127,6 @@ type semanticVersion struct {
 }
 
 type httpSystemReleaseClient struct {
-	apiClient      *http.Client
+	metadataClient *http.Client
 	downloadClient *http.Client
 }

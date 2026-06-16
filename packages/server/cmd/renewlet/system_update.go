@@ -204,51 +204,50 @@ func (service *systemUpdateService) fetchTargetRelease(ctx context.Context) (*fe
 }
 
 func (service *systemUpdateService) fetchLatestStableRelease(ctx context.Context) (*fetchedSystemRelease, error) {
-	release, err := service.client.FetchLatestRelease(ctx)
+	releases, err := service.client.FetchReleases(ctx)
 	if err != nil {
 		return nil, err
 	}
-	version, parsed, ok := parseSystemVersion(release.TagName)
-	if !ok || parsed.prerelease != "" || release.Prerelease || release.Draft {
-		return nil, nil
+	for index := range releases {
+		release := &releases[index]
+		version, parsed, ok := parseSystemVersion(release.TagName)
+		if !ok || parsed.prerelease != "" {
+			continue
+		}
+		return service.systemReleaseFromSource(ctx, release, version), nil
 	}
-	return systemReleaseFromGitHub(release, version), nil
+	return nil, nil
 }
 
 func (service *systemUpdateService) fetchLatestRCRelease(ctx context.Context) (*fetchedSystemRelease, error) {
-	var best *githubRelease
+	var best *systemRelease
 	var bestVersion string
 	var bestParsed semanticVersion
-	for page := 1; page <= systemUpdateReleaseListPages; page += 1 {
-		releases, err := service.client.FetchReleases(ctx, page, systemUpdateReleaseListSize)
-		if err != nil {
-			return nil, err
+	releases, err := service.client.FetchReleases(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for index := range releases {
+		release := &releases[index]
+		version, parsed, ok := parseSystemVersion(release.TagName)
+		if !ok || parsed.rc <= 0 {
+			continue
 		}
-		if len(releases) == 0 {
-			break
+		if !isNewerSystemRCVersion(Version, version) {
+			continue
 		}
-		for index := range releases {
-			release := &releases[index]
-			version, parsed, ok := parseSystemVersion(release.TagName)
-			if !ok || parsed.rc <= 0 || release.Draft || !release.Prerelease {
-				continue
-			}
-			if !isNewerSystemRCVersion(Version, version) {
-				continue
-			}
-			if best == nil || compareSemanticVersion(parsed, bestParsed) > 0 {
-				copyRelease := *release
-				copyRelease.Assets = append([]githubAsset(nil), release.Assets...)
-				best = &copyRelease
-				bestVersion = version
-				bestParsed = parsed
-			}
+		if best == nil || compareSemanticVersion(parsed, bestParsed) > 0 {
+			copyRelease := *release
+			copyRelease.Assets = append([]systemReleaseAsset(nil), release.Assets...)
+			best = &copyRelease
+			bestVersion = version
+			bestParsed = parsed
 		}
 	}
 	if best == nil {
 		return nil, nil
 	}
-	return systemReleaseFromGitHub(best, bestVersion), nil
+	return service.systemReleaseFromSource(ctx, best, bestVersion), nil
 }
 
 func (service *systemUpdateService) isTargetVersionNewer(version string) bool {
@@ -267,7 +266,17 @@ func currentUpdateChannel() string {
 	return systemUpdateChannelStable
 }
 
-func systemReleaseFromGitHub(release *githubRelease, version string) *fetchedSystemRelease {
+func (service *systemUpdateService) systemReleaseFromSource(ctx context.Context, release *systemRelease, version string) *fetchedSystemRelease {
+	copyRelease := *release
+	if assets := service.client.ProbeReleaseAssets(ctx, release.TagName, version); assets != nil {
+		copyRelease.Assets = assets
+	} else if copyRelease.Assets == nil {
+		copyRelease.Assets = []systemReleaseAsset{}
+	}
+	return systemReleaseFromSource(&copyRelease, version)
+}
+
+func systemReleaseFromSource(release *systemRelease, version string) *fetchedSystemRelease {
 	assets := makeSystemReleaseAssetDTOs(release.Assets)
 	return &fetchedSystemRelease{
 		dto: &systemReleaseInfoDTO{
@@ -279,11 +288,11 @@ func systemReleaseFromGitHub(release *githubRelease, version string) *fetchedSys
 			HTMLURL:     release.HTMLURL,
 			Assets:      assets,
 		},
-		assets: append([]githubAsset(nil), release.Assets...),
+		assets: append([]systemReleaseAsset(nil), release.Assets...),
 	}
 }
 
-func makeSystemReleaseAssetDTOs(source []githubAsset) []systemReleaseAssetDTO {
+func makeSystemReleaseAssetDTOs(source []systemReleaseAsset) []systemReleaseAssetDTO {
 	assets := make([]systemReleaseAssetDTO, 0, len(source))
 	for _, asset := range source {
 		assets = append(assets, systemReleaseAssetDTO{Name: asset.Name, Size: asset.Size})
@@ -305,7 +314,7 @@ func (service *systemUpdateService) storeVersion(response *systemVersionResponse
 	defer service.cacheMu.Unlock()
 	cached := cloneSystemVersionResponse(response, false)
 	if cached != nil {
-		// GitHub raw response 只随当前管理员操作返回；版本缓存只保存可信 release 结果和短 warning。
+		// 上游 raw response 只随当前管理员操作返回；版本缓存只保存可信 release 结果和短 warning。
 		cached.ErrorDetails = nil
 	}
 	service.cacheValue = cached
@@ -320,12 +329,9 @@ func (service *systemUpdateService) clearCache() {
 }
 
 func (service *systemUpdateService) versionCheckWarning(locale appLocale, err error) string {
-	var githubErr *githubAPIError
-	if errors.As(err, &githubErr) {
-		if githubErr.rateLimited {
-			return service.versionCheckRateLimitWarning(locale, githubErr.retryAt)
-		}
-		switch githubErr.statusCode {
+	var releaseErr *systemReleaseCheckError
+	if errors.As(err, &releaseErr) {
+		switch releaseErr.statusCode {
 		case http.StatusNotFound:
 			return serverText(locale, "system.versionCheckNotFoundWarning")
 		case http.StatusForbidden, http.StatusUnauthorized:
@@ -344,18 +350,11 @@ func (service *systemUpdateService) versionCheckDetails(err error) *upstreamErro
 }
 
 func systemUpstreamErrorDetails(err error) *upstreamErrorDetails {
-	var githubErr *githubAPIError
-	if errors.As(err, &githubErr) && githubErr.details != nil {
-		return githubErr.details
+	var releaseErr *systemReleaseCheckError
+	if errors.As(err, &releaseErr) && releaseErr.details != nil {
+		return releaseErr.details
 	}
 	return upstreamErrorDetailsFromError(err)
-}
-
-func (service *systemUpdateService) versionCheckRateLimitWarning(locale appLocale, retryAt time.Time) string {
-	if !retryAt.IsZero() && retryAt.After(service.now()) {
-		return serverFormat(locale, "system.versionCheckRateLimitRetryWarning", map[string]interface{}{"time": retryAt.UTC().Format(time.RFC3339)})
-	}
-	return serverText(locale, "system.versionCheckRateLimitWarning")
 }
 
 func (service *systemUpdateService) beginUpdate() bool {
@@ -458,10 +457,10 @@ func updateModeForManualDeployment() string {
 	return "source-manual"
 }
 
-func findSystemUpdateAssets(assets []githubAsset, version string) (*githubAsset, *githubAsset) {
+func findSystemUpdateAssets(assets []systemReleaseAsset, version string) (*systemReleaseAsset, *systemReleaseAsset) {
 	archiveName := systemArchiveName(version)
-	var archiveAsset *githubAsset
-	var checksumAsset *githubAsset
+	var archiveAsset *systemReleaseAsset
+	var checksumAsset *systemReleaseAsset
 	for index := range assets {
 		asset := &assets[index]
 		switch asset.Name {
@@ -474,7 +473,7 @@ func findSystemUpdateAssets(assets []githubAsset, version string) (*githubAsset,
 	return archiveAsset, checksumAsset
 }
 
-func systemUpdateAssetsUnsupportedReason(locale appLocale, assets []githubAsset, version string) string {
+func systemUpdateAssetsUnsupportedReason(locale appLocale, assets []systemReleaseAsset, version string) string {
 	archiveAsset, checksumAsset := findSystemUpdateAssets(assets, version)
 	if archiveAsset == nil {
 		return serverFormat(locale, "system.updateUnsupportedReleaseAsset", map[string]interface{}{"asset": systemArchiveName(version)})
@@ -485,13 +484,13 @@ func systemUpdateAssetsUnsupportedReason(locale appLocale, assets []githubAsset,
 	return ""
 }
 
-func selectSystemUpdateAssets(assets []githubAsset, version string) (githubAsset, githubAsset, error) {
+func selectSystemUpdateAssets(assets []systemReleaseAsset, version string) (systemReleaseAsset, systemReleaseAsset, error) {
 	archiveAsset, checksumAsset := findSystemUpdateAssets(assets, version)
 	if archiveAsset == nil {
-		return githubAsset{}, githubAsset{}, fmt.Errorf("no compatible release asset found for %s/%s", runtime.GOOS, runtime.GOARCH)
+		return systemReleaseAsset{}, systemReleaseAsset{}, fmt.Errorf("no compatible release asset found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
 	if checksumAsset == nil {
-		return githubAsset{}, githubAsset{}, errors.New("checksums.txt is missing from the release")
+		return systemReleaseAsset{}, systemReleaseAsset{}, errors.New("checksums.txt is missing from the release")
 	}
 	return *archiveAsset, *checksumAsset, nil
 }

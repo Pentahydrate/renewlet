@@ -14,6 +14,7 @@ export function Intro({ locale }: IntroProps) {
       id="intro"
     >
       <div className="grid items-start justify-between gap-5 md:grid-cols-2">
+        {/* 中英文标题长度差异很大，中文保留右侧呼吸感，英文用 ch 宽度控制断行节奏。 */}
         <div className={`text-[2rem]/[1.07] font-bold tracking-tight md:text-5xl/[1.07] ${isChinese ? 'pr-8 md:pr-16' : 'max-w-[16ch] pr-0 [text-wrap:balance]'}`}>
           <span className="bg-gradient-to-br from-white to-zinc-500 bg-clip-text text-transparent">
             {text(copy.intro.title, locale)}

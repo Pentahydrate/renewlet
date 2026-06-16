@@ -4,7 +4,7 @@
  * Worker 不能执行 Docker 式下载、替换二进制或重启；这里仍检查 GitHub Release，让前端能提示用户同步部署。
  */
 import { systemVersionResponseSchema } from "@renewlet/shared/schemas/app";
-import { z } from "zod";
+import { XMLParser } from "fast-xml-parser";
 import rootPackageJson from "../../../package.json";
 import { requireAdmin } from "./auth";
 import { HttpError, json, requestLocale } from "./http";
@@ -22,29 +22,13 @@ import {
 } from "./upstream-response";
 
 const DEV_VERSION = "0.0.0-dev";
-const GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/zhiyingzzhou/renewlet/releases/latest";
-const GITHUB_API_VERSION = "2026-03-10";
+const SYSTEM_RELEASE_FEED_URL = "https://github.com/zhiyingzzhou/renewlet/releases.atom";
+const SYSTEM_RELEASE_FEED_LIMIT_BYTES = 512 * 1024;
 const STABLE_BUILD_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 const BRANCH_BUILD_VERSION_PATTERN = /^\d+\.\d+\.\d+-dev\+[0-9a-f]{7,40}$/i;
 const PLACEHOLDER_DEV_VERSION_PATTERN = /^0\.0\.0-dev(?:\+.*)?$/;
 const STABLE_VERSION_PATTERN = /^v?(\d+)\.(\d+)\.(\d+)$/;
 const COMPARABLE_VERSION_PATTERN = /^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/;
-
-const githubReleaseAssetSchema = z.object({
-  name: z.string().min(1),
-  size: z.number().int().nonnegative(),
-}).passthrough();
-
-const githubReleaseSchema = z.object({
-  tag_name: z.string().min(1),
-  name: z.string().nullable().optional(),
-  body: z.string().nullable().optional(),
-  published_at: z.string().nullable().optional(),
-  html_url: z.string().min(1),
-  prerelease: z.boolean().optional().default(false),
-  draft: z.boolean().optional().default(false),
-  assets: z.array(githubReleaseAssetSchema).optional().default([]),
-}).passthrough();
 
 type ParsedVersion = {
   major: number;
@@ -52,7 +36,47 @@ type ParsedVersion = {
   patch: number;
 };
 
-type GitHubRelease = z.infer<typeof githubReleaseSchema>;
+type SystemReleaseEntry = {
+  tagName: string;
+  name: string;
+  body: string;
+  publishedAt: string;
+  htmlUrl: string;
+};
+
+type AtomTextValue =
+  | string
+  | number
+  | boolean
+  | {
+      "#text"?: unknown;
+    };
+
+type AtomLinkValue = {
+  href?: unknown;
+};
+
+type AtomEntryValue = {
+  title?: AtomTextValue;
+  updated?: AtomTextValue;
+  content?: AtomTextValue;
+  link?: AtomLinkValue | AtomLinkValue[];
+};
+
+type AtomFeedValue = {
+  feed?: {
+    entry?: AtomEntryValue | AtomEntryValue[];
+  };
+};
+
+const releaseFeedParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "",
+  textNodeName: "#text",
+  parseTagValue: false,
+  parseAttributeValue: false,
+  removeNSPrefix: true,
+});
 
 /**
  * systemVersion 返回 Cloudflare 运行面的版本状态。
@@ -129,8 +153,8 @@ function resolveCloudflareVersion(rawVersion: string | undefined): string {
 async function checkLatestStableRelease(currentVersion: string, locale: ReturnType<typeof requestLocale>, env: Env) {
   try {
     const release = await fetchLatestStableRelease(env);
-    if (!release || release.draft || release.prerelease) return releaseCheckDeferred(currentVersion, locale);
-    const latest = parseStableVersion(release.tag_name);
+    if (!release) return releaseCheckDeferred(currentVersion, locale);
+    const latest = parseStableVersion(release.tagName);
     const current = parseComparableVersion(currentVersion);
     if (!latest || !current) return releaseCheckDeferred(currentVersion, locale);
     const latestVersion = versionToString(latest);
@@ -140,7 +164,7 @@ async function checkLatestStableRelease(currentVersion: string, locale: ReturnTy
       latestVersion,
       hasUpdate,
       checkSucceeded: true,
-      releaseInfo: hasUpdate || currentIsStableRelease ? releaseInfoFromGitHub(release, latestVersion) : null,
+      releaseInfo: hasUpdate || currentIsStableRelease ? releaseInfoFromSource(release, latestVersion) : null,
       warning: undefined,
       errorDetails: undefined,
     };
@@ -160,26 +184,22 @@ function releaseCheckDeferred(currentVersion: string, locale: ReturnType<typeof 
   };
 }
 
-async function fetchLatestStableRelease(env: Env): Promise<GitHubRelease> {
+async function fetchLatestStableRelease(env: Env): Promise<SystemReleaseEntry | null> {
   const headers: HeadersInit = {
-      accept: "application/vnd.github+json",
-      "x-github-api-version": GITHUB_API_VERSION,
-      "user-agent": `Renewlet/${rootPackageJson.version}`,
+    accept: "application/atom+xml",
+    "user-agent": `Renewlet/${env.RENEWLET_VERSION?.trim() || rootPackageJson.version}`,
   };
-  const token = env.RENEWLET_GITHUB_TOKEN?.trim();
-  if (token) headers["authorization"] = `Bearer ${token}`;
   let response: Response;
   try {
-    response = await fetch(GITHUB_LATEST_RELEASE_URL, { headers });
+    response = await fetch(SYSTEM_RELEASE_FEED_URL, { headers });
   } catch (error) {
     throw createUpstreamNetworkError({
       provider: "GitHub",
       error,
-      secrets: token ? [token] : [],
     });
   }
-  const body = await readUpstreamResponseBody(response);
-  const providerResponse = upstreamProviderResponseFromBody(response, body.text, body.truncated, token ? [token] : []);
+  const body = await readUpstreamResponseBody(response, SYSTEM_RELEASE_FEED_LIMIT_BYTES);
+  const providerResponse = upstreamProviderResponseFromBody(response, body.text, body.truncated);
   if (!response.ok) {
     const providerMessage = providerMessageFromResponse(providerResponse);
     throw createUpstreamHTTPError({
@@ -189,36 +209,76 @@ async function fetchLatestStableRelease(env: Env): Promise<GitHubRelease> {
       providerMessage,
     });
   }
-  let payload: unknown;
   try {
-    payload = JSON.parse(body.text) as unknown;
+    return parseLatestStableReleaseAtomFeed(body.text);
   } catch {
-    throw new UpstreamOperationError("GitHub Release response is not valid JSON", createUpstreamErrorDetails({
+    throw new UpstreamOperationError("GitHub Release feed shape is invalid", createUpstreamErrorDetails({
       providerResponse,
     }));
   }
-  const parsed = githubReleaseSchema.safeParse(payload);
-  if (!parsed.success) {
-    throw new UpstreamOperationError("GitHub Release response shape is invalid", createUpstreamErrorDetails({
-      providerResponse,
-    }));
-  }
-  return parsed.data;
 }
 
-function releaseInfoFromGitHub(release: GitHubRelease, version: string) {
+function releaseInfoFromSource(release: SystemReleaseEntry, version: string) {
   return {
-    tagName: release.tag_name,
+    tagName: release.tagName,
     version,
-    name: release.name ?? "",
-    body: release.body ?? "",
-    publishedAt: release.published_at ?? "",
-    htmlUrl: release.html_url,
-    assets: release.assets.map((asset) => ({
-      name: asset.name,
-      size: asset.size,
-    })),
+    name: release.name,
+    body: release.body,
+    publishedAt: release.publishedAt,
+    htmlUrl: release.htmlUrl,
+    assets: [],
   };
+}
+
+function parseLatestStableReleaseAtomFeed(text: string): SystemReleaseEntry | null {
+  const parsed = releaseFeedParser.parse(text) as AtomFeedValue;
+  for (const entry of toArray(parsed.feed?.entry)) {
+    const release = releaseFromAtomEntry(entry);
+    if (release && parseStableVersion(release.tagName)) return release;
+  }
+  return null;
+}
+
+function releaseFromAtomEntry(entry: AtomEntryValue): SystemReleaseEntry | null {
+  const href = releaseLinkHref(entry);
+  const rawTag = href.match(/\/releases\/tag\/([^/?#"]+)/i)?.[1] ?? "";
+  const tagName = rawTag ? decodePathSegment(rawTag).trim() : atomText(entry.title);
+  if (!parseComparableVersion(tagName)) return null;
+  return {
+    tagName,
+    name: atomText(entry.title) || tagName,
+    body: atomText(entry.content),
+    publishedAt: atomText(entry.updated),
+    htmlUrl: href || `https://github.com/zhiyingzzhou/renewlet/releases/tag/${encodeURIComponent(tagName)}`,
+  };
+}
+
+function releaseLinkHref(entry: AtomEntryValue): string {
+  for (const link of toArray(entry.link)) {
+    const href = typeof link.href === "string" ? link.href.trim() : "";
+    if (href.includes("/releases/tag/")) return href;
+  }
+  return "";
+}
+
+function atomText(value: AtomTextValue | undefined): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value).trim();
+  const text = value?.["#text"];
+  return typeof text === "string" ? text.trim() : "";
+}
+
+function toArray<T>(value: T | T[] | undefined): T[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function decodePathSegment(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function parseStableVersion(rawVersion: string): ParsedVersion | null {

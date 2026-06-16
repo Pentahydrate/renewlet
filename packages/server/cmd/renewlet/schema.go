@@ -377,17 +377,19 @@ func ensureMediaIconIndexesCollection(app core.App) error {
 			&core.JSONField{Name: "providerStatus", MaxSize: builtInIconProviderStatusMaxBytes},
 			&core.TextField{Name: "checkedAt", Max: 40},
 			&core.TextField{Name: "indexUpdatedAt", Max: 40},
-			&core.TextField{Name: "indexGzipBase64", Max: 2_000_000},
+			&core.TextField{Name: "searchIndexGzipBase64", Max: 2_000_000},
+			&core.TextField{Name: "detailIndexGzipBase64", Max: 2_000_000},
 		}
 		for _, field := range fields {
 			if err := upsertField(c, field); err != nil {
 				return err
 			}
 		}
+		c.Fields.RemoveByName("indexGzipBase64")
 		if err := ensureAutodates(c); err != nil {
 			return err
 		}
-		// 系统级索引不挂 user relation；只有管理员自定义 API 能读写，避免普通 collection API 暴露索引维护面。
+		// 系统级索引不挂 user relation；普通搜索只读热索引，完整 detail 仅供管理员刷新合并 provider。
 		c.AddIndex("idx_media_icon_indexes_key_unique", true, "`key`", "")
 		return nil
 	})

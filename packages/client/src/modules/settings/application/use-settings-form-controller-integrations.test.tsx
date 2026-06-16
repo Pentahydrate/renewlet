@@ -417,6 +417,87 @@ describe("useSettingsFormController integrations", () => {
     expect(mocks.updateSettingsMutateAsync).not.toHaveBeenCalled();
   });
 
+  it("automatically checks a provider when its status popover opens without marking settings dirty", async () => {
+    const { result } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await result.current.builtInIconIndex.openProviderStatus("dashboardIcons");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenCalledWith("dashboardIcons");
+    expect(result.current.hasUnsavedChanges).toBe(false);
+    expect(mocks.updateSettingsMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates automatic provider checks during one popover open while keeping manual retry available", async () => {
+    const { result } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await result.current.builtInIconIndex.openProviderStatus("dashboardIcons");
+      await result.current.builtInIconIndex.openProviderStatus("dashboardIcons");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenLastCalledWith("dashboardIcons");
+
+    await act(async () => {
+      await result.current.builtInIconIndex.checkProvider("dashboardIcons");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenCalledTimes(2);
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenLastCalledWith("dashboardIcons");
+
+    act(() => {
+      result.current.builtInIconIndex.closeProviderStatus("dashboardIcons");
+    });
+    await act(async () => {
+      await result.current.builtInIconIndex.openProviderStatus("dashboardIcons");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).toHaveBeenCalledTimes(3);
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("skips automatic provider checks for non-admin, pending, or refreshing providers", async () => {
+    mocks.accountIdentity = { email: "alice@example.com", role: "user", banned: false };
+    const { result: userResult } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await userResult.current.builtInIconIndex.openProviderStatus("thesvg");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).not.toHaveBeenCalled();
+
+    mocks.accountIdentity = { email: "alice@example.com", role: "admin", banned: false };
+    mocks.checkBuiltInIconIndexProviderIsPending = true;
+    const { result: pendingResult } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await pendingResult.current.builtInIconIndex.openProviderStatus("selfhst");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).not.toHaveBeenCalled();
+
+    mocks.checkBuiltInIconIndexProviderIsPending = false;
+    mocks.builtInIconIndexStatus = {
+      ...mocks.builtInIconIndexStatus,
+      data: {
+        ...mocks.builtInIconIndexStatus.data,
+        providers: providerStatusFixtures({ thesvg: 40, selfhst: 30, dashboardIcons: 30 }).map((providerStatus) => (
+          providerStatus.provider === "dashboardIcons" ? { ...providerStatus, refreshing: true } : providerStatus
+        )),
+      },
+    };
+    const { result: refreshingResult } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await refreshingResult.current.builtInIconIndex.openProviderStatus("dashboardIcons");
+    });
+
+    expect(mocks.checkBuiltInIconIndexProviderMutateAsync).not.toHaveBeenCalled();
+    expect(refreshingResult.current.hasUnsavedChanges).toBe(false);
+  });
+
   it("shows a destructive toast when the built-in icon index refresh fails", async () => {
     mocks.refreshBuiltInIconIndexProviderMutateAsync.mockRejectedValue(new Error("Registry offline"));
     const { result } = renderHook(() => useSettingsFormController());

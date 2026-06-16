@@ -15,6 +15,7 @@ export interface AIDraftBlockingIssue {
   field: "price" | "currency" | "billingCycle" | "dates" | "customDays";
 }
 
+// 这些字段缺失会让 import preview 只能靠默认值改写账单事实，所以 AI 入口先要求用户显式修正。
 export function getAIDraftBlockingIssues(draft: AiRecognizedSubscriptionDraft): AIDraftBlockingIssue[] {
   const issues: AIDraftBlockingIssue[] = [];
 

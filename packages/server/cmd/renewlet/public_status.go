@@ -21,6 +21,8 @@ const (
 	publicStatusSubscriptionPageSize = 500
 )
 
+// publicStatusPageStatus 是登录用户设置页看到的公开展示页状态。
+// PageURL 是唯一可复制凭据；token 不拆字段出站，避免进入 settings/export 等持久配置。
 type publicStatusPageStatus struct {
 	Enabled    bool   `json:"enabled"`
 	CreatedAt  string `json:"createdAt,omitempty"`
@@ -29,10 +31,12 @@ type publicStatusPageStatus struct {
 	UpdatedAt  string `json:"updatedAt,omitempty"`
 }
 
+// publicStatusPageStatusResponse 保持 settings 页读取的 root key；前端 schema 依赖 publicStatusPage 包裹层。
 type publicStatusPageStatusResponse struct {
 	PublicStatusPage publicStatusPageStatus `json:"publicStatusPage"`
 }
 
+// publicStatusPageCreateStatus 是创建/复用 token 后的完整状态。
 type publicStatusPageCreateStatus struct {
 	Enabled    bool   `json:"enabled"`
 	CreatedAt  string `json:"createdAt"`
@@ -41,21 +45,26 @@ type publicStatusPageCreateStatus struct {
 	UpdatedAt  string `json:"updatedAt"`
 }
 
+// publicStatusPageCreateResponse 与读取响应保持同一 root key，避免创建后缓存写入需要单独分支。
 type publicStatusPageCreateResponse struct {
 	PublicStatusPage publicStatusPageCreateStatus `json:"publicStatusPage"`
 }
 
+// publicStatusPageCreateRequest 只允许空对象；公开 token 始终由服务端生成。
 type publicStatusPageCreateRequest struct{}
 
+// publicStatusPageUpdateRequest 只允许切换金额公开开关，不允许客户端提交 token 或 URL。
 type publicStatusPageUpdateRequest struct {
 	ShowPrices bool `json:"showPrices"`
 }
 
+// publicStatusResponse 是公开 API 的 allowlist 投影，不能直接返回订阅 record。
 type publicStatusResponse struct {
 	Page          publicStatusPageView           `json:"page"`
 	Subscriptions []publicStatusSubscriptionView `json:"subscriptions"`
 }
 
+// publicStatusPageView 描述公开页元信息；Currency 只有 showPrices=true 时才出现。
 type publicStatusPageView struct {
 	Title       string `json:"title"`
 	ShowPrices  bool   `json:"showPrices"`
@@ -64,6 +73,8 @@ type publicStatusPageView struct {
 	Truncated   bool   `json:"truncated"`
 }
 
+// publicStatusSubscriptionView 是公开订阅字段白名单。
+// 不包含订阅 id、备注、支付方式、提醒策略、tags、website、extra 或用户信息。
 type publicStatusSubscriptionView struct {
 	Name             string                   `json:"name"`
 	Logo             string                   `json:"logo,omitempty"`
@@ -81,12 +92,14 @@ type publicStatusSubscriptionView struct {
 	OneTimeTermUnit  string                   `json:"oneTimeTermUnit,omitempty"`
 }
 
+// publicStatusCategoryView 只暴露展示标签和颜色，隐藏用户自定义配置的其它原始字段。
 type publicStatusCategoryView struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
 	Color string `json:"color,omitempty"`
 }
 
+// publicStatusCategoryResolver 把分类 value 映射成当前 locale 下的公开展示标签。
 type publicStatusCategoryResolver struct {
 	locale  appLocale
 	byValue map[string]customConfigItem
@@ -109,6 +122,7 @@ func handlePublicStatusPageCreate(app core.App, e *core.RequestEvent) error {
 	if err != nil {
 		return e.InternalServerError(serverText(locale, "common.internalError"), err)
 	}
+	// 创建接口可重复调用；已存在 token 时只回显状态，避免刷新页面意外轮换公开 URL。
 	return e.JSON(http.StatusOK, publicStatusPageCreateResponse{PublicStatusPage: publicStatusPageCreateStatus{
 		Enabled:    true,
 		CreatedAt:  record.GetDateTime("created").Time().UTC().Format(time.RFC3339),
@@ -144,6 +158,7 @@ func handlePublicStatusPageDelete(app core.App, e *core.RequestEvent) error {
 		return e.InternalServerError(serverText(requestLocale(e.Request), "common.internalError"), err)
 	}
 	if record != nil {
+		// 撤销公开页只删除 token record；订阅自身 publicHidden 设置保留，便于用户之后重新开启沿用可见性选择。
 		if err := app.Delete(record); err != nil {
 			return e.InternalServerError(serverText(requestLocale(e.Request), "common.internalError"), err)
 		}

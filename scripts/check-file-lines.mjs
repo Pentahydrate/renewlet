@@ -37,7 +37,6 @@ const EXCLUDED_PATHS = [
   /(^|\/)coverage\//,
   /(^|\/)pb_data\//,
   /^packages\/server\/internal\/static\//,
-  /^packages\/client\/src\/lib\/built-in-icons-index\.json$/,
   /^packages\/client\/src\/i18n\/catalog-keys\.ts$/,
 ];
 

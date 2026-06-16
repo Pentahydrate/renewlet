@@ -4,6 +4,7 @@ import { responsiveScreenshotAsset, screenshotName } from './renewlet-image-asse
 
 describe('renewlet image assets', () => {
   it('uses mobile responsive candidates for h5 screenshots', () => {
+    // H5 截图必须走手机宽度候选，避免移动官网首屏下载桌面 1400w 资源。
     for (const key of ['notifications-h5', 'subscriptions-h5'] as const) {
       const asset = responsiveScreenshotAsset(screenshotName(key, 'zh'), 'featurePhone')
 

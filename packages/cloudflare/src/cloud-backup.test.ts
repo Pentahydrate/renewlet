@@ -69,6 +69,7 @@ function fakeEnv(handler: (query: FakeD1Query) => unknown | Promise<unknown>): E
         } as D1PreparedStatement;
       },
     } as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {} as R2Bucket,
   } as Env;
 }

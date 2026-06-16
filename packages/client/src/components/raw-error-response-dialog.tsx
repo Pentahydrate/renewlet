@@ -16,6 +16,7 @@ interface RawErrorResponseDialogProps {
 
 type CopyState = "idle" | "copied" | "failed";
 
+// 通用 raw response 弹窗只做当前会话排障展示；调用方负责保证内容已脱敏且不会被持久化。
 export function RawErrorResponseDialog({
   open,
   details,
@@ -35,6 +36,7 @@ export function RawErrorResponseDialog({
       : t("rawErrorResponse.copy");
 
   useEffect(() => {
+    // 弹窗关闭即清空复制状态，避免下一次错误详情继承“已复制”的过期反馈。
     if (!open) setCopyState("idle");
   }, [open, details]);
 

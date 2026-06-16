@@ -1,6 +1,6 @@
 package main
 
-// hooks.go 负责 PocketBase record 写入前的运行时规范化与校验。
+// hooks.go 负责 PocketBase record 写入前的运行时规范化，并覆盖 API、SDK 与管理后台写入路径。
 //
 // 架构位置：
 //   - HTTP route 负责请求体 schema；PocketBase SDK、Admin UI、迁移脚本等写入会经过这里。

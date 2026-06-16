@@ -17,6 +17,7 @@ interface ImportFileDropZoneProps {
   fileHintLabel: string;
 }
 
+// 文件入口同时承接 Renewlet 备份 ZIP 与 Wallos 源文件，accept 只做浏览器提示，真实校验仍在导入解析层。
 export function ImportFileDropZone({
   file,
   dragActive,
@@ -97,6 +98,7 @@ export function ImportPastePanel({ value, parsing, onChange, onPreview, placehol
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        // 粘贴入口面向 JSON/SQLite 文本排障，保留等宽字体但不在这里解析，避免输入中途产生昂贵副作用。
         className="min-h-40 resize-y border-border bg-background font-mono text-xs"
       />
       <div className="mt-3 flex justify-end">
@@ -109,6 +111,7 @@ export function ImportPastePanel({ value, parsing, onChange, onPreview, placehol
   );
 }
 
+// 导入弹层的步骤状态由上层状态机传入，这里只负责紧凑展示，避免 UI 组件自行推断流程阶段。
 export function ImportStep({ active, done, label }: { active: boolean; done?: boolean; label: string }) {
   return (
     <div className={cn(

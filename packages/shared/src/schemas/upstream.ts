@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/**
+ * 上游错误详情的跨运行面契约。
+ *
+ * rawResponseText 只随当前失败响应回显给操作者；Go、Worker 和前端共享这个 shape，
+ * 但 cron history、版本缓存、provider lastError、导出和备份包都只能保存短摘要。
+ */
 export const UPSTREAM_RAW_RESPONSE_TEXT_MAX_CHARS = 1 << 20;
 export const UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS = 64 * 1024;
 

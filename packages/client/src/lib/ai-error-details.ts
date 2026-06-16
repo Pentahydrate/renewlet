@@ -5,6 +5,7 @@ import {
 
 export type AIErrorDetails = RawErrorResponseDetails;
 
+// AI 错误详情复用统一 raw response 契约，避免 provider body 在 AI 模块里出现第二套持久化路径。
 export function extractAIErrorDetails(error: unknown): AIErrorDetails | null {
   return createRawErrorResponseDetails(error);
 }

@@ -59,6 +59,11 @@ msgid "legal.privacy.thirdParty.ai"
 msgstr "AI recognition: when you actively use AI recognition to add subscriptions, pasted text, uploaded images, and existing tag names are sent to the third-party AI platform configured in Settings."
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/legal.ts:20
+msgid "legal.privacy.thirdParty.customScript"
+msgstr "Custom external script: an instance operator can inject one external script through environment configuration, such as analytics, a chat widget, or site monitoring; that script may send visit data to its provider."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:25
 msgid "legal.terms.intro"
 msgstr "Renewlet (renewlet) is an open-source subscription management tool. This page explains the basic rules you should understand when using this project or a deployed instance."
@@ -126,7 +131,7 @@ msgstr "The project is provided as is, without warranties of any kind, including
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:7
 msgid "legal.privacy.intro"
-msgstr "This project does not include third-party analytics or advertising SDKs by default. When you use a deployed instance, its operator, which may be you, is responsible for storing and processing the data."
+msgstr "Renewlet does not include third-party analytics, advertising SDKs, or external scripts by default. An instance operator can inject an external script through environment configuration; when you use a deployed instance, that operator, which may be you, is responsible for storing and processing the data."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:30

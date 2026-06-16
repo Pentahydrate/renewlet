@@ -59,6 +59,11 @@ msgid "legal.privacy.thirdParty.ai"
 msgstr "AI 识别：当你主动使用 AI 识别添加订阅时，粘贴的文字、上传的图片和已有标签名会发送到你在设置页配置的第三方 AI 平台。"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/legal.ts:20
+msgid "legal.privacy.thirdParty.customScript"
+msgstr "自定义外部脚本：部署者可通过环境变量注入单个外链 script，例如统计、客服组件或站点监控；该脚本可能向其服务商发送访问数据。"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:25
 msgid "legal.terms.intro"
 msgstr "Renewlet（renewlet）是一个开源的订阅管理工具。本页面用于说明你在使用本项目或其部署实例时需要了解的基本规则。"
@@ -126,7 +131,7 @@ msgstr "本项目按“现状”提供，不对任何结果作保证（包括但
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:7
 msgid "legal.privacy.intro"
-msgstr "本项目本身不内置任何第三方埋点/广告 SDK。你在使用某个部署实例时，数据将由该实例的运营者（可能是你自己）负责保存与处理。"
+msgstr "Renewlet 默认不内置第三方埋点、广告 SDK 或外部脚本。部署者可以通过环境变量自行注入外部 script；你在使用某个部署实例时，数据将由该实例的运营者（可能是你自己）负责保存与处理。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/legal.ts:30

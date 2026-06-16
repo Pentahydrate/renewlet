@@ -12,6 +12,7 @@ export const appErrorBoundaryBrowser = {
   reload: () => window.location.reload(),
 };
 
+// 顶层错误边界只兜底渲染崩溃，不吞 API 业务错误；业务错误仍应在各自页面用可恢复状态展示。
 export class AppErrorBoundary extends Component<PropsWithChildren, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = { error: null };
 
@@ -20,6 +21,7 @@ export class AppErrorBoundary extends Component<PropsWithChildren, AppErrorBound
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // 当前只写浏览器控制台，避免自动上报组件栈时携带用户订阅数据或第三方 raw response。
     reportClientError(error, { componentStack: info.componentStack ?? "" });
   }
 

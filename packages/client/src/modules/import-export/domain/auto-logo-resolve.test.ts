@@ -109,6 +109,7 @@ describe("resolveAutoLogosForPreparedImport", () => {
   });
 
   it("auto-writes only high-confidence built-in logo candidates", async () => {
+    // 自动 Logo 只能写入内置 exact/strong 命中，favicon/domain 候选必须留给用户手动确认。
     resolveMock.mockResolvedValue(response([
       {
         id: "0",
@@ -140,6 +141,7 @@ describe("resolveAutoLogosForPreparedImport", () => {
   });
 
   it("does not auto-write weak built-in candidates", async () => {
+    // 弱命中即使来自内置库也不能批量写入导入 payload，避免误把相似品牌当作真实 Logo。
     resolveMock.mockResolvedValue(response([
       {
         id: "0",

@@ -15,6 +15,7 @@ vi.mock("@/pages/settings", () => new Promise(() => undefined));
 
 describe("App route fallback", () => {
   it("uses the settings page skeleton for the settings route while the chunk loads", () => {
+    // settings chunk 悬挂时必须展示设置页骨架，避免懒加载 fallback 错落到 dashboard 占位。
     render(
       <MemoryRouter initialEntries={["/settings"]}>
         <App />

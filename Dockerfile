@@ -15,7 +15,7 @@ COPY apps/website/package.json apps/website/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM client-deps AS client-builder
-# Client typecheck resolves workspace exports from @renewlet/shared and runs the root CSP guard after Vite build.
+# 客户端构建会解析 @renewlet/shared workspace export，并在 Vite 产物后跑 CSP 守卫。
 COPY packages/client packages/client
 COPY packages/shared packages/shared
 COPY scripts/check-client-csp.mjs scripts/check-client-csp.mjs

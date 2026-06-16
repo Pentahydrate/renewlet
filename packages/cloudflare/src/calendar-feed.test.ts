@@ -435,6 +435,7 @@ async function createCalendarFeedTestEnv(options: CalendarFeedTestOptions = {}):
   };
   return {
     DB: new CalendarFeedTestDB(state) as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {} as R2Bucket,
     __state: state,
   };

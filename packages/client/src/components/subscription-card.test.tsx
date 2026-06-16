@@ -1,4 +1,4 @@
-// 订阅卡片测试保护有效状态、菜单操作和日历入口，避免列表页展示与 domain 状态计算分叉。
+// 订阅卡片测试保护有效状态、公开隐藏、菜单操作和日历入口，避免列表展示与 domain 状态计算分叉。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";

@@ -1,5 +1,11 @@
 package main
 
+// cloud_backup_config.go 负责云备份目标配置的读写归一。
+//
+// 架构位置：
+//   - cloud_backup_targets 以 user+provider 作为唯一事实源，WebDAV/S3 互不覆盖。
+//   - 凭据字段是 write-only；API 响应只暴露 credentialSet 状态。
+//   - 定时策略和最近状态按 provider 独立保存，不能因切换 tab 清空另一个目标。
 import (
 	"bytes"
 	"database/sql"
@@ -12,6 +18,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// saveCloudBackupConfig 只保存当前 provider 的配置行，并在写入后返回完整双 provider 状态。
 func saveCloudBackupConfig(app core.App, userID string, body cloudBackupConfigUpdateRequest) (cloudBackupResolvedConfig, error) {
 	current, err := readCloudBackupTarget(app, userID, body.Provider)
 	if err != nil {
@@ -46,6 +53,8 @@ func saveCloudBackupConfig(app core.App, userID string, body cloudBackupConfigUp
 	return readCloudBackupConfig(app, userID)
 }
 
+// targetFromCloudBackupUpdate 合并当前 provider 的非密配置、write-only 凭据和调度策略。
+// 注意：空凭据表示“沿用旧值”，不是清空 secret；清空语义需要单独设计显式字段。
 func targetFromCloudBackupUpdate(userID string, body cloudBackupConfigUpdateRequest, current cloudBackupResolvedTarget) cloudBackupResolvedTarget {
 	credential := current.Credential
 	if body.Credentials != nil {
@@ -100,6 +109,7 @@ func readCloudBackupConfig(app core.App, userID string) (cloudBackupResolvedConf
 	return config, nil
 }
 
+// readCloudBackupTarget 按 user+provider 读取单个目标；不存在时返回默认行，避免读取操作制造隐式写入。
 func readCloudBackupTarget(app core.App, userID string, provider string) (cloudBackupResolvedTarget, error) {
 	target := defaultCloudBackupTarget(userID, provider)
 	record, err := app.FindFirstRecordByFilter("cloud_backup_targets", "user = {:user} && provider = {:provider}", dbx.Params{"user": userID, "provider": provider})
@@ -112,6 +122,8 @@ func readCloudBackupTarget(app core.App, userID string, provider string) (cloudB
 	return cloudBackupTargetFromRecord(userID, record), nil
 }
 
+// cloudBackupTargetFromRecord 把 PocketBase record 还原为运行时配置。
+// 脏 JSON 只在当前字段回落默认值，不能让一个 provider 的坏配置拖垮整个设置页。
 func cloudBackupTargetFromRecord(userID string, record *core.Record) cloudBackupResolvedTarget {
 	provider := strings.TrimSpace(record.GetString("provider"))
 	target := defaultCloudBackupTarget(userID, provider)

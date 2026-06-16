@@ -38,13 +38,29 @@ export interface BuiltInIconVariant {
   path: string;
 }
 
+/** 运行时热索引只保存普通搜索必需字段；冷字段留在 detail-index，避免 Docker/Worker 常驻大对象。 */
+export interface BuiltInIconSearchEntry {
+  p: BuiltInIconProvider;
+  s: string;
+  t: string;
+  v: BuiltInIconVariant[];
+  q: string[];
+}
+
+export interface BuiltInIconSearchIndex {
+  version: 1;
+  entries: BuiltInIconSearchEntry[];
+  canonicalExact: Record<string, number[]>;
+  tokenExact: Record<string, number[]>;
+}
+
 interface ResolverIcon {
-  icon: BuiltInIcon;
+  provider: BuiltInIconProvider;
+  slug: string;
+  title: string;
+  variants: BuiltInIconVariant[];
   providerRank: number;
   terms: string[];
-  compactTerms: string[];
-  canonicalKeys: string[];
-  tokenKeys: string[];
 }
 
 interface BuiltInSearchResult {
@@ -83,6 +99,17 @@ export function createMediaResolver(
   config: MediaResolverConfig = mediaResolverConfig,
   providerCdnBaseOverrides: Partial<Record<BuiltInIconProvider, string>> = {},
 ): MediaResolver {
+  return createMediaResolverFromSearchIndex(createSearchIndexFromIcons(icons, config), config, providerCdnBaseOverrides);
+}
+
+export function createMediaResolverFromSearchIndex(
+  searchIndex: BuiltInIconSearchIndex,
+  config: MediaResolverConfig = mediaResolverConfig,
+  providerCdnBaseOverrides: Partial<Record<BuiltInIconProvider, string>> = {},
+): MediaResolver {
+  if (searchIndex.version !== 1) {
+    throw new Error(`Unsupported built-in icon search index version: ${searchIndex.version}`);
+  }
   const providerRank = new Map(config.builtInProviders.map((provider, index) => [provider.provider, index]));
   const resolver: MediaResolver = {
     config,
@@ -95,29 +122,59 @@ export function createMediaResolver(
     searchModifierSuffixWords: new Set(config.search.modifierSuffixWords),
   };
 
-  for (const icon of icons) {
-    if (!icon.variants.length) continue;
-    const rank = providerRank.get(icon.provider);
+  const sourceIndexToResolverIndex = new Map<number, number>();
+  for (let sourceIndex = 0; sourceIndex < searchIndex.entries.length; sourceIndex += 1) {
+    const entry = searchIndex.entries[sourceIndex];
+    if (!entry) continue;
+    if (!entry.v.length) continue;
+    const rank = providerRank.get(entry.p);
     if (rank === undefined) continue;
-    const entry: ResolverIcon = {
-      icon,
+    sourceIndexToResolverIndex.set(sourceIndex, resolver.icons.length);
+    resolver.icons.push({
+      provider: entry.p,
+      slug: entry.s,
+      title: entry.t,
+      variants: entry.v,
       providerRank: rank,
-      terms: normalizedTerms(icon.terms?.length ? icon.terms : [icon.slug, icon.title, icon.url ?? "", icon.guidelines ?? "", ...(icon.aliases ?? []), ...(icon.categories ?? [])]),
-      compactTerms: compactTerms(icon.compactTerms?.length ? icon.compactTerms : [icon.slug, icon.title, ...(icon.aliases ?? [])]),
-      canonicalKeys: normalizedTerms(icon.exactKeys?.length ? icon.exactKeys : [icon.slug, icon.title, ...(icon.aliases ?? [])]),
-      tokenKeys: normalizedTerms(icon.tokenKeys?.length ? icon.tokenKeys : tokenKeys([icon.slug, icon.title, ...(icon.aliases ?? [])], resolver.planSuffixWords)),
-    };
-    const index = resolver.icons.length;
-    resolver.icons.push(entry);
-    for (const key of unique([...entry.canonicalKeys, ...entry.compactTerms])) {
-      appendMapValue(resolver.canonicalExact, key, index);
-    }
-    for (const key of entry.tokenKeys) {
-      appendMapValue(resolver.tokenExact, key, index);
-    }
+      terms: entry.q,
+    });
   }
+  resolver.canonicalExact = remapRecordToNumberMap(searchIndex.canonicalExact, sourceIndexToResolverIndex);
+  resolver.tokenExact = remapRecordToNumberMap(searchIndex.tokenExact, sourceIndexToResolverIndex);
 
   return resolver;
+}
+
+function createSearchIndexFromIcons(icons: readonly BuiltInIcon[], config: MediaResolverConfig): BuiltInIconSearchIndex {
+  const canonicalExact: Record<string, number[]> = {};
+  const tokenExact: Record<string, number[]> = {};
+  const planSuffixWords = new Set(config.auto.planSuffixWords);
+  const entries = icons.map((icon, index): BuiltInIconSearchEntry => {
+    const terms = normalizedTerms(icon.terms?.length ? icon.terms : [icon.slug, icon.title, icon.url ?? "", icon.guidelines ?? "", ...(icon.aliases ?? []), ...(icon.categories ?? [])]);
+    const compactKeys = compactTerms(icon.compactTerms?.length ? icon.compactTerms : [icon.slug, icon.title, ...(icon.aliases ?? [])]);
+    const canonicalKeys = normalizedTerms(icon.exactKeys?.length ? icon.exactKeys : [icon.slug, icon.title, ...(icon.aliases ?? [])]);
+    const tokenKeyValues = normalizedTerms(icon.tokenKeys?.length ? icon.tokenKeys : tokenKeys([icon.slug, icon.title, ...(icon.aliases ?? [])], planSuffixWords));
+    for (const key of unique([...canonicalKeys, ...compactKeys])) {
+      appendRecordValue(canonicalExact, key, index);
+    }
+    for (const key of tokenKeyValues) {
+      appendRecordValue(tokenExact, key, index);
+    }
+    return {
+      p: icon.provider,
+      s: icon.slug,
+      t: icon.title,
+      v: [...icon.variants],
+      q: terms,
+    };
+  });
+
+  return {
+    version: 1,
+    entries,
+    canonicalExact,
+    tokenExact,
+  };
 }
 
 /**
@@ -233,8 +290,8 @@ function searchBuiltInCandidatesForQuery(
   for (const candidate of preferred ?? []) pushCandidate(candidate);
   for (const item of resolver.icons
     .map((entry, index) => ({ entry, index, score: scoreBuiltInIcon(resolver, entry, normalized) }))
-    .filter((item) => item.score >= resolver.config.scores.mediumThreshold && providerEnabled(options.sources, item.entry.icon.provider))
-    .sort((left, right) => left.entry.providerRank - right.entry.providerRank || right.score - left.score || compareMediaTitle(left.entry.icon.title, right.entry.icon.title))
+    .filter((item) => item.score >= resolver.config.scores.mediumThreshold && providerEnabled(options.sources, item.entry.provider))
+    .sort((left, right) => left.entry.providerRank - right.entry.providerRank || right.score - left.score || compareMediaTitle(left.entry.title, right.entry.title))
   ) {
     const confidence = confidenceFromScore(resolver, item.score);
     for (const candidate of toBuiltInCandidates(resolver, item.entry, kind, confidence, confidence === "exact" || confidence === "strong", normalized, candidates.length, "search", options)) {
@@ -330,9 +387,9 @@ function candidateForExactMatches(
   const enabled = [...strongestByIndex]
     .flatMap(([index, baseConfidence]) => {
       const entry = resolver.icons[index];
-      return entry && providerEnabled(options.sources, entry.icon.provider) ? [{ entry, baseConfidence }] : [];
+      return entry && providerEnabled(options.sources, entry.provider) ? [{ entry, baseConfidence }] : [];
     })
-    .sort((left, right) => left.entry.providerRank - right.entry.providerRank || confidenceRank(left.baseConfidence) - confidenceRank(right.baseConfidence) || compareMediaTitle(left.entry.icon.title, right.entry.icon.title));
+    .sort((left, right) => left.entry.providerRank - right.entry.providerRank || confidenceRank(left.baseConfidence) - confidenceRank(right.baseConfidence) || compareMediaTitle(left.entry.title, right.entry.title));
   if (enabled.length === 0) return null;
   const match = enabled[0];
   if (!match) return null;
@@ -351,17 +408,17 @@ function toBuiltInCandidates(
   mode: "auto" | "search",
   options: SearchOptions,
 ): MediaCandidate[] {
-  const provider = entry.icon.provider;
+  const provider = entry.provider;
   const variants = mode === "auto" || !options.sources[provider].variantsEnabled
-    ? preferredBuiltInVariants(resolver, entry.icon).slice(0, 1)
-    : preferredBuiltInVariants(resolver, entry.icon);
+    ? preferredBuiltInVariants(resolver, entry).slice(0, 1)
+    : preferredBuiltInVariants(resolver, entry);
   // 自动分配必须保持稳定首选图标；手动搜索才按设置展开上游变体供用户挑选。
   return variants.map((variant): MediaCandidate => ({
-    id: `builtin:${provider}:${entry.icon.slug}:${variant.name}`,
+    id: `builtin:${provider}:${entry.slug}:${variant.name}`,
     kind,
     source: "builtIn",
     provider,
-    label: entry.icon.title,
+    label: entry.title,
     variant: variant.name,
     url: builtInVariantURL(resolver, provider, variant),
     confidence,
@@ -371,7 +428,7 @@ function toBuiltInCandidates(
   }));
 }
 
-function preferredBuiltInVariants(resolver: MediaResolver, icon: BuiltInIcon): BuiltInIconVariant[] {
+function preferredBuiltInVariants(resolver: MediaResolver, icon: Pick<ResolverIcon, "provider" | "variants">): BuiltInIconVariant[] {
   const preferredNames = resolver.preferredVariants.get(icon.provider) ?? [];
   const byName = new Map(icon.variants.map((variant) => [variant.name, variant]));
   const preferred = preferredNames.flatMap((name) => {
@@ -467,14 +524,9 @@ function scoreBuiltInIcon(resolver: MediaResolver, entry: ResolverIcon, query: s
     else if (parts.length > 1 && parts.every((part) => value.includes(part))) best = Math.max(best, scores.allParts);
     else if (compactQuery.length >= 4 && isSubsequence(compactQuery, compactValue)) best = Math.max(best, scores.subsequence);
   }
-  for (const value of entry.compactTerms) {
-    if (value === compactQuery) best = Math.max(best, scores.exact);
-    else if (value.startsWith(compactQuery)) best = Math.max(best, scores.prefix);
-    else if (value.includes(compactQuery)) best = Math.max(best, scores.contains);
-  }
   if (best === 0) return 0;
-  if (normalizeMediaTerm(entry.icon.slug) === query || normalizeMediaTerm(entry.icon.title) === query) return best + scores.slugExactBoost;
-  if (normalizeMediaTerm(entry.icon.slug).startsWith(query)) return best + scores.slugPrefixBoost;
+  if (normalizeMediaTerm(entry.slug) === query || normalizeMediaTerm(entry.title) === query) return best + scores.slugExactBoost;
+  if (normalizeMediaTerm(entry.slug).startsWith(query)) return best + scores.slugPrefixBoost;
   return best;
 }
 
@@ -495,6 +547,16 @@ function compactTerms(values: readonly string[]): string[] {
 
 function tokenKeys(values: readonly string[], planSuffixWords: ReadonlySet<string>): string[] {
   return unique(normalizedTerms(values).flatMap((value) => value.split(/\s+/)).filter((token) => token.length >= 3 && !planSuffixWords.has(token)));
+}
+
+function remapRecordToNumberMap(record: Record<string, number[]>, indexMap: ReadonlyMap<number, number>): Map<string, number[]> {
+  return new Map(Object.entries(record).flatMap(([key, values]) => {
+    const mapped = values.flatMap((value) => {
+      const index = indexMap.get(value);
+      return index === undefined ? [] : [index];
+    });
+    return mapped.length > 0 ? [[key, mapped] as const] : [];
+  }));
 }
 
 function isPlanOnlyQuery(resolver: MediaResolver, query: string): boolean {
@@ -540,8 +602,9 @@ function confidenceRank(confidence: ExactBuiltInMatch["baseConfidence"]): number
   return confidence === "exact" ? 0 : 1;
 }
 
-function appendMapValue(map: Map<string, number[]>, key: string, value: number) {
-  map.set(key, [...(map.get(key) ?? []), value]);
+function appendRecordValue(record: Record<string, number[]>, key: string, value: number) {
+  record[key] ??= [];
+  record[key].push(value);
 }
 
 function unique(values: readonly string[]): string[] {

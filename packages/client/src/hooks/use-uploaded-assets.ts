@@ -3,6 +3,12 @@ import { useInfiniteQuery, useQueryClient, type InfiniteData, type QueryClient }
 import type { UploadedAsset, UploadedAssetsPage, UploadKind } from "@/lib/api/schemas/media";
 import { assetService } from "@/services/asset-service";
 
+/**
+ * 上传资产 React Query 缓存层。
+ *
+ * LogoPicker 和设置页资产管理共用同一资产事实源；这里只管理分页缓存和可见启用状态，
+ * 删除引用阻止、owner 校验和 R2/PocketBase 清理由后端负责。
+ */
 export const uploadedAssetsQueryKeys = {
   all: ["uploaded-assets"] as const,
   byKind: (kind: UploadKind) => [...uploadedAssetsQueryKeys.all, "kind", kind] as const,
@@ -31,6 +37,7 @@ export function removeUploadedAssetFromQueryCache(queryClient: QueryClient, asse
     uploadedAssetsQueryKeys.byKind(asset.kind),
     (current) => {
       if (!current) return current;
+      // 删除成功后只从对应 kind 的分页缓存剔除；其它 kind 和未加载页交给失效/刷新处理，避免假装全局一致。
       return {
         ...current,
         pages: current.pages.map((page) => ({
@@ -58,6 +65,7 @@ export function useUploadedAssetsByKind(
 
   const assets = useMemo(() => {
     if (!enabled) return [];
+    // 无限分页可能因 refetch 或并发 loadMore 产生重复页项；渲染前按 id 合并，避免 UI 出现重复删除按钮。
     return mergeAssets(query.data?.pages.flatMap((page) => page.items) ?? []);
   }, [enabled, query.data?.pages]);
   const error = query.error instanceof Error ? query.error : query.error ? new Error("Uploaded assets load failed") : null;

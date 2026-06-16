@@ -1,4 +1,4 @@
-import type { BuiltInIcon, BuiltInIconVariant } from "./media-resolver";
+import type { BuiltInIcon, BuiltInIconSearchIndex, BuiltInIconVariant } from "./media-resolver";
 import type { MediaResolverConfig } from "./media-resolver-config";
 import { BUILT_IN_ICON_PROVIDERS, type BuiltInIconProvider } from "./built-in-icons.ts";
 import type { BuiltInIconProviderVersion, BuiltInIconSeedMetadata } from "./schemas/media";
@@ -314,6 +314,39 @@ export function replaceBuiltInIconProviderIndex(
 
 export function canonicalBuiltInIconIndexJson(icons: readonly BuiltInIcon[]): string {
   return `${JSON.stringify(icons)}\n`;
+}
+
+export function createBuiltInIconSearchIndex(icons: readonly BuiltInIcon[]): BuiltInIconSearchIndex {
+  const canonicalExact: Record<string, number[]> = {};
+  const tokenExact: Record<string, number[]> = {};
+  const entries = icons.map((icon, index) => {
+    for (const key of new Set([...(icon.exactKeys ?? []), ...(icon.compactTerms ?? [])])) {
+      canonicalExact[key] ??= [];
+      canonicalExact[key].push(index);
+    }
+    for (const key of icon.tokenKeys ?? []) {
+      tokenExact[key] ??= [];
+      tokenExact[key].push(index);
+    }
+    return {
+      p: icon.provider,
+      s: icon.slug,
+      t: icon.title,
+      v: icon.variants,
+      q: icon.terms ?? [],
+    };
+  });
+
+  return {
+    version: 1,
+    entries,
+    canonicalExact,
+    tokenExact,
+  };
+}
+
+export function canonicalBuiltInIconSearchIndexJson(index: BuiltInIconSearchIndex): string {
+  return `${JSON.stringify(index)}\n`;
 }
 
 export function createBuiltInIconSeedMetadata(

@@ -19,18 +19,27 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	appstatic "github.com/zhiyingzzhou/renewlet/packages/server/internal/static"
+	"golang.org/x/sync/singleflight"
 )
 
 const mediaIconIndexRecordKey = "active"
 const builtInIconGitHubFetchTimeout = 15 * time.Second
+const builtInIconGitHubAtomFeedLimitBytes = 512 * 1024
 const builtInIconProviderStatusMaxBytes = 64 * 1024
 
 var builtInIconProviders = []string{"thesvg", "selfhst", "dashboardIcons"}
-var builtInIconGitHubAPIBase = "https://api.github.com"
+var builtInIconGitHubBase = "https://github.com"
 
 type builtInIconIndexCacheState struct {
 	hash     string
 	resolver builtInResolverIndex
+}
+
+type encodedBuiltInIconIndex struct {
+	hash                  string
+	searchIndex           builtInIconSearchIndex
+	searchIndexGzipBase64 string
+	detailIndexGzipBase64 string
 }
 
 type storedBuiltInIconProviderState struct {
@@ -59,17 +68,25 @@ var builtInIconIndexRefreshingProvider = struct {
 var builtInIconIndexCache = struct {
 	sync.RWMutex
 	state builtInIconIndexCacheState
-}{
-	state: builtInIconIndexCacheState{
-		hash:     embeddedBuiltInIconIndexHash(),
-		resolver: embeddedBuiltInResolver,
-	},
-}
+}{}
+var embeddedBuiltInResolverCache = struct {
+	sync.RWMutex
+	hash     string
+	resolver builtInResolverIndex
+	loaded   bool
+}{}
+var embeddedBuiltInResolverLoadGroup singleflight.Group
 var embeddedBuiltInIconSeedMetadata = loadEmbeddedBuiltInIconSeedMetadata()
+
+func init() {
+	go func() {
+		_, _ = loadEmbeddedBuiltInResolver()
+	}()
+}
 
 func activeBuiltInResolver(app core.App) builtInResolverIndex {
 	record, err := findMediaIconIndexRecord(app)
-	if err != nil || record == nil || record.GetString("hash") == "" || record.GetString("indexGzipBase64") == "" {
+	if err != nil || !recordHasActiveBuiltInIconIndexes(record) {
 		return cachedEmbeddedBuiltInResolver()
 	}
 	hash := record.GetString("hash")
@@ -81,12 +98,12 @@ func activeBuiltInResolver(app core.App) builtInResolverIndex {
 	}
 	builtInIconIndexCache.RUnlock()
 
-	icons, err := loadRuntimeBuiltInIcons(record)
+	searchIndex, err := loadRuntimeBuiltInSearchIndex(record)
 	if err != nil {
 		return cachedEmbeddedBuiltInResolver()
 	}
 	states := providerStatesFromRecord(record)
-	resolver := buildBuiltInResolverIndexWithProviderBases(icons, providerCDNBaseOverridesFromStates(states))
+	resolver := buildBuiltInResolverIndexFromSearchIndex(searchIndex, providerCDNBaseOverridesFromStates(states))
 	// active 指针按 hash 切换；缓存只保存 resolver，不保存请求级数据，避免用户设置或认证状态串到全局。
 	builtInIconIndexCache.Lock()
 	builtInIconIndexCache.state = builtInIconIndexCacheState{hash: hash, resolver: resolver}
@@ -95,12 +112,41 @@ func activeBuiltInResolver(app core.App) builtInResolverIndex {
 }
 
 func cachedEmbeddedBuiltInResolver() builtInResolverIndex {
-	builtInIconIndexCache.RLock()
-	defer builtInIconIndexCache.RUnlock()
-	if builtInIconIndexCache.state.hash == embeddedBuiltInIconIndexHash() {
-		return builtInIconIndexCache.state.resolver
+	resolver, err := loadEmbeddedBuiltInResolver()
+	if err != nil {
+		return builtInResolverIndex{canonicalExact: map[string][]int{}, tokenExact: map[string][]int{}}
 	}
-	return embeddedBuiltInResolver
+	return resolver
+}
+
+func loadEmbeddedBuiltInResolver() (builtInResolverIndex, error) {
+	hash := embeddedBuiltInIconIndexHash()
+	embeddedBuiltInResolverCache.RLock()
+	if embeddedBuiltInResolverCache.loaded && embeddedBuiltInResolverCache.hash == hash {
+		resolver := embeddedBuiltInResolverCache.resolver
+		embeddedBuiltInResolverCache.RUnlock()
+		return resolver, nil
+	}
+	embeddedBuiltInResolverCache.RUnlock()
+
+	value, err, _ := embeddedBuiltInResolverLoadGroup.Do("embedded-search-index", func() (any, error) {
+		// seed 搜索索引异步预热且由 singleflight 合并；首个搜索若抢先到达，只会等待同一份 gzip 解析任务。
+		searchIndex, err := loadBuiltInIconSearchIndexFromGzip(appstatic.BuiltInIconsSearchIndexGzip)
+		if err != nil {
+			return builtInResolverIndex{}, err
+		}
+		resolver := buildBuiltInResolverIndexFromSearchIndex(searchIndex, nil)
+		embeddedBuiltInResolverCache.Lock()
+		embeddedBuiltInResolverCache.hash = hash
+		embeddedBuiltInResolverCache.resolver = resolver
+		embeddedBuiltInResolverCache.loaded = true
+		embeddedBuiltInResolverCache.Unlock()
+		return resolver, nil
+	})
+	if err != nil {
+		return builtInResolverIndex{}, err
+	}
+	return value.(builtInResolverIndex), nil
 }
 
 func handleBuiltInIconIndexStatus(app core.App, e *core.RequestEvent) error {
@@ -210,7 +256,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		status := builtInIconIndexStatus(app)
 		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
-	hash, gzipBase64, err := encodeBuiltInIconIndex(icons)
+	encoded, err := encodeBuiltInIconIndex(icons)
 	if err != nil {
 		saveMediaIconProviderFailure(app, provider, checkedAt, err)
 		releaseBuiltInIconIndexOperation()
@@ -218,7 +264,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 		status := builtInIconIndexStatus(app)
 		return e.JSON(http.StatusBadGateway, builtInIconIndexProviderRefreshResponse{Status: status, Provider: providerStatusFromResponse(status, provider), ErrorDetails: upstreamErrorDetailsFromError(err)})
 	}
-	if err := saveMediaIconProviderRefreshSuccess(app, provider, checkedAt, hash, gzipBase64, icons, version, etag); err != nil {
+	if err := saveMediaIconProviderRefreshSuccess(app, provider, checkedAt, encoded, icons, version, etag); err != nil {
 		return e.InternalServerError(serverText(locale, "common.internalError"), err)
 	}
 	releaseBuiltInIconIndexOperation()
@@ -230,7 +276,7 @@ func handleBuiltInIconIndexProviderRefresh(app core.App, e *core.RequestEvent) e
 func builtInIconIndexStatus(app core.App) builtInIconIndexStatusResponse {
 	record, err := findMediaIconIndexRecord(app)
 	refreshingProvider := currentBuiltInIconIndexRefreshingProvider()
-	if err != nil || record == nil || record.GetString("hash") == "" || record.GetString("indexGzipBase64") == "" {
+	if err != nil || !recordHasActiveBuiltInIconIndexes(record) {
 		status := embeddedBuiltInIconIndexStatus(providerStatesFromRecord(record))
 		if record != nil {
 			status.CheckedAt = stringPtrOrNil(record.GetString("checkedAt"))
@@ -258,8 +304,8 @@ func embeddedBuiltInIconIndexStatus(states storedBuiltInIconProviderStates) buil
 	status := builtInIconIndexStatusResponse{
 		Source:         "embedded",
 		Hash:           &hash,
-		IconCount:      len(embeddedBuiltInIcons),
-		ProviderCounts: providerCountsResponse(embeddedBuiltInIcons),
+		IconCount:      embeddedBuiltInIconSeedMetadata.IconCount,
+		ProviderCounts: embeddedBuiltInIconSeedMetadata.ProviderCounts,
 		CheckedAt:      nil,
 		UpdatedAt:      nil,
 		Refreshing:     false,
@@ -270,14 +316,21 @@ func embeddedBuiltInIconIndexStatus(states storedBuiltInIconProviderStates) buil
 
 func activeBuiltInIconIndex(app core.App) []builtInIcon {
 	record, err := findMediaIconIndexRecord(app)
-	if err != nil || record == nil || record.GetString("hash") == "" || record.GetString("indexGzipBase64") == "" {
-		return embeddedBuiltInIcons
+	if err != nil || !recordHasActiveBuiltInIconIndexes(record) {
+		return loadEmbeddedBuiltInDetailIcons()
 	}
 	icons, err := loadRuntimeBuiltInIcons(record)
 	if err != nil {
-		return embeddedBuiltInIcons
+		return loadEmbeddedBuiltInDetailIcons()
 	}
 	return icons
+}
+
+func recordHasActiveBuiltInIconIndexes(record *core.Record) bool {
+	return record != nil &&
+		record.GetString("hash") != "" &&
+		record.GetString("searchIndexGzipBase64") != "" &&
+		record.GetString("detailIndexGzipBase64") != ""
 }
 
 func findMediaIconIndexRecord(app core.App) (*core.Record, error) {
@@ -324,7 +377,7 @@ func saveMediaIconProviderLatest(app core.App, provider string, checkedAt string
 	return app.Save(record)
 }
 
-func saveMediaIconProviderRefreshSuccess(app core.App, provider string, checkedAt string, hash string, gzipBase64 string, icons []builtInIcon, version *builtInIconProviderVersionResponse, etag string) error {
+func saveMediaIconProviderRefreshSuccess(app core.App, provider string, checkedAt string, encoded encodedBuiltInIconIndex, icons []builtInIcon, version *builtInIconProviderVersionResponse, etag string) error {
 	record, err := mediaIconIndexRecord(app)
 	if err != nil {
 		return err
@@ -340,19 +393,21 @@ func saveMediaIconProviderRefreshSuccess(app core.App, provider string, checkedA
 		state.ETag = etag
 	}
 	states[provider] = state
-	record.Set("hash", hash)
+	record.Set("hash", encoded.hash)
 	record.Set("iconCount", len(icons))
 	record.Set("providerCounts", providerCountsMap(icons))
 	record.Set("checkedAt", checkedAt)
 	record.Set("indexUpdatedAt", checkedAt)
 	record.Set("providerStatus", states)
-	record.Set("indexGzipBase64", gzipBase64)
+	record.Set("searchIndexGzipBase64", encoded.searchIndexGzipBase64)
+	record.Set("detailIndexGzipBase64", encoded.detailIndexGzipBase64)
 	if err := app.Save(record); err != nil {
 		return err
 	}
-	resolver := buildBuiltInResolverIndexWithProviderBases(icons, providerCDNBaseOverridesFromStates(states))
+	// 两份 gzip 都成功落库后才替换 hash cache；失败路径只写 lastError，普通搜索继续使用旧 active。
+	resolver := buildBuiltInResolverIndexFromSearchIndex(encoded.searchIndex, providerCDNBaseOverridesFromStates(states))
 	builtInIconIndexCache.Lock()
-	builtInIconIndexCache.state = builtInIconIndexCacheState{hash: hash, resolver: resolver}
+	builtInIconIndexCache.state = builtInIconIndexCacheState{hash: encoded.hash, resolver: resolver}
 	builtInIconIndexCache.Unlock()
 	return nil
 }
@@ -363,7 +418,7 @@ func saveMediaIconProviderFailure(app core.App, provider string, checkedAt strin
 		states := providerStatesFromRecord(record)
 		state := states[provider]
 		state.CheckedAt = checkedAt
-		state.LastError = truncateText(failure.Error(), 2000)
+		state.LastError = truncateText(persistentUpstreamErrorMessage(failure), 2000)
 		states[provider] = state
 		record.Set("checkedAt", checkedAt)
 		record.Set("providerStatus", states)
@@ -373,35 +428,76 @@ func saveMediaIconProviderFailure(app core.App, provider string, checkedAt strin
 	return status
 }
 
-func encodeBuiltInIconIndex(icons []builtInIcon) (string, string, error) {
-	raw, err := json.Marshal(icons)
+func encodeBuiltInIconIndex(icons []builtInIcon) (encodedBuiltInIconIndex, error) {
+	detailRaw, err := json.Marshal(icons)
 	if err != nil {
-		return "", "", err
+		return encodedBuiltInIconIndex{}, err
 	}
-	raw = append(raw, '\n')
-	hashBytes := sha256.Sum256(raw)
-	var buffer bytes.Buffer
-	gzipWriter := gzip.NewWriter(&buffer)
-	if _, err := gzipWriter.Write(raw); err != nil {
-		return "", "", err
+	detailRaw = append(detailRaw, '\n')
+	searchIndex := createBuiltInIconSearchIndex(icons)
+	searchRaw, err := json.Marshal(searchIndex)
+	if err != nil {
+		return encodedBuiltInIconIndex{}, err
 	}
-	if err := gzipWriter.Close(); err != nil {
-		return "", "", err
+	searchRaw = append(searchRaw, '\n')
+	hashBytes := sha256.Sum256(detailRaw)
+	searchGzip, err := gzipBytes(searchRaw)
+	if err != nil {
+		return encodedBuiltInIconIndex{}, err
 	}
-	return hex.EncodeToString(hashBytes[:]), base64.StdEncoding.EncodeToString(buffer.Bytes()), nil
+	detailGzip, err := gzipBytes(detailRaw)
+	if err != nil {
+		return encodedBuiltInIconIndex{}, err
+	}
+	return encodedBuiltInIconIndex{
+		hash:                  hex.EncodeToString(hashBytes[:]),
+		searchIndex:           searchIndex,
+		searchIndexGzipBase64: base64.StdEncoding.EncodeToString(searchGzip),
+		detailIndexGzipBase64: base64.StdEncoding.EncodeToString(detailGzip),
+	}, nil
+}
+
+func loadRuntimeBuiltInSearchIndex(record *core.Record) (builtInIconSearchIndex, error) {
+	compressed, err := base64.StdEncoding.DecodeString(record.GetString("searchIndexGzipBase64"))
+	if err != nil {
+		return builtInIconSearchIndex{}, err
+	}
+	return loadBuiltInIconSearchIndexFromGzip(compressed)
 }
 
 func loadRuntimeBuiltInIcons(record *core.Record) ([]builtInIcon, error) {
-	compressed, err := base64.StdEncoding.DecodeString(record.GetString("indexGzipBase64"))
+	compressed, err := base64.StdEncoding.DecodeString(record.GetString("detailIndexGzipBase64"))
 	if err != nil {
 		return nil, err
 	}
-	reader, err := gzip.NewReader(bytes.NewReader(compressed))
+	return loadBuiltInIconsFromGzip(compressed)
+}
+
+func loadEmbeddedBuiltInDetailIcons() []builtInIcon {
+	icons, err := loadBuiltInIconsFromGzip(appstatic.BuiltInIconsDetailIndexGzip)
 	if err != nil {
-		return nil, err
+		return []builtInIcon{}
 	}
-	defer reader.Close()
-	raw, err := io.ReadAll(io.LimitReader(reader, 16*1024*1024))
+	return icons
+}
+
+func loadBuiltInIconSearchIndexFromGzip(compressed []byte) (builtInIconSearchIndex, error) {
+	raw, err := gunzipLimited(compressed, 16*1024*1024)
+	if err != nil {
+		return builtInIconSearchIndex{}, err
+	}
+	var index builtInIconSearchIndex
+	if err := json.Unmarshal(raw, &index); err != nil {
+		return builtInIconSearchIndex{}, err
+	}
+	if index.Version != 1 {
+		return builtInIconSearchIndex{}, errors.New("unsupported built-in icon search index version")
+	}
+	return index, nil
+}
+
+func loadBuiltInIconsFromGzip(compressed []byte) ([]builtInIcon, error) {
+	raw, err := gunzipLimited(compressed, 16*1024*1024)
 	if err != nil {
 		return nil, err
 	}
@@ -412,17 +508,41 @@ func loadRuntimeBuiltInIcons(record *core.Record) ([]builtInIcon, error) {
 	return icons, nil
 }
 
+func gzipBytes(raw []byte) ([]byte, error) {
+	var buffer bytes.Buffer
+	gzipWriter := gzip.NewWriter(&buffer)
+	if _, err := gzipWriter.Write(raw); err != nil {
+		return nil, err
+	}
+	if err := gzipWriter.Close(); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func gunzipLimited(compressed []byte, limit int64) ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(compressed))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	raw, err := io.ReadAll(io.LimitReader(reader, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(raw)) > limit {
+		return nil, errors.New("built-in icon index is too large")
+	}
+	return raw, nil
+}
+
 func embeddedBuiltInIconIndexHash() string {
-	hash := sha256.Sum256(appstatic.BuiltInIconsIndex)
-	return hex.EncodeToString(hash[:])
+	return embeddedBuiltInIconSeedMetadata.Hash
 }
 
 func loadEmbeddedBuiltInIconSeedMetadata() builtInIconSeedMetadata {
 	var metadata builtInIconSeedMetadata
 	if err := json.Unmarshal(appstatic.BuiltInIconsIndexMetadata, &metadata); err != nil {
-		return builtInIconSeedMetadata{Providers: map[string]*builtInIconProviderVersionResponse{}}
-	}
-	if metadata.Hash == "" || metadata.Hash != embeddedBuiltInIconIndexHash() {
 		return builtInIconSeedMetadata{Providers: map[string]*builtInIconProviderVersionResponse{}}
 	}
 	if metadata.Providers == nil {

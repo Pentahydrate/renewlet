@@ -28,12 +28,14 @@ describe("auth-session helpers", () => {
   });
 
   it("does not clear a newer token when an older validation fails", () => {
+    // 旧请求的 401 不能清掉用户刚刷新的 token，这是登录竞态的核心防线。
     clearAuthSession("old-token");
 
     expect(mocks.authStoreClear).not.toHaveBeenCalled();
   });
 
   it("clears PocketBase authStore on guarded 401 errors and rethrows the original error", async () => {
+    // PocketBase SDK 路径不经过 apiFetch，这里补齐同一套 401 清会话语义。
     const error = Object.assign(new Error("Unauthorized"), { status: 401 });
 
     await expect(withPocketBaseAuthGuard(Promise.reject(error))).rejects.toBe(error);

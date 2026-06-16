@@ -1,4 +1,3 @@
-// Worker AI 识别测试覆盖 multipart 输入、provider runtime 分流、schema repair 和 diagnostics 不入库契约。
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { AI_RECOGNITION_MAX_IMAGES } from "@renewlet/shared/schemas/ai-recognition";
 import { recognizeSubscriptions, testAIRecognitionConnection } from "./ai-recognition";
@@ -85,7 +84,7 @@ const authUser = {
 };
 
 function envFixture(): Env {
-  return { DB: {} as D1Database, ASSETS_BUCKET: {} as R2Bucket };
+  return { DB: {} as D1Database, ASSETS: {} as Fetcher, ASSETS_BUCKET: {} as R2Bucket };
 }
 
 function requestForText(text: string): Request {

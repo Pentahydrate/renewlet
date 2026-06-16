@@ -26,6 +26,7 @@ export function getAIThinkingOptions(
 ): AIThinkingOption[] {
   const normalizedModel = normalizeAIModelIdForCapability(model);
   if (!normalizedModel) return [];
+  // transport protocol 是真实 API 形状边界，同一 provider 在兼容协议下不能复用原生 thinking 参数。
   if (providerType === "openai" && transportProtocol === "openai-chat") return getOpenAIThinkingOptions(normalizedModel);
   if (providerType === "gemini" && transportProtocol === "gemini-generate-content") return getGeminiThinkingOptions(normalizedModel);
   if (providerType === "anthropic" && transportProtocol === "anthropic-messages") return getAnthropicThinkingOptions(normalizedModel);
@@ -60,6 +61,7 @@ export function defaultAIThinkingControl(
 
 export function thinkingOptionId(control: AiThinkingControl | null): string {
   if (!control) return "off";
+  // id 必须编码 provider 维度，防止不同 provider 的 budget/effort 文案选项在 Select 中撞值。
   if (control.provider === "openai") return `openai:${control.effort}`;
   if (control.provider === "gemini") {
     if (control.mode === "budget") return `gemini:budget:${control.budget ?? ""}`;
@@ -112,6 +114,7 @@ function getGeminiThinkingOptions(model: string): AIThinkingOption[] {
     control: { provider: "gemini" as const, mode: "budget" as const, budget },
   }));
   if (!isGeminiBudgetToggleModel(model)) return budgetOptions;
+  // Gemini 2.5 flash 系列同时支持关闭/动态/预算，顺序决定设置页默认项和回显稳定性。
   return [
     {
       id: "gemini:off",

@@ -329,25 +329,8 @@ jobs:
       - name: Apply D1 migrations
         run: pnpm exec wrangler d1 migrations apply DB --remote --config "$CI_WRANGLER_CONFIG"
 
-      - name: Prepare optional Worker secrets
-        id: worker-secrets
-        env:
-          CLOUDFLARE_WORKER_SECRETS_FILE: ${{ runner.temp }}/renewlet-worker-secrets.json
-          RENEWLET_GITHUB_TOKEN: ${{ secrets.RENEWLET_GITHUB_TOKEN }}
-        run: node scripts/write-cloudflare-worker-secrets-file.mjs "$CLOUDFLARE_WORKER_SECRETS_FILE"
-
       - name: Deploy Worker
-        shell: bash
-        env:
-          CLOUDFLARE_WORKER_SECRETS_FILE: ${{ steps.worker-secrets.outputs.secrets_file }}
-          HAS_CLOUDFLARE_WORKER_SECRETS: ${{ steps.worker-secrets.outputs.has_secrets }}
-        run: |
-          set -euo pipefail
-          deploy_args=(deploy --config "$CI_WRANGLER_CONFIG")
-          if [[ "$HAS_CLOUDFLARE_WORKER_SECRETS" == "true" ]]; then
-            deploy_args+=(--secrets-file "$CLOUDFLARE_WORKER_SECRETS_FILE")
-          fi
-          pnpm exec wrangler "${deploy_args[@]}"
+        run: pnpm exec wrangler deploy --config "$CI_WRANGLER_CONFIG"
 
   fork-notice:
     needs: metadata

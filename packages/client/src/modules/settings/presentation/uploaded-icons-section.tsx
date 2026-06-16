@@ -43,6 +43,7 @@ export function UploadedIconsSection({ id, className, controller }: UploadedIcon
   const isDeletingTarget = deleteTarget ? controller.deletingAssetId === deleteTarget.id : false;
   const totalCount = controller.logo.assets.length + controller.icon.assets.length;
   const openManager = (kind: UploadKind) => {
+    // 入口默认落到用户选择的资产类型，避免 Logo 和支付方式 icon 共用管理器时误删另一类资产。
     setActiveKind(kind);
     setManagerOpen(true);
   };
@@ -149,6 +150,7 @@ export function UploadedIconsSection({ id, className, controller }: UploadedIcon
       </Dialog>
 
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => {
+        // 删除请求进行中不允许关闭后清空 target，否则 pending 状态会丢失对应资产。
         if (!open && !isDeletingTarget) setDeleteTarget(null);
       }}>
         <AlertDialogContent>
@@ -302,6 +304,7 @@ function UploadedAssetKindStatus({ controller, emptyLabel }: { controller: Uploa
   }
 
   if (!controller.isLoading && !controller.error && controller.hasLoaded && controller.assets.length === 0) {
+    // 只在本 kind 已完成一次请求后展示空态，避免懒加载 tab 初次打开前闪现“暂无资产”。
     return (
       <div className="rounded-md border border-dashed border-border bg-background px-3 py-6 text-center">
         <ImageIcon className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
@@ -341,6 +344,7 @@ function UploadedAssetRow({
       onDelete ? "min-[560px]:grid-cols-[3.5rem_minmax(0,1fr)_auto]" : "min-[560px]:grid-cols-[3.5rem_minmax(0,1fr)]",
     )}>
       <div className="media-thumbnail-canvas flex h-14 w-14 items-center justify-center rounded-lg border border-border p-1.5">
+        {/* 资产 URL 仍走私有代理路径，缩略图失败时由 FaviconResultImage 负责降级占位。 */}
         <FaviconResultImage src={asset.url} alt={name} className="media-thumbnail-image" />
       </div>
       <div className="min-w-0">

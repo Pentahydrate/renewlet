@@ -21,7 +21,13 @@ const PRIVACY_SECTIONS: Array<{ title: MessageKey; items: MessageKey[] }> = [
   },
   {
     title: "legal.privacy.thirdParty.title",
-    items: ["legal.privacy.thirdParty.rates", "legal.privacy.thirdParty.icons", "legal.privacy.thirdParty.notifications", "legal.privacy.thirdParty.ai"],
+    items: [
+      "legal.privacy.thirdParty.rates",
+      "legal.privacy.thirdParty.icons",
+      "legal.privacy.thirdParty.notifications",
+      "legal.privacy.thirdParty.ai",
+      "legal.privacy.thirdParty.customScript",
+    ],
   },
   {
     title: "legal.privacy.control.title",

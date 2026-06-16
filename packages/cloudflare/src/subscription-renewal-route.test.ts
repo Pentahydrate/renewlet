@@ -52,6 +52,7 @@ function envFixture(row: SubscriptionRow | null) {
         }),
       })),
     } as unknown as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {} as R2Bucket,
   } satisfies Env;
   return {

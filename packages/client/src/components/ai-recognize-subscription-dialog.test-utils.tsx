@@ -7,6 +7,7 @@ import { DEFAULT_CUSTOM_CONFIG } from "@/types/config";
 import { DEFAULT_SETTINGS, type AppSettings } from "@/types/subscription";
 import { AIRecognizeSubscriptionDialog } from "./ai-recognize-subscription-dialog";
 
+// 测试设置固定为“已配置 provider”，让用例聚焦 AI 弹层状态机而不是设置就绪态。
 export function configuredSettings(): AppSettings {
   return {
     ...DEFAULT_SETTINGS,
@@ -59,6 +60,7 @@ export function makeResponse(subscriptions: AiRecognizedSubscriptionDraft[]): Ai
     model: "gpt-5-mini",
     subscriptions,
     warnings: [],
+    // diagnostics 在成功响应里只做当前请求排障，测试 fixture 不应被导入 preview/apply 断言消费。
     diagnostics: {
       schemaVersion: "1",
       promptVersion: "test",
@@ -130,6 +132,7 @@ export function renderDialog(settings: AppSettings = configuredSettings()) {
 }
 
 export function mockMobile(matches = true) {
+  // AI 弹层在 H5 下换成 workbench 布局，测试通过 matchMedia 明确锁定移动端分支。
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     writable: true,
@@ -147,6 +150,7 @@ export function mockMobile(matches = true) {
 }
 
 export function clipboardDataWithItems(items: Array<{ file: File; kind?: string; type?: string }>): DataTransfer {
+  // 粘贴图片走 DataTransferItem.getAsFile；直接 files 数组覆盖不了该浏览器路径。
   return {
     items: items.map(({ file, kind = "file", type = file.type }) => ({
       kind,

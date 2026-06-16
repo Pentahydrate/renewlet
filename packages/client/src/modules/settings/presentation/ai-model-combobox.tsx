@@ -28,6 +28,7 @@ interface AIModelComboboxProps {
 
 const MODEL_INITIAL_RENDER_LIMIT = 120;
 
+// AI 模型列表来自后端代理的第三方 /models；组件只管理选择体验，不把 API key 暴露给浏览器直连。
 export function AIModelCombobox({
   id,
   value,
@@ -53,6 +54,7 @@ export function AIModelCombobox({
   const visibleModels = React.useMemo(() => {
     const query = modelSearchKey(search);
     if (query) return models.filter((model) => modelMatchesQuery(model, query));
+    // 第三方模型列表可能很长，初始只渲染前 N 个；搜索时再展开匹配结果，保护设置页弹层性能。
     return models.slice(0, MODEL_INITIAL_RENDER_LIMIT);
   }, [models, search]);
   const showModelListFeedback = mode === "select";
@@ -60,16 +62,19 @@ export function AIModelCombobox({
   React.useEffect(() => {
     const previousStatus = previousStatusRef.current;
     previousStatusRef.current = status;
+    // 用户显式刷新成功后自动展开列表，让“刷新模型 -> 选择模型”保持在同一交互上下文里。
     if (previousStatus === "loading" && status === "success" && models.length > 0 && mode === "select") {
       setOpen(true);
     }
   }, [mode, models.length, status]);
 
   React.useEffect(() => {
+    // 关闭 popover 时丢弃搜索词，避免下一次打开看不到刚刷新出来的 provider 模型。
     if (!open) setSearch("");
   }, [open]);
 
   React.useEffect(() => {
+    // 手动输入和错误态都不展示旧列表，避免用户误选到已失败 provider 返回的过期候选。
     if (disabled || status === "error" || mode === "manual") setOpen(false);
   }, [disabled, mode, status]);
 
@@ -80,6 +85,7 @@ export function AIModelCombobox({
 
   const requestModelsIfNeeded = React.useCallback(() => {
     if (!canAutoRefreshModels || disabled || status === "loading") return;
+    // 只在 idle/error 时触发代理刷新；success 结果由 React Query/上层缓存控制新鲜度。
     if (status === "idle" || status === "error") onRequestModels();
   }, [canAutoRefreshModels, disabled, onRequestModels, status]);
 

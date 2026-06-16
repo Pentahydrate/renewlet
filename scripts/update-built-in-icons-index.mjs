@@ -9,13 +9,16 @@
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildBuiltInIconIndex,
   canonicalBuiltInIconSeedMetadataJson,
   canonicalBuiltInIconIndexJson,
+  canonicalBuiltInIconSearchIndexJson,
   countBuiltInIconProviders,
+  createBuiltInIconSearchIndex,
   createBuiltInIconSeedMetadata,
 } from "../packages/shared/src/built-in-icon-index-builder.ts";
 
@@ -23,17 +26,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const configPath = path.resolve(__dirname, "../packages/shared/data/media-resolver-config.json");
 const mediaResolverConfig = JSON.parse(await readFile(configPath, "utf8"));
 
-const outputPaths = [
-  path.resolve(__dirname, "../packages/client/src/lib/built-in-icons-index.json"),
-  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-index.json"),
+const searchIndexOutputPaths = [
+  path.resolve(__dirname, "../packages/client/public/built-in-icons/search-index.json.gz"),
+  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-search-index.json.gz"),
+];
+const detailIndexOutputPaths = [
+  path.resolve(__dirname, "../packages/client/public/built-in-icons/detail-index.json.gz"),
+  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-detail-index.json.gz"),
 ];
 const metadataOutputPaths = [
-  path.resolve(__dirname, "../packages/client/src/lib/built-in-icons-index-metadata.json"),
+  path.resolve(__dirname, "../packages/client/public/built-in-icons/metadata.json"),
   path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-index-metadata.json"),
 ];
 const FETCH_TIMEOUT_MS = 15_000;
-const GITHUB_API_BASE = "https://api.github.com";
-const GITHUB_API_VERSION = "2022-11-28";
+const GITHUB_WEB_BASE = "https://github.com";
+const GITHUB_ATOM_FEED_LIMIT_BYTES = 512 * 1024;
 
 async function fetchJson(url, label) {
   const controller = new AbortController();
@@ -50,22 +57,20 @@ async function fetchJson(url, label) {
   }
 }
 
-async function fetchGitHubJson(url, label) {
+async function fetchGitHubAtomFeed(owner, repo, feedPath, label) {
+  const url = `${GITHUB_WEB_BASE}/${owner}/${repo}/${feedPath.replace(/^\/+|\/+$/g, "")}.atom`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const headers = {
-      accept: "application/vnd.github+json",
+      accept: "application/atom+xml",
       "user-agent": "Renewlet-built-in-icon-index-generator",
-      "x-github-api-version": GITHUB_API_VERSION,
     };
-    const token = process.env.RENEWLET_GITHUB_TOKEN?.trim();
-    if (token) headers.authorization = `Bearer ${token}`;
     const response = await fetch(url, { headers, signal: controller.signal });
     if (!response.ok) {
       throw new Error(`${label} HTTP ${response.status}`);
     }
-    return await response.json();
+    return await responseTextUpToLimit(response, label, GITHUB_ATOM_FEED_LIMIT_BYTES);
   } finally {
     clearTimeout(timeout);
   }
@@ -73,10 +78,10 @@ async function fetchGitHubJson(url, label) {
 
 async function fetchLatestRelease(owner, repo) {
   try {
-    const release = await fetchGitHubJson(`${GITHUB_API_BASE}/repos/${owner}/${repo}/releases/latest`, `${owner}/${repo} latest release`);
+    const release = parseGitHubReleaseAtomFeed(await fetchGitHubAtomFeed(owner, repo, "releases", `${owner}/${repo} latest release`));
     return {
-      tagName: typeof release.tag_name === "string" && release.tag_name.trim() ? release.tag_name.trim() : null,
-      publishedAt: typeof release.published_at === "string" && release.published_at.trim() ? release.published_at.trim() : null,
+      tagName: release.tagName,
+      publishedAt: release.publishedAt,
     };
   } catch {
     return { tagName: null, publishedAt: null };
@@ -85,25 +90,93 @@ async function fetchLatestRelease(owner, repo) {
 
 async function fetchProviderVersion(providerConfig) {
   const { owner, repo, branch, latestRelease } = providerConfig.github;
-  const commit = await fetchGitHubJson(`${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${branch}`, `${owner}/${repo} commit`);
-  if (typeof commit.sha !== "string" || !commit.sha.trim()) {
-    throw new Error(`${owner}/${repo} commit response missing sha`);
-  }
-  const commitSha = commit.sha.trim();
+  const commit = parseGitHubCommitAtomFeed(await fetchGitHubAtomFeed(owner, repo, `commits/${branch}`, `${owner}/${repo} commit`));
+  const commitSha = commit.sha;
   const commitShortSha = commitSha.slice(0, 7);
-  const commitDate = typeof commit.commit?.committer?.date === "string" && commit.commit.committer.date.trim()
-    ? commit.commit.committer.date.trim()
-    : null;
   const release = latestRelease ? await fetchLatestRelease(owner, repo) : { tagName: null, publishedAt: null };
   return {
     sourceRef: commitSha,
     displayVersion: commitShortSha,
     commitSha,
     commitShortSha,
-    commitDate,
+    commitDate: commit.updated,
     releaseTag: release.tagName,
     releasePublishedAt: release.publishedAt,
   };
+}
+
+async function responseTextUpToLimit(response, label, limitBytes) {
+  const declaredLength = Number.parseInt(response.headers.get("content-length") ?? "", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > limitBytes) {
+    throw new Error(`${label} response too large`);
+  }
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limitBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw new Error(`${label} response too large`);
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
+
+function parseGitHubCommitAtomFeed(text) {
+  const entry = firstGitHubAtomEntry(text);
+  const id = atomTagText(entry, "id");
+  const sha = id.match(/\/([a-f0-9]{7,40})$/i)?.[1] ?? "";
+  if (!sha) throw new Error("GitHub commit feed missing sha");
+  return {
+    sha,
+    updated: atomTagText(entry, "updated") || null,
+  };
+}
+
+function parseGitHubReleaseAtomFeed(text) {
+  const entry = firstGitHubAtomEntry(text);
+  const href = entry.match(/<link\b[^>]*\bhref="([^"]+)"/i)?.[1] ?? "";
+  const rawTag = href.match(/\/releases\/tag\/([^/?#"]+)/i)?.[1] ?? "";
+  const tagName = rawTag ? decodePathSegment(xmlText(rawTag)).trim() : "";
+  return {
+    tagName: tagName || null,
+    publishedAt: atomTagText(entry, "updated") || null,
+  };
+}
+
+function firstGitHubAtomEntry(text) {
+  const entry = text.match(/<entry\b[\s\S]*?<\/entry>/i)?.[0] ?? "";
+  if (!entry) throw new Error("GitHub Atom feed is empty");
+  return entry;
+}
+
+function atomTagText(entry, tagName) {
+  const pattern = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "i");
+  return xmlText(entry.match(pattern)?.[1] ?? "").trim();
+}
+
+function xmlText(value) {
+  return value
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+function decodePathSegment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return "";
+  }
 }
 
 async function fetchProviderVersions(config) {
@@ -115,18 +188,23 @@ async function fetchProviderVersions(config) {
 }
 
 const icons = await buildBuiltInIconIndex(mediaResolverConfig, fetchJson);
-const json = canonicalBuiltInIconIndexJson(icons);
-const hash = createHash("sha256").update(json).digest("hex");
+const detailIndexJson = canonicalBuiltInIconIndexJson(icons);
+const searchIndexJson = canonicalBuiltInIconSearchIndexJson(createBuiltInIconSearchIndex(icons));
+const hash = createHash("sha256").update(detailIndexJson).digest("hex");
 const metadataJson = canonicalBuiltInIconSeedMetadataJson(createBuiltInIconSeedMetadata(
   icons,
   hash,
   await fetchProviderVersions(mediaResolverConfig),
 ));
 
-for (const outputPath of outputPaths) {
+for (const outputPath of searchIndexOutputPaths) {
   await mkdir(path.dirname(outputPath), { recursive: true });
-  // 前端 seed 和 Go embedded static seed 必须写入同一 JSON 内容，保证 Docker 与 Cloudflare 冷启动行为一致。
-  await writeFile(outputPath, json, "utf8");
+  await writeFile(outputPath, gzipSync(searchIndexJson));
+}
+
+for (const outputPath of detailIndexOutputPaths) {
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, gzipSync(detailIndexJson));
 }
 
 for (const outputPath of metadataOutputPaths) {
@@ -136,4 +214,4 @@ for (const outputPath of metadataOutputPaths) {
 }
 
 const counts = countBuiltInIconProviders(icons);
-console.log(`Generated ${icons.length} built-in icons (${Object.entries(counts).map(([provider, count]) => `${provider}:${count}`).join(", ")}) at ${outputPaths.map((item) => path.relative(process.cwd(), item)).join(", ")} with metadata ${metadataOutputPaths.map((item) => path.relative(process.cwd(), item)).join(", ")}`);
+console.log(`Generated ${icons.length} built-in icons (${Object.entries(counts).map(([provider, count]) => `${provider}:${count}`).join(", ")}) with search index ${searchIndexOutputPaths.map((item) => path.relative(process.cwd(), item)).join(", ")}, detail index ${detailIndexOutputPaths.map((item) => path.relative(process.cwd(), item)).join(", ")}, metadata ${metadataOutputPaths.map((item) => path.relative(process.cwd(), item)).join(", ")}`);

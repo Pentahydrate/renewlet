@@ -61,7 +61,7 @@ function envFixture() {
     batch: vi.fn(async () => ({ success: true, results: [], meta: {} })),
   };
   return {
-    env: { DB: db as unknown as D1Database, ASSETS_BUCKET: {} as R2Bucket } as Env,
+    env: { DB: db as unknown as D1Database, ASSETS: {} as Fetcher, ASSETS_BUCKET: {} as R2Bucket } as Env,
     db,
     statements,
   };

@@ -19,6 +19,7 @@ const values = (items: readonly ConfigItem[]) => items.map((item) => item.value)
 
 describe("getExchangeRatePreviewCurrencies", () => {
   it("uses the primary common-currency order when CNY is the default currency", () => {
+    // 汇率预览使用固定常用货币顺序，不继承用户配置顺序，保证设置页信息密度稳定。
     const currencies = [
       currency("AED"),
       currency("AFN"),
@@ -39,6 +40,7 @@ describe("getExchangeRatePreviewCurrencies", () => {
   });
 
   it("fills disabled primary currencies from the common fallback pool", () => {
+    // 主推荐币种被禁用时从 fallback 池补齐，而不是展示不可用币种占位。
     const currencies = [
       "USD", "EUR", "GBP", "AUD", "TRY", "NGN", "ARS", "PHP",
       "JPY", "CNY", "CAD", "CHF", "HKD", "SGD", "NZD", "SEK", "NOK",

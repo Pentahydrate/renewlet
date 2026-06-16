@@ -8,6 +8,7 @@ import {
 
 describe("AI thinking capability registry", () => {
   it("exposes OpenAI reasoning efforts only for reasoning models", () => {
+    // thinking 能力表直接影响请求参数；非 reasoning 模型不能出现 provider 会拒绝的 effort。
     expect(getAIThinkingOptions("openai", "openai-chat", "gpt-5.1").map((option) => option.id)).toEqual([
       "openai:none",
       "openai:minimal",
@@ -21,6 +22,7 @@ describe("AI thinking capability registry", () => {
   });
 
   it("uses level controls for Gemini 3 and budget controls for Gemini 2.5", () => {
+    // Gemini 模型 id 可能带 models/ 前缀，能力判断必须在标准化后保持同一口径。
     expect(normalizeAIModelIdForCapability(" models/gemini-2.5-pro ")).toBe("gemini-2.5-pro");
     expect(getAIThinkingOptions("gemini", "gemini-generate-content", "gemini-3-flash").map((option) => option.id)).toEqual([
       "gemini:level:minimal",
@@ -70,6 +72,7 @@ describe("AI thinking capability registry", () => {
   });
 
   it("drops thinking controls that do not match the current provider or model", () => {
+    // 设置页保存的是上一次选择，切换 provider/model 后必须丢弃不兼容 control。
     expect(normalizeAIThinkingControl("openai", "openai-chat", "gpt-5.1", { provider: "gemini", mode: "off" })).toBeNull();
     expect(normalizeAIThinkingControl("openai", "openai-chat", "gpt-4.1", { provider: "openai", effort: "high" })).toBeNull();
     expect(normalizeAIThinkingControl("gemini", "gemini-generate-content", "gemini-2.5-pro", { provider: "gemini", mode: "off" })).toBeNull();

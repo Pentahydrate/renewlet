@@ -43,6 +43,7 @@ export function CallToAction({ locale, onDeployClick }: CallToActionProps) {
             }}
           />
         </div>
+        {/* CTA 文案长度中英文差异明显，宽度分支只保护断行，不改变按钮行为。 */}
         <div className={`mx-auto text-center ${isChinese ? 'max-w-xl' : 'max-w-[42rem]'}`}>
           <h2 className="bg-gradient-to-br from-zinc-100 to-zinc-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
             {text(copy.cta.title, locale)}

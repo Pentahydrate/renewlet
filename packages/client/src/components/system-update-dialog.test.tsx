@@ -481,7 +481,7 @@ describe("SystemUpdateDialog", () => {
       hasUpdate: false,
       checkSucceeded: false,
       releaseInfo: null,
-      warning: "GitHub API 临时限流，请稍后重新检查。",
+      warning: "暂时无法获取 GitHub Release，请稍后重试。",
     });
 
     const user = userEvent.setup();
@@ -489,10 +489,10 @@ describe("SystemUpdateDialog", () => {
 
     await user.click(await screen.findByRole("button", { name: "打开系统更新" }));
 
-    await screen.findByText("GitHub API 临时限流，请稍后重新检查。");
+    await screen.findByText("暂时无法获取 GitHub Release，请稍后重试。");
     expect(screen.getAllByText("暂时无法检查更新")).toHaveLength(1);
     expect(screen.getByRole("status")).toHaveTextContent("暂时无法检查更新");
-    expect(screen.getByText("GitHub API 临时限流，请稍后重新检查。")).toBeInTheDocument();
+    expect(screen.getByText("暂时无法获取 GitHub Release，请稍后重试。")).toBeInTheDocument();
     expect(screen.queryByText("已是最新版本")).not.toBeInTheDocument();
   });
 

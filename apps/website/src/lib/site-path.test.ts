@@ -12,6 +12,7 @@ describe('websitePath', () => {
   })
 
   it('keeps the GitHub Pages repository base URL unchanged', () => {
+    // 默认项目页部署依赖 /renewlet/ 子路径，不能被路径拼接逻辑吃掉尾随斜杠。
     expect(websitePath('', '/renewlet/')).toBe('/renewlet/')
   })
 

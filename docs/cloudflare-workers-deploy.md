@@ -108,6 +108,7 @@ Renewlet's Worker binding names are fixed:
 | Binding | Cloudflare product | Purpose |
 | --- | --- | --- |
 | `DB` | D1 | Users, sessions, subscriptions, settings, notification jobs |
+| `ASSETS` | Workers Static Assets | React app and built-in icon seed indexes |
 | `ASSETS_BUCKET` | R2 | Private uploaded logos/icons |
 
 ### 3. Get CLOUDFLARE_ACCOUNT_ID
@@ -181,22 +182,6 @@ In your fork repository, open `Settings` -> `Secrets and variables` -> `Actions`
 | `WORKER_NAME` | Worker name, for example `renewlet` or `renewlet-prod` |
 | `D1_DATABASE_ID` | D1 database ID copied from the Cloudflare dashboard |
 | `R2_BUCKET_NAME` | R2 bucket name, for example `renewlet-assets` |
-
-Optional: Renewlet checks GitHub Releases for the version popover and GitHub repository commits for the built-in icon library status. Anonymous checks work for most deployments; if the version or icon library status shows GitHub `403` / rate-limit errors, add this extra repository secret:
-
-| Secret | Value |
-| --- | --- |
-| `RENEWLET_GITHUB_TOKEN` | Read-only GitHub token; the workflow uploads it as a Worker secret through a temporary `--secrets-file` during Worker deploy |
-
-One-click deploy users do not use this GitHub Actions secrets table. If needed, open the Renewlet Worker in the Cloudflare Dashboard, go to `Settings` -> `Variables and Secrets`, add the same `RENEWLET_GITHUB_TOKEN` Secret, then redeploy.
-
-For local `pnpm dev:cloudflare`, put the same value in ignored `.dev.vars`:
-
-```env
-RENEWLET_GITHUB_TOKEN="github_pat_..."
-```
-
-Do not put this token in `wrangler.jsonc` `vars`, `wrangler.generated.jsonc`, or front-end code.
 
 <img src="./screenshots/cloudflare/github-actions-secrets.jpg" alt="New repository secret" width="720">
 
@@ -274,23 +259,12 @@ pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.generated.j
 pnpm exec wrangler deploy --config wrangler.generated.jsonc
 ```
 
-If your local CLI deployment also needs `RENEWLET_GITHUB_TOKEN`, create an uncommitted secrets file first, then keep deploying with the same generated config:
-
-```bash
-cat > cloudflare-worker-secrets.local <<'EOF'
-RENEWLET_GITHUB_TOKEN="github_pat_..."
-EOF
-
-pnpm exec wrangler deploy --config wrangler.generated.jsonc --secrets-file cloudflare-worker-secrets.local
-```
-
 ## Other Configuration
 
 | Name | Type | Purpose |
 | --- | --- | --- |
 | `SETUP_ENABLED` | Worker var | `/setup` switch, defaults to `true` |
 | `SESSION_TTL_DAYS` | Worker var | Login validity period, defaults to 30 days |
-| `RENEWLET_GITHUB_TOKEN` | Worker secret | Optional; raises GitHub Release and built-in icon library version check limits |
 | `VITE_RENEWLET_RUNTIME=cloudflare` | Build variable | Frontend uses the Worker API |
 
 ## Common Cases

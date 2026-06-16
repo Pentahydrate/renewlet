@@ -17,7 +17,7 @@ describe("Cloudflare system update contract", () => {
   });
 
   it("returns deploy-only version capability", async () => {
-    mockLatestRelease("1.2.3");
+    const fetchMock = mockLatestRelease("1.2.3");
 
     const response = await systemVersion(new Request("https://renewlet.example/api/app/admin/system/version", {
       headers: { "accept-language": "en-US" },
@@ -46,6 +46,12 @@ describe("Cloudflare system update contract", () => {
       assets: [],
     });
     expect(body).not.toHaveProperty("runtime");
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(url)).toBe("https://github.com/zhiyingzzhou/renewlet/releases.atom");
+    const headers = new Headers((init as RequestInit | undefined)?.headers);
+    expect(headers.get("accept")).toBe("application/atom+xml");
+    expect(headers.get("authorization")).toBeNull();
+    expect(headers.get("x-github-api-version")).toBeNull();
   });
 
   it("treats deploy button builds without metadata as the package stable version", async () => {
@@ -194,11 +200,32 @@ describe("Cloudflare system update contract", () => {
     });
   });
 
+  it("skips release candidates from the Atom feed when selecting the stable target", async () => {
+    mockReleaseFeed(["1.3.0-rc.1", "1.2.3"]);
+
+    const response = await systemVersion(new Request("https://renewlet.example/api/app/admin/system/version", {
+      headers: { "accept-language": "en-US" },
+    }), envFixture({ RENEWLET_VERSION: "1.2.2" }));
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as Record<string, unknown>;
+    expect(body).toMatchObject({
+      currentVersion: "1.2.2",
+      latestVersion: "1.2.3",
+      checkSucceeded: true,
+      hasUpdate: true,
+      releaseInfo: {
+        tagName: "v1.2.3",
+        version: "1.2.3",
+        htmlUrl: "https://github.com/zhiyingzzhou/renewlet/releases/tag/v1.2.3",
+      },
+    });
+  });
+
   it("keeps the dialog usable when GitHub release checks fail", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("rate limited github-secret", { status: 403 })));
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("release feed unavailable", { status: 403 })));
 
     const env = envFixture();
-    env.RENEWLET_GITHUB_TOKEN = "github-secret";
     delete env.RENEWLET_VERSION;
     delete env.RENEWLET_COMMIT;
 
@@ -222,10 +249,10 @@ describe("Cloudflare system update contract", () => {
         buildType: "cloudflare",
       },
       errorDetails: {
-        rawResponseText: "rate limited [redacted]",
+        rawResponseText: "release feed unavailable",
       },
     });
-    expect(JSON.stringify(body)).not.toContain("github-secret");
+    expect(JSON.stringify(body).toLowerCase()).not.toContain("authorization");
   });
 
   it("rejects executable updates in the Worker runtime", async () => {
@@ -252,6 +279,7 @@ describe("Cloudflare system update contract", () => {
 function envFixture(overrides: Partial<Env> = {}): Env {
   return {
     DB: {} as D1Database,
+    ASSETS: {} as Fetcher,
     ASSETS_BUCKET: {} as R2Bucket,
     RENEWLET_VERSION: "1.2.3",
     RENEWLET_COMMIT: "504c1681822ac60f0caafdb0b1ba731853c9169d",
@@ -261,14 +289,38 @@ function envFixture(overrides: Partial<Env> = {}): Env {
 }
 
 function mockLatestRelease(version: string) {
-  vi.stubGlobal("fetch", vi.fn(async () => Response.json({
-    tag_name: `v${version}`,
-    name: `Renewlet ${version}`,
-    body: "",
-    published_at: "2026-06-02T00:00:00Z",
-    html_url: `https://github.com/zhiyingzzhou/renewlet/releases/tag/v${version}`,
-    prerelease: false,
-    draft: false,
-    assets: [],
-  })));
+  const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+    new Response(releaseAtomFixture([version]), {
+      headers: { "content-type": "application/atom+xml" },
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+function mockReleaseFeed(versions: string[]) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(releaseAtomFixture(versions), {
+        headers: { "content-type": "application/atom+xml" },
+      }),
+    ),
+  );
+}
+
+function releaseAtomFixture(versions: string[]): string {
+  const entries = versions.map((version) => {
+    const tag = version.startsWith("v") ? version : `v${version}`;
+    return `  <entry>
+    <updated>2026-06-02T00:00:00Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/zhiyingzzhou/renewlet/releases/tag/${tag}"/>
+    <title>${tag}</title>
+    <content type="html">&lt;p&gt;Release notes&lt;/p&gt;</content>
+  </entry>`;
+  }).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+${entries}
+</feed>`;
 }

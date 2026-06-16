@@ -2,23 +2,22 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 )
 
-// defaultSystemReleaseClient 返回只信任 GitHub Release 下载边界的 HTTP 客户端。
+// defaultSystemReleaseClient 返回只信任 GitHub Release feed 和下载边界的 HTTP 客户端。
 func defaultSystemReleaseClient() systemReleaseClient {
 	return &httpSystemReleaseClient{
-		apiClient: &http.Client{Timeout: systemUpdateAPITimeout},
+		metadataClient: &http.Client{Timeout: systemUpdateCheckTimeout},
 		downloadClient: &http.Client{
 			Timeout: systemUpdateDownloadTimeout,
 			CheckRedirect: func(request *http.Request, via []*http.Request) error {
@@ -32,56 +31,71 @@ func defaultSystemReleaseClient() systemReleaseClient {
 	}
 }
 
-// FetchLatestRelease 读取官方仓库最新 Release，并把网络/限流错误归类为可展示的版本检查失败。
-func (client *httpSystemReleaseClient) FetchLatestRelease(ctx context.Context) (*githubRelease, error) {
-	requestURL := "https://api.github.com/repos/" + systemUpdateRepository + "/releases/latest"
+// FetchReleases 读取官方仓库 Release Atom feed；系统版本检查不再访问 GitHub REST API。
+func (client *httpSystemReleaseClient) FetchReleases(ctx context.Context) ([]systemRelease, error) {
+	requestURL := systemReleaseFeedURL()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	applyGitHubAPIHeaders(request)
-	response, err := client.apiClient.Do(request)
+	applySystemReleaseFeedHeaders(request)
+	response, err := client.metadataClient.Do(request)
 	if err != nil {
-		return nil, classifyGitHubNetworkError(requestURL, err)
+		return nil, classifySystemReleaseNetworkError(err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return nil, newGitHubAPIError(response)
+		return nil, newSystemReleaseHTTPError(response)
 	}
-	var release githubRelease
-	// Release API 是外部输入，限制 body 避免版本检查被异常响应拖垮常驻进程。
-	decoder := json.NewDecoder(io.LimitReader(response.Body, 4<<20))
-	if err := decoder.Decode(&release); err != nil {
+	data, err := io.ReadAll(io.LimitReader(response.Body, systemUpdateReleaseFeedLimitBytes+1))
+	if err != nil {
 		return nil, err
 	}
-	return &release, nil
+	if len(data) > systemUpdateReleaseFeedLimitBytes {
+		return nil, errors.New("GitHub Release feed response too large")
+	}
+	return parseSystemReleaseAtomFeed(data)
 }
 
-// FetchReleases 读取有限页 Release 列表；RC 通道只需要发布队列头部，不能为版本弹窗无限扫描历史。
-func (client *httpSystemReleaseClient) FetchReleases(ctx context.Context, page int, perPage int) ([]githubRelease, error) {
-	if page <= 0 || perPage <= 0 {
-		return nil, errors.New("invalid release list pagination")
+// ProbeReleaseAssets 用固定 Release asset URL 做轻量 HEAD；失败只表示页面内更新暂不可用，不否定版本本身。
+func (client *httpSystemReleaseClient) ProbeReleaseAssets(ctx context.Context, tagName string, version string) []systemReleaseAsset {
+	candidates := []systemReleaseAsset{
+		{Name: systemArchiveName(version), BrowserDownloadURL: systemReleaseAssetURL(tagName, systemArchiveName(version))},
+		{Name: "checksums.txt", BrowserDownloadURL: systemReleaseAssetURL(tagName, "checksums.txt")},
 	}
-	requestURL := fmt.Sprintf("https://api.github.com/repos/%s/releases?page=%d&per_page=%d", systemUpdateRepository, page, perPage)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-	if err != nil {
-		return nil, err
+	assets := make([]systemReleaseAsset, 0, len(candidates))
+	for _, candidate := range candidates {
+		size, ok := client.probeReleaseAsset(ctx, candidate.BrowserDownloadURL)
+		if !ok {
+			continue
+		}
+		candidate.Size = size
+		assets = append(assets, candidate)
 	}
-	applyGitHubAPIHeaders(request)
-	response, err := client.apiClient.Do(request)
+	return assets
+}
+
+func (client *httpSystemReleaseClient) probeReleaseAsset(ctx context.Context, sourceURL string) (int64, bool) {
+	if err := validateTrustedDownloadURL(sourceURL); err != nil {
+		return 0, false
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodHead, sourceURL, nil)
 	if err != nil {
-		return nil, classifyGitHubNetworkError(requestURL, err)
+		return 0, false
+	}
+	request.Header.Set("User-Agent", "Renewlet/"+Version)
+	response, err := client.downloadClient.Do(request)
+	if err != nil {
+		return 0, false
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return nil, newGitHubAPIError(response)
+		return 0, false
 	}
-	var releases []githubRelease
-	decoder := json.NewDecoder(io.LimitReader(response.Body, 4<<20))
-	if err := decoder.Decode(&releases); err != nil {
-		return nil, err
+	if response.ContentLength < 0 {
+		return 0, true
 	}
-	return releases, nil
+	return response.ContentLength, true
 }
 
 // DownloadFile 下载自更新产物到预先分配的临时路径，并限制可信 host、跳转次数和最大体积。
@@ -164,90 +178,121 @@ func validateTrustedDownloadURL(rawURL string) error {
 	return fmt.Errorf("download host %q is not trusted", host)
 }
 
-func applyGitHubAPIHeaders(request *http.Request) {
-	request.Header.Set("Accept", "application/vnd.github+json")
-	request.Header.Set("X-GitHub-Api-Version", systemUpdateGitHubAPIVersion)
+func applySystemReleaseFeedHeaders(request *http.Request) {
+	request.Header.Set("Accept", "application/atom+xml")
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
-	if token := strings.TrimSpace(os.Getenv(systemUpdateGitHubTokenEnv)); token != "" {
-		// GitHub 匿名 REST API 每 IP 共享低额度；管理员可配置只读 token 把版本检查从共享出口限流中解耦。
-		request.Header.Set("Authorization", "Bearer "+token)
-	}
 }
 
-func newGitHubAPIError(response *http.Response) error {
-	token := strings.TrimSpace(os.Getenv(systemUpdateGitHubTokenEnv))
-	secrets := []string{}
-	if token != "" {
-		secrets = append(secrets, token)
+func newSystemReleaseHTTPError(response *http.Response) error {
+	providerResponse, rawBody, _ := captureUpstreamProviderResponse(response, nil)
+	checkError := &systemReleaseCheckError{
+		statusCode: response.StatusCode,
+		status:     response.Status,
+		message:    strings.TrimSpace(rawBody),
+		details:    createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
 	}
-	providerResponse, rawBody, _ := captureUpstreamProviderResponse(response, secrets)
-	message := githubErrorMessage([]byte(rawBody))
-	apiError := &githubAPIError{
-		statusCode:  response.StatusCode,
-		status:      response.Status,
-		message:     message,
-		rateLimited: isGitHubRateLimited(response, message),
-		retryAt:     githubRetryAt(response.Header, time.Now()),
-		details:     createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
-	}
-	return apiError
+	return checkError
 }
 
-func githubErrorMessage(body []byte) string {
-	var payload struct {
-		Message string `json:"message"`
-	}
-	if err := json.Unmarshal(body, &payload); err == nil {
-		return strings.TrimSpace(payload.Message)
-	}
-	return strings.TrimSpace(string(body))
-}
-
-func isGitHubRateLimited(response *http.Response, message string) bool {
-	if response.StatusCode == http.StatusTooManyRequests {
-		return true
-	}
-	if response.StatusCode != http.StatusForbidden {
-		return false
-	}
-	if strings.EqualFold(response.Header.Get("X-RateLimit-Remaining"), "0") {
-		return true
-	}
-	if strings.TrimSpace(response.Header.Get("Retry-After")) != "" {
-		return true
-	}
-	normalizedMessage := strings.ToLower(message)
-	return strings.Contains(normalizedMessage, "rate limit") || strings.Contains(normalizedMessage, "abuse")
-}
-
-func githubRetryAt(header http.Header, now time.Time) time.Time {
-	if retryAfter := strings.TrimSpace(header.Get("Retry-After")); retryAfter != "" {
-		if seconds, err := strconv.Atoi(retryAfter); err == nil && seconds > 0 {
-			return now.Add(time.Duration(seconds) * time.Second)
-		}
-		if at, err := http.ParseTime(retryAfter); err == nil {
-			return at
-		}
-	}
-	if reset := strings.TrimSpace(header.Get("X-RateLimit-Reset")); reset != "" {
-		if seconds, err := strconv.ParseInt(reset, 10, 64); err == nil && seconds > 0 {
-			return time.Unix(seconds, 0)
-		}
-	}
-	return time.Time{}
-}
-
-func classifyGitHubNetworkError(requestURL string, err error) error {
+func classifySystemReleaseNetworkError(err error) error {
 	if err == nil {
 		return nil
 	}
 	var netError net.Error
 	if errors.Is(err, io.EOF) || errors.As(err, &netError) {
 		message := err.Error()
-		return &githubAPIError{
+		return &systemReleaseCheckError{
 			message: message,
 			details: createUpstreamErrorDetails(nil, message),
 		}
 	}
 	return err
+}
+
+type systemReleaseAtomFeed struct {
+	Entries []systemReleaseAtomEntry `xml:"entry"`
+}
+
+type systemReleaseAtomEntry struct {
+	Title   string                   `xml:"title"`
+	Updated string                   `xml:"updated"`
+	Links   []systemReleaseAtomLink  `xml:"link"`
+	Content systemReleaseAtomContent `xml:"content"`
+}
+
+type systemReleaseAtomLink struct {
+	Href string `xml:"href,attr"`
+}
+
+type systemReleaseAtomContent struct {
+	Text string `xml:",chardata"`
+}
+
+func parseSystemReleaseAtomFeed(data []byte) ([]systemRelease, error) {
+	var feed systemReleaseAtomFeed
+	if err := xml.Unmarshal(data, &feed); err != nil {
+		return nil, err
+	}
+	if len(feed.Entries) == 0 {
+		return nil, errors.New("GitHub Release feed is empty")
+	}
+	releases := make([]systemRelease, 0, len(feed.Entries))
+	for _, entry := range feed.Entries {
+		release, ok := systemReleaseFromAtomEntry(entry)
+		if ok {
+			releases = append(releases, release)
+		}
+	}
+	if len(releases) == 0 {
+		return nil, errors.New("GitHub Release feed has no trusted release entries")
+	}
+	return releases, nil
+}
+
+func systemReleaseFromAtomEntry(entry systemReleaseAtomEntry) (systemRelease, bool) {
+	tagName, htmlURL := systemReleaseTagAndURL(entry)
+	version, _, ok := parseSystemVersion(tagName)
+	if !ok {
+		return systemRelease{}, false
+	}
+	if strings.TrimSpace(htmlURL) == "" {
+		htmlURL = systemReleaseTagURL(tagName)
+	}
+	name := strings.TrimSpace(entry.Title)
+	if name == "" {
+		name = "Renewlet " + version
+	}
+	return systemRelease{
+		TagName:     tagName,
+		Name:        name,
+		Body:        strings.TrimSpace(html.UnescapeString(entry.Content.Text)),
+		PublishedAt: strings.TrimSpace(entry.Updated),
+		HTMLURL:     htmlURL,
+		Assets:      nil,
+	}, true
+}
+
+func systemReleaseTagAndURL(entry systemReleaseAtomEntry) (string, string) {
+	for _, link := range entry.Links {
+		if tag := releaseTagFromGitHubAtomLink(link.Href); tag != "" {
+			return tag, strings.TrimSpace(link.Href)
+		}
+	}
+	title := strings.TrimSpace(entry.Title)
+	if _, _, ok := parseSystemVersion(title); ok {
+		return title, ""
+	}
+	return "", ""
+}
+
+func systemReleaseFeedURL() string {
+	return "https://github.com/" + systemUpdateRepository + "/releases.atom"
+}
+
+func systemReleaseTagURL(tagName string) string {
+	return "https://github.com/" + systemUpdateRepository + "/releases/tag/" + url.PathEscape(tagName)
+}
+
+func systemReleaseAssetURL(tagName string, assetName string) string {
+	return "https://github.com/" + systemUpdateRepository + "/releases/download/" + url.PathEscape(tagName) + "/" + url.PathEscape(assetName)
 }

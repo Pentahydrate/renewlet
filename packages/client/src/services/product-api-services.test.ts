@@ -30,6 +30,7 @@ beforeEach(() => {
 
 describe("product API services", () => {
   it("loads and saves settings through /api/app/settings", async () => {
+    // settings 服务是 Docker/Cloudflare 共用边界，测试防止前端回退到 PocketBase collection REST。
     mocks.apiFetch.mockResolvedValue({ settings: DEFAULT_SETTINGS });
 
     await settingsService.get();
@@ -44,6 +45,7 @@ describe("product API services", () => {
   });
 
   it("loads and saves custom config through /api/app/custom-config", async () => {
+    // custom config 同样必须走产品 API，Cloudflare 运行面没有 PocketBase collection endpoint。
     const emptyConfig = { categories: [], statuses: [], paymentMethods: [], currencies: [] };
     mocks.apiFetch.mockResolvedValue({ config: emptyConfig });
 
@@ -59,6 +61,7 @@ describe("product API services", () => {
   });
 
   it("uploads and lists assets through /api/app/assets", async () => {
+    // 上传资产只能通过受控代理 URL 暴露，测试固定前端不依赖 PocketBase 文件路径或 R2 key。
     mocks.apiFetch
       .mockResolvedValueOnce({ url: "/api/app/assets/asset_1" })
       .mockResolvedValueOnce({

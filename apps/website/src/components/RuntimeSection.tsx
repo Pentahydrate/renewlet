@@ -31,6 +31,7 @@ function RuntimeCardView({ card, locale }: { card: RuntimeCard; locale: Locale }
         <ul className="relative grid gap-3">
           {card.details.map((detail) => (
             <li
+              // 英文详情比中文更长，单独放宽行高以避免卡片固定高度下出现拥挤。
               className={`rounded-xl border border-white/10 bg-zinc-950/40 px-4 py-3 text-sm text-zinc-300 ${isChinese ? 'leading-6' : 'leading-[1.65]'}`}
               key={text(detail, locale)}
             >

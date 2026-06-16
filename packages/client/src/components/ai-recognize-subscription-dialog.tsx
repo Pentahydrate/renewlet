@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, FileSearch } from "lucide-react";
+// AI 识别弹窗负责把流式事件收敛为导入草稿；只有 final 事件能进入 preview/apply 链路。
 import { AIDraftReviewPanel } from "@/components/ai-recognition/ai-draft-review-panel";
 import { AIErrorDetailsDialog } from "@/components/ai-recognition/ai-error-details-dialog";
 import {

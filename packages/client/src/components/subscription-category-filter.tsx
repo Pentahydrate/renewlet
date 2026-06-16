@@ -42,6 +42,7 @@ function toggleCategoryValue(categories: Category[], category: Category) {
 
 function selectedCategoryStyle(color?: string): CSSProperties | undefined {
   if (!color) return undefined;
+  // 分类色来自用户配置，只参与轻量强调；透明度固定，避免自定义高饱和色压过状态语义色。
   return {
     backgroundColor: colorWithAlpha(color, 0.12) ?? undefined,
     borderColor: colorWithAlpha(color, 0.35) ?? undefined,
@@ -97,6 +98,7 @@ export function SubscriptionCategoryFilter({
     }
 
     if (mode === "drawer") {
+      // 移动端抽屉先编辑草稿，点击“应用”后再提交，防止用户滑动筛选时列表在背后频繁重排。
       setDraftCategories(selectedCategories);
       setSearchQuery("");
     }
@@ -122,6 +124,7 @@ export function SubscriptionCategoryFilter({
   const activeCategories = mode === "drawer" ? draftCategories : selectedCategories;
   const visibleOptions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    // 搜索只按本地化标签匹配，category value 是持久化 key，不应该暴露给普通筛选用户。
     if (!query) return options;
     return options.filter((option) => option.label.toLowerCase().includes(query));
   }, [options, searchQuery]);
@@ -160,6 +163,7 @@ export function SubscriptionCategoryFilter({
         {open && (
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+            {/* H5 抽屉拥有自己的滚动权和 safe-area 底部预算，避免移动端列表筛选按钮被系统手势条遮住。 */}
             <Drawer.Content className="h5-drawer-panel fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4">
               <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted" />
 

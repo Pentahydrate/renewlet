@@ -39,6 +39,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
+    "vite/**/*.ts",
     "lingui.config.ts",
     "vite.config.ts",
     "vitest.config.ts"

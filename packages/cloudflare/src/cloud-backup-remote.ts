@@ -32,9 +32,16 @@ import {
   upstreamProviderResponseFromFetchResponse,
 } from "./upstream-response";
 
+/**
+ * Worker 云备份远端适配层。
+ *
+ * WebDAV 与 S3 都在这里统一做探针、manifest 校验、上游响应脱敏和错误 shape 收敛；
+ * 调用方只处理 CloudBackupRemoteClient，不直接依赖 webdav/AWS SDK 的异常结构。
+ */
 const textEncoder = new TextEncoder();
 type CloudBackupProviderResponse = UpstreamProviderResponse;
 
+/** 远端存储失败的产品化错误；details 只能随当前认证请求返回，不写入 last_error 或备份包。 */
 export class CloudBackupRemoteError extends Error {
   constructor(
     readonly code: string,
@@ -45,6 +52,7 @@ export class CloudBackupRemoteError extends Error {
   }
 }
 
+/** 远端备份目标的最小能力集；WebDAV/S3 必须共享 manifest 语义和快照校验入口。 */
 export type CloudBackupRemoteClient = {
   test(): Promise<void>;
   list(): Promise<CloudBackupSnapshotManifest[]>;
@@ -53,6 +61,7 @@ export type CloudBackupRemoteClient = {
   delete(id: string): Promise<void>;
 };
 
+/** WebDAV 适配器通过 webdav/web 承接 PROPFIND/MKCOL 等浏览器 fetch 兼容路径。 */
 export class WebDAVCloudBackupClient implements CloudBackupRemoteClient {
   private readonly client: WebDAVClient;
   private readonly attemptedHost: string;
@@ -215,6 +224,7 @@ function joinWebDAVRemotePath(...parts: string[]): string {
   return segments.length > 0 ? `/${segments.join("/")}` : "/";
 }
 
+/** S3 适配器显式使用 fetch handler，避免 Worker 运行面落回 Node stream 语义。 */
 export class S3CloudBackupClient implements CloudBackupRemoteClient {
   private readonly client: S3Client;
   private readonly capture: S3ProviderResponseCapture;

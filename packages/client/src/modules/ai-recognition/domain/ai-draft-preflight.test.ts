@@ -39,6 +39,7 @@ describe("AI draft preflight", () => {
   });
 
   it("blocks drafts missing core billing fields", () => {
+    // 这些缺失字段会让导入层只能填默认值，AI 入口必须先拦住让用户确认。
     expect(getAIDraftBlockingIssues(draft({
       price: null,
       currency: null,

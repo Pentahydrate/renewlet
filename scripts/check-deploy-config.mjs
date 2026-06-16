@@ -227,6 +227,27 @@ function checkDockerSelfUpdateLayout() {
   }
 }
 
+function checkDockerCustomHeadScriptEnv() {
+  const expectedEnv = "RENEWLET_CUSTOM_HEAD_SCRIPT";
+  const files = [
+    ".env.example",
+    "deploy/env.example",
+    "docker-compose.yml",
+    "docker-compose.ghcr.yml",
+    "deploy/docker-compose.yml",
+    "README.md",
+    "README.zh-CN.md",
+  ];
+
+  // 自定义 head 脚本同时影响 HTML 注入与 CSP；部署入口漏传会让文档配置变成静默无效。
+  for (const relativePath of files) {
+    const content = readFileSync(join(repoRoot, relativePath), "utf8");
+    if (!content.includes(expectedEnv)) {
+      throw new Error(`${relativePath} must document or pass through ${expectedEnv}.`);
+    }
+  }
+}
+
 function checkCloudflareDeployMigrationScript() {
   const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
   const deployScript = packageJson.scripts?.deploy;
@@ -285,7 +306,12 @@ function checkCloudflareStaticAssetHeadersContract() {
 function checkCloudflareScheduledLocalRoute() {
   const wranglerConfig = readFileSync(join(repoRoot, "wrangler.jsonc"), "utf8");
   const runWorkerFirst = /"run_worker_first"\s*:\s*\[([^\]]*)\]/s.exec(wranglerConfig)?.[1] ?? "";
+  const assetsBlock = /"assets"\s*:\s*\{(?<body>[\s\S]*?)\n\s*\}/.exec(wranglerConfig)?.groups?.body ?? "";
 
+  // Worker 通过 Static Assets binding 读取 seed 图标索引；不能把大 JSON 再打进 Worker bundle。
+  if (!/"binding"\s*:\s*"ASSETS"/.test(assetsBlock)) {
+    throw new Error('wrangler.jsonc assets.binding must stay "ASSETS" for built-in icon seed reads.');
+  }
   // Wrangler 的 /cdn-cgi scheduled 测试入口在 Workers Static Assets 下会先打到 asset proxy；Renewlet 本地 Cron 固定走 /__scheduled。
   if (!runWorkerFirst.includes('"/__scheduled"')) {
     throw new Error('wrangler.jsonc assets.run_worker_first must include "/__scheduled" for local Cron testing.');
@@ -400,73 +426,34 @@ function checkCloudflareWorkflowBuildMetadata() {
   }
 }
 
-function checkCloudflareWorkerSecretsFileScript() {
-  const helperScript = join(repoRoot, "scripts/write-cloudflare-worker-secrets-file.mjs");
-  const tempDir = mkdtempSync(join(tmpdir(), "renewlet-worker-secrets-"));
-  try {
-    const absentPath = join(tempDir, "absent.json");
-    const absentOutputPath = join(tempDir, "absent.out");
-    run("node", [helperScript, absentPath], {
-      env: {
-        ...process.env,
-        GITHUB_OUTPUT: absentOutputPath,
-        RENEWLET_GITHUB_TOKEN: "",
-      },
-    });
-    if (existsSync(absentPath)) {
-      throw new Error("Cloudflare Worker secrets helper must not write a file when no optional secrets are configured.");
-    }
-    const absentOutput = readFileSync(absentOutputPath, "utf8");
-    if (!absentOutput.includes("has_secrets=false\n") || !absentOutput.includes("secrets_file=\n")) {
-      throw new Error("Cloudflare Worker secrets helper must emit empty GitHub outputs when no optional secrets exist.");
-    }
-
-    const presentPath = join(tempDir, "present.json");
-    const presentOutputPath = join(tempDir, "present.out");
-    run("node", [helperScript, presentPath], {
-      env: {
-        ...process.env,
-        GITHUB_OUTPUT: presentOutputPath,
-        RENEWLET_GITHUB_TOKEN: "github_pat_test",
-      },
-    });
-    const secrets = JSON.parse(readFileSync(presentPath, "utf8"));
-    if (secrets.RENEWLET_GITHUB_TOKEN !== "github_pat_test") {
-      throw new Error("Cloudflare Worker secrets helper must write RENEWLET_GITHUB_TOKEN into the secrets file.");
-    }
-    const presentOutput = readFileSync(presentOutputPath, "utf8");
-    if (!presentOutput.includes("has_secrets=true\n") || !presentOutput.includes(`secrets_file=${presentPath}\n`)) {
-      throw new Error("Cloudflare Worker secrets helper must emit the generated secrets file path for GitHub Actions.");
-    }
-    if (presentOutput.includes("github_pat_test")) {
-      throw new Error("Cloudflare Worker secrets helper must not leak secret values through GitHub outputs.");
-    }
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true });
+function checkRuntimeReleaseSecretPathRemoved() {
+  const removedHelper = join(repoRoot, "scripts/write-cloudflare-worker-secrets-file.mjs");
+  const removedRuntimeReleaseSecretEnv = ["RENEWLET", "GITHUB", "TOKEN"].join("_");
+  if (existsSync(removedHelper)) {
+    throw new Error("Cloudflare Worker secrets helper must stay removed; release checks do not use runtime secret envs.");
   }
-}
 
-function checkCloudflareWorkflowOptionalSecrets() {
-  const workflows = [
-    ["cloudflare-worker.yml", readFileSync(join(repoRoot, ".github/workflows/cloudflare-worker.yml"), "utf8")],
-    ["release-publish.yml", readFileSync(join(repoRoot, ".github/workflows/release-publish.yml"), "utf8")],
+  const files = [
+    ".env.example",
+    "deploy/env.example",
+    "docs/cloudflare-workers-deploy.md",
+    "docs/cloudflare-workers-deploy.zh-CN.md",
+    ".github/workflows/cloudflare-worker.yml",
+    ".github/workflows/release-publish.yml",
   ];
 
-  for (const [name, workflow] of workflows) {
+  // 已发布 release notes 是历史记录，不能为了新 runtime 契约回写旧版本说明；这里仅守当前部署入口。
+  for (const relativePath of files) {
+    const content = readFileSync(join(repoRoot, relativePath), "utf8");
     for (const snippet of [
-      "id: worker-secrets",
-      "RENEWLET_GITHUB_TOKEN: ${{ secrets.RENEWLET_GITHUB_TOKEN }}",
-      "node scripts/write-cloudflare-worker-secrets-file.mjs \"$CLOUDFLARE_WORKER_SECRETS_FILE\"",
-      "deploy_args=(deploy --config \"$CI_WRANGLER_CONFIG\")",
-      "deploy_args+=(--secrets-file \"$CLOUDFLARE_WORKER_SECRETS_FILE\")",
-      "pnpm exec wrangler \"${deploy_args[@]}\"",
+      removedRuntimeReleaseSecretEnv,
+      "write-cloudflare-worker-secrets-file",
+      "worker-secrets",
+      "--secrets-file",
     ]) {
-      if (!workflow.includes(snippet)) {
-        throw new Error(`${name} must keep optional Worker secrets deployment snippet: ${snippet}`);
+      if (content.includes(snippet)) {
+        throw new Error(`${relativePath} must not contain removed runtime release secret path: ${snippet}`);
       }
-    }
-    if (workflow.includes("secret put RENEWLET_GITHUB_TOKEN")) {
-      throw new Error(`${name} must deploy optional Worker secrets through --secrets-file, not wrangler secret put.`);
     }
   }
 }
@@ -475,6 +462,7 @@ run("bash", ["-n", deployScript]);
 checkGeneratedSecrets();
 checkInvalidExistingPBKeyIsRejected();
 checkDockerSelfUpdateLayout();
+checkDockerCustomHeadScriptEnv();
 checkCloudflareDeployMigrationScript();
 checkCloudflareStaticAssetHeadersContract();
 checkCloudflareScheduledLocalRoute();
@@ -483,8 +471,7 @@ checkCloudflareFreshD1Migrations();
 checkCloudflareDeployButtonVars();
 checkCloudflareDeployButtonVersionFallback();
 checkCloudflareWorkflowBuildMetadata();
-checkCloudflareWorkerSecretsFileScript();
-checkCloudflareWorkflowOptionalSecrets();
+checkRuntimeReleaseSecretPathRemoved();
 checkComposeConfig();
 
 console.log("Deployment configuration checks passed.");

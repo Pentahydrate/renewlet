@@ -25,6 +25,7 @@ import {
   type CloudBackupWebDavConfig,
 } from "@renewlet/shared/schemas/cloud-backup";
 import { renewletExportV1Schema, type RenewletExportAsset } from "@renewlet/shared/schemas/import-export";
+// Cloudflare 云备份在 D1 保存策略与锁、R2 保存 ZIP，对外只暴露脱敏后的上游错误详情。
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import {
   boolToInt,
