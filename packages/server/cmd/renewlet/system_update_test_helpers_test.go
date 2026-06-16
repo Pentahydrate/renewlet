@@ -4,13 +4,66 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
+	"time"
 )
+
+// fake client 隔离 GitHub 网络和真实下载，同时暴露计数器给拆分后的测试断言缓存与 probe 行为。
+type fakeSystemReleaseClient struct {
+	release     *systemRelease
+	releases    []systemRelease
+	fetchDelay  time.Duration
+	fetchCount  int32
+	probeCount  int32
+	downloadFn  func(targetPath string) error
+	checksumTxt []byte
+	probeAssets []systemReleaseAsset
+}
+
+func (client *fakeSystemReleaseClient) FetchReleases(ctx context.Context) ([]systemRelease, error) {
+	atomic.AddInt32(&client.fetchCount, 1)
+	if client.fetchDelay > 0 {
+		select {
+		case <-time.After(client.fetchDelay):
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	if client.releases != nil {
+		return append([]systemRelease(nil), client.releases...), nil
+	}
+	if client.release == nil {
+		return nil, errors.New("missing release")
+	}
+	return []systemRelease{*client.release}, nil
+}
+
+func (client *fakeSystemReleaseClient) ProbeReleaseAssets(_ context.Context, _ string, _ string) []systemReleaseAsset {
+	atomic.AddInt32(&client.probeCount, 1)
+	if client.probeAssets != nil {
+		return append([]systemReleaseAsset(nil), client.probeAssets...)
+	}
+	return nil
+}
+
+func (client *fakeSystemReleaseClient) DownloadFile(_ context.Context, _ string, targetPath string, _ int64) error {
+	if client.downloadFn != nil {
+		return client.downloadFn(targetPath)
+	}
+	return errors.New("download not configured")
+}
+
+func (client *fakeSystemReleaseClient) FetchText(_ context.Context, _ string, _ int64) ([]byte, error) {
+	return client.checksumTxt, nil
+}
 
 func (service *systemUpdateService) downloadFnForTest(binaryContent string) {
 	if fake, ok := service.client.(*fakeSystemReleaseClient); ok {
@@ -75,4 +128,16 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return fn(request)
+}
+
+func systemReleaseAtomFixture(tag string, updated string) string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <updated>` + updated + `</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/zhiyingzzhou/renewlet/releases/tag/` + tag + `"/>
+    <title>` + tag + `</title>
+    <content type="html">&lt;p&gt;Release notes&lt;/p&gt;</content>
+  </entry>
+</feed>`
 }
