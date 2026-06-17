@@ -224,6 +224,7 @@ describe("Cloudflare subscription mapper", () => {
     const publicStatusMigration = readFileSync(resolve("migrations/0009_public_status.sql"), "utf8");
     const autoRenewMigration = readFileSync(resolve("migrations/0010_subscription_auto_renew.sql"), "utf8");
     const logoIndexMigration = readFileSync(resolve("migrations/0014_subscription_logo_index.sql"), "utf8");
+    const notificationIndexesMigration = readFileSync(resolve("migrations/0016_notification_scheduler_indexes.sql"), "utf8");
 
     expect(initialMigration).not.toContain("custom_cycle_unit");
     expect(initialMigration).not.toContain("one_time_term");
@@ -240,5 +241,9 @@ describe("Cloudflare subscription mapper", () => {
     expect(autoRenewMigration).toContain("ALTER TABLE subscriptions ADD COLUMN auto_renew INTEGER NOT NULL DEFAULT 0;");
     expect(autoRenewMigration).toContain("UPDATE subscriptions SET auto_renew = 0 WHERE billing_cycle = 'one-time';");
     expect(logoIndexMigration.trim()).toBe("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_logo ON subscriptions (user_id, logo);");
+    expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_auto_renew_due");
+    expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_reminder_due");
+    expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_trial_reminder");
+    expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_repeat_reminder");
   });
 });

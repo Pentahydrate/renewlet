@@ -19,11 +19,15 @@ import (
 
 const notificationSubscriptionPageSize = 500
 
-// listNotificationSubscriptions 读取通知计算所需的订阅投影。
+// listNotificationSubscriptions 只保留给用户主动页面、手动运行、导出和预览等显式读取场景；后台 cron 必须走候选查询。
 func listNotificationSubscriptions(app core.App, userID string) ([]notificationSubscription, error) {
+	return listNotificationSubscriptionsByFilter(app, "user = {:user}", dbx.Params{"user": userID})
+}
+
+func listNotificationSubscriptionsByFilter(app core.App, filter string, params dbx.Params) ([]notificationSubscription, error) {
 	subscriptions := []notificationSubscription{}
 	for offset := 0; ; offset += notificationSubscriptionPageSize {
-		rows, err := app.FindRecordsByFilter("subscriptions", "user = {:user}", "-created", notificationSubscriptionPageSize, offset, dbx.Params{"user": userID})
+		rows, err := app.FindRecordsByFilter("subscriptions", filter, "-created", notificationSubscriptionPageSize, offset, params)
 		if err != nil {
 			return nil, err
 		}
@@ -34,6 +38,42 @@ func listNotificationSubscriptions(app core.App, userID string) ([]notificationS
 			return subscriptions, nil
 		}
 	}
+}
+
+func listNotificationScheduleCandidateSubscriptions(app core.App, userID string, settings appSettings, schedule localScheduleOccurrence, includeExpired bool) ([]notificationSubscription, error) {
+	params := dbx.Params{
+		"user":      userID,
+		"disabled":  disabledReminderDays,
+		"localDate": schedule.ScheduledLocalDate,
+		"maxDate":   addDateOnly(schedule.ScheduledLocalDate, maxReminderDays),
+	}
+	conditions := []string{
+		"(nextBillingDate >= {:localDate} && nextBillingDate <= {:maxDate})",
+		"(trialEndDate >= {:localDate} && trialEndDate <= {:maxDate})",
+	}
+	if includeExpired && settings.ShowExpired {
+		conditions = append(conditions, "nextBillingDate < {:localDate}")
+	}
+	// cron 只读“可能进入本次窗口”的候选，精确 reminderDays、trial/expired/one-time 语义仍交给 collect* 二次过滤。
+	return listNotificationSubscriptionsByFilter(
+		app,
+		"user = {:user} && reminderDays != {:disabled} && ("+strings.Join(conditions, " || ")+")",
+		params,
+	)
+}
+
+func listRepeatReminderCandidateSubscriptions(app core.App, userID string, settings appSettings, now time.Time) ([]notificationSubscription, error) {
+	localDate := todayDateOnly(now, settings.Timezone)
+	params := dbx.Params{
+		"user":      userID,
+		"disabled":  disabledReminderDays,
+		"localDate": localDate,
+		"maxDate":   addDateOnly(localDate, maxReminderDays),
+	}
+	filter := "user = {:user} && reminderDays != {:disabled} && repeatReminderEnabled = true && " +
+		"((nextBillingDate >= {:localDate} && nextBillingDate <= {:maxDate}) || (status = 'trial' && trialEndDate >= {:localDate} && trialEndDate <= {:maxDate}))"
+	// 非日常窗口每分钟只允许读取 repeat 候选；否则 D1 rows read 和 PocketBase I/O 会随订阅总量线性放大。
+	return listNotificationSubscriptionsByFilter(app, filter, params)
 }
 
 func notificationSubscriptionFromRecord(row *core.Record) notificationSubscription {

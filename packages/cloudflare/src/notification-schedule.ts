@@ -118,7 +118,7 @@ export function getNextRepeatScheduleOccurrence(
   return next;
 }
 
-function getRepeatScheduleDecision(
+export function getRepeatScheduleDecision(
   now: Date,
   settings: Pick<ApiAppSettings, "timezone" | "notificationTimeLocal" | "notificationReminderDays">,
   subscriptions: ApiSubscription[],

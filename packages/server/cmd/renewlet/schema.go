@@ -327,6 +327,11 @@ func ensureSubscriptionsCollection(app core.App, users *core.Collection) error {
 		c.AddIndex("idx_subscriptions_user", false, "user", "")
 		c.AddIndex("idx_subscriptions_user_logo", false, "user, logo", "")
 		c.AddIndex("idx_subscriptions_user_next_billing", false, "user, nextBillingDate", "")
+		// 通知/续订 cron 只能读候选集合；这些索引保护每分钟后台 tick 不再退化为按用户全量订阅扫描。
+		c.AddIndex("idx_subscriptions_user_auto_renew_due", false, "user, autoRenew, status, billingCycle, nextBillingDate", "")
+		c.AddIndex("idx_subscriptions_user_reminder_due", false, "user, reminderDays, nextBillingDate", "")
+		c.AddIndex("idx_subscriptions_user_trial_reminder", false, "user, reminderDays, trialEndDate", "")
+		c.AddIndex("idx_subscriptions_user_repeat_reminder", false, "user, repeatReminderEnabled, reminderDays, nextBillingDate", "")
 		return replaceLegacyLogoURLField, nil
 	})
 }

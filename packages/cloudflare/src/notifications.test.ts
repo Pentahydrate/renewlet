@@ -343,6 +343,32 @@ describe("Cloudflare notifications", () => {
     }));
   });
 
+  it("skips non-due scheduled ticks without full subscription scans", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-09T07:00:00.000Z"));
+    const subscriptionQueries: string[] = [];
+    const env = fakeEnv(({ sql, method }) => {
+      if (method === "all" && sql.includes("SELECT id FROM users WHERE banned = 0")) {
+        return d1All([{ id: "usr_due" }]);
+      }
+      if (method === "first" && sql.includes("SELECT settings_json FROM settings")) {
+        return { settings_json: JSON.stringify(settings({ notificationTimeLocal: "08:00" as ApiAppSettings["notificationTimeLocal"] })) };
+      }
+      if (method === "all" && sql.includes("FROM subscriptions")) {
+        subscriptionQueries.push(sql);
+        return d1All([]);
+      }
+      throw new Error(`unexpected ${method} query: ${sql}`);
+    });
+
+    await expect(runScheduledNotifications(env)).resolves.toBeUndefined();
+
+    expect(subscriptionQueries).toHaveLength(1);
+    expect(subscriptionQueries[0]).toContain("repeat_reminder_enabled = 1");
+    expect(subscriptionQueries[0]).not.toContain("auto_renew = 1");
+    expect(subscriptionQueries[0]).not.toMatch(/WHERE user_id = \?\s+ORDER BY created_at DESC, id DESC\s+LIMIT \?/s);
+  });
+
   it("keeps ServerChan business failures summarized inside the cron job history", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-09T08:00:00.000Z"));
@@ -410,6 +436,7 @@ describe("Cloudflare notifications", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-09T08:00:00.000Z"));
     const events: string[] = [];
+    let renewalSelectSql = "";
     let renewalUpdateParams: unknown[] | null = null;
     let finalizeParams: unknown[] | null = null;
     const env = fakeEnv(({ sql, params, method }) => {
@@ -423,6 +450,7 @@ describe("Cloudflare notifications", () => {
         return d1Run(1);
       }
       if (method === "all" && sql.includes("auto_renew = 1")) {
+        renewalSelectSql = sql;
         events.push("renewal-maintenance");
         return d1All([subscriptionRow({
           start_date: "2026-01-08",
@@ -458,6 +486,7 @@ describe("Cloudflare notifications", () => {
     await expect(runScheduledNotifications(env)).resolves.toBeUndefined();
 
     expect(events).toEqual(["renewal-maintenance", "notification-content"]);
+    expect(renewalSelectSql).toContain("billing_cycle IN");
     expect(renewalUpdateParams?.[0]).toBe("2026-02-08");
     expect(finalizeParams?.[0]).toBe("skipped");
   });

@@ -3,6 +3,7 @@ import { appSettingsSchema, settingsUpdateBodySchema, type ApiAppSettings } from
 import { apiSubscriptionSchema, type ApiSubscription } from "@renewlet/shared/schemas/subscriptions";
 import { customConfigSchema } from "@renewlet/shared/schemas/custom-config";
 import { cleanBuiltInIconSourceSettingsPatch, mergeBuiltInIconSourceSettings } from "@renewlet/shared/built-in-icons";
+import { DISABLED_REMINDER_DAYS, MAX_REMINDER_DAYS } from "@renewlet/shared/runtime";
 import type { AdminUser } from "@renewlet/shared/schemas/admin";
 import type { AssetInUseDetails } from "@renewlet/shared/schemas/media";
 import type { z } from "zod";
@@ -279,7 +280,7 @@ export async function countSubscriptions(env: Env, userId: string): Promise<numb
   return row?.count ?? 0;
 }
 
-/** listSubscriptions 用游标分页拉全量，供通知 cron/ICS 这类后台任务复用。 */
+/** listSubscriptions 用游标分页拉全量，只供用户主动列表、导出、日历和设置页概览这类显式读取场景复用。 */
 export async function listSubscriptions(env: Env, userId: string): Promise<SubscriptionRow[]> {
   const rows: SubscriptionRow[] = [];
   let cursor: string | undefined;
@@ -289,6 +290,52 @@ export async function listSubscriptions(env: Env, userId: string): Promise<Subsc
     if (page.length < 100) return rows;
     cursor = subscriptionCursor(page[page.length - 1]!);
   }
+}
+
+export async function listNotificationScheduleCandidateSubscriptions(
+  env: Env,
+  userId: string,
+  options: { scheduledLocalDate: string; includeExpired: boolean; showExpired: boolean },
+): Promise<SubscriptionRow[]> {
+  const maxDate = addDateOnlyDays(options.scheduledLocalDate, MAX_REMINDER_DAYS);
+  const selects = [
+    `SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
+      WHERE user_id = ? AND reminder_days != ? AND next_billing_date >= ? AND next_billing_date <= ?`,
+    `SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
+      WHERE user_id = ? AND reminder_days != ? AND trial_end_date >= ? AND trial_end_date <= ?`,
+  ];
+  const params: unknown[] = [
+    userId, DISABLED_REMINDER_DAYS, options.scheduledLocalDate, maxDate,
+    userId, DISABLED_REMINDER_DAYS, options.scheduledLocalDate, maxDate,
+  ];
+  if (options.includeExpired && options.showExpired) {
+    selects.push(`SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
+      WHERE user_id = ? AND reminder_days != ? AND next_billing_date < ?`);
+    params.push(userId, DISABLED_REMINDER_DAYS, options.scheduledLocalDate);
+  }
+  // scheduled cron 先用索引列缩到候选集合；精确 reminderDays、fixed-term、expired 和 repeat 语义仍由 collect* 统一过滤。
+  const result = await env.DB.prepare(`${selects.join("\nUNION\n")}\nORDER BY created_at DESC, id DESC`)
+    .bind(...params)
+    .all<SubscriptionRow>();
+  return result.results;
+}
+
+export async function listRepeatReminderCandidateSubscriptions(env: Env, userId: string, localDate: string): Promise<SubscriptionRow[]> {
+  const maxDate = addDateOnlyDays(localDate, MAX_REMINDER_DAYS);
+  const result = await env.DB.prepare(`
+    SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
+      WHERE user_id = ? AND repeat_reminder_enabled = 1 AND reminder_days != ?
+        AND next_billing_date >= ? AND next_billing_date <= ?
+    UNION
+    SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
+      WHERE user_id = ? AND repeat_reminder_enabled = 1 AND reminder_days != ?
+        AND status = 'trial' AND trial_end_date >= ? AND trial_end_date <= ?
+    ORDER BY created_at DESC, id DESC
+  `).bind(
+    userId, DISABLED_REMINDER_DAYS, localDate, maxDate,
+    userId, DISABLED_REMINDER_DAYS, localDate, maxDate,
+  ).all<SubscriptionRow>();
+  return result.results;
 }
 
 /** 分页只按当前 user_id 查询，游标不能跨用户复用或泄露其它用户订阅。 */
@@ -424,4 +471,15 @@ export function parseJobResult(row: NotificationJobRow): unknown {
   } catch {
     return {};
   }
+}
+
+function addDateOnlyDays(value: string, days: number): string {
+  const parts = value.split("-");
+  if (parts.length !== 3) return value;
+  const year = Number.parseInt(parts[0] ?? "", 10);
+  const month = Number.parseInt(parts[1] ?? "", 10);
+  const day = Number.parseInt(parts[2] ?? "", 10);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return value;
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
 }

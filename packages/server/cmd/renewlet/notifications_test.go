@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -289,6 +290,145 @@ func TestRegularAndRepeatReminderItemsShareOneSchedule(t *testing.T) {
 	if message.Items[0].RepeatReminder != nil || message.Items[1].RepeatReminder == nil {
 		t.Fatalf("expected regular item then repeat item, got %#v", message.Items)
 	}
+}
+
+func TestNotificationScheduleCandidateSubscriptionsMatchFullFiltering(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	user, _ := createRouteTestUser(t, app, "notification-candidates")
+	settings := defaultAppSettings()
+	settings.Timezone = "UTC"
+	settings.NotificationTimeLocal = "08:00"
+	settings.NotificationReminderDays = 5
+	settings.ShowExpired = true
+	schedule := localScheduleOccurrence{
+		ScheduledLocalDate:  "2026-05-14",
+		ScheduledLocalTime:  "08:00",
+		TimeZone:            "UTC",
+		ScheduledInstantUTC: "2026-05-14T08:00:00Z",
+	}
+
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Renewal", "nextBillingDate": "2026-05-17", "reminderDays": 3})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Inherited", "nextBillingDate": "2026-05-19", "reminderDays": inheritReminderDays})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Trial", "status": "trial", "nextBillingDate": "2026-06-01", "trialEndDate": "2026-05-15", "reminderDays": 1})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Expired", "nextBillingDate": "2026-05-01", "reminderDays": 7})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Fixed Term", "billingCycle": "one-time", "oneTimeTermCount": 6, "oneTimeTermUnit": "month", "nextBillingDate": "2026-05-17", "reminderDays": 3})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Lifetime", "billingCycle": "one-time", "nextBillingDate": "2026-05-14", "reminderDays": 0})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Quiet", "nextBillingDate": "2026-05-17", "reminderDays": disabledReminderDays})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Future", "nextBillingDate": "2040-01-01", "reminderDays": 3})
+
+	full, err := listNotificationSubscriptions(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := listNotificationScheduleCandidateSubscriptions(app, user.Id, settings, schedule, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fullMessage := buildDueNotificationForSchedule(schedule, time.Date(2026, 5, 14, 8, 0, 0, 0, time.UTC), settings, full, true)
+	candidateMessage := buildDueNotificationForSchedule(schedule, time.Date(2026, 5, 14, 8, 0, 0, 0, time.UTC), settings, candidates, true)
+
+	if len(candidates) >= len(full) {
+		t.Fatalf("expected cron candidates to avoid full subscription scan, got candidates=%d full=%d", len(candidates), len(full))
+	}
+	if got, want := notificationItemKeys(candidateMessage.Items), notificationItemKeys(fullMessage.Items); strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("candidate items = %#v, want %#v", got, want)
+	}
+}
+
+func TestRepeatReminderCandidateSubscriptionsMatchFullFiltering(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	user, _ := createRouteTestUser(t, app, "repeat-candidates")
+	settings := defaultAppSettings()
+	settings.Timezone = "UTC"
+	settings.NotificationTimeLocal = "08:00"
+	settings.NotificationReminderDays = 5
+	now := time.Date(2026, 5, 14, 9, 0, 0, 0, time.UTC)
+
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Repeat Explicit", "nextBillingDate": "2026-05-17", "reminderDays": 3, "repeatReminderEnabled": true, "repeatReminderInterval": "1h", "repeatReminderWindow": "72h"})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Repeat Inherit", "nextBillingDate": "2026-05-19", "reminderDays": inheritReminderDays, "repeatReminderEnabled": true, "repeatReminderInterval": "1h", "repeatReminderWindow": "full"})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Repeat Trial", "status": "trial", "nextBillingDate": "2026-06-01", "trialEndDate": "2026-05-17", "reminderDays": 3, "repeatReminderEnabled": true, "repeatReminderInterval": "1h", "repeatReminderWindow": "72h"})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Quiet Repeat", "nextBillingDate": "2026-05-17", "reminderDays": disabledReminderDays, "repeatReminderEnabled": true})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "One Time Repeat", "billingCycle": "one-time", "oneTimeTermCount": 6, "oneTimeTermUnit": "month", "nextBillingDate": "2026-05-17", "reminderDays": 3, "repeatReminderEnabled": true})
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Regular Only", "nextBillingDate": "2026-05-17", "reminderDays": 3, "repeatReminderEnabled": false})
+
+	full, err := listNotificationSubscriptions(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := listRepeatReminderCandidateSubscriptions(app, user.Id, settings, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fullSchedule := getRepeatScheduleDecision(now, settings, full, 2)
+	candidateSchedule := getRepeatScheduleDecision(now, settings, candidates, 2)
+	if !candidateSchedule.Due || candidateSchedule.ScheduledLocalTime != fullSchedule.ScheduledLocalTime {
+		t.Fatalf("candidate repeat schedule = %#v, want %#v", candidateSchedule, fullSchedule)
+	}
+	fullMessage := buildDueNotificationForSchedule(fullSchedule.localScheduleOccurrence, now, settings, full, true)
+	candidateMessage := buildDueNotificationForSchedule(candidateSchedule.localScheduleOccurrence, now, settings, candidates, true)
+	if got, want := notificationItemKeys(candidateMessage.Items), notificationItemKeys(fullMessage.Items); strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("candidate repeat items = %#v, want %#v", got, want)
+	}
+}
+
+func TestNotificationCronNonDueDoesNotCreateJobOrRenewSubscriptions(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	user, _ := createRouteTestUser(t, app, "non-due-cron")
+	settings := defaultAppSettings()
+	settings.Timezone = "UTC"
+	settings.NotificationTimeLocal = "08:00"
+	createNotificationCronRouteTestSettings(t, app, user, settings)
+	expired := createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Expired Auto", "startDate": "2026-01-01", "nextBillingDate": "2026-05-01", "autoRenew": true})
+	for i := 0; i < 20; i++ {
+		createRouteTestSubscription(t, app, user.Id, map[string]interface{}{"name": "Unrelated " + strconv.Itoa(i), "nextBillingDate": "2026-08-01", "repeatReminderEnabled": false})
+	}
+
+	result, err := runNotificationCron(app, notificationCronOptions{
+		Now:           time.Date(2026, 5, 14, 7, 0, 0, 0, time.UTC),
+		WindowMinutes: 2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Processed != 1 || result.Skipped != 1 || result.Results[0].Action != "skipped" {
+		t.Fatalf("unexpected non-due cron result: %#v", result)
+	}
+	jobs, err := app.FindAllRecords("notification_jobs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs) != 0 {
+		t.Fatalf("expected non-due cron not to create jobs, got %d", len(jobs))
+	}
+	reloaded, err := app.FindRecordById("subscriptions", expired.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := reloaded.GetString("nextBillingDate"); got != "2026-05-01" {
+		t.Fatalf("expected non-due notification cron not to run renewal maintenance, got nextBillingDate=%q", got)
+	}
+}
+
+func notificationItemKeys(items []notificationContentItem) []string {
+	keys := make([]string, 0, len(items))
+	for _, item := range items {
+		repeat := ""
+		if item.RepeatReminder != nil {
+			repeat = item.RepeatReminder.Interval + "/" + item.RepeatReminder.Window
+		}
+		keys = append(keys, item.Type+"|"+item.Name+"|"+item.TargetDate+"|"+repeat)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func TestRepeatReminderCronCreatesOneIdempotentJob(t *testing.T) {

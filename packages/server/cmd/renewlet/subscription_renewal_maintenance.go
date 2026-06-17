@@ -17,6 +17,16 @@ const subscriptionRenewalMaintenancePageSize = 500
 
 var subscriptionRenewalCronMu sync.Mutex
 
+func positiveRecurringBillingCycleFilter(field string) string {
+	// 正向枚举让自动续订候选查询命中复合索引；!= one-time 在 D1/PocketBase 下都容易退化成宽扫描。
+	return "(" + field + " = 'weekly' || " +
+		field + " = 'monthly' || " +
+		field + " = 'quarterly' || " +
+		field + " = 'semi-annual' || " +
+		field + " = 'annual' || " +
+		field + " = 'custom')"
+}
+
 type subscriptionRenewalMaintenanceResult struct {
 	UsersProcessed       int
 	SubscriptionsUpdated int
@@ -93,7 +103,7 @@ func renewAutoSubscriptionsForUser(app core.App, userID string, timezone string,
 		// 每轮都从第 0 页按 nextBillingDate 重新查；更新后记录会离开条件，避免 offset 跳过跨多期过期项。
 		rows, err := app.FindRecordsByFilter(
 			"subscriptions",
-			"user = {:user} && autoRenew = true && billingCycle != 'one-time' && nextBillingDate < {:today} && (status = 'active' || status = 'trial')",
+			"user = {:user} && autoRenew = true && "+positiveRecurringBillingCycleFilter("billingCycle")+" && nextBillingDate < {:today} && (status = 'active' || status = 'trial')",
 			"nextBillingDate",
 			subscriptionRenewalMaintenancePageSize,
 			0,

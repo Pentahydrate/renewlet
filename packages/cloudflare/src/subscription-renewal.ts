@@ -8,6 +8,7 @@ import { getSettings, nowIso, SUBSCRIPTION_COLUMNS } from "./db";
 import type { Env, SubscriptionRow } from "./types";
 
 const RENEWAL_MAINTENANCE_PAGE_SIZE = 500;
+const RECURRING_BILLING_CYCLE_SQL = "billing_cycle IN ('weekly', 'monthly', 'quarterly', 'semi-annual', 'annual', 'custom')";
 
 /**
  * 将 D1 订阅行推进为 shared 续订结果。
@@ -59,7 +60,7 @@ export async function renewAutoSubscriptionsForUserInTimezone(env: Env, userId: 
     let pageUpdated = 0;
     const rows = await env.DB.prepare(`
       SELECT ${SUBSCRIPTION_COLUMNS} FROM subscriptions
-      WHERE user_id = ? AND auto_renew = 1 AND billing_cycle != 'one-time'
+      WHERE user_id = ? AND auto_renew = 1 AND ${RECURRING_BILLING_CYCLE_SQL}
         AND next_billing_date < ? AND (status = 'active' OR status = 'trial')
       ORDER BY next_billing_date ASC, id ASC
       LIMIT ?

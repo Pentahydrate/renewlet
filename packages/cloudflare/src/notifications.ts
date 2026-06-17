@@ -13,7 +13,15 @@ import { effectiveReminderDays, isDisabledReminderDays } from "@renewlet/shared/
 import { appSettingsSchema, settingsUpdateBodySchema, type ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { ApiSubscription } from "@renewlet/shared/schemas/subscriptions";
 import { cleanBuiltInIconSourceSettingsPatch, mergeBuiltInIconSourceSettings } from "@renewlet/shared/built-in-icons";
-import { getSettings, listSubscriptions, NOTIFICATION_JOB_COLUMNS, parseJobResult, toApiSubscription } from "./db";
+import {
+  getSettings,
+  listNotificationScheduleCandidateSubscriptions,
+  listRepeatReminderCandidateSubscriptions,
+  listSubscriptions,
+  NOTIFICATION_JOB_COLUMNS,
+  parseJobResult,
+  toApiSubscription,
+} from "./db";
 import { renewAutoSubscriptionsForUserInTimezone } from "./subscription-renewal";
 import { HttpError, json, ok, readOptionalJson, readJson, requestLocale, type AppLocale } from "./http";
 import { DEFAULT_SERVER_I18N_LOCALE, serverFormat, serverText } from "./server-i18n";
@@ -46,9 +54,10 @@ import {
   dateOnlyInZone,
   daysBetween,
   displayTime,
+  getLocalScheduleDecision,
   getNextLocalScheduleOccurrence,
   getNextRepeatScheduleOccurrence,
-  getNotificationScheduleDecision,
+  getRepeatScheduleDecision,
   nextRepeatOccurrenceAfter,
   repeatReminderOccurrenceMatches,
   repeatReminderSnapshot,
@@ -203,11 +212,22 @@ async function runBounded<T>(items: T[], concurrency: number, task: (item: T) =>
 async function runScheduledForUser(env: Env, userId: string): Promise<void> {
   const settings = await getSettings(env, userId);
   const now = new Date();
-  await renewAutoSubscriptionsForUserInTimezone(env, userId, settings.timezone, now);
-  const subscriptions = (await listSubscriptions(env, userId)).map(toApiSubscription);
-  const decision = getNotificationScheduleDecision(now, settings, subscriptions, NOTIFICATION_CRON_WINDOW_MINUTES, false);
+  let decision = getLocalScheduleDecision(now, settings.timezone, settings.notificationTimeLocal, NOTIFICATION_CRON_WINDOW_MINUTES, false);
+  if (!decision.due) {
+    const repeatCandidates = (await listRepeatReminderCandidateSubscriptions(env, userId, dateOnlyInZone(now, settings.timezone))).map(toApiSubscription);
+    // 非日常窗口只允许 repeat 候选参与 due 判断；避免每分钟 scheduled tick 按用户订阅总量读取 D1。
+    const repeatDecision = getRepeatScheduleDecision(now, settings, repeatCandidates, NOTIFICATION_CRON_WINDOW_MINUTES);
+    if (repeatDecision.due) decision = repeatDecision;
+  }
   if (!decision.due) return;
   const occurrence = publicScheduleOccurrence(decision);
+  // due 确认后才推进续订并读取 payload 候选，保持自动续订先于通知内容且不污染非 due 分钟。
+  await renewAutoSubscriptionsForUserInTimezone(env, userId, settings.timezone, now);
+  const subscriptions = (await listNotificationScheduleCandidateSubscriptions(env, userId, {
+    scheduledLocalDate: occurrence.scheduledLocalDate,
+    includeExpired: true,
+    showExpired: settings.showExpired,
+  })).map(toApiSubscription);
   // Cron 没有 request origin；邮件 CTA 只在手动请求能确定公开域名时生成。
   await runCronForUser(env, userId, settings, subscriptions, occurrence, now, DEFAULT_SERVER_I18N_LOCALE);
 }
