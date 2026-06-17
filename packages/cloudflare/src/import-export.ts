@@ -17,6 +17,7 @@ import { requestLocale, json, readJsonWithLimit, HttpError, type AppLocale } fro
 import { serverText } from "./server-i18n";
 import { requireAuth } from "./auth";
 import { normalizeSubscriptionBodyForStorage, subscriptionRowValues, toSubscriptionRow, type SubscriptionBody } from "./subscriptions";
+import { refreshSubscriptionSchedulerState } from "./subscription-scheduler-state";
 import type { Env, SubscriptionRow } from "./types";
 
 const INSERT_SUBSCRIPTION_SQL = `
@@ -70,6 +71,7 @@ export async function applyImport(request: Request, env: Env): Promise<Response>
   const timestamp = nowIso();
   const statements: D1PreparedStatement[] = [];
   const existingMatches = buildExistingImportMatches(existing);
+  let wroteSubscriptions = false;
   for (const item of preview.items) {
     if (item.action !== "create" && item.action !== "replace") continue;
     const source = preview.normalizedByIndex.get(item.index);
@@ -84,6 +86,7 @@ export async function applyImport(request: Request, env: Env): Promise<Response>
       timestamp,
     );
     if (existingRow) {
+      wroteSubscriptions = true;
       statements.push(env.DB.prepare(UPDATE_SUBSCRIPTION_SQL).bind(
         row.name,
         row.logo,
@@ -117,6 +120,7 @@ export async function applyImport(request: Request, env: Env): Promise<Response>
         existingRow.id,
       ));
     } else {
+      wroteSubscriptions = true;
       statements.push(env.DB.prepare(INSERT_SUBSCRIPTION_SQL).bind(...subscriptionRowValues(row)));
     }
   }
@@ -144,6 +148,9 @@ export async function applyImport(request: Request, env: Env): Promise<Response>
   if (statements.length > 0) {
     // D1 batch 在同一事务里执行；导入要么整体写入，要么让调用方看到明确失败。
     await env.DB.batch(statements);
+  }
+  if (wroteSubscriptions) {
+    await refreshSubscriptionSchedulerState(env, auth.user.id, { resetAutoRenewCheck: true });
   }
   return json(importApplyResponseSchema.parse({ ok: true, ...publicPreview(preview) }));
 }

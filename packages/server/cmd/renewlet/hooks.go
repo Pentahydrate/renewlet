@@ -111,6 +111,29 @@ func registerRecordHooks(app core.App) {
 		}
 		return e.Next()
 	})
+	app.OnRecordAfterCreateSuccess("subscriptions").BindFunc(func(e *core.RecordEvent) error {
+		if err := e.Next(); err != nil {
+			return err
+		}
+		return refreshSubscriptionSchedulerStateAfterWrite(app, e.Record)
+	})
+	app.OnRecordAfterUpdateSuccess("subscriptions").BindFunc(func(e *core.RecordEvent) error {
+		if err := e.Next(); err != nil {
+			return err
+		}
+		return refreshSubscriptionSchedulerStateAfterWrite(app, e.Record)
+	})
+	app.OnRecordAfterDeleteSuccess("subscriptions").BindFunc(func(e *core.RecordEvent) error {
+		if err := e.Next(); err != nil {
+			return err
+		}
+		return refreshSubscriptionSchedulerStateAfterWrite(app, e.Record)
+	})
+}
+
+func refreshSubscriptionSchedulerStateAfterWrite(app core.App, record *core.Record) error {
+	_, err := refreshSubscriptionSchedulerState(app, record.GetString("user"), true)
+	return err
 }
 
 func normalizeCloudBackupTargetRecord(record *core.Record) error {

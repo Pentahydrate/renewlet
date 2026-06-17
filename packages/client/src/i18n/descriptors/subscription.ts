@@ -552,4 +552,5 @@ export const messages = [
   msg({ id: "calendar.mobileAgendaEmpty", message: "本月暂无续费或到期" }),
   msg({ id: "calendar.dayListDescription", message: "选择 {date} 要查看的订阅。" }),
   msg({ id: "calendar.dayListFallbackDescription", message: "选择当天要查看的订阅。" }),
+  msg({ id: "subscription.addToCalendarFeedUrlCopyFailedDescription", message: "当前一键复制不可用，请手动选择并复制本次 URL。" }),
 ] as const;

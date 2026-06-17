@@ -15,6 +15,7 @@ const BASE_SETTINGS: AppSettings = {
   ...DEFAULT_SETTINGS,
   recipientEmail: "alice@example.com",
 };
+const originalExecCommandDescriptor = Object.getOwnPropertyDescriptor(document, "execCommand");
 
 function providerStatusFixtures(counts: Record<BuiltInIconProvider, number>) {
   return BUILT_IN_ICON_PROVIDERS.map((provider) => ({
@@ -197,8 +198,9 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "settings.calendarFeedRevoked": "日历订阅已撤销",
         "settings.calendarFeedRevokedDescription": "旧 URL 已失效，日历客户端后续刷新将无法再读取。",
         "settings.calendarFeedFailed": "日历订阅操作失败",
+        "settings.calendarFeedCopyFailed": "复制失败",
         "settings.calendarFeedFailedDescription": "请稍后重试。",
-        "settings.calendarFeedCopyFailedDescription": "复制失败。",
+        "settings.calendarFeedCopyFailedDescription": "当前一键复制不可用，请手动选择并复制 URL。",
         "settings.calendarFeedOpenSystemFailedDescription": "无法唤起系统日历。",
         "settings.publicStatusGenerated": "公开展示已生成",
         "settings.publicStatusGeneratedDescription": "你可以复制链接，或先按订阅逐条隐藏不想公开的项目。",
@@ -214,7 +216,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "settings.publicStatusFailed": "公开展示操作失败",
         "settings.publicStatusFailedDescription": "无法生成公开展示链接，请稍后重试。",
         "settings.publicStatusCopyFailed": "复制失败",
-        "settings.publicStatusCopyFailedDescription": "浏览器拒绝了剪贴板访问，请手动选择并复制 URL。",
+        "settings.publicStatusCopyFailedDescription": "当前一键复制不可用，请手动选择并复制 URL。",
         "settings.publicStatusRevokeFailedDescription": "无法撤销公开展示，请稍后重试。",
         "settings.publicStatusUpdateFailedDescription": "无法更新公开展示设置，请稍后重试。",
       };
@@ -387,6 +389,11 @@ describe("useSettingsFormController integrations", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    if (originalExecCommandDescriptor) {
+      Object.defineProperty(document, "execCommand", originalExecCommandDescriptor);
+    } else {
+      Reflect.deleteProperty(document, "execCommand");
+    }
     localStorage.clear();
   });
 
@@ -604,6 +611,30 @@ describe("useSettingsFormController integrations", () => {
     expect(mocks.toast).toHaveBeenCalledWith({
       title: "日历订阅已撤销",
       description: "旧 URL 已失效，日历客户端后续刷新将无法再读取。",
+    });
+  });
+
+  it("uses localized calendar feed copy failure when clipboard helpers are unavailable", async () => {
+    mocks.calendarFeedStatus = {
+      data: { enabled: true, feedUrl: "https://example.com/calendar/renewals.ics?token=secret" },
+      isLoading: false,
+    };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    Object.defineProperty(document, "execCommand", { configurable: true, value: vi.fn(() => false) });
+    const target = document.createElement("input");
+    target.value = "https://example.com/calendar/renewals.ics?token=secret";
+    document.body.append(target);
+    const { result } = renderHook(() => useSettingsFormController());
+
+    await act(async () => {
+      await result.current.calendarFeed.copyUrl(target);
+    });
+    target.remove();
+
+    expect(mocks.toast).toHaveBeenCalledWith({
+      title: "复制失败",
+      description: "当前一键复制不可用，请手动选择并复制 URL。",
+      variant: "destructive",
     });
   });
 

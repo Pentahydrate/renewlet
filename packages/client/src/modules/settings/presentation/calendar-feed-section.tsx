@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CalendarDays, CalendarPlus, Clipboard, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
+import type { ClipboardCopyTarget } from "@/shared/browser/clipboard";
 import { LoadingButtonContent } from "./settings-shared-controls";
 
 interface CalendarFeedSectionProps {
@@ -22,7 +23,7 @@ interface CalendarFeedSectionProps {
   className?: string;
   /** 是否已有可用 feed；公开 ICS route 只认 URL 中的高熵 token，不读取登录态。 */
   enabled: boolean;
-  /** 当前用户可复制的 HTTPS 订阅 URL；为 null 时表示尚未生成或已撤销。 */
+  /** 当前用户可复制的订阅 URL；为 null 时表示尚未生成或已撤销。 */
   feedUrl: string | null;
   /** 首次读取 feed 状态中，用于统一禁用会改 token 的操作。 */
   isLoading: boolean;
@@ -31,7 +32,7 @@ interface CalendarFeedSectionProps {
   /** 撤销 token 中；完成后公开 ICS URL 应返回同类 404。 */
   isDeleting: boolean;
   onCreate: () => void | Promise<void>;
-  onCopy: () => void | Promise<void>;
+  onCopy: (target?: ClipboardCopyTarget | null) => void | Promise<void>;
   onDelete: () => void | Promise<void>;
   onOpenSystem: () => void | Promise<void>;
   onRegenerate: () => void | Promise<void>;
@@ -58,6 +59,7 @@ export function CalendarFeedSection({
 }: CalendarFeedSectionProps) {
   const { t } = useI18n();
   const [confirmRegenerateOpen, setConfirmRegenerateOpen] = useState(false);
+  const feedUrlInputRef = useRef<HTMLInputElement>(null);
   const busy = isLoading || isCreating || isDeleting;
   return (
     <section id={id} className={cn("rounded-xl border border-border bg-card p-6", className)}>
@@ -78,8 +80,16 @@ export function CalendarFeedSection({
         {feedUrl ? (
           <div className="grid gap-2">
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <Input value={feedUrl} readOnly className="border-border bg-secondary font-mono text-xs" aria-label={t("settings.calendarFeedUrl")} />
-              <Button type="button" variant="default" onClick={onCopy} disabled={busy} className="justify-center gap-2">
+              <Input ref={feedUrlInputRef} value={feedUrl} readOnly className="border-border bg-secondary font-mono text-xs" aria-label={t("settings.calendarFeedUrl")} />
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => {
+                  void onCopy(feedUrlInputRef.current);
+                }}
+                disabled={busy}
+                className="justify-center gap-2"
+              >
                 <Clipboard className="h-4 w-4" />
                 {t("settings.calendarFeedCopy")}
               </Button>

@@ -1224,6 +1224,11 @@ msgid "calendar.startDate"
 msgstr "Start date"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/subscription.ts:555
+msgid "subscription.addToCalendarFeedUrlCopyFailedDescription"
+msgstr "One-click copy is unavailable. Select and copy this URL manually."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:356
 msgid "import.error.workerUnsupported"
 msgstr "This browser does not support background import parsing."

@@ -173,13 +173,19 @@ describe("Cloudflare subscription mapper", () => {
       tags_json: "{dirty-json",
     } satisfies SubscriptionRow;
     let updateValues: unknown[] | null = null;
+    let schedulerRefreshValues: unknown[] | null = null;
     const env = {
       DB: {
         prepare: (sql: string) => ({
           bind: (...values: unknown[]) => ({
             first: async <T>() => sql.includes("FROM subscriptions") ? existing as T : null,
             run: async () => {
-              updateValues = values;
+              if (sql.includes("UPDATE subscriptions SET")) {
+                updateValues = values;
+              }
+              if (sql.includes("subscription_scheduler_state")) {
+                schedulerRefreshValues = values;
+              }
               return { success: true, meta: { changes: 1 }, results: [] } as unknown as D1Result;
             },
           }),
@@ -199,6 +205,7 @@ describe("Cloudflare subscription mapper", () => {
     expect(response.status).toBe(200);
     expect(body.subscription.tags).toEqual([]);
     expect(updateValues?.[21]).toBe("[]");
+    expect(schedulerRefreshValues).toEqual([USER_ID, expect.any(String), expect.any(String), USER_ID]);
   });
 
   it("clears one-time term fields for recurring subscriptions", () => {
@@ -225,6 +232,7 @@ describe("Cloudflare subscription mapper", () => {
     const autoRenewMigration = readFileSync(resolve("migrations/0010_subscription_auto_renew.sql"), "utf8");
     const logoIndexMigration = readFileSync(resolve("migrations/0014_subscription_logo_index.sql"), "utf8");
     const notificationIndexesMigration = readFileSync(resolve("migrations/0016_notification_scheduler_indexes.sql"), "utf8");
+    const schedulerStateMigration = readFileSync(resolve("migrations/0017_subscription_scheduler_state.sql"), "utf8");
 
     expect(initialMigration).not.toContain("custom_cycle_unit");
     expect(initialMigration).not.toContain("one_time_term");
@@ -245,5 +253,17 @@ describe("Cloudflare subscription mapper", () => {
     expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_reminder_due");
     expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_trial_reminder");
     expect(notificationIndexesMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_repeat_reminder");
+    expect(schedulerStateMigration).toContain("CREATE TABLE IF NOT EXISTS subscription_scheduler_state");
+    expect(schedulerStateMigration).toContain("DROP INDEX IF EXISTS idx_subscriptions_user_auto_renew_due");
+    expect(schedulerStateMigration).toContain("ON subscriptions (user_id, auto_renew, next_billing_date, id)");
+    expect(schedulerStateMigration).toContain("DROP INDEX IF EXISTS idx_subscriptions_user_reminder_due");
+    expect(schedulerStateMigration).toContain("ON subscriptions (user_id, next_billing_date, id)");
+    expect(schedulerStateMigration).toContain("DROP INDEX IF EXISTS idx_subscriptions_user_trial_reminder");
+    expect(schedulerStateMigration).toContain("ON subscriptions (user_id, trial_end_date, id)");
+    expect(schedulerStateMigration).toContain("DROP INDEX IF EXISTS idx_subscriptions_user_repeat_reminder");
+    expect(schedulerStateMigration).toContain("ON subscriptions (user_id, repeat_reminder_enabled, next_billing_date, id)");
+    expect(schedulerStateMigration).toContain("idx_subscriptions_user_repeat_trial_reminder");
+    expect(schedulerStateMigration).not.toContain("_v2");
+    expect(schedulerStateMigration).not.toContain("legacy");
   });
 });

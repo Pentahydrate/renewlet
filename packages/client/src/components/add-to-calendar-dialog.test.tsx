@@ -1,6 +1,6 @@
 // 添加到日历弹窗测试锁住一次性 ICS 下载不再依赖浏览器端序列化。
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { assertDateOnly } from "@/lib/time/date-only";
 import type { Subscription } from "@/types/subscription";
 import { AddToCalendarDialog } from "./add-to-calendar-dialog";
@@ -10,9 +10,12 @@ const mocks = vi.hoisted(() => ({
   deleteSubscriptionCalendarFeed: vi.fn(),
   downloadFile: vi.fn(),
   downloadSubscriptionIcs: vi.fn(),
+  subscriptionCalendarFeedStatus: { data: { enabled: false, feedUrl: undefined as string | undefined }, isLoading: false },
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
 }));
+const originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+const originalExecCommandDescriptor = Object.getOwnPropertyDescriptor(document, "execCommand");
 
 vi.mock("@/contexts/CustomConfigContext", () => ({
   useCustomConfig: () => ({
@@ -48,10 +51,7 @@ vi.mock("@/hooks/use-calendar-feed", () => ({
     isPending: false,
     mutateAsync: mocks.deleteSubscriptionCalendarFeed,
   }),
-  useSubscriptionCalendarFeedStatus: () => ({
-    data: { enabled: false, feedUrl: undefined },
-    isLoading: false,
-  }),
+  useSubscriptionCalendarFeedStatus: () => mocks.subscriptionCalendarFeedStatus,
 }));
 
 vi.mock("@/services/calendar-feed-service", () => ({
@@ -132,9 +132,23 @@ describe("AddToCalendarDialog", () => {
     mocks.deleteSubscriptionCalendarFeed.mockReset();
     mocks.downloadFile.mockReset();
     mocks.downloadSubscriptionIcs.mockReset();
+    mocks.subscriptionCalendarFeedStatus = { data: { enabled: false, feedUrl: undefined }, isLoading: false };
     mocks.toastError.mockReset();
     mocks.toastSuccess.mockReset();
     mocks.downloadSubscriptionIcs.mockResolvedValue(new Blob(["BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"], { type: "text/calendar;charset=utf-8" }));
+  });
+
+  afterEach(() => {
+    if (originalClipboardDescriptor) {
+      Object.defineProperty(navigator, "clipboard", originalClipboardDescriptor);
+    } else {
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+    if (originalExecCommandDescriptor) {
+      Object.defineProperty(document, "execCommand", originalExecCommandDescriptor);
+    } else {
+      Reflect.deleteProperty(document, "execCommand");
+    }
   });
 
   it("renders without crypto.randomUUID", () => {
@@ -167,5 +181,32 @@ describe("AddToCalendarDialog", () => {
     await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("ICS 文件生成失败"));
     expect(mocks.downloadFile).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog", { name: "添加到日历" })).toBeInTheDocument();
+  });
+
+  it("shows a localized copy failure instead of leaking missing Clipboard API errors", async () => {
+    mocks.subscriptionCalendarFeedStatus = {
+      data: {
+        enabled: true,
+        feedUrl: "https://example.com/calendar/renewals.ics?token=secret",
+      },
+      isLoading: false,
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(document, "execCommand", {
+      configurable: true,
+      value: vi.fn(() => false),
+    });
+
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "复制 URL" }));
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("订阅 URL 复制失败", {
+      description: "当前一键复制不可用，请手动选择并复制本次 URL。",
+    }));
+    expect(mocks.toastError).not.toHaveBeenCalledWith(expect.stringContaining("writeText"));
+    expect(screen.getByLabelText("本次订阅 URL")).toHaveFocus();
   });
 });

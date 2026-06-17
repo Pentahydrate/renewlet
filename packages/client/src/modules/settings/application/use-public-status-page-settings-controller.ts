@@ -8,6 +8,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n/I18nProvider";
 import { getDisplayErrorMessage } from "@/lib/display-error";
+import { copyTextToClipboard, type ClipboardCopyTarget } from "@/shared/browser/clipboard";
 import type { Subscription } from "@/types/subscription";
 
 export interface SettingsPublicStatusPageController {
@@ -21,7 +22,7 @@ export interface SettingsPublicStatusPageController {
   isDeleting: boolean;
   isUpdating: boolean;
   createOrRotate: () => Promise<void>;
-  copyUrl: () => Promise<void>;
+  copyUrl: (target?: ClipboardCopyTarget | null) => Promise<void>;
   openPage: () => Promise<void>;
   regenerate: () => Promise<void>;
   revoke: () => Promise<void>;
@@ -65,22 +66,22 @@ export function usePublicStatusPageSettingsController(
     }
   }, [createPublicStatusPage, t, toast]);
 
-  const handleCopyPublicStatusUrl = useCallback(async () => {
+  const handleCopyPublicStatusUrl = useCallback(async (target?: ClipboardCopyTarget | null) => {
     const pageUrl = publicStatusPageStatus.data?.pageUrl;
     if (!pageUrl) return;
-    try {
-      await navigator.clipboard.writeText(pageUrl);
+    const copyResult = await copyTextToClipboard(pageUrl, { target });
+    if (copyResult.ok) {
       toast({
         title: t("settings.publicStatusCopied"),
         description: t("settings.publicStatusCopiedDescription"),
       });
-    } catch (error) {
-      toast({
-        title: t("settings.publicStatusCopyFailed"),
-        description: getDisplayErrorMessage(error, t("settings.publicStatusCopyFailedDescription")),
-        variant: "destructive",
-      });
+      return;
     }
+    toast({
+      title: t("settings.publicStatusCopyFailed"),
+      description: t("settings.publicStatusCopyFailedDescription"),
+      variant: "destructive",
+    });
   }, [publicStatusPageStatus.data?.pageUrl, t, toast]);
 
   const handleOpenPublicStatusPage = useCallback(async () => {

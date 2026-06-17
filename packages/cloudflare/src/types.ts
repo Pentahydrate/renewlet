@@ -89,6 +89,16 @@ export interface SubscriptionRow {
   updated_at: string;
 }
 
+/** 每用户调度 gate；Cron 先读这里，空状态下不再触碰 subscriptions 候选查询。 */
+export interface SubscriptionSchedulerStateRow {
+  user_id: string;
+  auto_renew_count: number;
+  repeat_reminder_count: number;
+  last_auto_renew_local_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /** R2 私有资产的 D1 元数据索引；权限判断只能信任这里的 user_id，而不是 R2 key。 */
 export interface AssetRow {
   id: string;

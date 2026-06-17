@@ -32,6 +32,7 @@ import { getDisplayErrorMessage } from "@/lib/display-error";
 import type { RawErrorResponseDetails } from "@/lib/raw-error-response";
 import { applyThemeVariant } from "@/lib/theme-variant";
 import { openValidatedWebcalUrl } from "@/shared/browser/calendar-links";
+import { copyTextToClipboard, type ClipboardCopyTarget } from "@/shared/browser/clipboard";
 import {
   clearSettingsAppearanceDraftFromStorage,
   writeAppearancePendingToStorage,
@@ -100,7 +101,7 @@ interface SettingsCalendarFeedController {
   isCreating: boolean;
   isDeleting: boolean;
   createOrRotate: () => Promise<void>;
-  copyUrl: () => Promise<void>;
+  copyUrl: (target?: ClipboardCopyTarget | null) => Promise<void>;
   openSystem: () => Promise<void>;
   regenerate: () => Promise<void>;
   revoke: () => Promise<void>;
@@ -534,23 +535,23 @@ export function useSettingsFormController(): SettingsFormController {
     }
   }, [createCalendarFeed, t, toast]);
 
-  const handleCopyCalendarFeedUrl = useCallback(async () => {
+  const handleCopyCalendarFeedUrl = useCallback(async (target?: ClipboardCopyTarget | null) => {
     const feedUrl = calendarFeedStatus.data?.feedUrl;
     if (!feedUrl) return;
-    try {
-      // 复制只读当前缓存中的 URL；不在点击时重新请求，避免系统剪贴板权限弹窗和网络竞态叠加。
-      await navigator.clipboard.writeText(feedUrl);
+    // 复制只读当前缓存中的 URL；不在点击时重新请求，避免系统剪贴板动作和网络竞态叠加。
+    const copyResult = await copyTextToClipboard(feedUrl, { target });
+    if (copyResult.ok) {
       toast({
         title: t("settings.calendarFeedCopied"),
         description: t("settings.calendarFeedCopiedDescription"),
       });
-    } catch (error) {
-      toast({
-        title: t("settings.calendarFeedCopyFailed"),
-        description: getDisplayErrorMessage(error, t("settings.calendarFeedCopyFailedDescription")),
-        variant: "destructive",
-      });
+      return;
     }
+    toast({
+      title: t("settings.calendarFeedCopyFailed"),
+      description: t("settings.calendarFeedCopyFailedDescription"),
+      variant: "destructive",
+    });
   }, [calendarFeedStatus.data?.feedUrl, t, toast]);
 
   const handleOpenCalendarFeedSystem = useCallback(async () => {

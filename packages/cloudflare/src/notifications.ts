@@ -23,6 +23,7 @@ import {
   toApiSubscription,
 } from "./db";
 import { renewAutoSubscriptionsForUserInTimezone } from "./subscription-renewal";
+import { getSubscriptionSchedulerState } from "./subscription-scheduler-state";
 import { HttpError, json, ok, readOptionalJson, readJson, requestLocale, type AppLocale } from "./http";
 import { DEFAULT_SERVER_I18N_LOCALE, serverFormat, serverText } from "./server-i18n";
 import { requireAuth } from "./auth";
@@ -214,10 +215,13 @@ async function runScheduledForUser(env: Env, userId: string): Promise<void> {
   const now = new Date();
   let decision = getLocalScheduleDecision(now, settings.timezone, settings.notificationTimeLocal, NOTIFICATION_CRON_WINDOW_MINUTES, false);
   if (!decision.due) {
-    const repeatCandidates = (await listRepeatReminderCandidateSubscriptions(env, userId, dateOnlyInZone(now, settings.timezone))).map(toApiSubscription);
-    // 非日常窗口只允许 repeat 候选参与 due 判断；避免每分钟 scheduled tick 按用户订阅总量读取 D1。
-    const repeatDecision = getRepeatScheduleDecision(now, settings, repeatCandidates, NOTIFICATION_CRON_WINDOW_MINUTES);
-    if (repeatDecision.due) decision = repeatDecision;
+    const schedulerState = await getSubscriptionSchedulerState(env, userId);
+    if (schedulerState.repeat_reminder_count > 0) {
+      const repeatCandidates = (await listRepeatReminderCandidateSubscriptions(env, userId, dateOnlyInZone(now, settings.timezone))).map(toApiSubscription);
+      // 非日常窗口只允许 repeat 候选参与 due 判断；gate=0 时连候选查询都不做，避免空跑读放大。
+      const repeatDecision = getRepeatScheduleDecision(now, settings, repeatCandidates, NOTIFICATION_CRON_WINDOW_MINUTES);
+      if (repeatDecision.due) decision = repeatDecision;
+    }
   }
   if (!decision.due) return;
   const occurrence = publicScheduleOccurrence(decision);

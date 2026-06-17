@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Clipboard, ExternalLink, Globe2, RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
+import type { ClipboardCopyTarget } from "@/shared/browser/clipboard";
 import { LoadingButtonContent } from "./settings-shared-controls";
 
 interface PublicStatusPageSectionProps {
@@ -36,7 +37,7 @@ interface PublicStatusPageSectionProps {
   isDeleting: boolean;
   isUpdating: boolean;
   onCreate: () => void | Promise<void>;
-  onCopy: () => void | Promise<void>;
+  onCopy: (target?: ClipboardCopyTarget | null) => void | Promise<void>;
   onDelete: () => void | Promise<void>;
   onOpenPage: () => void | Promise<void>;
   onRegenerate: () => void | Promise<void>;
@@ -51,7 +52,7 @@ interface PublicStatusLinkRowProps {
   copyLabel: string;
   openLabel: string;
   helpText: string;
-  onCopy: () => void | Promise<void>;
+  onCopy: (target?: ClipboardCopyTarget | null) => void | Promise<void>;
   onOpenPage: () => void | Promise<void>;
 }
 
@@ -65,12 +66,22 @@ function PublicStatusLinkRow({
   onCopy,
   onOpenPage,
 }: PublicStatusLinkRowProps) {
+  const pageUrlInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="grid gap-2">
       <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-        <Input value={pageUrl} readOnly className="h-9 border-border bg-secondary font-mono text-xs" aria-label={urlLabel} />
+        <Input ref={pageUrlInputRef} value={pageUrl} readOnly className="h-9 border-border bg-secondary font-mono text-xs" aria-label={urlLabel} />
         <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-          <Button type="button" variant="outline" size="sm" onClick={onCopy} disabled={busy} className="justify-center gap-2 border-border">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void onCopy(pageUrlInputRef.current);
+            }}
+            disabled={busy}
+            className="justify-center gap-2 border-border"
+          >
             <Clipboard className="h-4 w-4" />
             {copyLabel}
           </Button>

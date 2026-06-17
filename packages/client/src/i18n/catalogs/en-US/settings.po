@@ -2136,12 +2136,12 @@ msgstr "Test connection"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:265
 msgid "settings.calendarFeedCopyFailedDescription"
-msgstr "The browser blocked clipboard access. Select and copy the URL manually."
+msgstr "One-click copy is unavailable. Select and copy the URL manually."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:302
 msgid "settings.publicStatusCopyFailedDescription"
-msgstr "The browser blocked clipboard access. Select and copy the URL manually."
+msgstr "One-click copy is unavailable. Select and copy the URL manually."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:513

@@ -63,6 +63,9 @@ func ensureSchema(app core.App) error {
 	if err := ensureSubscriptionsCollection(app, users); err != nil {
 		return err
 	}
+	if err := ensureSubscriptionSchedulerStatesCollection(app, users); err != nil {
+		return err
+	}
 	if err := ensureSettingsCollection(app, users); err != nil {
 		return err
 	}
@@ -90,7 +93,10 @@ func ensureSchema(app core.App) error {
 	if err := migrateLegacyCloudBackupConfigs(app); err != nil {
 		return err
 	}
-	if err := backfillAutodates(app, "subscriptions", "settings", "custom_configs", "assets", "notification_jobs", "calendar_feeds", "public_status_pages", "cloud_backup_targets", "media_icon_indexes"); err != nil {
+	if err := backfillAutodates(app, "subscriptions", "subscription_scheduler_states", "settings", "custom_configs", "assets", "notification_jobs", "calendar_feeds", "public_status_pages", "cloud_backup_targets", "media_icon_indexes"); err != nil {
+		return err
+	}
+	if err := backfillSubscriptionSchedulerStates(app); err != nil {
 		return err
 	}
 	if err := deleteLegacyHashOnlyCalendarFeeds(app); err != nil {
@@ -327,12 +333,44 @@ func ensureSubscriptionsCollection(app core.App, users *core.Collection) error {
 		c.AddIndex("idx_subscriptions_user", false, "user", "")
 		c.AddIndex("idx_subscriptions_user_logo", false, "user, logo", "")
 		c.AddIndex("idx_subscriptions_user_next_billing", false, "user, nextBillingDate", "")
-		// 通知/续订 cron 只能读候选集合；这些索引保护每分钟后台 tick 不再退化为按用户全量订阅扫描。
-		c.AddIndex("idx_subscriptions_user_auto_renew_due", false, "user, autoRenew, status, billingCycle, nextBillingDate", "")
-		c.AddIndex("idx_subscriptions_user_reminder_due", false, "user, reminderDays, nextBillingDate", "")
-		c.AddIndex("idx_subscriptions_user_trial_reminder", false, "user, reminderDays, trialEndDate", "")
-		c.AddIndex("idx_subscriptions_user_repeat_reminder", false, "user, repeatReminderEnabled, reminderDays, nextBillingDate", "")
+		for _, name := range []string{
+			"idx_subscriptions_user_auto_renew_due",
+			"idx_subscriptions_user_reminder_due",
+			"idx_subscriptions_user_trial_reminder",
+			"idx_subscriptions_user_repeat_reminder",
+		} {
+			removeIndex(c, name)
+		}
+		// 旧索引把低选择性字段放在日期前，SQLite/D1 都可能退回按用户宽扫描；这里直接替换同名语义索引。
+		c.AddIndex("idx_subscriptions_user_auto_renew_due", false, "user, autoRenew, nextBillingDate, id", "")
+		c.AddIndex("idx_subscriptions_user_reminder_due", false, "user, nextBillingDate, id", "")
+		c.AddIndex("idx_subscriptions_user_trial_reminder", false, "user, trialEndDate, id", "")
+		c.AddIndex("idx_subscriptions_user_repeat_reminder", false, "user, repeatReminderEnabled, nextBillingDate, id", "")
+		c.AddIndex("idx_subscriptions_user_repeat_trial_reminder", false, "user, repeatReminderEnabled, status, trialEndDate, id", "")
 		return replaceLegacyLogoURLField, nil
+	})
+}
+
+func ensureSubscriptionSchedulerStatesCollection(app core.App, users *core.Collection) error {
+	return ensureCollection(app, "subscription_scheduler_states", func(c *core.Collection) error {
+		ownerRules(c)
+		if err := upsertField(c, userRelation(users)); err != nil {
+			return err
+		}
+		if err := upsertField(c, &core.NumberField{Name: "autoRenewCount", OnlyInt: true, Min: types.Pointer(float64(0))}); err != nil {
+			return err
+		}
+		if err := upsertField(c, &core.NumberField{Name: "repeatReminderCount", OnlyInt: true, Min: types.Pointer(float64(0))}); err != nil {
+			return err
+		}
+		if err := upsertField(c, &core.TextField{Name: "lastAutoRenewLocalDate", Max: 10, Pattern: `^$|^\d{4}-\d{2}-\d{2}$`}); err != nil {
+			return err
+		}
+		if err := ensureAutodates(c); err != nil {
+			return err
+		}
+		c.AddIndex("idx_subscription_scheduler_states_user_unique", true, "user", "")
+		return nil
 	})
 }
 

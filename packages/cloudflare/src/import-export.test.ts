@@ -223,6 +223,17 @@ describe("Cloudflare import", () => {
     expect(insert?.values[24]).toBe(-2);
   });
 
+  it("refreshes scheduler state after applying subscription imports", async () => {
+    const { env, db, statements } = envFixture();
+    const response = await applyImport(requestFor("/api/app/import/apply", importPayload([
+      importSubscription({ autoRenew: true, repeatReminderEnabled: true }),
+    ])), env);
+
+    expect(response.status).toBe(200);
+    expect(db.batch).toHaveBeenCalledTimes(1);
+    expect(statements.some((statement) => statement.sql.includes("INSERT INTO subscription_scheduler_state"))).toBe(true);
+  });
+
   it("defaults missing import autoRenew to manual renewal before binding D1 statements", async () => {
     const { env, db, statements } = envFixture();
     const subscription = { ...importSubscription() } as Record<string, unknown>;

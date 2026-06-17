@@ -97,9 +97,20 @@ func renewAutoSubscriptionsForUser(app core.App, userID string, timezone string,
 		// 手动通知概览也会调用该 helper；这里统一跳过，避免 demo 只读预览路径产生写库副作用。
 		return 0, nil
 	}
+	state, err := getSubscriptionSchedulerState(app, userID)
+	if err != nil {
+		return 0, err
+	}
+	if state.AutoRenewCount <= 0 {
+		return 0, nil
+	}
 	today := todayDateOnly(now, timezone)
+	if state.LastAutoRenewLocalDate == today {
+		return 0, nil
+	}
 	updated := 0
 	for {
+		pageUpdated := 0
 		// 每轮都从第 0 页按 nextBillingDate 重新查；更新后记录会离开条件，避免 offset 跳过跨多期过期项。
 		rows, err := app.FindRecordsByFilter(
 			"subscriptions",
@@ -126,8 +137,12 @@ func renewAutoSubscriptionsForUser(app core.App, userID string, timezone string,
 				return updated, err
 			}
 			updated++
+			pageUpdated++
 		}
-		if len(rows) < subscriptionRenewalMaintenancePageSize {
+		if pageUpdated == 0 || len(rows) < subscriptionRenewalMaintenancePageSize {
+			if err := markSubscriptionAutoRenewChecked(app, userID, today); err != nil {
+				return updated, err
+			}
 			return updated, nil
 		}
 	}

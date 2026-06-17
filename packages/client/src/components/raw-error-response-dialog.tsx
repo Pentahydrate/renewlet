@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatRawErrorResponseText, type RawErrorResponseDetails } from "@/lib/raw-error-response";
+import { copyTextToClipboard } from "@/shared/browser/clipboard";
 
 interface RawErrorResponseDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ export function RawErrorResponseDialog({
 }: RawErrorResponseDialogProps) {
   const { t } = useI18n();
   const [copyState, setCopyState] = useState<CopyState>("idle");
+  const responseTextRef = useRef<HTMLPreElement>(null);
   const responseText = details?.responseText || details?.message || "";
   const displayText = formatRawErrorResponseText(responseText);
   const copyLabel = copyState === "copied"
@@ -42,12 +44,12 @@ export function RawErrorResponseDialog({
 
   async function handleCopy() {
     if (!displayText) return;
-    try {
-      await navigator.clipboard.writeText(displayText);
+    const copyResult = await copyTextToClipboard(displayText, { target: responseTextRef.current });
+    if (copyResult.ok) {
       setCopyState("copied");
-    } catch {
-      setCopyState("failed");
+      return;
     }
+    setCopyState("failed");
   }
 
   return (
@@ -73,6 +75,8 @@ export function RawErrorResponseDialog({
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3" data-testid={testId}>
           <pre
+            ref={responseTextRef}
+            tabIndex={-1}
             className={[
               "min-h-0 flex-1 overflow-auto rounded-md border border-border bg-secondary/30 p-3 font-mono text-xs leading-5 whitespace-pre-wrap break-words",
               displayText ? "text-foreground" : "text-muted-foreground",

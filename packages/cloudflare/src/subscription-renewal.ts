@@ -5,7 +5,8 @@ import {
   type SubscriptionRenewalResult,
 } from "@renewlet/shared/subscription-renewal";
 import { getSettings, nowIso, SUBSCRIPTION_COLUMNS } from "./db";
-import type { Env, SubscriptionRow } from "./types";
+import { getSubscriptionSchedulerState, markAutoRenewCheckedForLocalDate } from "./subscription-scheduler-state";
+import type { Env, SubscriptionRow, SubscriptionSchedulerStateRow } from "./types";
 
 const RENEWAL_MAINTENANCE_PAGE_SIZE = 500;
 const RECURRING_BILLING_CYCLE_SQL = "billing_cycle IN ('weekly', 'monthly', 'quarterly', 'semi-annual', 'annual', 'custom')";
@@ -48,13 +49,23 @@ export async function renewAutoSubscriptionsForAllUsers(env: Env, now = new Date
 
 /** 单用户入口从 settings 读取时区；通知、手动运行和 Cron 都复用同一 today 计算。 */
 export async function renewAutoSubscriptionsForUser(env: Env, userId: string, now = new Date()): Promise<number> {
+  const state = await getSubscriptionSchedulerState(env, userId);
+  if (state.auto_renew_count <= 0) return 0;
   const settings = await getSettings(env, userId);
-  return renewAutoSubscriptionsForUserInTimezone(env, userId, settings.timezone, now);
+  return renewAutoSubscriptionsForUserInTimezone(env, userId, settings.timezone, now, state);
 }
 
-export async function renewAutoSubscriptionsForUserInTimezone(env: Env, userId: string, timezone: string, now = new Date()): Promise<number> {
+export async function renewAutoSubscriptionsForUserInTimezone(
+  env: Env,
+  userId: string,
+  timezone: string,
+  now = new Date(),
+  cachedState?: SubscriptionSchedulerStateRow,
+): Promise<number> {
   if (!userId) return 0;
   const today = dateOnlyInZone(now, timezone);
+  const state = cachedState ?? await getSubscriptionSchedulerState(env, userId);
+  if (state.auto_renew_count <= 0 || state.last_auto_renew_local_date === today) return 0;
   let updated = 0;
   for (;;) {
     let pageUpdated = 0;
@@ -73,8 +84,10 @@ export async function renewAutoSubscriptionsForUserInTimezone(env: Env, userId: 
       pageUpdated += 1;
     }
     // 本轮更新后继续从头查，保证一次 cron 能追上跨多期过期订阅，同时不会依赖被改写的游标。
-    if (pageUpdated === 0) return updated;
-    if (rows.results.length < RENEWAL_MAINTENANCE_PAGE_SIZE) return updated;
+    if (pageUpdated === 0 || rows.results.length < RENEWAL_MAINTENANCE_PAGE_SIZE) {
+      await markAutoRenewCheckedForLocalDate(env, userId, today);
+      return updated;
+    }
   }
 }
 

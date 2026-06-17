@@ -1448,6 +1448,7 @@ export const MESSAGE_KEYS = [
   "subscription.addToCalendarFeedUrl",
   "subscription.addToCalendarFeedUrlCopied",
   "subscription.addToCalendarFeedUrlCopyFailed",
+  "subscription.addToCalendarFeedUrlCopyFailedDescription",
   "subscription.addToCalendarGenerateFeed",
   "subscription.addToCalendarGoogle",
   "subscription.addToCalendarNoSync",

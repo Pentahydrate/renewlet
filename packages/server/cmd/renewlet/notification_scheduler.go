@@ -313,13 +313,19 @@ func processNotificationCronUser(app core.App, options notificationCronOptions, 
 	settings := settingsFromRecord(row)
 	schedule := getLocalScheduleDecision(options.Now, settings.Timezone, settings.NotificationTimeLocal, options.WindowMinutes, options.Force)
 	if !schedule.Due && !options.Force {
-		subscriptions, err := listRepeatReminderCandidateSubscriptions(app, userID, settings, options.Now)
+		state, err := getSubscriptionSchedulerState(app, userID)
 		if err != nil {
 			return notificationCronUserResult{}, err
 		}
-		// 日常窗口未命中时只让 repeat 候选参与 due 判断；全量订阅扫描会把每分钟 cron 放大成按用户订阅总量计费/耗时。
-		if repeat := getRepeatScheduleDecision(options.Now, settings, subscriptions, options.WindowMinutes); repeat.Due {
-			schedule = repeat
+		if state.RepeatReminderCount > 0 {
+			subscriptions, err := listRepeatReminderCandidateSubscriptions(app, userID, settings, options.Now)
+			if err != nil {
+				return notificationCronUserResult{}, err
+			}
+			// 日常窗口未命中时只让 repeat 候选参与 due 判断；gate=0 时不查 subscriptions，避免每分钟空跑 I/O。
+			if repeat := getRepeatScheduleDecision(options.Now, settings, subscriptions, options.WindowMinutes); repeat.Due {
+				schedule = repeat
+			}
 		}
 	}
 	if !schedule.Due {

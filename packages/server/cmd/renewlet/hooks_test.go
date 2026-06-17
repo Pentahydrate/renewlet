@@ -74,6 +74,66 @@ func TestDetectUploadMimeTypeRejectsNonSvgXml(t *testing.T) {
 	}
 }
 
+func TestSubscriptionSchedulerStateRefreshesAfterSubscriptionWrites(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	registerRecordHooks(app)
+	user, _ := createRouteTestUser(t, app, "scheduler-state")
+
+	record := createRouteTestSubscription(t, app, user.Id, map[string]interface{}{
+		"autoRenew":             false,
+		"repeatReminderEnabled": false,
+	})
+	state, err := getSubscriptionSchedulerState(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.AutoRenewCount != 0 || state.RepeatReminderCount != 0 {
+		t.Fatalf("initial scheduler state = %#v, want zero counts", state)
+	}
+
+	record.Set("autoRenew", true)
+	record.Set("repeatReminderEnabled", true)
+	if err := app.Save(record); err != nil {
+		t.Fatal(err)
+	}
+	state, err = getSubscriptionSchedulerState(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.AutoRenewCount != 1 || state.RepeatReminderCount != 1 {
+		t.Fatalf("updated scheduler state = %#v, want one auto and one repeat", state)
+	}
+
+	if err := markSubscriptionAutoRenewChecked(app, user.Id, "2026-05-14"); err != nil {
+		t.Fatal(err)
+	}
+	record.Set("notes", "invalidate scheduler check")
+	if err := app.Save(record); err != nil {
+		t.Fatal(err)
+	}
+	state, err = getSubscriptionSchedulerState(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.LastAutoRenewLocalDate != "" {
+		t.Fatalf("expected subscription update to invalidate last auto renew check, got %#v", state)
+	}
+
+	if err := app.Delete(record); err != nil {
+		t.Fatal(err)
+	}
+	state, err = getSubscriptionSchedulerState(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.AutoRenewCount != 0 || state.RepeatReminderCount != 0 {
+		t.Fatalf("deleted scheduler state = %#v, want zero counts", state)
+	}
+}
+
 func TestNormalizeCustomConfigRecordAllowsMissingGroupsAndRejectsWrongTypes(t *testing.T) {
 	collection := core.NewBaseCollection("custom_configs")
 	record := core.NewRecord(collection)

@@ -2136,12 +2136,12 @@ msgstr "测试连接"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:265
 msgid "settings.calendarFeedCopyFailedDescription"
-msgstr "浏览器拒绝了剪贴板访问，请手动选择并复制 URL。"
+msgstr "当前一键复制不可用，请手动选择并复制 URL。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:302
 msgid "settings.publicStatusCopyFailedDescription"
-msgstr "浏览器拒绝了剪贴板访问，请手动选择并复制 URL。"
+msgstr "当前一键复制不可用，请手动选择并复制 URL。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:513
