@@ -1314,16 +1314,6 @@ msgid "settings.builtInIconIndexCurrentVersion"
 msgstr "当前：{version}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:265
-msgid "settings.calendarFeedCopyFailedDescription"
-msgstr "当前一键复制不可用，请手动选择并复制 URL。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:302
-msgid "settings.publicStatusCopyFailedDescription"
-msgstr "当前一键复制不可用，请手动选择并复制 URL。"
-
-#. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:36
 msgid "settings.currentPassword"
 msgstr "当前密码"
@@ -2142,6 +2132,16 @@ msgstr "测试连接"
 #: src/i18n/descriptors/settings.ts:360
 msgid "settings.cloudBackupTest"
 msgstr "测试连接"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:265
+msgid "settings.calendarFeedCopyFailedDescription"
+msgstr "当前一键复制不可用，请手动选择并复制 URL。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:302
+msgid "settings.publicStatusCopyFailedDescription"
+msgstr "当前一键复制不可用，请手动选择并复制 URL。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:513
