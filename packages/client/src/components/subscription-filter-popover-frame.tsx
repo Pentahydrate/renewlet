@@ -1,3 +1,9 @@
+/**
+ * 订阅页桌面筛选 Popover 的唯一布局骨架。
+ *
+ * 分类和标签共用这里固定 header/search/footer，把滚动权收敛到内容区，
+ * 避免各筛选器重新写一套高度链后又出现外框裁切、列表不滚动的问题。
+ */
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
@@ -33,6 +39,7 @@ export function SubscriptionFilterPopoverFrame({
       sideOffset={8}
       data-testid={contentTestId}
       className={[
+        // 同时吃应用视觉视口和 Radix 可用高度，Popover 靠近屏幕边缘时也只能让内容区滚动。
         "flex max-h-[min(calc(var(--app-viewport-height)-1rem),var(--radix-popover-content-available-height,32rem))]",
         "w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden border-border bg-popover p-0 text-popover-foreground",
       ].join(" ")}

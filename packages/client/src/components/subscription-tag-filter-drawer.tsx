@@ -151,6 +151,7 @@ export function SubscriptionTagFilterPopover({
         </PopoverTrigger>
       </div>
 
+      {/* 桌面标签筛选和分类共用同一条高度链；H5 Drawer 继续独立处理批量选择后的确认提交。 */}
       <SubscriptionFilterPopoverFrame
         title={t("subscriptions.tags.drawerTitle")}
         closeLabel={t("common.close")}

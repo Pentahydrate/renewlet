@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   exportToJSONWithSecrets: vi.fn(),
   exportToCSV: vi.fn(),
   customConfig: {
+    // 长分类墙复现默认内置分类数量，专门覆盖桌面 Popover 超过首屏时的滚动布局。
     categories: ([
       ["productivity", "生产力", "Productivity", "hsl(200 80% 50%)"],
       ["entertainment", "娱乐", "Entertainment", "hsl(280 70% 55%)"],
@@ -188,6 +189,7 @@ function visibleSubscriptionNames() {
   return screen.getAllByTestId("subscription-card").map((card) => card.textContent ?? "");
 }
 
+// 这里锁的是“外框限高 + 中间唯一滚动区”的结构契约，不是装饰性 Tailwind 快照。
 function expectDesktopFilterPopoverFrame(contentTestId: string, scrollTestId: string) {
   const popover = screen.getByTestId(contentTestId);
   const scroll = screen.getByTestId(scrollTestId);

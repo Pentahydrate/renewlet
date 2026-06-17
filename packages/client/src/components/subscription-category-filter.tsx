@@ -248,6 +248,7 @@ export function SubscriptionCategoryFilter({
         </PopoverTrigger>
       </div>
 
+      {/* 桌面分类选择即时生效；H5 Drawer 保留草稿确认，避免小屏滑动筛选时背后列表频繁重排。 */}
       <SubscriptionFilterPopoverFrame
         title={t("subscriptions.category.drawerTitle")}
         closeLabel={t("common.close")}
