@@ -86,7 +86,7 @@ RENEWLET_IMAGE="ghcr.io/zhiyingzzhou/renewlet:0.1.0"
 
 Use the deploy button for a Cloudflare-managed repository, or follow [Cloudflare Workers deploy](docs/cloudflare-workers-deploy.md) to manage D1, R2, GitHub Actions, and secrets yourself.
 
-Do not click the deploy button again to upgrade. One-click deploy users update the repository connected in Cloudflare Builds; manual deploy users sync their fork and run `Cloudflare Worker`. Cloudflare updates must apply D1 migrations before publishing the Worker.
+Do not click the deploy button again to upgrade. One-click deploy users run `Sync Renewlet Upstream` in the generated repository connected by Cloudflare Builds; manual deploy users update their fork to the latest Renewlet version, then run `Cloudflare Worker`. Cloudflare updates must apply D1 migrations before publishing the Worker.
 
 ## Upgrade
 
@@ -142,7 +142,7 @@ RENEWLET_CUSTOM_HEAD_SCRIPT='<script defer src="https://cdn.example.com/widget.j
 
 Renewlet accepts only a single external script tag with `src` and no inline content. The script origin is automatically added to `script-src` and `connect-src`; when `data-host-url` is present, its origin is also added to `connect-src`.
 
-Docker/Go deployments inject this at runtime, so changing the environment variable only requires restarting Renewlet. Local `pnpm dev` injects through Vite. Cloudflare Static Assets injects it at build time when the variable is present during `pnpm build:cloudflare`, so changes require rebuilding and redeploying.
+Docker/Go deployments inject this at runtime, so changing the environment variable only requires restarting Renewlet. Cloudflare Static Assets reads the variable at build time, so changes require rebuilding and redeploying.
 
 ## Screenshots
 

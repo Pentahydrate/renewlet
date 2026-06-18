@@ -23,36 +23,32 @@ If you are using a proxy/VPN node, a corporate or school network, or another sha
 
 ### Upgrade
 
-One-click deploy creates a repository in your GitHub account. To upgrade later, update that repository. Do not click the one-click button again.
+One-click deploy creates and connects a repository in your GitHub account. To upgrade Renewlet later, update that generated repository. Do not click the one-click deploy button again; that can create a new Worker/D1/R2 instead of updating your existing instance.
 
-Open the Renewlet Worker in the Cloudflare dashboard, go to `Settings` -> `Builds`, and find the connected repository. The Cloudflare generated repository is not a standard GitHub fork, so it will not have GitHub's native `Sync fork` button.
+Open the Renewlet Worker in the Cloudflare dashboard, go to `Settings` -> `Builds`, and find the generated repository connected by Cloudflare Builds. This generated repository is not a standard GitHub fork, so it will not have GitHub's native `Sync fork` button.
 
-New GitHub generated repositories include a manual sync workflow. To upgrade, open the generated repository:
+Open the generated repository, then:
 
 1. Go to `Actions`.
 2. Select `Sync Renewlet Upstream`.
 3. Click `Run workflow`.
 4. Wait for the workflow to finish.
 
-This workflow only syncs when you click it. It does not run on a schedule. It syncs the file tree from Renewlet upstream, preserves the Worker name, D1 database ID/name, R2 bucket, and existing vars in the generated repository's `wrangler.jsonc`, then pushes a normal commit. After that push, Cloudflare redeploys automatically.
+This workflow runs only when you click it; it does not update on a schedule. It updates the generated repository to the latest Renewlet files while preserving the Worker name, D1 database ID/name, R2 bucket, and vars in `wrangler.jsonc`. After the workflow commits the update, Cloudflare Builds redeploys automatically.
 
 If GitHub says Actions are disabled, open the generated repository's `Settings` -> `Actions` -> `General`, enable Actions, and allow `Read and write permissions` under `Workflow permissions`.
 
 ### Existing One-Click Deploy Users
 
-Existing GitHub generated repositories will not get `Sync Renewlet Upstream` automatically. Do not click the one-click deploy button again; keep using the original Worker, D1, R2, and generated repository.
+Older GitHub generated repositories might not have `Sync Renewlet Upstream`. Do not click the one-click deploy button again; keep using the original Worker, D1, R2, and generated repository.
 
-Add this file once in the original generated repository:
+If you do not see this workflow in `Actions`, add this file once in the original generated repository:
 
 ```text
 .github/workflows/sync-renewlet-upstream.yml
 ```
 
-Copy its content from the same file in Renewlet upstream:
-
-```text
-https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/sync-renewlet-upstream.yml
-```
+Copy the content from this workflow: [sync-renewlet-upstream.yml](https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/sync-renewlet-upstream.yml).
 
 After committing it, future upgrades use the same path as new users: `Actions` -> `Sync Renewlet Upstream` -> `Run workflow`.
 
@@ -60,7 +56,7 @@ If you prefer to create D1/R2, the Cloudflare API Token, and GitHub Secrets your
 
 ## Manual Deploy (GitHub Actions)
 
-Manual deploy is for users who want to manage Cloudflare resources and GitHub Actions themselves. After preparing the 5 values below, run `Cloudflare Worker` manually in your fork.
+Manual deploy is for users who want to manage Cloudflare resources and GitHub Actions themselves. After preparing the 5 values below, run `Cloudflare Worker` in your fork to apply D1 migrations and deploy the Worker.
 
 Workflow:
 
@@ -75,7 +71,7 @@ Add these 5 values to GitHub Secrets to enable remote deployment.
 
 ### 1. Fork The Repository
 
-Fork the current repository to your own account or organization.
+Fork the Renewlet repository to your own account or organization.
 
 Repository name already exists: use the existing fork, or choose another repository name.
 
@@ -202,7 +198,7 @@ In your fork repository, open `Settings` -> `Secrets and variables` -> `Actions`
 
 The workflow file is `.github/workflows/cloudflare-worker.yml`.
 
-For the first deployment, run it manually from GitHub Actions. Later, when you sync upstream changes into your fork, Actions can redeploy automatically if enabled. You can also run it manually at any time:
+For the first deployment, run it manually from GitHub Actions. For later upgrades, update your fork to the latest Renewlet version first; if Actions are enabled, the update can redeploy automatically. You can also run it manually at any time:
 
 The workflow needs the 5 required repository secrets above to deploy to Cloudflare. Without them, it only verifies the Cloudflare build path and does not change any remote D1 database or Worker.
 
@@ -233,9 +229,9 @@ Custom domain: after deployment, bind a Worker route or custom domain for the Wo
 
 ## Update Version
 
-One-click deploy users: follow the Upgrade steps above and sync the repository connected in Cloudflare Builds.
+One-click deploy users: follow the Upgrade steps above and run `Sync Renewlet Upstream` in the generated repository connected by Cloudflare Builds.
 
-Manual deploy users: open your fork and click `Sync fork` / `Update branch`. If deployment does not start automatically, open `Actions` and run `Cloudflare Worker`.
+Manual deploy users: update your fork to the latest Renewlet version with `Sync fork` / `Update branch`. If deployment does not start automatically, open `Actions` and run `Cloudflare Worker`.
 
 Every Cloudflare update must apply D1 migrations before publishing the Worker. `pnpm deploy` and GitHub Actions both keep this order.
 
@@ -293,9 +289,9 @@ pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.generated.j
 
 **ServerChan test notifications return HTTP 429?**
 
-This is ServerChan rejecting the request. The official ServerChan FAQ says `429` means the source IP exceeded the API call limit within 24 hours, and the fix is to stop calling the API and try again after 24 hours.
+This is a ServerChan rate-limit response, not a Renewlet notification payload error. The official ServerChan FAQ says `429` means the source IP exceeded the API call limit within 24 hours, and the fix is to stop calling the API and try again after 24 hours.
 
-When Renewlet runs on Cloudflare Workers, the ServerChan request is sent by the Worker. ServerChan counts the source IP that reaches ServerChan from the Worker egress path. The real cause is that this Cloudflare egress source IP has hit ServerChan's 24-hour limit; it is not a Renewlet notification payload format error.
+When Renewlet runs on Cloudflare Workers, the ServerChan request is sent by the Worker. ServerChan counts the source IP that reaches ServerChan from the Worker egress path. The usual cause is that this Cloudflare egress source IP has hit ServerChan's 24-hour limit.
 
 Use these fixes:
 

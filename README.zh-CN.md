@@ -86,7 +86,7 @@ RENEWLET_IMAGE="ghcr.io/zhiyingzzhou/renewlet:0.1.0"
 
 可以使用部署按钮创建 Cloudflare 管理的仓库；也可以按 [Cloudflare Workers 部署](docs/cloudflare-workers-deploy.zh-CN.md) 自己管理 D1、R2、GitHub Actions 和 secrets。
 
-升级时不要重新点击部署按钮。一键部署用户更新 Cloudflare Builds 连接的仓库；手动部署用户同步 fork 后运行 `Cloudflare Worker`。Cloudflare 升级必须先执行 D1 migrations，再发布 Worker。
+升级时不要重新点击部署按钮。一键部署用户在 Cloudflare Builds 连接的生成仓库里运行 `Sync Renewlet Upstream`；手动部署用户把自己的 fork 更新到 Renewlet 最新版本后运行 `Cloudflare Worker`。Cloudflare 升级必须先执行 D1 migrations，再发布 Worker。
 
 ## 升级
 
@@ -142,7 +142,7 @@ RENEWLET_CUSTOM_HEAD_SCRIPT='<script defer src="https://cdn.example.com/widget.j
 
 Renewlet 只接受单个带 `src`、无内联内容的外链 script。脚本 origin 会自动加入 `script-src` 和 `connect-src`；如果提供 `data-host-url`，该 origin 也会加入 `connect-src`。
 
-Docker/Go 部署在运行时注入，修改环境变量后只需重启 Renewlet。本地 `pnpm dev` 由 Vite 注入。Cloudflare Static Assets 在 `pnpm build:cloudflare` 构建时读取该变量并注入，修改后需要重新构建和部署。
+Docker/Go 部署在运行时注入，修改环境变量后只需重启 Renewlet。Cloudflare Static Assets 在构建时读取该变量并注入，修改后需要重新构建和部署。
 
 ## 截图
 

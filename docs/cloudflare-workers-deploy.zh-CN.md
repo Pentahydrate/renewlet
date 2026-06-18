@@ -23,36 +23,32 @@ https://<worker-name>.<workers-dev-subdomain>.workers.dev/setup
 
 ### 升级办法
 
-一键部署会在你的 GitHub 账号下生成一个仓库。以后升级，更新这个仓库，不要重新点一键部署按钮。
+一键部署会在你的 GitHub 账号下生成并连接一个仓库。以后升级 Renewlet 时，请更新这个生成仓库；不要重新点一键部署按钮，否则可能创建新的 Worker/D1/R2，而不是升级现有实例。
 
-先在 Cloudflare Dashboard 打开 Renewlet Worker，进入 `Settings` -> `Builds`，找到连接的生成仓库。Cloudflare 生成仓库不是标准 GitHub fork，所以不会有 GitHub 原生的 `Sync fork` 按钮。
+先在 Cloudflare Dashboard 打开 Renewlet Worker，进入 `Settings` -> `Builds`，找到 Cloudflare Builds 连接的生成仓库。这个生成仓库不是标准 GitHub fork，所以不会有 GitHub 原生的 `Sync fork` 按钮。
 
-新的 GitHub 生成仓库会带一个手动同步入口。升级时打开生成仓库：
+打开生成仓库后：
 
 1. 进入 `Actions`。
 2. 选择 `Sync Renewlet Upstream`。
 3. 点击 `Run workflow`。
 4. 等待 workflow 完成。
 
-这个 workflow 只在你手动点击时同步，不会定时自动同步。它会从 Renewlet 上游同步文件树，保留生成仓库 `wrangler.jsonc` 里的 Worker 名称、D1 database ID / name、R2 bucket 和现有 vars，然后 push 一个普通提交。push 后 Cloudflare 会自动重新部署。
+这个 workflow 只在你手动点击时运行，不会定时自动更新。运行后，它会把生成仓库更新到 Renewlet 最新文件，同时保留 `wrangler.jsonc` 里的 Worker 名称、D1 database ID / name、R2 bucket 和 vars。workflow 提交完成后，Cloudflare Builds 会按这个提交自动重新部署。
 
 如果 GitHub 提示 Actions 被禁用，先在生成仓库打开 `Settings` -> `Actions` -> `General`，启用 Actions，并在 `Workflow permissions` 里允许 `Read and write permissions`。
 
 ### 旧一键部署用户
 
-旧 GitHub 生成仓库不会自动出现 `Sync Renewlet Upstream`。不要重新点一键部署；继续使用原来的 Worker、D1、R2 和生成仓库。
+旧 GitHub 生成仓库可能没有 `Sync Renewlet Upstream`。不要重新点一键部署；继续使用原来的 Worker、D1、R2 和生成仓库。
 
-只需要在原生成仓库里一次性添加：
+如果在 `Actions` 里看不到这个 workflow，只需要在原生成仓库里一次性添加：
 
 ```text
 .github/workflows/sync-renewlet-upstream.yml
 ```
 
-文件内容复制自 Renewlet 上游同名文件：
-
-```text
-https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/sync-renewlet-upstream.yml
-```
+从这个 workflow 复制文件内容：[sync-renewlet-upstream.yml](https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/sync-renewlet-upstream.yml)。
 
 提交后，以后升级就和新用户一样，进入 `Actions` -> `Sync Renewlet Upstream` -> `Run workflow`。
 
@@ -60,7 +56,7 @@ https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/s
 
 ## 手动部署（GitHub Actions）
 
-手动部署适合想自己管理 Cloudflare 资源和 GitHub Actions 的用户。准备好下面 5 个值后，在你的 fork 仓库里手动运行 `Cloudflare Worker`。
+手动部署适合想自己管理 Cloudflare 资源和 GitHub Actions 的用户。准备好下面 5 个值后，在你的 fork 仓库里运行 `Cloudflare Worker`，由它应用 D1 migrations 并部署 Worker。
 
 流程：
 
@@ -75,7 +71,7 @@ https://raw.githubusercontent.com/zhiyingzzhou/renewlet/main/.github/workflows/s
 
 ### 1. Fork 仓库
 
-把当前仓库 Fork 到自己的账号或组织。
+把 Renewlet 仓库 Fork 到自己的账号或组织。
 
 仓库名已存在：使用已有 fork，或换一个仓库名。
 
@@ -202,7 +198,7 @@ Renewlet 的 Worker binding 名固定如下：
 
 工作流文件在 `.github/workflows/cloudflare-worker.yml`。
 
-首次部署建议从 GitHub Actions 手动运行。之后同步 fork 更新后，仓库启用 Actions 时会自动重新部署；也可以随时从 GitHub Actions 手动运行：
+首次部署建议从 GitHub Actions 手动运行。以后升级时，先把你的 fork 更新到 Renewlet 最新版本；如果仓库已启用 Actions，更新后会自动重新部署，也可以随时从 GitHub Actions 手动运行：
 
 workflow 需要上面 5 个必需 repository secrets 才会部署到 Cloudflare。没有配齐时，它只验证 Cloudflare 构建路径，不会修改任何远端 D1 数据库或 Worker。
 
@@ -233,9 +229,9 @@ https://<WORKER_NAME>.<workers-dev-subdomain>.workers.dev/setup
 
 ## 更新版本
 
-一键部署用户：按上面的“升级办法”，同步 Cloudflare Builds 连接的生成仓库。
+一键部署用户：按上面的“升级办法”，在 Cloudflare Builds 连接的生成仓库里运行 `Sync Renewlet Upstream`。
 
-手动部署用户：打开 fork，点击 `Sync fork` / `Update branch`。如果没有自动部署，进入 `Actions` 手动运行 `Cloudflare Worker`。
+手动部署用户：在你的 fork 里点击 `Sync fork` / `Update branch`，把 fork 更新到 Renewlet 最新版本。如果没有自动部署，进入 `Actions` 手动运行 `Cloudflare Worker`。
 
 每次 Cloudflare 升级都必须先跑 D1 migrations，再发布 Worker。`pnpm deploy` 和 GitHub Actions 都会按这个顺序执行。
 
@@ -293,9 +289,9 @@ pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.generated.j
 
 **Server酱测试通知返回 HTTP 429？**
 
-这是 Server酱上游拒绝请求。Server酱官方 FAQ 写明：`429` 是来源 IP 在 24 小时内调用 API 次数超过限制，处理办法是停止调用 24 小时后再试。
+这是 Server酱返回的限流错误，不是 Renewlet 通知参数格式错误。Server酱官方 FAQ 写明：`429` 是来源 IP 在 24 小时内调用 API 次数超过限制，处理办法是停止调用 24 小时后再试。
 
-Renewlet 部署在 Cloudflare Workers 后，Server酱请求由 Worker 发出；Server酱统计的是 Worker 出站到 Server酱时的来源 IP。真正原因就是这个 Cloudflare 出站来源 IP 触发了 Server酱的 24 小时限流，不是 Renewlet 的通知参数格式错误。
+Renewlet 部署在 Cloudflare Workers 后，Server酱请求由 Worker 发出；Server酱统计的是 Worker 出站到 Server酱时的来源 IP。真正原因通常是这个 Cloudflare 出站来源 IP 触发了 Server酱的 24 小时限流。
 
 处理办法：
 
