@@ -223,6 +223,29 @@ describe("Cloudflare import", () => {
     expect(insert?.values[24]).toBe(-2);
   });
 
+  it("preserves cost sharing before binding D1 statements", async () => {
+    const { env, db, statements } = envFixture();
+    const costSharing = {
+      enabled: true,
+      payerMemberId: "self",
+      selfMemberId: "self",
+      splitMode: "custom",
+      members: [
+        { id: "self", name: "Me", included: true, customAmount: 7 },
+        { id: "partner", name: "Partner", included: true, customAmount: 5 },
+      ],
+    };
+    const response = await applyImport(requestFor("/api/app/import/apply", importPayload([
+      importSubscription({ costSharing }),
+    ])), env);
+
+    expect(response.status).toBe(200);
+    expect(db.batch).toHaveBeenCalledTimes(1);
+    const insert = statements.find((statement) => statement.sql.includes("INSERT INTO subscriptions"));
+    expect(insert?.sql).toContain("cost_sharing_json");
+    expect(JSON.parse(insert?.values[28] as string)).toEqual(costSharing);
+  });
+
   it("refreshes scheduler state after applying subscription imports", async () => {
     const { env, db, statements } = envFixture();
     const response = await applyImport(requestFor("/api/app/import/apply", importPayload([
