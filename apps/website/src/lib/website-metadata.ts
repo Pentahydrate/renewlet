@@ -22,6 +22,9 @@ function normalizeBaseUrl(rawBaseUrl: string | undefined) {
   const candidate = rawBaseUrl?.trim() || LOCAL_PREVIEW_BASE_URL
   const url = new URL(candidate)
 
+  if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+    url.protocol = 'https:'
+  }
   // sitemap/OG URL 必须是稳定 origin + path，不继承预览链接里的 query/hash。
   url.hash = ''
   url.search = ''

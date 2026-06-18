@@ -47,6 +47,24 @@ describe('resolveWebsiteDeployment', () => {
     expect(deployment.basePath).toBe('/renewlet')
     expect(deployment.viteBase).toBe('/renewlet/')
   })
+
+  it('upgrades public GitHub Pages HTTP metadata to HTTPS', () => {
+    const deployment = resolveWebsiteDeployment({
+      RENEWLET_WEBSITE_BASE_URL: 'http://renewlet.olyq.org',
+      RENEWLET_WEBSITE_BASE_PATH: '',
+    })
+
+    expect(deployment.baseUrl).toBe('https://renewlet.olyq.org')
+  })
+
+  it('keeps local preview metadata on HTTP', () => {
+    const deployment = resolveWebsiteDeployment({
+      RENEWLET_WEBSITE_BASE_URL: 'http://localhost:4173',
+      RENEWLET_WEBSITE_BASE_PATH: '',
+    })
+
+    expect(deployment.baseUrl).toBe('http://localhost:4173')
+  })
 })
 
 describe('website metadata rendering', () => {
