@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   repeat_reminder_enabled INTEGER NOT NULL,
   repeat_reminder_interval TEXT NOT NULL,
   repeat_reminder_window TEXT NOT NULL,
-  cost_sharing_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

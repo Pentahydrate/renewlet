@@ -621,6 +621,7 @@ type costSharingMember struct {
 	CustomAmount *float64 `json:"customAmount,omitempty"`
 }
 
+// normalizeCostSharing 是 Docker 持久层的 costSharing 契约门；API、SDK 和 Admin UI 写入都必须收敛到 shared wire shape。
 func normalizeCostSharing(value interface{}, price float64, baseCurrency string) (interface{}, error) {
 	data, err := jsonBytesFromValue(value)
 	if err != nil || len(bytes.TrimSpace(data)) == 0 || string(bytes.TrimSpace(data)) == "{}" {
@@ -687,6 +688,7 @@ func normalizeCostSharing(value interface{}, price float64, baseCurrency string)
 	if _, ok := ids[payload.SelfMemberID]; !ok {
 		return nil, errors.New("COST_SHARING_SELF_INVALID")
 	}
+	// Go hook 没有用户汇率上下文；含异币种成员时只做结构校验，严格总额校验交给有转换器的前端和同币种写入。
 	if payload.SplitMode == "custom" && canValidateCustomTotal && math.Abs(roundMoney(customTotal)-roundMoney(price)) > 0.01 {
 		return nil, errors.New("COST_SHARING_CUSTOM_TOTAL_INVALID")
 	}

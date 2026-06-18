@@ -91,6 +91,7 @@ function normalizeCustomCycleUnit(value: unknown): CustomCycleUnit {
 
 function normalizeCostSharingParticipation(costSharing: Subscription["costSharing"]): Subscription["costSharing"] {
   if (!costSharing) return costSharing;
+  // 当前 UI 没有排除成员入口；读写边界强制全员 included，避免历史/导入数据让表单展示和统计口径分叉。
   return {
     ...costSharing,
     members: costSharing.members.map((member) => ({ ...member, included: true })),

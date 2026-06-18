@@ -54,6 +54,7 @@ func TestEnsureSchemaCreatesContractFieldsAndIndexes(t *testing.T) {
 		"website":                      core.FieldTypeURL,
 		"notes":                        core.FieldTypeText,
 		"tags":                         core.FieldTypeJSON,
+		"costSharing":                  core.FieldTypeJSON,
 		"extra":                        core.FieldTypeJSON,
 		"reminderDays":                 core.FieldTypeNumber,
 		"repeatReminderEnabled":        core.FieldTypeBool,
@@ -100,6 +101,7 @@ func TestEnsureSchemaCreatesContractFieldsAndIndexes(t *testing.T) {
 	assertSelectFieldValues(t, app, "subscriptions", "oneTimeTermUnit", "day", "week", "month", "year")
 	assertSelectFieldValues(t, app, "subscriptions", "status", "trial", "active", "expired", "paused", "cancelled")
 	assertJSONFieldMaxSize(t, app, "subscriptions", "tags", maxSubscriptionTagsFieldSize)
+	assertJSONFieldMaxSize(t, app, "subscriptions", "costSharing", 65536)
 	assertFileFieldMimeTypes(t, app, "assets", "file", "image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon")
 	assertFields(t, app, "notification_jobs", map[string]string{
 		"user":                core.FieldTypeRelation,

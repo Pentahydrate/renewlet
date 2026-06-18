@@ -72,6 +72,7 @@ const optionalLogoReferenceSchema = logoReferenceSchema.nullable().optional();
 
 const tagsSchema = z.array(z.string().trim().min(1).max(40)).max(100).optional();
 const extraSchema = z.record(z.string(), z.unknown()).optional();
+// costSharing 是 shared wire shape：前端表单、Go hook 和 Worker D1 mapper 都必须按这组字段持久化。
 const costSharingMemberSchema = z.object({
   id: z.string().trim().min(1).max(80),
   name: z.string().trim().min(1).max(80),
@@ -124,6 +125,7 @@ function costSharingFieldsAreConsistent(value: {
   costSharing?: z.infer<typeof costSharingSchema> | null | undefined;
 }): boolean {
   if (!value.costSharing?.enabled || value.price === undefined) return true;
+  // shared schema 不读取用户汇率设置；跨币种 custom 总额只能在前端转换器或后端同币种场景下被严格证明。
   return costSharingCustomTotalMatches(value.costSharing, value.price);
 }
 

@@ -193,6 +193,7 @@ export function buildStatisticsModel({
   const activeSubscriptions = subscriptions.filter((subscription) => isEffectivelyActiveSubscription(subscription, today));
   const inactiveSubscriptions = subscriptions.filter((subscription) => isEffectivelyInactiveSubscription(subscription, today));
 
+  // costBasis 是统计页的金额口径开关；一旦选 personal，月均、当月现金流、分类和趋势都必须使用个人份额。
   const amountForStats = (subscription: Subscription): number =>
     costBasis === "personal"
       ? calculateCostSharingSummary(subscription.costSharing, subscription.price, {

@@ -235,6 +235,7 @@ export async function putCustomConfig(env: Env, userId: string, config: unknown)
 /** 将 D1 订阅行转换为公开 API 形状；这是 Worker 订阅响应的唯一出站契约门。 */
 export function toApiSubscription(row: SubscriptionRow): ApiSubscription {
   const tags = parseStringArray(row.tags_json);
+  // cost_sharing_json 是 D1 唯一持久化形态，出站必须重新过 shared schema，防止 Worker 与 Docker costSharing 漂移。
   const costSharing = parseJsonObject(row.cost_sharing_json ?? "{}");
   const extra = parseJsonObject(row.extra_json);
   // D1 行使用 snake_case/整数布尔；所有出站数据都在这里重新过 shared schema，避免前端和 Worker 分叉。

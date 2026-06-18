@@ -222,6 +222,7 @@ function toBody(row: SubscriptionRow): SubscriptionBody {
     repeatReminderEnabled: row.repeat_reminder_enabled === 1,
     repeatReminderInterval: row.repeat_reminder_interval as SubscriptionBody["repeatReminderInterval"],
     repeatReminderWindow: row.repeat_reminder_window as SubscriptionBody["repeatReminderWindow"],
+    // PATCH 合并必须带回 costSharing，否则只改备注也会把 D1 JSON 分摊信息清空。
     costSharing: Object.keys(parseJsonObject(row.cost_sharing_json ?? "{}")).length > 0 ? parseJsonObject(row.cost_sharing_json ?? "{}") as SubscriptionBody["costSharing"] : null,
     extra: parseJsonObject(row.extra_json),
   };
@@ -269,6 +270,7 @@ export function toSubscriptionRow(
     repeat_reminder_enabled: boolToInt(body.repeatReminderEnabled),
     repeat_reminder_interval: body.repeatReminderInterval,
     repeat_reminder_window: body.repeatReminderWindow,
+    // D1 没有 JSON 类型；空对象表示未开启分摊，非空对象必须保持 shared costSharing wire shape。
     cost_sharing_json: JSON.stringify(body.costSharing ?? {}),
     // extra 不走 UI 展示；它给 seed/import 留稳定幂等键，编辑订阅时必须随原记录保留。
     extra_json: JSON.stringify(body.extra ?? {}),

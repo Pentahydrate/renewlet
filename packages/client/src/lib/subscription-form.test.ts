@@ -287,4 +287,54 @@ describe("subscription-form", () => {
       repeatReminderWindow: "full",
     });
   });
+
+  it("keeps valid cost sharing drafts after currency conversion", () => {
+    const form = createSubscriptionFormState({
+      name: "Family Plan",
+      price: "100",
+      currency: "USD",
+      startDate: assertDateOnly("2026-01-01"),
+      nextBillingDate: assertDateOnly("2026-02-01"),
+      costSharing: {
+        enabled: true,
+        payerMemberId: "me",
+        selfMemberId: "me",
+        splitMode: "custom",
+        members: [
+          { id: "me", name: "Me", currency: "USD", included: true, customAmount: 40 },
+          { id: "partner", name: "Partner", currency: "CNY", included: true, customAmount: 420 },
+        ],
+      },
+    });
+    const costSharingCurrencyConvert = (amount: number, fromCurrency: string, toCurrency: string) => {
+      if (fromCurrency === "CNY" && toCurrency === "USD") return amount / 7;
+      return amount;
+    };
+
+    expect(getSubscriptionDraftValidationError(form, { costSharingCurrencyConvert })).toBeNull();
+    expect(toSubscriptionDraft(form, { costSharingCurrencyConvert })?.costSharing).toEqual(form.costSharing);
+  });
+
+  it("rejects custom cost sharing totals that do not match the subscription price", () => {
+    const form = createSubscriptionFormState({
+      name: "Broken Family Plan",
+      price: "100",
+      currency: "USD",
+      startDate: assertDateOnly("2026-01-01"),
+      nextBillingDate: assertDateOnly("2026-02-01"),
+      costSharing: {
+        enabled: true,
+        payerMemberId: "me",
+        selfMemberId: "me",
+        splitMode: "custom",
+        members: [
+          { id: "me", name: "Me", currency: "USD", included: true, customAmount: 40 },
+          { id: "partner", name: "Partner", currency: "USD", included: true, customAmount: 50 },
+        ],
+      },
+    });
+
+    expect(getSubscriptionDraftValidationError(form)).not.toBeNull();
+    expect(toSubscriptionDraft(form)).toBeNull();
+  });
 });

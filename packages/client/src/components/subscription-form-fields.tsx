@@ -82,6 +82,7 @@ function defaultCostSharing(t: (key: MessageKey, values?: MessageParams) => stri
 }
 
 function normalizeCostSharingSelection(costSharing: CostSharing): CostSharing {
+  // v1 表单只支持“所有成员参与分摊”；included 字段仍随 API 保存，给后续排除成员 UI 留同一 wire shape。
   const members = (costSharing.members.length > 0 ? costSharing.members : [{ id: newCostSharingId(), name: "Member 1", included: true }])
     .map((member) => ({ ...member, included: true }));
   const ids = new Set(members.map((member) => member.id));

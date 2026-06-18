@@ -346,6 +346,54 @@ describe("subscription statistics models", () => {
     expect(model.trendData[0]).toEqual(expect.objectContaining({ cashflow: 140, amortized: 140 }));
   });
 
+  it("switches statistics from total cost to personal cost basis", () => {
+    const familyPlan = subscription({
+      id: "family-plan",
+      price: 100,
+      billingCycle: "monthly",
+      nextBillingDate: assertDateOnly("2026-01-05"),
+      costSharing: {
+        enabled: true,
+        payerMemberId: "me",
+        selfMemberId: "me",
+        splitMode: "custom",
+        members: [
+          { id: "me", name: "Me", currency: "USD", included: true, customAmount: 40 },
+          { id: "partner", name: "Partner", currency: "USD", included: true, customAmount: 60 },
+        ],
+      },
+    });
+    const totalModel = buildStatisticsModel({
+      subscriptions: [familyPlan],
+      config: DEFAULT_CUSTOM_CONFIG,
+      monthlyBudget: 100,
+      defaultCurrency: "USD",
+      convert,
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      costBasis: "total",
+    });
+    const personalModel = buildStatisticsModel({
+      subscriptions: [familyPlan],
+      config: DEFAULT_CUSTOM_CONFIG,
+      monthlyBudget: 100,
+      defaultCurrency: "USD",
+      convert,
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      costBasis: "personal",
+    });
+
+    expect(totalModel.totalMonthly).toBe(100);
+    expect(totalModel.thisMonthDue).toBe(100);
+    expect(totalModel.trendData[0]).toEqual(expect.objectContaining({ cashflow: 100, amortized: 100 }));
+    expect(personalModel.totalMonthly).toBe(40);
+    expect(personalModel.thisMonthDue).toBe(40);
+    expect(personalModel.budgetUsedPercent).toBe(40);
+    expect(personalModel.categoryData).toEqual([
+      expect.objectContaining({ value: 40 }),
+    ]);
+    expect(personalModel.trendData[0]).toEqual(expect.objectContaining({ cashflow: 40, amortized: 40 }));
+  });
+
   it("uses the configured timezone to choose the trend start month", () => {
     const model = buildStatisticsModel({
       subscriptions: [subscription({ id: "monthly", price: 10, billingCycle: "monthly", nextBillingDate: assertDateOnly("2026-07-01") })],
