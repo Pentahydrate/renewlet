@@ -3,7 +3,7 @@
  * 发布辅助脚本。
  *
  * 触发时机：maintainer release workflow、本地准备 release 和 tag publish workflow。
- * 副作用：sync-version 会改 workspace package.json；package-docker 会写 tmp/release；其它命令只输出校验结果/正文。
+ * 副作用：sync-version 会改 workspace package.json 和 README Docker 固定版本示例；package-docker 会写 tmp/release；其它命令只输出校验结果/正文。
  */
 import { execFileSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -32,6 +32,8 @@ const packagePaths = [
   "packages/server/package.json",
   "packages/shared/package.json",
 ];
+const readmeDockerImagePaths = ["README.md", "README.zh-CN.md"];
+const readmeDockerImages = [dockerHubImage, ghcrImage];
 
 function usage() {
   console.log(`Usage:
@@ -108,6 +110,10 @@ function escapedRegExp(source) {
   return source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function readmeDockerTagPattern(image) {
+  return new RegExp(`(?<![A-Za-z0-9./_-])${escapedRegExp(image)}:(?<version>\\d+\\.\\d+\\.\\d+)`, "g");
+}
+
 function latestStableTag() {
   const output = runGit(["tag", "--list", "v[0-9]*.[0-9]*.[0-9]*", "--sort=-v:refname"]);
   return output
@@ -165,7 +171,28 @@ function syncVersion(rawVersion) {
     writeFileSync(path, `${JSON.stringify(packageJson, null, 2)}\n`);
   }
 
-  console.log(`Synced workspace package versions to ${version}.`);
+  syncReadmeDockerImageVersions(version);
+
+  console.log(`Synced workspace package versions and README Docker image tags to ${version}.`);
+}
+
+function syncReadmeDockerImageVersions(version) {
+  for (const relativePath of readmeDockerImagePaths) {
+    const path = join(repoRoot, relativePath);
+    let content = readFileSync(path, "utf8");
+
+    for (const image of readmeDockerImages) {
+      const pattern = readmeDockerTagPattern(image);
+      const matches = [...content.matchAll(pattern)];
+      if (matches.length === 0) {
+        fail(`${relativePath} must include a pinned ${image}:x.y.z Docker image example.`);
+      }
+      // README 是用户复制固定镜像 tag 的入口；release prepare 负责把示例同步到本次稳定版。
+      content = content.replace(pattern, `${image}:${version}`);
+    }
+
+    writeFileSync(path, content);
+  }
 }
 
 function validatePackageVersions(rawVersion) {
@@ -180,13 +207,39 @@ function validatePackageVersions(rawVersion) {
       mismatches.push(`${relativePath}: expected ${packageVersion}, got ${actual}`);
     }
   }
+  mismatches.push(...validateReadmeDockerImageVersions(packageVersion));
 
   if (mismatches.length > 0) {
-    fail(`Workspace package versions must match the release tag:\n${mismatches.join("\n")}`);
+    fail(`Workspace package versions and README Docker image tags must match the release tag:\n${mismatches.join("\n")}`);
   }
 
   console.log(packageVersion);
   return packageVersion;
+}
+
+function validateReadmeDockerImageVersions(version) {
+  const mismatches = [];
+
+  for (const relativePath of readmeDockerImagePaths) {
+    const content = readFileSync(join(repoRoot, relativePath), "utf8");
+
+    for (const image of readmeDockerImages) {
+      const matches = [...content.matchAll(readmeDockerTagPattern(image))];
+      if (matches.length === 0) {
+        mismatches.push(`${relativePath}: missing pinned ${image}:x.y.z Docker image example`);
+        continue;
+      }
+
+      for (const match of matches) {
+        const actual = match.groups?.version;
+        if (actual !== version) {
+          mismatches.push(`${relativePath}: ${image} expected ${version}, got ${actual}`);
+        }
+      }
+    }
+  }
+
+  return mismatches;
 }
 
 function commitRange(previous) {
