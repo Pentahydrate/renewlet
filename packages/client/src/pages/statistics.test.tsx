@@ -245,6 +245,45 @@ describe("Statistics page", () => {
     ).not.toHaveLength(0);
   });
 
+  it("keeps the personal cost basis switch in the overview heading row", async () => {
+    const user = userEvent.setup();
+    mocks.useSubscriptions.mockReturnValue({
+      data: [
+        subscription({
+          id: "family-plan",
+          price: 100,
+          status: "active",
+          costSharing: {
+            enabled: true,
+            splitMode: "custom",
+            members: [
+              { id: "member", name: "Member", currency: "CNY", customAmount: 60 },
+            ],
+          },
+        }),
+      ],
+      isPending: false,
+    });
+
+    renderStatistics();
+
+    const overviewHeading = screen.getByRole("heading", { name: "总体统计" });
+    const personalCostBasisSwitch = screen.getByRole("switch", { name: "按我的份额统计" });
+    const overviewHeadingRow = overviewHeading.parentElement;
+
+    if (!overviewHeadingRow) {
+      throw new Error("Expected overview heading to be rendered inside a heading row.");
+    }
+
+    expect(overviewHeadingRow).toContainElement(personalCostBasisSwitch);
+    expect(overviewHeadingRow).toHaveClass("sm:flex-row", "sm:justify-between");
+    expect(screen.getAllByText("¥100").length).toBeGreaterThan(0);
+
+    await user.click(personalCostBasisSwitch);
+
+    expect(await screen.findAllByText("¥40")).not.toHaveLength(0);
+  });
+
   it("disables position animation for all chart tooltips", () => {
     renderStatistics();
 

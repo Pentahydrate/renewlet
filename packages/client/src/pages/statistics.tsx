@@ -287,7 +287,13 @@ const Statistics = () => {
 
         {/* 总体统计 */}
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">{t("statistics.overview")}</h2>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-semibold text-foreground">{t("statistics.overview")}</h2>
+            <label className="inline-flex w-fit items-center gap-2 text-sm text-muted-foreground">
+              <Switch checked={personalCostBasis} onCheckedChange={setPersonalCostBasis} aria-label={t("statistics.personalCostBasis")} />
+              {t("statistics.personalCostBasis")}
+            </label>
+          </div>
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <StatBox
               value={stats.activeCount}
@@ -344,10 +350,6 @@ const Statistics = () => {
               description={t("statistics.annualSavingsDescription")}
             />
           </div>
-          <label className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <Switch checked={personalCostBasis} onCheckedChange={setPersonalCostBasis} aria-label={t("statistics.personalCostBasis")} />
-            {t("statistics.personalCostBasis")}
-          </label>
         </section>
 
         <StatisticsTrendChart
