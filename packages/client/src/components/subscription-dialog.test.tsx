@@ -107,8 +107,8 @@ describe("SubscriptionDialog", () => {
     expect(dateError).toBeInTheDocument();
     const autoCalculateHelp = screen.getByText("根据开始日期和扣费周期自动计算");
     expect(startDateButton).toHaveAttribute("aria-invalid", "true");
-    expect(startDateButton).toHaveAttribute("aria-describedby", "dates-error");
-    expect(startDateButton.parentElement).toContainElement(dateError);
+    expect(startDateButton).toHaveAttribute("aria-describedby", "startDate-error");
+    expect(startDateButton.closest('[data-slot="form-field-row"]')).toContainElement(dateError);
     expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "false");
     expect(nextBillingDateButton).toHaveAttribute("aria-describedby", autoCalculateHelp.id);
     expect(onSubmit).not.toHaveBeenCalled();

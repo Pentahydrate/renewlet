@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from "react";
 import { Image as ImageIcon, Link, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FieldError } from "@/components/ui/field-error";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { FaviconResultImage } from "@/components/favicon-result-image";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -71,26 +71,32 @@ export function LogoUrlInputPanel({
 
   return (
     <div className={cn("grid gap-3", className)}>
-      <div className="grid gap-2">
-        <Input
-          id={inputId}
-          type="url"
-          inputMode="url"
-          value={rawValue}
-          maxLength={LOGO_URL_INPUT_MAX_LENGTH}
-          placeholder="https://example.com/logo.svg"
-          aria-invalid={showError}
-          aria-describedby={showError ? errorId : validation.ok ? previewId : undefined}
-          className={cn(isSmall && "h-9 text-sm")}
-          onBlur={() => setTouched(true)}
-          onChange={(event) => {
-            setRawValue(event.target.value);
-            setTouched(true);
-            setPreviewFailed(false);
-          }}
-        />
-        <FieldError id={errorId} message={errorMessage} />
-      </div>
+      <FormField
+        id={inputId}
+        describedBy={validation.ok ? previewId : undefined}
+        error={errorMessage}
+        errorId={errorId}
+      >
+        {(field) => (
+          <Input
+            id={field.id}
+            type="url"
+            inputMode="url"
+            value={rawValue}
+            maxLength={LOGO_URL_INPUT_MAX_LENGTH}
+            placeholder="https://example.com/logo.svg"
+            aria-invalid={field.invalid}
+            aria-describedby={field.describedBy}
+            className={cn(isSmall && "h-9 text-sm")}
+            onBlur={() => setTouched(true)}
+            onChange={(event) => {
+              setRawValue(event.target.value);
+              setTouched(true);
+              setPreviewFailed(false);
+            }}
+          />
+        )}
+      </FormField>
 
       {validation.ok ? (
         <div

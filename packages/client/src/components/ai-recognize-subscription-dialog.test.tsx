@@ -418,8 +418,8 @@ describe("AIRecognizeSubscriptionDialog", () => {
       throw new Error("AI draft date buttons were not rendered");
     }
     expect(startDateButton).toHaveAttribute("aria-invalid", "true");
-    expect(startDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-dates-error");
-    expect(startDateButton.parentElement).toHaveTextContent("请选择开始日期和续费或到期日期。");
+    expect(startDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-startDate-error");
+    expect(startDateButton.closest('[data-slot="form-field-row"]')).toHaveTextContent("请选择开始日期和续费或到期日期。");
     const autoCalculateHelp = screen.getByText("根据开始日期和扣费周期自动计算");
     expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "false");
     expect(nextBillingDateButton).toHaveAttribute("aria-describedby", autoCalculateHelp.id);

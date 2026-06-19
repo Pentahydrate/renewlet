@@ -9,9 +9,8 @@ import { type FormEvent, useRef, useState } from "react";
 import Link from '@/components/router-link';
 import { ArrowLeft, CheckCircle2, Mail, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FieldError } from "@/components/ui/field-error";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { RenewletBrandLockup } from "@/components/brand/renewlet-brand-mark";
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { toast } from "@/components/ui/sonner";
@@ -87,13 +86,21 @@ export function ForgotPasswordClient({ enabled }: ForgotPasswordClientProps) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
-              <div className="grid gap-2">
-                <Label htmlFor="forgot-email">{t("auth.email")}</Label>
+              <FormField
+                id="forgot-email"
+                label={t("auth.email")}
+                description={t("passwordReset.emailHelp")}
+                descriptionId="forgot-email-description"
+                error={emailError}
+                errorId="forgot-email-error"
+              >
+                {(field) => (
+                  <>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     ref={emailInputRef}
-                    id="forgot-email"
+                    id={field.id}
                     name="email"
                     type="email"
                     inputMode="email"
@@ -107,16 +114,14 @@ export function ForgotPasswordClient({ enabled }: ForgotPasswordClientProps) {
                     enterKeyHint="done"
                     autoCapitalize="none"
                     spellCheck={false}
-                    aria-invalid={Boolean(emailError)}
-                    aria-describedby={emailError ? "forgot-email-error" : "forgot-email-description"}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
                     required
                   />
                 </div>
-                <p id="forgot-email-description" className="text-xs text-muted-foreground">
-                  {t("passwordReset.emailHelp")}
-                </p>
-                <FieldError id="forgot-email-error" message={emailError} />
-              </div>
+                  </>
+                )}
+              </FormField>
 
               <Button
                 type="submit"

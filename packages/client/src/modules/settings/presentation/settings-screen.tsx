@@ -20,6 +20,7 @@ import { Header } from '@/components/header';
 import { BackToTopFloatButton } from '@/components/back-to-top-float-button';
 import { ImportDataDialog } from '@/components/import-data-dialog';
 import { Button } from '@/components/ui/button';
+import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NumericInput } from '@/components/ui/numeric-input';
@@ -315,35 +316,35 @@ export function SettingsScreen() {
               <section id="settings-budget" className={SETTINGS_SECTION_FRAME_CLASS}>
                 <h2 className="mb-6 text-lg font-semibold text-foreground">{t("settings.budget")}</h2>
                 <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="monthlyBudget">{t("settings.monthlyBudget")}</Label>
-                    <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-3">
-                      <NumericInput
-                        id="monthlyBudget"
-                        name="monthlyBudget"
-                        allowNegative={false}
-                        allowedDecimalSeparators={[".", "。"]}
-                        inputMode="decimal"
-                        enterKeyHint="done"
-                        value={monthlyBudgetInput}
-                        onRawValueChange={handleMonthlyBudgetInputChange}
-                        className="w-full border-border bg-secondary min-[380px]:w-[200px]"
-                        placeholder="1500"
-                        thousandSeparator
-                        aria-invalid={Boolean(monthlyBudgetError)}
-                        aria-describedby={monthlyBudgetError ? "monthlyBudget-error" : undefined}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {getCurrencySymbol(settings.defaultCurrency)} {t("settings.perMonth")}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.monthlyBudgetHelp")}
-                    </p>
-                    {monthlyBudgetError ? (
-                      <p id="monthlyBudget-error" className="text-xs text-destructive">{monthlyBudgetError}</p>
-                    ) : null}
-                  </div>
+                  <FormField
+                    id="monthlyBudget"
+                    label={t("settings.monthlyBudget")}
+                    description={t("settings.monthlyBudgetHelp")}
+                    error={monthlyBudgetError}
+                  >
+                    {(field) => (
+                      <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:gap-3">
+                        <NumericInput
+                          id={field.id}
+                          name={field.id}
+                          allowNegative={false}
+                          allowedDecimalSeparators={[".", "。"]}
+                          inputMode="decimal"
+                          enterKeyHint="done"
+                          value={monthlyBudgetInput}
+                          onRawValueChange={handleMonthlyBudgetInputChange}
+                          className="w-full border-border bg-secondary min-[380px]:w-[200px]"
+                          placeholder="1500"
+                          thousandSeparator
+                          aria-invalid={field.invalid}
+                          aria-describedby={field.describedBy}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {getCurrencySymbol(settings.defaultCurrency)} {t("settings.perMonth")}
+                        </span>
+                      </div>
+                    )}
+                  </FormField>
                 </div>
               </section>
 

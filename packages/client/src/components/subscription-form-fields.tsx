@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from "react";
-import { FieldError } from "@/components/ui/field-error";
+import { FormField, FormFieldRow } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/ui/numeric-input";
@@ -178,20 +178,20 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
 
   return (
     <>
-      <div className="grid gap-2">
-        <Label htmlFor={id("name")}>{t("subscription.field.name")}</Label>
-        <Input
-          id={id("name")} name={id("name")} enterKeyHint="next"
-          placeholder={t("subscription.placeholder.name")}
-          value={formData.name}
-          onChange={(e) => update("name", e.target.value)}
-          required
-          aria-invalid={Boolean(errors.name)}
-          aria-describedby={errors.name ? id("name-error") : undefined}
-          className="border-border bg-secondary"
-        />
-        <FieldError id={id("name-error")} message={errors.name} />
-      </div>
+      <FormField id={id("name")} label={t("subscription.field.name")} error={errors.name} errorId={id("name-error")}>
+        {(field) => (
+          <Input
+            id={field.id} name={field.id} enterKeyHint="next"
+            placeholder={t("subscription.placeholder.name")}
+            value={formData.name}
+            onChange={(e) => update("name", e.target.value)}
+            required
+            aria-invalid={field.invalid}
+            aria-describedby={field.describedBy}
+            className="border-border bg-secondary"
+          />
+        )}
+      </FormField>
 
       {showLogoField ? (
         <LogoPicker
@@ -202,45 +202,64 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
         />
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor={id("price")}>{t("subscription.field.price")}</Label>
-          <NumericInput
-            id={id("price")} name={id("price")}
-            allowNegative={false}
-            allowedDecimalSeparators={[".", "。"]}
-            inputMode="decimal" enterKeyHint="next"
-            placeholder="0.00"
-            thousandSeparator
-            value={formData.price}
-            onRawValueChange={(value: string) => update("price", value)}
-            required
-            aria-invalid={Boolean(errors.price)}
-            aria-describedby={errors.price ? id("price-error") : undefined}
-            className="border-border bg-secondary"
-          />
-          <FieldError id={id("price-error")} message={errors.price} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={id("currency")}>{t("subscription.field.currency")}</Label>
-          <SearchableSelect
-            value={formData.currency}
-            onValueChange={(value) => update("currency", value)}
-            options={currencyOptions}
-            placeholder={t("subscription.placeholder.currency")}
-            searchPlaceholder={t("subscription.search.currency")}
-            emptyMessage={t("subscription.empty.currency")}
-            className={cn(
-              "border-border bg-secondary",
-              errors.currency && "border-destructive focus:ring-destructive/40",
-            )}
-            aria-label={t("subscription.placeholder.currency")}
-            aria-invalid={Boolean(errors.currency)}
-            aria-describedby={errors.currency ? id("currency-error") : undefined}
-          />
-          <FieldError id={id("currency-error")} message={errors.currency} />
-        </div>
-      </div>
+      <FormFieldRow
+        rowClassName="sm:grid-cols-2"
+        errors={[
+          { id: id("price-error"), message: errors.price },
+          { id: id("currency-error"), message: errors.currency },
+        ]}
+      >
+        <FormField
+          id={id("price")}
+          label={t("subscription.field.price")}
+          error={errors.price}
+          errorId={id("price-error")}
+          renderError={false}
+        >
+          {(field) => (
+            <NumericInput
+              id={field.id} name={field.id}
+              allowNegative={false}
+              allowedDecimalSeparators={[".", "。"]}
+              inputMode="decimal" enterKeyHint="next"
+              placeholder="0.00"
+              thousandSeparator
+              value={formData.price}
+              onRawValueChange={(value: string) => update("price", value)}
+              required
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              className="border-border bg-secondary"
+            />
+          )}
+        </FormField>
+        <FormField
+          id={id("currency")}
+          label={t("subscription.field.currency")}
+          error={errors.currency}
+          errorId={id("currency-error")}
+          renderError={false}
+        >
+          {(field) => (
+            <SearchableSelect
+              id={field.id}
+              value={formData.currency}
+              onValueChange={(value) => update("currency", value)}
+              options={currencyOptions}
+              placeholder={t("subscription.placeholder.currency")}
+              searchPlaceholder={t("subscription.search.currency")}
+              emptyMessage={t("subscription.empty.currency")}
+              className={cn(
+                "border-border bg-secondary",
+                errors.currency && "border-destructive focus:ring-destructive/40",
+              )}
+              aria-label={t("subscription.placeholder.currency")}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </FormField>
+      </FormFieldRow>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
@@ -276,75 +295,93 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor={id("cycle")}>{t("subscription.field.billingCycle")}</Label>
-          <Select
-            value={formData.billingCycle}
-            onValueChange={(value) => update("billingCycle", value as BillingCycle)}
-          >
-            <SelectTrigger
-              id={id("cycle")}
-              className={cn(
-                "border-border bg-secondary",
-                errors.billingCycle && "border-destructive focus:ring-destructive/40",
-              )}
-              aria-label={t("subscription.field.billingCycle")}
-              aria-invalid={Boolean(errors.billingCycle)}
-              aria-describedby={errors.billingCycle ? id("billingCycle-error") : undefined}
+      <FormFieldRow
+        rowClassName="sm:grid-cols-2"
+        errors={[
+          { id: id("billingCycle-error"), message: errors.billingCycle },
+          { id: id("customDays-error"), message: errors.customDays },
+        ]}
+      >
+        <FormField
+          id={id("cycle")}
+          label={t("subscription.field.billingCycle")}
+          error={errors.billingCycle}
+          errorId={id("billingCycle-error")}
+          renderError={false}
+        >
+          {(field) => (
+            <Select
+              value={formData.billingCycle}
+              onValueChange={(value) => update("billingCycle", value as BillingCycle)}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(CYCLE_LABELS).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {localizedLabel(label, locale)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldError id={id("billingCycle-error")} message={errors.billingCycle} />
-        </div>
+              <SelectTrigger
+                id={field.id}
+                className={cn(
+                  "border-border bg-secondary",
+                  errors.billingCycle && "border-destructive focus:ring-destructive/40",
+                )}
+                aria-label={t("subscription.field.billingCycle")}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(CYCLE_LABELS).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {localizedLabel(label, locale)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
 
         {formData.billingCycle === "custom" ? (
-          <div className="grid gap-2">
-            <Label htmlFor={id("customDays")}>{t("subscription.field.customCycle")}</Label>
-            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_5rem] items-center gap-2" data-testid="custom-cycle-inline-control">
-              <span className="whitespace-nowrap text-sm text-muted-foreground">{t("subscription.customCycleEvery")}</span>
-              <NumericInput
-                id={id("customDays")} name={id("customDays")}
-                allowNegative={false}
-                decimalScale={0}
-                inputMode="numeric" enterKeyHint="next"
-                placeholder={t("subscription.customCycleCountPlaceholder")}
-                value={formData.customDays}
-                onRawValueChange={(value: string) => update("customDays", value)}
-                aria-invalid={Boolean(errors.customDays)}
-                aria-describedby={errors.customDays ? id("customDays-error") : undefined}
-                className="min-w-0 border-border bg-secondary"
-              />
-              <Select
-                value={formData.customCycleUnit}
-                onValueChange={(value) => update("customCycleUnit", value as SubscriptionFormState["customCycleUnit"])}
-              >
-                <SelectTrigger
-                  id={id("customCycleUnit")}
-                  className="h-10 min-w-0 overflow-hidden border-border bg-secondary px-2"
-                  aria-label={t("subscription.field.customCycleUnit")}
+          <FormField
+            id={id("customDays")}
+            label={t("subscription.field.customCycle")}
+            error={errors.customDays}
+            errorId={id("customDays-error")}
+            renderError={false}
+          >
+            {(field) => (
+              <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_5rem] items-center gap-2" data-testid="custom-cycle-inline-control">
+                <span className="whitespace-nowrap text-sm text-muted-foreground">{t("subscription.customCycleEvery")}</span>
+                <NumericInput
+                  id={field.id} name={field.id}
+                  allowNegative={false}
+                  decimalScale={0}
+                  inputMode="numeric" enterKeyHint="next"
+                  placeholder={t("subscription.customCycleCountPlaceholder")}
+                  value={formData.customDays}
+                  onRawValueChange={(value: string) => update("customDays", value)}
+                  aria-invalid={field.invalid}
+                  aria-describedby={field.describedBy}
+                  className="min-w-0 border-border bg-secondary"
+                />
+                <Select
+                  value={formData.customCycleUnit}
+                  onValueChange={(value) => update("customCycleUnit", value as SubscriptionFormState["customCycleUnit"])}
                 >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CUSTOM_CYCLE_UNITS.map((unit) => (
-                    <SelectItem key={unit} value={unit}>
-                      {t(customCycleUnitLabelKey(unit))}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <FieldError id={id("customDays-error")} message={errors.customDays} />
-          </div>
+                  <SelectTrigger
+                    id={id("customCycleUnit")}
+                    className="h-10 min-w-0 overflow-hidden border-border bg-secondary px-2"
+                    aria-label={t("subscription.field.customCycleUnit")}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CUSTOM_CYCLE_UNITS.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {t(customCycleUnitLabelKey(unit))}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </FormField>
         ) : formData.billingCycle === "one-time" ? (
           <div className="grid gap-2">
             <Label>{t("subscription.field.oneTimeMode")}</Label>
@@ -380,48 +417,53 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
             />
           </div>
         )}
-      </div>
+      </FormFieldRow>
 
       {formData.billingCycle === "one-time" && formData.oneTimeMode === "term" ? (
-        <div className="grid gap-2">
-          <Label htmlFor={id("oneTimeTermCount")}>{t("subscription.field.oneTimeTerm")}</Label>
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_5rem] items-center gap-2" data-testid="one-time-term-inline-control">
-            <span className="whitespace-nowrap text-sm text-muted-foreground">{t("subscription.oneTimeTermFor")}</span>
-            <NumericInput
-              id={id("oneTimeTermCount")} name={id("oneTimeTermCount")}
-              allowNegative={false}
-              decimalScale={0}
-              inputMode="numeric" enterKeyHint="next"
-              placeholder={t("subscription.customCycleCountPlaceholder")}
-              value={formData.oneTimeTermCount}
-              onRawValueChange={(value: string) => update("oneTimeTermCount", value)}
-              aria-invalid={Boolean(errors.oneTimeTerm)}
-              aria-describedby={errors.oneTimeTerm ? id("oneTimeTerm-error") : undefined}
-              className="min-w-0 border-border bg-secondary"
-            />
-            <Select
-              value={formData.oneTimeTermUnit}
-              onValueChange={(value) => update("oneTimeTermUnit", value as SubscriptionFormState["oneTimeTermUnit"])}
-            >
-              <SelectTrigger
-                id={id("oneTimeTermUnit")}
-                className="h-10 min-w-0 overflow-hidden border-border bg-secondary px-2"
-                aria-label={t("subscription.field.oneTimeTermUnit")}
+        <FormField
+          id={id("oneTimeTermCount")}
+          label={t("subscription.field.oneTimeTerm")}
+          description={t("subscription.oneTimeTermHelp")}
+          error={errors.oneTimeTerm}
+          errorId={id("oneTimeTerm-error")}
+        >
+          {(field) => (
+            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_5rem] items-center gap-2" data-testid="one-time-term-inline-control">
+              <span className="whitespace-nowrap text-sm text-muted-foreground">{t("subscription.oneTimeTermFor")}</span>
+              <NumericInput
+                id={field.id} name={field.id}
+                allowNegative={false}
+                decimalScale={0}
+                inputMode="numeric" enterKeyHint="next"
+                placeholder={t("subscription.customCycleCountPlaceholder")}
+                value={formData.oneTimeTermCount}
+                onRawValueChange={(value: string) => update("oneTimeTermCount", value)}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+                className="min-w-0 border-border bg-secondary"
+              />
+              <Select
+                value={formData.oneTimeTermUnit}
+                onValueChange={(value) => update("oneTimeTermUnit", value as SubscriptionFormState["oneTimeTermUnit"])}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CUSTOM_CYCLE_UNITS.map((unit) => (
-                  <SelectItem key={unit} value={unit}>
-                    {t(customCycleUnitLabelKey(unit))}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("subscription.oneTimeTermHelp")}</p>
-          <FieldError id={id("oneTimeTerm-error")} message={errors.oneTimeTerm} />
-        </div>
+                <SelectTrigger
+                  id={id("oneTimeTermUnit")}
+                  className="h-10 min-w-0 overflow-hidden border-border bg-secondary px-2"
+                  aria-label={t("subscription.field.oneTimeTermUnit")}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CUSTOM_CYCLE_UNITS.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {t(customCycleUnitLabelKey(unit))}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </FormField>
       ) : null}
 
       {(formData.billingCycle === "custom" || formData.billingCycle === "one-time") && (
@@ -496,7 +538,10 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
 
           {!isReminderDisabled ? (
             <>
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <FormFieldRow
+                rowClassName="flex flex-col gap-3 sm:flex-row"
+                errors={[{ id: id("reminder-error"), message: errors.reminderDays }]}
+              >
                 <Select
                   value={formData.reminderType === "custom" ? "custom" : formData.reminderType === "inherit" ? String(INHERIT_REMINDER_DAYS) : formData.reminderDays}
                   onValueChange={(value) => {
@@ -553,8 +598,7 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
                     <span className="text-sm text-muted-foreground">{t("subscription.daysUnit")}</span>
                   </div>
                 )}
-              </div>
-              <FieldError id={id("reminder-error")} message={errors.reminderDays} />
+              </FormFieldRow>
 
               <div className="flex items-center gap-2">
                 <Label htmlFor={id("repeatReminderEnabled")} className="text-sm text-muted-foreground cursor-pointer">
@@ -639,19 +683,19 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
         />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor={id("website")}>{t("subscription.field.website")}</Label>
-        <Input
-          id={id("website")} name={id("website")} type="url" inputMode="url" enterKeyHint="next" autoCapitalize="none" spellCheck={false}
-          placeholder="https://example.com"
-          value={formData.website}
-          onChange={(e) => update("website", e.target.value)}
-          aria-invalid={Boolean(errors.website)}
-          aria-describedby={errors.website ? id("website-error") : undefined}
-          className="border-border bg-secondary"
-        />
-        <FieldError id={id("website-error")} message={errors.website} />
-      </div>
+      <FormField id={id("website")} label={t("subscription.field.website")} error={errors.website} errorId={id("website-error")}>
+        {(field) => (
+          <Input
+            id={field.id} name={field.id} type="url" inputMode="url" enterKeyHint="next" autoCapitalize="none" spellCheck={false}
+            placeholder="https://example.com"
+            value={formData.website}
+            onChange={(e) => update("website", e.target.value)}
+            aria-invalid={field.invalid}
+            aria-describedby={field.describedBy}
+            className="border-border bg-secondary"
+          />
+        )}
+      </FormField>
 
       <div className="grid gap-2">
         <Label htmlFor={id("notes")}>{t("subscription.field.notes")}</Label>

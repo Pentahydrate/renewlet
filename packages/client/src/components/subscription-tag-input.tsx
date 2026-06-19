@@ -10,7 +10,7 @@
 import * as React from "react";
 import { Plus, Tag, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FieldError } from "@/components/ui/field-error";
+import { FormField } from "@/components/ui/form-field";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import {
   MAX_SUBSCRIPTION_TAG_LENGTH,
@@ -232,7 +232,9 @@ export function SubscriptionTagInput({
       setOpen(nextOpen);
       if (!nextOpen) setActiveIndex(null);
     }}>
-      <div className="grid gap-2">
+      <FormField id={id} error={effectiveError} errorId={resolvedErrorId}>
+        {(field) => (
+          <>
         <PopoverAnchor asChild>
           <div
             ref={fieldRef}
@@ -276,8 +278,8 @@ export function SubscriptionTagInput({
               </span>
               <input
                 ref={inputRef}
-                id={id}
-                name={id}
+                id={field.id}
+                name={field.id}
                 data-subscription-tag-pending-input=""
                 size={1}
                 value={inputValue}
@@ -292,8 +294,8 @@ export function SubscriptionTagInput({
                 aria-autocomplete="list"
                 aria-controls={open ? listboxId : undefined}
                 aria-activedescendant={activeOptionId}
-                aria-invalid={Boolean(effectiveError)}
-                aria-describedby={effectiveError ? resolvedErrorId : undefined}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
                 className={inputClassName}
               />
             </span>
@@ -360,9 +362,9 @@ export function SubscriptionTagInput({
             )}
           </div>
         </PopoverContent>
-
-        <FieldError id={resolvedErrorId} message={effectiveError} />
-      </div>
+          </>
+        )}
+      </FormField>
     </Popover>
   );
 }

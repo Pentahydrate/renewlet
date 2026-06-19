@@ -16,7 +16,7 @@ import { useRouter } from '@/lib/router';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FieldError } from "@/components/ui/field-error";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RenewletBrandLockup } from '@/components/brand/renewlet-brand-mark';
@@ -204,13 +204,14 @@ const Login = () => {
 
           <div className="grid gap-6">
             <form onSubmit={handleLogin} className="grid gap-4" noValidate>
-              <div className="grid gap-2">
-                <Label htmlFor="login-email">{t("auth.email")}</Label>
+              <FormField id="login-email" label={t("auth.email")} error={errors.email}>
+                {(field) => (
+                  <>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     ref={emailInputRef}
-                    id="login-email"
+                    id={field.id}
                     name="email"
                     type="email"
                     inputMode="email"
@@ -225,16 +226,20 @@ const Login = () => {
                       clearError("email");
                     }}
                     className="pl-10 bg-secondary border-border"
-                    aria-invalid={Boolean(errors.email)}
-                    aria-describedby={errors.email ? "login-email-error" : undefined}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
                     required
                   />
                 </div>
-                <FieldError id="login-email-error" message={errors.email} />
-              </div>
+                  </>
+                )}
+              </FormField>
 
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between">
+              <FormField
+                id="login-password"
+                error={errors.password}
+                labelSlot={(
+                  <div className="flex items-center justify-between">
                   <Label htmlFor="login-password">{t("auth.password")}</Label>
                   {passwordResetEnabled ? (
                     <Link href="/forgot-password" className="text-xs text-primary hover:underline">
@@ -242,11 +247,15 @@ const Login = () => {
                     </Link>
                   ) : null}
                 </div>
+                )}
+              >
+                {(field) => (
+                  <>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     ref={passwordInputRef}
-                    id="login-password"
+                    id={field.id}
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
@@ -258,8 +267,8 @@ const Login = () => {
                       clearError("password");
                     }}
                     className="pl-10 pr-10 bg-secondary border-border"
-                    aria-invalid={Boolean(errors.password)}
-                    aria-describedby={errors.password ? "login-password-error" : undefined}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
                     required
                   />
                   <button
@@ -271,8 +280,9 @@ const Login = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <FieldError id="login-password-error" message={errors.password} />
-              </div>
+                  </>
+                )}
+              </FormField>
 
               <div className="flex items-center gap-2">
                 <Checkbox

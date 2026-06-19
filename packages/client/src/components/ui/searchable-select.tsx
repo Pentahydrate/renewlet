@@ -19,6 +19,7 @@ import { translate } from "@/i18n/messages";
 export type { SearchableSelectOption };
 
 interface SearchableSelectProps {
+  id?: string;
   value: string;
   onValueChange: (value: string) => void;
   options: SearchableSelectOption[];
@@ -40,6 +41,7 @@ interface SearchableSelectProps {
 const DEFAULT_INITIAL_RENDER_LIMIT = 100;
 
 export function SearchableSelect({
+  id,
   value,
   onValueChange,
   options,
@@ -93,6 +95,7 @@ export function SearchableSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           type="button"
           variant="outline"
           role="combobox"

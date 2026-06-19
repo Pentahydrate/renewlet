@@ -9,9 +9,8 @@ import { type FormEvent, useRef, useState } from "react";
 import Link from '@/components/router-link';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FieldError } from "@/components/ui/field-error";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { RenewletBrandLockup } from "@/components/brand/renewlet-brand-mark";
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { toast } from "@/components/ui/sonner";
@@ -111,13 +110,20 @@ export function ResetPasswordClient({ token }: ResetPasswordClientProps) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
-              <div className="grid gap-2">
-                <Label htmlFor="new-password">{t("passwordReset.newPassword")}</Label>
+              <FormField
+                id="new-password"
+                label={t("passwordReset.newPassword")}
+                description={t("passwordReset.passwordHelp")}
+                descriptionId="new-password-description"
+                error={errors.password}
+              >
+                {(field) => (
+                  <>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     ref={passwordInputRef}
-                    id="new-password"
+                    id={field.id}
                     name="new-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
@@ -131,8 +137,8 @@ export function ResetPasswordClient({ token }: ResetPasswordClientProps) {
                     className="pl-10 pr-10 bg-secondary border-border"
                     autoComplete="new-password"
                     enterKeyHint="next"
-                    aria-invalid={Boolean(errors.password)}
-                    aria-describedby={errors.password ? "new-password-error" : "new-password-description"}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
                     required
                   />
                   <button
@@ -144,17 +150,15 @@ export function ResetPasswordClient({ token }: ResetPasswordClientProps) {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p id="new-password-description" className="text-xs text-muted-foreground">
-                  {t("passwordReset.passwordHelp")}
-                </p>
-                <FieldError id="new-password-error" message={errors.password} />
-              </div>
+                  </>
+                )}
+              </FormField>
 
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-password">{t("passwordReset.confirmPassword")}</Label>
+              <FormField id="confirm-password" label={t("passwordReset.confirmPassword")} error={errors.confirm}>
+                {(field) => (
                 <Input
                   ref={confirmInputRef}
-                  id="confirm-password"
+                  id={field.id}
                   name="confirm-password"
                   type={showPassword ? "text" : "password"}
                   value={confirm}
@@ -168,12 +172,12 @@ export function ResetPasswordClient({ token }: ResetPasswordClientProps) {
                   className="bg-secondary border-border"
                   autoComplete="new-password"
                   enterKeyHint="done"
-                  aria-invalid={Boolean(errors.confirm)}
-                  aria-describedby={errors.confirm ? "confirm-password-error" : undefined}
+                  aria-invalid={field.invalid}
+                  aria-describedby={field.describedBy}
                   required
                 />
-                <FieldError id="confirm-password-error" message={errors.confirm} />
-              </div>
+                )}
+              </FormField>
 
               <Button
                 type="submit"
