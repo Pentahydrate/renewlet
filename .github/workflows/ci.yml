@@ -1,6 +1,6 @@
 name: CI
 
-# 质量门只覆盖 dev/main/release 分支，不发布任何远端产物；Docker/Cloudflare 发布必须走 tag workflow。
+# 分支质量门只覆盖 dev/main push；release 分支靠 PR 和 tag workflow 守门，避免 prepare/RC 修复重复跑整套 CI。
 on:
   pull_request:
     branches:
@@ -11,7 +11,6 @@ on:
     branches:
       - dev
       - main
-      - "release/**"
 
 permissions:
   contents: read

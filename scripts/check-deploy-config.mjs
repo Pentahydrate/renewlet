@@ -461,6 +461,43 @@ function checkCloudflareWorkflowBuildMetadata() {
   }
 }
 
+function workflowTriggerBlock(content, trigger) {
+  const match = new RegExp(`^  ${trigger}:\\n(?<body>(?:    .*(?:\\n|$))*)`, "m").exec(content);
+  return match?.groups?.body ?? "";
+}
+
+function checkReleaseBranchWorkflowTriggers() {
+  const workflows = [
+    { path: ".github/workflows/ci.yml", name: "CI" },
+    { path: ".github/workflows/build-smoke.yml", name: "Build Smoke" },
+  ];
+
+  // Release 分支 push 不跑质量门；required checks 只能绑定 PR 或 tag job，避免被过滤的 workflow 长期 pending。
+  for (const workflow of workflows) {
+    const content = readFileSync(join(repoRoot, workflow.path), "utf8");
+    const pullRequestBlock = workflowTriggerBlock(content, "pull_request");
+    const pushBlock = workflowTriggerBlock(content, "push");
+
+    for (const snippet of ["      - dev", "      - main", '      - "release/**"']) {
+      if (!pullRequestBlock.includes(snippet)) {
+        throw new Error(`${workflow.name} pull_request trigger must keep branch snippet: ${snippet.trim()}`);
+      }
+    }
+    for (const snippet of ["      - dev", "      - main"]) {
+      if (!pushBlock.includes(snippet)) {
+        throw new Error(`${workflow.name} push trigger must keep branch snippet: ${snippet.trim()}`);
+      }
+    }
+    if (pushBlock.includes("release/")) {
+      throw new Error(`${workflow.name} push trigger must not include release branches; release checks run on PR and tag workflows.`);
+    }
+  }
+
+  if (!readFileSync(join(repoRoot, ".github/workflows/build-smoke.yml"), "utf8").includes("workflow_dispatch:")) {
+    throw new Error("Build Smoke must keep workflow_dispatch for manual no-secret build verification.");
+  }
+}
+
 function checkRuntimeReleaseSecretPathRemoved() {
   const removedHelper = join(repoRoot, "scripts/write-cloudflare-worker-secrets-file.mjs");
   const removedRuntimeReleaseSecretEnv = ["RENEWLET", "GITHUB", "TOKEN"].join("_");
@@ -777,6 +814,7 @@ checkCloudflareFreshD1Migrations();
 checkCloudflareDeployButtonVars();
 checkCloudflareDeployButtonVersionFallback();
 checkCloudflareWorkflowBuildMetadata();
+checkReleaseBranchWorkflowTriggers();
 checkRuntimeReleaseSecretPathRemoved();
 checkSyncRenewletUpstreamWorkflow();
 checkSyncRenewletUpstreamBehavior();

@@ -223,7 +223,7 @@ jobs:
           - \`${RC_TAG}\`
 
           Checklist:
-          - [ ] CI is green on \`${RELEASE_BRANCH}\`
+          - [ ] The \`${RELEASE_BRANCH}\` -> \`main\` PR checks are green
           - [ ] \`${RC_TAG}\` Docker and GHCR images have been tested
           - [ ] Docker deployment package has been checked
           - [ ] Cloudflare release build has passed
