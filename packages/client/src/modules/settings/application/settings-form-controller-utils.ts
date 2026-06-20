@@ -68,6 +68,7 @@ export const EXTERNAL_INTEGRATION_SETTING_KEYS = new Set<keyof AppSettings>([
   "testPhone",
   "telegramBotToken",
   "telegramChatId",
+  "telegramMessageFormat",
   "notifyxApiKey",
   "webhookUrl",
   "webhookMethod",

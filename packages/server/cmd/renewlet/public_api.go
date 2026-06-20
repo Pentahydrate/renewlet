@@ -15,6 +15,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -295,6 +296,33 @@ func publicAPIDueForUserWithSettings(app core.App, userID string, days int, sett
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339Nano),
 		Items:       publicAPIDueItemsFromRecords(rows, today, through),
 	}, nil
+}
+
+func publicAPINextDueForUserWithSettings(app core.App, userID string, settings appSettings) (*publicAPIDueItem, error) {
+	today := todayDateOnly(time.Now().UTC(), settings.Timezone)
+	// Telegram /next 只需要第一条，但仍复用 Public API due item 契约；先按 owner 和未来日期缩小候选，再用同一 dueType 规则裁掉买断项。
+	rows, err := app.FindRecordsByFilter(
+		"subscriptions",
+		"user = {:user} && ((status = 'trial' && trialEndDate >= {:today}) || (nextBillingDate >= {:today} && (billingCycle != 'one-time' || oneTimeTermCount > 0)))",
+		"nextBillingDate,trialEndDate,-created,-id",
+		publicAPIDueResultLimit,
+		0,
+		dbx.Params{"user": userID, "today": today},
+	)
+	if err != nil {
+		return nil, err
+	}
+	items := publicAPIDueItemsFromRecords(rows, today, "9999-12-31")
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].DueDate == items[j].DueDate {
+			return publicAPISubscriptionName(items[i].Subscription) < publicAPISubscriptionName(items[j].Subscription)
+		}
+		return items[i].DueDate < items[j].DueDate
+	})
+	if len(items) == 0 {
+		return nil, nil
+	}
+	return &items[0], nil
 }
 
 func createAPITokenRecord(app core.App, userID string, name string) (*core.Record, string, error) {

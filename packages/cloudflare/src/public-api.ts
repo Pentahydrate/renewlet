@@ -6,6 +6,7 @@ import {
   apiTokenSchema,
   apiTokensListResponseSchema,
   publicApiDueQuerySchema,
+  publicApiDueItemSchema,
   publicApiDueResponseSchema,
   publicApiMeResponseSchema,
   publicApiStatusResponseSchema,
@@ -207,6 +208,38 @@ export async function readPublicApiDueForUser(env: Env, userId: string, days: nu
     generatedAt: nowIso(),
     items,
   });
+}
+
+export async function readPublicApiNextDueForUser(env: Env, userId: string, options: PublicApiDueOptions = {}): Promise<z.infer<typeof publicApiDueItemSchema> | null> {
+  const settings = options.settings ?? await getSettings(env, userId);
+  const today = dateOnlyInZone(new Date(), settings.timezone);
+  // Telegram /next 只需要第一条，但仍复用 Public API due item 契约；先按 owner 和未来日期缩小候选，再用同一 dueType 规则裁掉买断项。
+  const result = await env.DB.prepare(`
+    SELECT ${SUBSCRIPTION_COLUMNS}
+    FROM subscriptions
+    WHERE user_id = ?
+      AND (
+        (status = 'trial' AND trial_end_date IS NOT NULL AND trial_end_date >= ?)
+        OR (next_billing_date >= ? AND (billing_cycle != 'one-time' OR one_time_term_count > 0))
+      )
+    ORDER BY
+      CASE
+        WHEN status = 'trial'
+          AND trial_end_date IS NOT NULL
+          AND trial_end_date >= ?
+          AND (next_billing_date < ? OR trial_end_date <= next_billing_date)
+        THEN trial_end_date
+        ELSE next_billing_date
+      END ASC,
+      created_at DESC,
+      id DESC
+    LIMIT 10
+  `).bind(userId, today, today, today, today).all<SubscriptionRow>();
+  const items = result.results
+    .map((row) => toDueItem(row, today, "9999-12-31"))
+    .filter((item): item is z.infer<typeof publicApiDueItemSchema> => item !== null)
+    .sort((left, right) => left.dueDate.localeCompare(right.dueDate) || left.subscription.name.localeCompare(right.subscription.name));
+  return items[0] ?? null;
 }
 
 async function requirePublicApiRead(request: Request, env: Env): Promise<PublicApiAuth> {

@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	telegramBotCommandsVersion      = "v1"
+	telegramBotCommandsVersion      = "v2"
 	telegramWebhookSecretBytes      = 32
 	telegramWebhookSecretHeader     = "X-Telegram-Bot-Api-Secret-Token"
 	telegramWebhookUpdateBodyMax    = 1 << 20
@@ -246,7 +246,8 @@ func handleTelegramWebhook(app core.App, e *core.RequestEvent) error {
 	reply := telegramBotCommandReply(app, userID, settings, command, arg)
 	botToken := strings.TrimSpace(settings.TelegramBotToken)
 	if reply != "" {
-		_ = telegramBotSendMessage(botToken, binding.GetString("chatId"), reply, normalizeAppLocale(settings.Locale))
+		// 命令已经处理完就推进 update；sendMessage 失败也不让 Telegram 重试造成重复查询和重复写库。
+		_ = telegramBotSendMessage(botToken, binding.GetString("chatId"), reply, settings.TelegramMessageFormat, normalizeAppLocale(settings.Locale))
 	}
 	_ = markTelegramBindingUpdate(app, binding, updateID, true)
 	return telegramWebhookOK(e)
@@ -374,10 +375,12 @@ func telegramBotBestEffortRemoteCleanup(botToken string, chatID string, locale a
 	}, locale, chatID)
 }
 
-func telegramBotSendMessage(botToken string, chatID string, text string, locale appLocale) error {
+func telegramBotSendMessage(botToken string, chatID string, text string, format string, locale appLocale) error {
+	formatted := formatTelegramBotMessage(text, format)
 	return telegramBotPostJSON(botToken, telegramBotAPIMethodSendMessage, telegramSendMessageRequest{
 		ChatID:             chatID,
-		Text:               text,
+		Text:               formatted.Text,
+		ParseMode:          formatted.ParseMode,
 		LinkPreviewOptions: &telegramLinkPreviewOptions{IsDisabled: true},
 	}, locale, chatID)
 }
@@ -395,16 +398,22 @@ func defaultTelegramBotPostJSON(botToken string, method string, payload interfac
 }
 
 func telegramBotMenuCommands() []telegramBotCommand {
+	// BotCommand.Description 是 Telegram 菜单纯文本契约；富文本只属于后续 sendMessage，/due 仅保留手输高级入口。
 	return []telegramBotCommand{
 		{Command: "start", Description: "Show Renewlet command help"},
 		{Command: "help", Description: "Show Renewlet command help"},
 		{Command: "status", Description: "Show subscription status summary"},
-		{Command: "due", Description: "Show upcoming renewals"},
+		{Command: "next", Description: "Show the next renewal"},
+		{Command: "today", Description: "Show renewals due today"},
+		{Command: "week", Description: "Show renewals in the next 7 days"},
+		{Command: "month", Description: "Show renewals in the next 30 days"},
 		{Command: "subscriptions", Description: "List subscription summaries"},
+		{Command: "settings", Description: "Show bot and message settings"},
 	}
 }
 
 func telegramBotCommandReply(app core.App, userID string, settings appSettings, command string, arg string) string {
+	// 命令 adapter 只做路由和文本排版；订阅读取必须继续走 Public API owner-scoped service。
 	switch command {
 	case "start", "help":
 		return telegramBotHelpText()
@@ -414,6 +423,32 @@ func telegramBotCommandReply(app core.App, userID string, settings appSettings, 
 			return "Renewlet status is temporarily unavailable."
 		}
 		return telegramBotStatusText(status)
+	case "next":
+		item, err := publicAPINextDueForUserWithSettings(app, userID, settings)
+		if err != nil {
+			return "Renewlet next renewal is temporarily unavailable."
+		}
+		return telegramBotNextText(item)
+	case "today":
+		due, err := publicAPIDueForUserWithSettings(app, userID, 1, settings)
+		if err != nil {
+			return "Renewlet upcoming renewals are temporarily unavailable."
+		}
+		today := todayDateOnly(time.Now().UTC(), settings.Timezone)
+		due.Items = filterPublicAPIDueItemsByDate(due.Items, today)
+		return telegramBotDueTextWithTitle(due, "Today's renewals")
+	case "week":
+		due, err := publicAPIDueForUserWithSettings(app, userID, 7, settings)
+		if err != nil {
+			return "Renewlet upcoming renewals are temporarily unavailable."
+		}
+		return telegramBotDueText(due)
+	case "month":
+		due, err := publicAPIDueForUserWithSettings(app, userID, 30, settings)
+		if err != nil {
+			return "Renewlet upcoming renewals are temporarily unavailable."
+		}
+		return telegramBotDueText(due)
 	case "due":
 		days := telegramBotDueDays(arg)
 		due, err := publicAPIDueForUserWithSettings(app, userID, days, settings)
@@ -427,6 +462,8 @@ func telegramBotCommandReply(app core.App, userID string, settings appSettings, 
 			return "Renewlet subscriptions are temporarily unavailable."
 		}
 		return telegramBotSubscriptionsText(list)
+	case "settings":
+		return telegramBotSettingsText(settings)
 	default:
 		return telegramBotHelpText()
 	}
@@ -436,8 +473,13 @@ func telegramBotHelpText() string {
 	return strings.Join([]string{
 		"Renewlet Bot commands:",
 		"/status - subscription status summary",
+		"/next - next renewal",
+		"/today - renewals due today",
+		"/week - upcoming renewals in 7 days",
+		"/month - upcoming renewals in 30 days",
 		"/due [days] - upcoming renewals, default 30 days",
 		"/subscriptions - first 10 subscription summaries",
+		"/settings - bot and message settings",
 		"/help - show this help",
 	}, "\n")
 }
@@ -454,6 +496,18 @@ func telegramBotStatusText(response publicAPIStatusResponse) string {
 }
 
 func telegramBotDueText(response publicAPIDueResponse) string {
+	return telegramBotDueTextWithTitle(response, fmt.Sprintf("Upcoming renewals in %d days", response.Days))
+}
+
+func telegramBotNextText(item *publicAPIDueItem) string {
+	lines := []string{"Next renewal"}
+	if item == nil {
+		return strings.Join(append(lines, "No upcoming subscriptions."), "\n")
+	}
+	return strings.Join(append(lines, fmt.Sprintf("%s: %s (%s)", item.DueDate, publicAPISubscriptionName(item.Subscription), item.DueType)), "\n")
+}
+
+func telegramBotDueTextWithTitle(response publicAPIDueResponse, title string) string {
 	items := append([]publicAPIDueItem(nil), response.Items...)
 	sort.SliceStable(items, func(i, j int) bool {
 		if items[i].DueDate == items[j].DueDate {
@@ -461,7 +515,7 @@ func telegramBotDueText(response publicAPIDueResponse) string {
 		}
 		return items[i].DueDate < items[j].DueDate
 	})
-	lines := []string{fmt.Sprintf("Upcoming renewals in %d days", response.Days)}
+	lines := []string{title}
 	if len(items) == 0 {
 		return strings.Join(append(lines, "No matching subscriptions."), "\n")
 	}
@@ -476,6 +530,29 @@ func telegramBotDueText(response publicAPIDueResponse) string {
 		lines = append(lines, fmt.Sprintf("...and %d more. Open Renewlet Web UI for details.", remaining))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func telegramBotSettingsText(settings appSettings) string {
+	messageStyle := "Plain text"
+	if settings.TelegramMessageFormat == telegramMessageFormatHTML {
+		messageStyle = "Rich text"
+	}
+	return strings.Join([]string{
+		"Renewlet bot settings",
+		fmt.Sprintf("Chat ID: %s", fallbackText(strings.TrimSpace(settings.TelegramChatID), "Not configured")),
+		fmt.Sprintf("Message style: %s", messageStyle),
+		"Manage this in Renewlet Web UI Settings > Notifications.",
+	}, "\n")
+}
+
+func filterPublicAPIDueItemsByDate(items []publicAPIDueItem, date string) []publicAPIDueItem {
+	out := []publicAPIDueItem{}
+	for _, item := range items {
+		if item.DueDate == date {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 func telegramBotSubscriptionsText(response subscriptionsListResponse) string {
@@ -553,6 +630,7 @@ func parseTelegramCommand(text string) (string, string, bool) {
 }
 
 func markTelegramBindingUpdate(app core.App, binding *core.Record, updateID int64, used bool) error {
+	// 只有真实命令路径会调用这里；no-op update 不写 lastUpdateId，避免 foreign chat 抢占后续合法 update。
 	binding.Set("lastUpdateId", updateID)
 	if used {
 		binding.Set("lastUsedAt", time.Now().UTC().Format(time.RFC3339Nano))

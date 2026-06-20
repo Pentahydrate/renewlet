@@ -9,6 +9,7 @@
 import type { CustomThemeColor, ThemeMode, ThemeVariant } from './theme';
 import type { BuiltInIconSourceSettings } from "@renewlet/shared/built-in-icons";
 import type { AiRecognitionSettings } from "@renewlet/shared/schemas/ai-recognition";
+import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import { labelsFromCatalog } from "@/i18n/label-messages";
 import { getInitialLocale, labels, type Locale, type LocalizedLabels } from '@/i18n/locales';
 import { SUPPORTED_EXCHANGE_RATE_CURRENCIES, getIntlCurrencyOptionLabel } from '@/lib/currency-data';
@@ -291,6 +292,8 @@ export interface AppSettings {
   telegramBotToken: string;
   /** Telegram Chat ID。 */
   telegramChatId: string;
+  /** Telegram 消息正文样式。 */
+  telegramMessageFormat: ApiAppSettings["telegramMessageFormat"];
   /** Notifyx API Key。 */
   notifyxApiKey: string;
   /** Webhook URL。 */

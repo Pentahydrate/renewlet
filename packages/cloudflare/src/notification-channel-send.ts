@@ -6,6 +6,7 @@ import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import { notificationSmtpConfig, sendSmtpEmail } from "./smtp";
 import { assertSafeOutboundUrl } from "./outbound-url-policy";
 import { sendServerChan } from "./notification-serverchan";
+import { plainNotificationMessage, telegramNotificationMessage } from "./telegram-format";
 import { NotificationChannelError } from "./notification-errors";
 import {
   createUpstreamErrorDetails,
@@ -57,9 +58,11 @@ export async function sendChannel(
     case "telegram": {
       const token = required(settings.telegramBotToken, serverText(locale, "service.telegramBotToken"), locale);
       const chatId = required(settings.telegramChatId, serverText(locale, "service.telegramChatID"), locale);
+      // Telegram 样式只在 sendMessage 边界生效；其它渠道继续消费纯文本，避免跨渠道模板语义互相污染。
+      const telegramMessage = telegramNotificationMessage(message, settings.telegramMessageFormat);
       await postJson(`https://api.telegram.org/bot${token}/sendMessage`, {
         chat_id: chatId,
-        text: textMessage(message),
+        ...telegramMessage,
         link_preview_options: { is_disabled: true },
       }, "Telegram", locale, undefined, { secrets: [token, chatId] });
       return;
@@ -81,9 +84,9 @@ export async function sendChannel(
       await postJson(await safeHttpsUrl(rawUrl, locale), {
         msgtype: settings.wechatMessageType,
         [settings.wechatMessageType]: settings.wechatMessageType === "markdown"
-          ? { content: textMessage(message) }
+          ? { content: plainNotificationMessage(message) }
           : {
-              content: textMessage(message),
+              content: plainNotificationMessage(message),
               mentioned_mobile_list: settings.wechatAtAll ? ["@all"] : splitList(settings.wechatAtPhones),
             },
       }, "WeCom", locale, undefined, { secrets: [rawUrl] });
@@ -227,10 +230,6 @@ function headersSecrets(headers: Headers): string[] {
 function required(value: string, label: string, locale: AppLocale): string {
   if (value.trim()) return value.trim();
   throw new Error(serverFormat(locale, "common.requiredField", { label }));
-}
-
-function textMessage(message: NotificationEmailMessage): string {
-  return `${message.title}\n\n${message.content}\n\n${message.timestamp}`;
 }
 
 function applyTemplate(template: string, message: NotificationEmailMessage): string {

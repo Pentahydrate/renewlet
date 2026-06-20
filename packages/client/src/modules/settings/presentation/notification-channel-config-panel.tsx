@@ -204,6 +204,34 @@ export function NotificationChannelConfigPanel({
                 className="border-border bg-secondary"
               />
             </div>
+            <div className="grid gap-2">
+              <Label>{t("settings.telegramMessageFormat")}</Label>
+              {/* 消息样式是 settings 草稿字段；下面的 Bot 命令安装状态走独立 API，不参与统一保存。 */}
+              <div
+                role="group"
+                aria-label={t("settings.telegramMessageFormat")}
+                className="grid grid-cols-2 rounded-md border border-border bg-secondary p-1"
+              >
+                {(["plain", "html"] as const).map((format) => {
+                  const active = settings.telegramMessageFormat === format;
+                  return (
+                    <Button
+                      key={format}
+                      type="button"
+                      variant={active ? "default" : "ghost"}
+                      size="sm"
+                      aria-pressed={active}
+                      disabled={disabled}
+                      onClick={() => updateSetting("telegramMessageFormat", format)}
+                      className="h-8"
+                    >
+                      {t(format === "plain" ? "settings.telegramMessageFormatPlain" : "settings.telegramMessageFormatHtml")}
+                    </Button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("settings.telegramMessageFormatHelp")}</p>
+            </div>
           </div>
           <div className="mt-4 flex flex-col items-start gap-2 sm:items-end">
             <NotificationTestButton

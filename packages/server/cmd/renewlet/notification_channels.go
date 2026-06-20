@@ -78,9 +78,12 @@ func sendTelegram(settings appSettings, message notificationMessage) error {
 		return err
 	}
 	endpoint := "https://api.telegram.org/bot" + token + "/sendMessage"
+	// Telegram 样式只在 sendMessage 边界生效；其它渠道继续消费纯文本，避免跨渠道模板语义互相污染。
+	formatted := formatTelegramNotificationMessage(message, settings.TelegramMessageFormat)
 	body := telegramSendMessageRequest{
 		ChatID:             chatID,
-		Text:               buildTextMessage(message),
+		Text:               formatted.Text,
+		ParseMode:          formatted.ParseMode,
 		LinkPreviewOptions: &telegramLinkPreviewOptions{IsDisabled: true},
 	}
 	var lastErr error

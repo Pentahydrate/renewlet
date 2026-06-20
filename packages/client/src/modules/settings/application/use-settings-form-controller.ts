@@ -450,6 +450,7 @@ export function useSettingsFormController(): SettingsFormController {
         setMonthlyBudgetError(null);
         syncSavedPreviewState(saved, { syncAppearance: appearanceChanged, rememberLocalePreference: localeChanged });
         void refetchNotificationHistory();
+        // Bot 命令安装状态读取的是已保存凭据；保存 token/chat 后要主动刷新，不能等低频 query 自然过期。
         void refetchTelegramBotCommands();
         if (providerChanged) {
           try {

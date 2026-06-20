@@ -27,6 +27,9 @@ const (
 	inheritReminderDays             = -1
 	defaultNotificationReminderDays = 3
 	maxReminderDays                 = 3650
+	// 默认 plain 表示不发送 Telegram parse_mode；HTML 只能通过 formatter 固定模板输出。
+	telegramMessageFormatPlain = "plain"
+	telegramMessageFormatHTML  = "html"
 )
 
 var (
@@ -64,6 +67,7 @@ type appSettings struct {
 	TestPhone                string                    `json:"testPhone"`
 	TelegramBotToken         string                    `json:"telegramBotToken"`
 	TelegramChatID           string                    `json:"telegramChatId"`
+	TelegramMessageFormat    string                    `json:"telegramMessageFormat"`
 	NotifyxAPIKey            string                    `json:"notifyxApiKey"`
 	WebhookURL               string                    `json:"webhookUrl"`
 	WebhookMethod            string                    `json:"webhookMethod"`
@@ -338,6 +342,7 @@ type notificationHistoryJob struct {
 type telegramSendMessageRequest struct {
 	ChatID             string                      `json:"chat_id"`
 	Text               string                      `json:"text"`
+	ParseMode          string                      `json:"parse_mode,omitempty"`
 	LinkPreviewOptions *telegramLinkPreviewOptions `json:"link_preview_options,omitempty"`
 }
 
@@ -414,6 +419,7 @@ func defaultAppSettings() appSettings {
 		NotificationReminderDays: defaultNotificationReminderDays,
 		EnabledChannels:          []string{},
 		TestPhone:                "",
+		TelegramMessageFormat:    telegramMessageFormatPlain,
 		WebhookMethod:            "POST",
 		WechatMessageType:        "text",
 		BarkServerURL:            "https://api.day.app",

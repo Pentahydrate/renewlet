@@ -43,6 +43,8 @@ export const publicStatusCurrencySchema = z.union([
   z.literal("inherit"),
   z.string().trim().regex(/^[A-Z]{3}$/),
 ]);
+// Telegram 菜单命令描述不支持富文本；这个枚举只控制 sendMessage 正文，默认值在 shared defaults 固定为 plain。
+export const telegramMessageFormatSchema = z.enum(["plain", "html"]);
 
 const builtInIconSourceSettingSchema = z.object({
   enabled: z.boolean(),
@@ -85,6 +87,7 @@ const appSettingsShape = {
   testPhone: z.string().trim().max(80),
   telegramBotToken: z.string().trim().max(256),
   telegramChatId: z.string().trim().max(128),
+  telegramMessageFormat: telegramMessageFormatSchema,
   notifyxApiKey: z.string().trim().max(256),
   // 所有用户可配置回调地址都收敛到 https，避免通知渠道成为明文或内网探测入口。
   webhookUrl: optionalHttpsUrlSchema,

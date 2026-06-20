@@ -257,7 +257,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "settings.publicApiCreateFailed": "API Token 创建失败",
         "settings.publicApiCreateFailedDescription": "无法创建 API Token，请稍后重试。",
         "settings.publicApiTokenCopied": "Token 已复制",
-        "settings.publicApiTokenCopiedDescription": "可以把它放到 Telegram Bot adapter 或其它只读客户端的 Bearer 配置里。",
+        "settings.publicApiTokenCopiedDescription": "可以把它用于只读集成或自动化工具。",
         "settings.publicApiCopyFailed": "复制失败",
         "settings.publicApiCopyFailedDescription": "当前一键复制不可用，请手动选择并复制 token。",
         "settings.publicApiDeleted": "API Token 已删除",
@@ -275,7 +275,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
         "settings.telegramBotCommandsInstallFailed": "Telegram 查询命令安装失败",
         "settings.telegramBotCommandsInstallFailedDescription": "无法安装 Telegram Bot 查询命令，请检查 Bot Token、Chat ID 和 HTTPS 外部访问地址。",
         "settings.telegramBotCommandsDeleted": "Telegram 查询命令已删除",
-        "settings.telegramBotCommandsDeletedDescription": "远端 webhook 和命令菜单已清理，本地 binding 已移除。",
+        "settings.telegramBotCommandsDeletedDescription": "Telegram 菜单命令已删除，需要时可以重新安装。",
         "settings.telegramBotCommandsDeleteFailed": "Telegram 查询命令删除失败",
         "settings.telegramBotCommandsDeleteFailedDescription": "无法删除 Telegram Bot 查询命令，请稍后重试。",
       };
@@ -437,7 +437,7 @@ describe("useSettingsFormController integrations", () => {
       installed: true,
       status: "installed",
       chatId: "123456",
-      commandsVersion: 1,
+      commandsVersion: "v2",
       installedAt: "2026-06-20T00:00:00Z",
       lastUsedAt: null,
     });
@@ -628,6 +628,24 @@ describe("useSettingsFormController integrations", () => {
       variant: "destructive",
     });
     expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("saves Telegram message format through the regular settings draft", async () => {
+    const { result } = renderHook(() => useSettingsFormController());
+
+    act(() => {
+      result.current.updateSetting("telegramMessageFormat", "html");
+    });
+
+    expect(result.current.hasUnsavedChanges).toBe(true);
+    await act(async () => {
+      await result.current.handleSaveChanges();
+    });
+
+    expect(mocks.updateSettingsMutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      telegramMessageFormat: "html",
+    }));
+    expect(mocks.telegramBotCommands.refetch).toHaveBeenCalledTimes(1);
   });
 
   it("creates the calendar feed and keeps an existing URL available for copy, regenerate, and revoke", async () => {

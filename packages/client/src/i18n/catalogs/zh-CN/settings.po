@@ -79,12 +79,12 @@ msgid "settings.uploadedIconsDeleteSuccessDescription"
 msgstr "「{name}」已从上传图标中移除。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:588
+#: src/i18n/descriptors/settings.ts:592
 msgid "settings.wechatAtAll"
 msgstr "@全体成员"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:586
+#: src/i18n/descriptors/settings.ts:590
 msgid "settings.wechatPhones"
 msgstr "@手机号 (可选)"
 
@@ -109,7 +109,7 @@ msgid "aiRecognition.thinking.budget.4096"
 msgstr "4096 tokens"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:592
+#: src/i18n/descriptors/settings.ts:596
 msgid "settings.smtpSecureHelp"
 msgstr "465 通常开启；587/2525 通常关闭并使用 STARTTLS。Cloudflare Workers 不支持 25。"
 
@@ -199,7 +199,7 @@ msgid "settings.channel.telegramReady"
 msgstr "Bot Token 与 Chat ID 已填写"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:544
+#: src/i18n/descriptors/settings.ts:548
 msgid "settings.telegramBotCommands"
 msgstr "Bot 查询命令"
 
@@ -304,7 +304,7 @@ msgid "aiRecognition.thinking.gemini.level.minimal.description"
 msgstr "Gemini thinkingLevel=minimal。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:576
+#: src/i18n/descriptors/settings.ts:580
 msgid "settings.webhookGetPostHelp"
 msgstr "GET：会把 title/content/timestamp 作为 query 参数；POST：默认发送 JSON（也可用下方模板自定义）。"
 
@@ -324,7 +324,7 @@ msgid "aiRecognition.thinking.anthropic.high"
 msgstr "High"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:578
+#: src/i18n/descriptors/settings.ts:582
 msgid "settings.webhookHeadersHelp"
 msgstr "JSON格式的自定义请求头，可留空则使用默认"
 
@@ -464,7 +464,7 @@ msgid "settings.cloudBackupProviderS3"
 msgstr "S3 兼容存储"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:609
+#: src/i18n/descriptors/settings.ts:613
 msgid "settings.serverchanSendKeyPlaceholder"
 msgstr "SCTxxxxxxxxxxxxxxxx 或 sctp123tabc"
 
@@ -484,7 +484,7 @@ msgid "settings.builtInIconSource.selfhst"
 msgstr "selfh.st icons"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:608
+#: src/i18n/descriptors/settings.ts:612
 msgid "settings.serverchanSendKey"
 msgstr "SendKey"
 
@@ -499,54 +499,64 @@ msgid "settings.help.serverchan"
 msgstr "Server酱 文档"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:594
+#: src/i18n/descriptors/settings.ts:598
 msgid "settings.smtpPassword"
 msgstr "SMTP 密码"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:589
+#: src/i18n/descriptors/settings.ts:593
 msgid "settings.smtpHost"
 msgstr "SMTP 服务器"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:593
+#: src/i18n/descriptors/settings.ts:597
 msgid "settings.smtpUser"
 msgstr "SMTP 用户名"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:590
+#: src/i18n/descriptors/settings.ts:594
 msgid "settings.smtpPort"
 msgstr "SMTP 端口"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:562
+#: src/i18n/descriptors/settings.ts:566
 msgid "settings.telegramBotCommandsHttpsRequired"
 msgstr "Telegram Webhook 需要 HTTPS 外部访问地址。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:561
+#: src/i18n/descriptors/settings.ts:565
 msgid "settings.telegramBotCommandsSaveFirst"
 msgstr "Telegram 凭据有未保存更改，请先保存设置。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:572
+#: src/i18n/descriptors/settings.ts:576
 msgid "settings.telegramBotCommandsDeleteFailed"
 msgstr "Telegram 查询命令删除失败"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:568
+#: src/i18n/descriptors/settings.ts:572
 msgid "settings.telegramBotCommandsInstallFailed"
 msgstr "Telegram 查询命令安装失败"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:570
+#: src/i18n/descriptors/settings.ts:574
 msgid "settings.telegramBotCommandsDeleted"
 msgstr "Telegram 查询命令已删除"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:566
+#: src/i18n/descriptors/settings.ts:570
 msgid "settings.telegramBotCommandsInstalled"
 msgstr "Telegram 查询命令已安装"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:544
+msgid "settings.telegramMessageFormat"
+msgstr "Telegram 消息样式"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:575
+msgid "settings.telegramBotCommandsDeletedDescription"
+msgstr "Telegram 菜单命令已删除，需要时可以重新安装。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:92
@@ -779,17 +789,17 @@ msgid "settings.uploadedIconsDeleteBlockedByBoth"
 msgstr "仍被 {subscriptionCount} 个订阅和 {paymentMethodCount} 个支付方式使用，请先分别换掉 Logo 和支付方式图标。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:605
+#: src/i18n/descriptors/settings.ts:609
 msgid "settings.barkKeyHelp"
 msgstr "从 Bark iOS 应用中获取的设备 Key"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:574
+#: src/i18n/descriptors/settings.ts:578
 msgid "settings.notifyxHelp"
 msgstr "从 Notifyx 平台获取的 API Key"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:549
+#: src/i18n/descriptors/settings.ts:553
 msgid "settings.telegramBotCommandsNever"
 msgstr "从未"
 
@@ -819,7 +829,7 @@ msgid "settings.exchangeRateProviderHelp"
 msgstr "优先使用所选来源；失败时会自动尝试另一个远端来源，最后使用内置备用汇率。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:567
+#: src/i18n/descriptors/settings.ts:571
 msgid "settings.telegramBotCommandsInstalledDescription"
 msgstr "你可以在目标 Telegram 聊天的命令菜单中查询 Renewlet 订阅摘要。"
 
@@ -834,7 +844,7 @@ msgid "settings.calendarFeedGeneratedDescription"
 msgstr "你可以随时回到这里复制 URL 或唤起系统日历订阅。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:591
+#: src/i18n/descriptors/settings.ts:595
 msgid "settings.smtpSecure"
 msgstr "使用 TLS 直连"
 
@@ -1009,7 +1019,7 @@ msgid "settings.publicApiTokenLastUsed"
 msgstr "最后使用 {time}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:548
+#: src/i18n/descriptors/settings.ts:552
 msgid "settings.telegramBotCommandsLastUsedAt"
 msgstr "最后使用：{time}"
 
@@ -1094,7 +1104,7 @@ msgid "settings.publicApiDeleteTitle"
 msgstr "删除 API Token？"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:554
+#: src/i18n/descriptors/settings.ts:558
 msgid "settings.telegramBotCommandsDeleteTitle"
 msgstr "删除 Telegram Bot 查询命令？"
 
@@ -1102,11 +1112,6 @@ msgstr "删除 Telegram Bot 查询命令？"
 #: src/i18n/descriptors/settings.ts:132
 msgid "settings.uploadedIconsDeleteTitle"
 msgstr "删除上传图标？"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:565
-msgid "settings.telegramBotCommandsDeleting"
-msgstr "删除中..."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:135
@@ -1119,17 +1124,22 @@ msgid "settings.cloudBackupDeleting"
 msgstr "删除中..."
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:569
+msgid "settings.telegramBotCommandsDeleting"
+msgstr "删除中..."
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:415
 msgid "settings.cloudBackupDeleteTitle"
 msgstr "删除云端快照？"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:555
+#: src/i18n/descriptors/settings.ts:559
 msgid "settings.telegramBotCommandsDeleteDescription"
-msgstr "删除后 Telegram 菜单命令会失效，本地 binding 也会移除。需要时可以重新安装。"
+msgstr "删除后 Telegram 菜单命令会失效，需要时可以重新安装。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:553
+#: src/i18n/descriptors/settings.ts:557
 msgid "settings.telegramBotCommandsDelete"
 msgstr "删除命令"
 
@@ -1164,12 +1174,12 @@ msgid "aiRecognition.thinking.gemini.dynamic"
 msgstr "动态预算"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:595
+#: src/i18n/descriptors/settings.ts:599
 msgid "settings.smtpFrom"
 msgstr "发件人"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:579
+#: src/i18n/descriptors/settings.ts:583
 msgid "settings.webhookPayload"
 msgstr "发送负载 (JSON格式，可选)"
 
@@ -1186,7 +1196,7 @@ msgstr "可以先填写配置，启用并保存后再发送通知。"
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:347
 msgid "settings.publicApiTokenCopiedDescription"
-msgstr "可以把它放到 Telegram Bot adapter 或其它只读客户端的 Bearer 配置里。"
+msgstr "可以把它用于只读集成或自动化工具。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:174
@@ -1219,12 +1229,12 @@ msgid "settings.currencyManagerDescription"
 msgstr "启用或禁用可用的货币选项（当前汇率来源共同支持 146 种货币）"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:607
+#: src/i18n/descriptors/settings.ts:611
 msgid "settings.barkSilentHelp"
 msgstr "启用该选项后推送通知将不会发出声音"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:596
+#: src/i18n/descriptors/settings.ts:600
 msgid "settings.smtpReplyTo"
 msgstr "回复地址"
 
@@ -1254,7 +1264,7 @@ msgid "settings.builtInIconIndexRefreshFailed"
 msgstr "图标索引更新失败"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:582
+#: src/i18n/descriptors/settings.ts:586
 msgid "settings.wechatHelp"
 msgstr "在企业微信群里添加「群机器人」后获取。"
 
@@ -1354,12 +1364,12 @@ msgid "settings.appearance"
 msgstr "外观设置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:587
+#: src/i18n/descriptors/settings.ts:591
 msgid "settings.wechatPhonesHelp"
 msgstr "多个手机号用逗号/换行分隔；仅在消息类型为“文本”时生效。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:598
+#: src/i18n/descriptors/settings.ts:602
 msgid "settings.multipleRecipients"
 msgstr "多个收件人"
 
@@ -1374,27 +1384,27 @@ msgid "settings.cloudBackupProvider"
 msgstr "存储类型"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:558
+#: src/i18n/descriptors/settings.ts:562
 msgid "settings.telegramBotCommandsStatus.installing"
 msgstr "安装中"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:564
+#: src/i18n/descriptors/settings.ts:568
 msgid "settings.telegramBotCommandsInstalling"
 msgstr "安装中..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:545
+#: src/i18n/descriptors/settings.ts:549
 msgid "settings.telegramBotCommandsHelp"
-msgstr "安装后可以在 Telegram 菜单中使用 /status、/due 和 /subscriptions 查询当前账号的订阅摘要。"
+msgstr "安装后可以在 Telegram 菜单中查看状态、下一条续费、今天、本周、本月和订阅摘要。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:551
+#: src/i18n/descriptors/settings.ts:555
 msgid "settings.telegramBotCommandsInstall"
 msgstr "安装命令"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:547
+#: src/i18n/descriptors/settings.ts:551
 msgid "settings.telegramBotCommandsInstalledAt"
 msgstr "安装时间：{time}"
 
@@ -1444,6 +1454,11 @@ msgid "settings.cloudBackupCredential"
 msgstr "密钥"
 
 #. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:546
+msgid "settings.telegramMessageFormatHtml"
+msgstr "富文本"
+
+#. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:288
 msgid "settings.publicStatusSummary"
 msgstr "展示 {visible} · 隐藏 {hidden}"
@@ -1489,7 +1504,7 @@ msgid "settings.builtInIconSourcesSummary"
 msgstr "已启用 {enabled} 个来源 · 变体 {variants}/{total}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:559
+#: src/i18n/descriptors/settings.ts:563
 msgid "settings.telegramBotCommandsStatus.installed"
 msgstr "已安装"
 
@@ -1539,7 +1554,7 @@ msgid "settings.appSettingsScope"
 msgstr "应用设置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:599
+#: src/i18n/descriptors/settings.ts:603
 msgid "settings.multipleRecipientsHelp"
 msgstr "开启后可用逗号/换行分隔多个邮箱。"
 
@@ -1659,7 +1674,7 @@ msgid "settings.cloudBackupUpstreamDescription"
 msgstr "接口返回的原始响应。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:601
+#: src/i18n/descriptors/settings.ts:605
 msgid "settings.recipientEmailHelp"
 msgstr "接收通知的目标邮箱地址（默认回显当前登录邮箱）。"
 
@@ -1719,17 +1734,17 @@ msgid "settings.uploadedIconsIconDescription"
 msgstr "支付方式管理里，点「上传」添加的图标。用「搜索」选的在线图标不在这里。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:610
+#: src/i18n/descriptors/settings.ts:614
 msgid "settings.serverchanHelp"
 msgstr "支持 Server酱 Turbo 与 Server酱³ SendKey，默认使用官方推送通道。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:580
+#: src/i18n/descriptors/settings.ts:584
 msgid "settings.webhookPayloadHelp"
 msgstr "支持变量: '{title}', '{content}', '{timestamp}'，使用这些变量会自动替换为发送内容"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:600
+#: src/i18n/descriptors/settings.ts:604
 msgid "settings.recipientEmail"
 msgstr "收件人邮箱"
 
@@ -1769,7 +1784,7 @@ msgid "settings.customConfigScope"
 msgstr "数据配置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:584
+#: src/i18n/descriptors/settings.ts:588
 msgid "settings.textMessage"
 msgstr "文本消息"
 
@@ -1824,7 +1839,7 @@ msgid "settings.publicApiDeleteFailedDescription"
 msgstr "无法删除 API Token，请稍后重试。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:573
+#: src/i18n/descriptors/settings.ts:577
 msgid "settings.telegramBotCommandsDeleteFailedDescription"
 msgstr "无法删除 Telegram Bot 查询命令，请稍后重试。"
 
@@ -1839,7 +1854,7 @@ msgid "settings.cloudBackupDeleteFailedDescription"
 msgstr "无法删除远端快照，请稍后重试。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:569
+#: src/i18n/descriptors/settings.ts:573
 msgid "settings.telegramBotCommandsInstallFailedDescription"
 msgstr "无法安装 Telegram Bot 查询命令，请检查 Bot Token、Chat ID 和 HTTPS 外部访问地址。"
 
@@ -2109,7 +2124,7 @@ msgid "settings.unsavedChanges"
 msgstr "有未保存更改"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:602
+#: src/i18n/descriptors/settings.ts:606
 msgid "settings.barkServer"
 msgstr "服务器地址"
 
@@ -2139,7 +2154,7 @@ msgid "settings.uploadedIconsUnnamedAsset"
 msgstr "未命名资产"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:557
+#: src/i18n/descriptors/settings.ts:561
 msgid "settings.telegramBotCommandsStatus.notInstalled"
 msgstr "未安装"
 
@@ -2214,12 +2229,12 @@ msgid "settings.cloudBackupStatusIdle"
 msgstr "未运行"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:550
+#: src/i18n/descriptors/settings.ts:554
 msgid "settings.telegramBotCommandsMissing"
 msgstr "未配置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:556
+#: src/i18n/descriptors/settings.ts:560
 msgid "settings.telegramBotCommandsStatus.notConfigured"
 msgstr "未配置"
 
@@ -2229,7 +2244,7 @@ msgid "aiRecognition.thinkingRunHelp"
 msgstr "本次识别可临时覆盖设置页默认值。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:581
+#: src/i18n/descriptors/settings.ts:585
 msgid "settings.wechatUrl"
 msgstr "机器人 Webhook URL"
 
@@ -2399,37 +2414,37 @@ msgid "aiRecognition.modelSelectEmpty"
 msgstr "没有可选择的模型。请确认 Base URL / API Key 已填写，或切换到手动输入。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:613
+#: src/i18n/descriptors/settings.ts:617
 msgid "settings.testChannel.webhook"
 msgstr "测试 {channel}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:611
+#: src/i18n/descriptors/settings.ts:615
 msgid "settings.testChannel.telegram"
 msgstr "测试 {channel} 通知"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:612
+#: src/i18n/descriptors/settings.ts:616
 msgid "settings.testChannel.notifyx"
 msgstr "测试 {channel} 通知"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:614
+#: src/i18n/descriptors/settings.ts:618
 msgid "settings.testChannel.wechat"
 msgstr "测试 {channel} 通知"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:616
+#: src/i18n/descriptors/settings.ts:620
 msgid "settings.testChannel.bark"
 msgstr "测试 {channel} 通知"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:617
+#: src/i18n/descriptors/settings.ts:621
 msgid "settings.testChannel.serverchan"
 msgstr "测试 {channel} 通知"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:615
+#: src/i18n/descriptors/settings.ts:619
 msgid "settings.testChannel.email"
 msgstr "测试{channel}"
 
@@ -2444,7 +2459,7 @@ msgid "settings.cloudBackupTesting"
 msgstr "测试中..."
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:618
+#: src/i18n/descriptors/settings.ts:622
 msgid "settings.testing"
 msgstr "测试中..."
 
@@ -2459,17 +2474,17 @@ msgid "settings.cloudBackupTest"
 msgstr "测试连接"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:585
+#: src/i18n/descriptors/settings.ts:589
 msgid "settings.wechatModeTag"
 msgstr "消息前追加「Renewlet」标记"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:583
+#: src/i18n/descriptors/settings.ts:587
 msgid "settings.messageType"
 msgstr "消息类型"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:563
+#: src/i18n/descriptors/settings.ts:567
 msgid "settings.telegramBotCommandsDemoDisabled"
 msgstr "演示模式下不能安装外部 Telegram 命令。"
 
@@ -2649,7 +2664,17 @@ msgid "settings.title"
 msgstr "系统配置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:546
+#: src/i18n/descriptors/settings.ts:545
+msgid "settings.telegramMessageFormatPlain"
+msgstr "纯文本"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:547
+msgid "settings.telegramMessageFormatHelp"
+msgstr "纯文本兼容性最好；富文本会让 Telegram 消息的标题和关键数字更醒目。"
+
+#. js-lingui-explicit-id
+#: src/i18n/descriptors/settings.ts:550
 msgid "settings.telegramBotCommandsChat"
 msgstr "绑定 Chat ID：{chatId}"
 
@@ -2679,7 +2704,7 @@ msgid "settings.dataConfigDescription"
 msgstr "自定义订阅的分类、状态、支付方式和货币选项，点击管理各项配置。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:577
+#: src/i18n/descriptors/settings.ts:581
 msgid "settings.webhookHeaders"
 msgstr "自定义请求头 (JSON格式，可选)"
 
@@ -2729,7 +2754,7 @@ msgid "settings.notificationReminderDaysHelp"
 msgstr "订阅选择“默认值从设置中获取”时，会使用这里的提前天数。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:604
+#: src/i18n/descriptors/settings.ts:608
 msgid "settings.barkKey"
 msgstr "设备 Key"
 
@@ -2794,7 +2819,7 @@ msgid "aiRecognition.apiKeyRequired"
 msgstr "请先填写 API Key。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:560
+#: src/i18n/descriptors/settings.ts:564
 msgid "settings.telegramBotCommandsConfigMissing"
 msgstr "请先填写并保存 Bot Token 和 Chat ID。"
 
@@ -2814,7 +2839,7 @@ msgid "settings.cloudBackupTestFailedDescription"
 msgstr "请检查地址、路径、Bucket 和密钥权限。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:575
+#: src/i18n/descriptors/settings.ts:579
 msgid "settings.webhookMethod"
 msgstr "请求方法"
 
@@ -2872,11 +2897,6 @@ msgstr "还没有上传过订阅 Logo"
 #: src/i18n/descriptors/settings.ts:250
 msgid "settings.calendarFeedOneTimeHelp"
 msgstr "这是你的私有订阅链接；如果误分享，可以重新生成让旧链接失效。"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:571
-msgid "settings.telegramBotCommandsDeletedDescription"
-msgstr "远端 webhook 和命令菜单已清理，本地 binding 已移除。"
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/settings.ts:440
@@ -2954,7 +2974,7 @@ msgid "settings.notifications"
 msgstr "通知设置"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:597
+#: src/i18n/descriptors/settings.ts:601
 msgid "settings.smtpHelp"
 msgstr "邮件通知使用当前账号 SMTP；留空不会使用部署环境 fallback。"
 
@@ -2979,7 +2999,7 @@ msgid "aiRecognition.settingsDescription"
 msgstr "配置用于识别订阅图片、备忘录或表格文本的第三方模型。识别内容和已有标签名会发送到你填写的 AI 平台。"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:552
+#: src/i18n/descriptors/settings.ts:556
 msgid "settings.telegramBotCommandsReinstall"
 msgstr "重新安装"
 
@@ -3009,7 +3029,7 @@ msgid "settings.uploadedIconsRetry"
 msgstr "重试"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:606
+#: src/i18n/descriptors/settings.ts:610
 msgid "settings.barkSilent"
 msgstr "静音推送"
 
@@ -3064,7 +3084,7 @@ msgid "settings.defaultCurrencyHelp"
 msgstr "首页和统计页面的金额将统一换算为此货币显示，单个订阅仍显示其原始货币"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/settings.ts:603
+#: src/i18n/descriptors/settings.ts:607
 msgid "settings.barkServerHelp"
 msgstr "默认使用官方服务 `https://api.day.app`；如你自建 Bark 服务，请填写你的服务地址。"
 

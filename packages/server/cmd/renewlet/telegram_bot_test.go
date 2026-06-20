@@ -92,8 +92,11 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	if err := json.Unmarshal((*calls)[1].Payload, &setCommands); err != nil {
 		t.Fatal(err)
 	}
-	if setCommands.Scope.Type != "chat" || setCommands.Scope.ChatID != settings.TelegramChatID || len(setCommands.Commands) != 5 {
+	if setCommands.Scope.Type != "chat" || setCommands.Scope.ChatID != settings.TelegramChatID || len(setCommands.Commands) != 9 {
 		t.Fatalf("unexpected setMyCommands payload: %#v", setCommands)
+	}
+	if !telegramBotTestHasCommand(setCommands.Commands, "next") || !telegramBotTestHasCommand(setCommands.Commands, "month") || telegramBotTestHasCommand(setCommands.Commands, "due") {
+		t.Fatalf("unexpected command menu: %#v", setCommands.Commands)
 	}
 
 	binding := telegramBotTestBinding(t, app, user.Id)
@@ -134,6 +137,9 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	}
 	if statusMessage.ChatID != settings.TelegramChatID || !strings.Contains(statusMessage.Text, "Total: 2") || statusMessage.LinkPreviewOptions == nil || !statusMessage.LinkPreviewOptions.IsDisabled {
 		t.Fatalf("unexpected status reply: %#v", statusMessage)
+	}
+	if statusMessage.ParseMode != "" {
+		t.Fatalf("plain Telegram replies must not set parse_mode, got %q", statusMessage.ParseMode)
 	}
 	binding = telegramBotTestBinding(t, app, user.Id)
 	if binding.GetInt("lastUpdateId") != 1 || binding.GetString("lastUsedAt") == "" {
@@ -190,6 +196,58 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	}
 	if _, err := findTelegramBotBindingForUser(app, user.Id); !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("expected binding to be hard deleted, err=%v", err)
+	}
+}
+
+func TestTelegramBotHTMLRepliesEscapeUserContent(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	registerRecordHooks(app)
+	user, sessionToken := createRouteTestUser(t, app, "telegram-html")
+	settings := defaultAppSettings()
+	settings.Locale = "en-US"
+	settings.Timezone = "UTC"
+	settings.TelegramBotToken = "123456:telegram-secret-token"
+	settings.TelegramChatID = "12345"
+	settings.TelegramMessageFormat = telegramMessageFormatHTML
+	createCalendarFeedTestSettings(t, app, user, settings)
+	createRouteTestSubscription(t, app, user.Id, map[string]interface{}{
+		"name":            `A&B <Pro> "Plan"`,
+		"status":          "active",
+		"nextBillingDate": addDateOnly(todayDateOnly(time.Now().UTC(), "UTC"), 5),
+	})
+	calls := captureTelegramBotAPICalls(t, nil)
+
+	installRes := serveTestRequestWithHeaders(t, app, http.MethodPost, "/api/app/telegram-bot/commands", "", sessionToken, map[string]string{
+		"X-Forwarded-Proto": "https",
+		"X-Forwarded-Host":  "renewlet.example.com",
+	})
+	if installRes.Code != http.StatusOK {
+		t.Fatalf("expected install 200, got %d: %s", installRes.Code, installRes.Body.String())
+	}
+	var setWebhook telegramBotSetWebhookRequest
+	if err := json.Unmarshal((*calls)[0].Payload, &setWebhook); err != nil {
+		t.Fatal(err)
+	}
+	binding := telegramBotTestBinding(t, app, user.Id)
+
+	res := serveTestRequestWithHeaders(t, app, http.MethodPost, "/api/telegram/webhook/"+binding.Id, `{"update_id":1,"message":{"chat":{"id":12345},"text":"/subscriptions"}}`, "", map[string]string{
+		telegramWebhookSecretHeader: setWebhook.SecretToken,
+	})
+	if res.Code != http.StatusOK || len(*calls) != 3 {
+		t.Fatalf("expected html subscriptions reply, code=%d calls=%#v", res.Code, *calls)
+	}
+	var message telegramSendMessageRequest
+	if err := json.Unmarshal((*calls)[2].Payload, &message); err != nil {
+		t.Fatal(err)
+	}
+	if message.ParseMode != "HTML" {
+		t.Fatalf("expected HTML parse mode, got %#v", message)
+	}
+	if !strings.Contains(message.Text, `A&amp;B &lt;Pro&gt; &#34;Plan&#34;`) || strings.Contains(message.Text, `<Pro>`) {
+		t.Fatalf("html reply did not escape subscription name: %q", message.Text)
 	}
 }
 
@@ -263,6 +321,15 @@ func telegramBotTestBinding(t *testing.T, app core.App, userID string) *core.Rec
 		t.Fatal(err)
 	}
 	return binding
+}
+
+func telegramBotTestHasCommand(commands []telegramBotCommand, command string) bool {
+	for _, item := range commands {
+		if item.Command == command {
+			return true
+		}
+	}
+	return false
 }
 
 func stringPointer(value string) *string {

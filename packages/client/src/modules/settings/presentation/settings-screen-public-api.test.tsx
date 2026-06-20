@@ -151,7 +151,7 @@ describe("SettingsScreen Public API and Telegram commands", () => {
           installed: true,
           status: "installed",
           chatId: "123456",
-          commandsVersion: "v1",
+          commandsVersion: "v2",
           installedAt: "2026-06-20T00:00:00Z",
           lastUsedAt: null,
         },
@@ -169,16 +169,22 @@ describe("SettingsScreen Public API and Telegram commands", () => {
     expect(notificationsSection).not.toBeNull();
     const telegramPanel = within(notificationsSection as HTMLElement);
     expect(telegramPanel.getByText("Bot 查询命令")).toBeInTheDocument();
+    expect(telegramPanel.getByText("Telegram 消息样式")).toBeInTheDocument();
+    expect(telegramPanel.getByRole("button", { name: "纯文本" })).toHaveAttribute("aria-pressed", "true");
+    expect(telegramPanel.getByRole("button", { name: "富文本" })).toHaveAttribute("aria-pressed", "false");
     expect(telegramPanel.getByText("已安装")).toBeInTheDocument();
     expect(telegramPanel.getByText("绑定 Chat ID：123456")).toBeInTheDocument();
     expect(telegramPanel.getByText("最后使用：从未")).toBeInTheDocument();
+
+    await user.click(telegramPanel.getByRole("button", { name: "富文本" }));
+    expect(controller.updateSetting).toHaveBeenCalledWith("telegramMessageFormat", "html");
 
     await user.click(telegramPanel.getByRole("button", { name: "重新安装" }));
     expect(install).toHaveBeenCalledTimes(1);
 
     await user.click(telegramPanel.getByRole("button", { name: "删除命令" }));
     const deleteDialog = await screen.findByRole("alertdialog", { name: "删除 Telegram Bot 查询命令？" });
-    expect(within(deleteDialog).getByText("删除后 Telegram 菜单命令会失效，本地 binding 也会移除。需要时可以重新安装。")).toBeInTheDocument();
+    expect(within(deleteDialog).getByText("删除后 Telegram 菜单命令会失效，需要时可以重新安装。")).toBeInTheDocument();
     await user.click(within(deleteDialog).getByRole("button", { name: "删除命令" }));
     expect(deleteCommands).toHaveBeenCalledTimes(1);
   });

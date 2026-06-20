@@ -231,7 +231,7 @@ describe("Cloudflare Telegram Bot commands", () => {
 
     const install = await installTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands", { method: "POST" }), env);
 
-    await expect(install.json()).resolves.toMatchObject({ status: "installed", installed: true, commandsVersion: "v1" });
+    await expect(install.json()).resolves.toMatchObject({ status: "installed", installed: true, commandsVersion: "v2" });
     expect(env.__state.bindings).toHaveLength(1);
     expect(env.__state.bindings[0]!.bot_token_hash).not.toBe(BOT_TOKEN);
     expect(env.__state.bindings[0]!.webhook_secret_hash).not.toBe(SECRET_TOKEN);
@@ -244,6 +244,9 @@ describe("Cloudflare Telegram Bot commands", () => {
       secret_token: SECRET_TOKEN,
     });
     expect(telegramCalls[1]!.body).toMatchObject({ scope: { type: "chat", chat_id: CHAT_ID } });
+    const commands = telegramCalls[1]!.body["commands"] as Array<{ command: string; description: string }>;
+    expect(commands.map((item) => item.command)).toEqual(["start", "help", "status", "next", "today", "week", "month", "subscriptions", "settings"]);
+    expect(commands).not.toContainEqual(expect.objectContaining({ command: "due" }));
 
     env.__state.settingsJson = JSON.stringify(settings({ telegramBotToken: "123456:another-token" }));
     const mismatched = await readTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands"), env);
@@ -268,6 +271,7 @@ describe("Cloudflare Telegram Bot commands", () => {
       chat_id: CHAT_ID,
       link_preview_options: { is_disabled: true },
     });
+    expect(telegramCalls[2]!.body).not.toHaveProperty("parse_mode");
     expect(String(telegramCalls[2]!.body["text"])).toContain("Total: 2");
     expect(binding.last_update_id).toBe(1);
     expect(binding.last_used_at).not.toBeNull();
@@ -303,6 +307,24 @@ describe("Cloudflare Telegram Bot commands", () => {
     expect(deleted.status).toBe(200);
     expect(telegramCalls.slice(-2).map((call) => call.method)).toEqual(["deleteWebhook", "deleteMyCommands"]);
     expect(env.__state.bindings).toHaveLength(0);
+  });
+
+  it("sends HTML replies only after escaping subscription content", async () => {
+    const env = createEnv({
+      settingsJson: JSON.stringify(settings({ telegramMessageFormat: "html" })),
+      subscriptions: [subscriptionRow({ id: "sub_html", name: `A&B <Pro> "Plan"` })],
+    });
+    const telegramCalls = captureTelegramFetch();
+    await installTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands", { method: "POST" }), env);
+    const binding = env.__state.bindings[0]!;
+
+    const response = await telegramWebhook(webhookRequest(binding.id, SECRET_TOKEN, { update_id: 1, message: { chat: { id: Number(CHAT_ID) }, text: "/subscriptions" } }), env, binding.id);
+
+    expect(response.status).toBe(200);
+    expect(telegramCalls).toHaveLength(3);
+    expect(telegramCalls[2]!.body).toMatchObject({ parse_mode: "HTML" });
+    expect(String(telegramCalls[2]!.body["text"])).toContain("A&amp;B &lt;Pro&gt; &quot;Plan&quot;");
+    expect(String(telegramCalls[2]!.body["text"])).not.toContain("<Pro>");
   });
 });
 

@@ -32,6 +32,8 @@ export function createDefaultAppSettings(options: DefaultSettingsOptions = {}): 
     testPhone: "",
     telegramBotToken: "",
     telegramChatId: "",
+    // 默认不发送 Telegram parse_mode；富文本必须由用户显式启用，避免旧 Bot/客户端渲染差异影响通知可读性。
+    telegramMessageFormat: "plain",
     notifyxApiKey: "",
     webhookUrl: "",
     webhookMethod: "POST",

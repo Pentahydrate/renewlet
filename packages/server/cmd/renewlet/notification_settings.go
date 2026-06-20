@@ -138,6 +138,12 @@ func mergeSettingsWithOptions(base appSettings, patch json.RawMessage, rejectUns
 		} else if ok && !isSupportedAppLocale(locale) {
 			return base, errors.New("APP_LOCALE_UNSUPPORTED")
 		}
+		// Telegram 消息样式是跨运行面枚举；写入边界拒绝未知值，坏库值才允许在 sanitizeSettings 回落 plain。
+		if format, ok, err := explicitSettingsStringPatch(patch, "telegramMessageFormat"); err != nil {
+			return base, err
+		} else if ok && format != telegramMessageFormatPlain && format != telegramMessageFormatHTML {
+			return base, errors.New("TELEGRAM_MESSAGE_FORMAT_UNSUPPORTED")
+		}
 	}
 	settings.BuiltInIconSources = mergeBuiltInIconSourceSettings(base.BuiltInIconSources, sourcePatch)
 	if !hasEnabledBuiltInIconSource(settings.BuiltInIconSources) {
@@ -147,19 +153,23 @@ func mergeSettingsWithOptions(base appSettings, patch json.RawMessage, rejectUns
 }
 
 func explicitSettingsLocalePatch(raw json.RawMessage) (string, bool, error) {
+	return explicitSettingsStringPatch(raw, "locale")
+}
+
+func explicitSettingsStringPatch(raw json.RawMessage, key string) (string, bool, error) {
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &fields); err != nil {
 		return "", false, err
 	}
-	value, ok := fields["locale"]
+	value, ok := fields[key]
 	if !ok {
 		return "", false, nil
 	}
-	var locale string
-	if err := json.Unmarshal(value, &locale); err != nil {
+	var text string
+	if err := json.Unmarshal(value, &text); err != nil {
 		return "", true, err
 	}
-	return locale, true, nil
+	return text, true, nil
 }
 
 // sanitizeSettings 对可恢复的设置值做保守归一。
@@ -187,6 +197,10 @@ func sanitizeSettings(settings appSettings) appSettings {
 	}
 	settings.NotificationReminderDays = normalizeNotificationReminderDays(settings.NotificationReminderDays)
 	settings.EnabledChannels = uniqueValidChannels(settings.EnabledChannels)
+	if settings.TelegramMessageFormat != telegramMessageFormatHTML && settings.TelegramMessageFormat != telegramMessageFormatPlain {
+		// 历史/手改 settings JSON 只降级 Telegram 样式，不应让整份设置回默认导致通知渠道丢失。
+		settings.TelegramMessageFormat = telegramMessageFormatPlain
+	}
 	if settings.WebhookMethod != "GET" && settings.WebhookMethod != "POST" {
 		settings.WebhookMethod = "POST"
 	}

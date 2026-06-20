@@ -131,6 +131,29 @@ describe("Cloudflare settings initialization", () => {
     expect(JSON.parse(state.rows.get(USER_ID) ?? "{}")).toMatchObject({ locale: "en-US" });
   });
 
+  it("defaults Telegram message format to plain and recovers invalid stored values", async () => {
+    expect(createDefaultAppSettings().telegramMessageFormat).toBe("plain");
+    const existing = {
+      ...createDefaultAppSettings({ locale: "en-US" }),
+      monthlyBudget: 2333,
+      telegramMessageFormat: "markdown",
+    };
+    const state: SettingsTestState = {
+      rows: new Map([[USER_ID, JSON.stringify(existing)]]),
+      inserts: [],
+    };
+    const env = {
+      DB: new SettingsTestDB(state) as unknown as D1Database,
+      ASSETS: {} as Fetcher,
+      ASSETS_BUCKET: {} as R2Bucket,
+    } as Env;
+
+    const settings = await ensureSettings(env, USER_ID, "zh-CN");
+
+    expect(settings.telegramMessageFormat).toBe("plain");
+    expect(settings.monthlyBudget).toBe(2333);
+  });
+
   it("readSettings ensures a settings row from the request locale", async () => {
     const { env, state } = createEnv();
 
@@ -158,5 +181,17 @@ describe("Cloudflare settings initialization", () => {
       .rejects.toMatchObject({ status: 400, code: "INVALID_PAYLOAD" });
 
     expect(state.rows.has(USER_ID)).toBe(false);
+  });
+
+  it("accepts only supported Telegram message formats on write", async () => {
+    const { env, state } = createEnv(createDefaultAppSettings({ locale: "en-US" }));
+
+    const response = await updateSettings(settingsRequest("PUT", "en-US", { telegramMessageFormat: "html" }), env);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ settings: { telegramMessageFormat: "html" } });
+
+    await expect(updateSettings(settingsRequest("PUT", "en-US", { telegramMessageFormat: "markdown" }), env))
+      .rejects.toMatchObject({ status: 400, code: "INVALID_PAYLOAD" });
+    expect(JSON.parse(state.rows.get(USER_ID) ?? "{}")).toMatchObject({ telegramMessageFormat: "html" });
   });
 });

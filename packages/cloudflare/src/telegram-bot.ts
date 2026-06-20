@@ -14,12 +14,15 @@ import {
 } from "./upstream-response";
 import {
   readPublicApiDueForUser,
+  readPublicApiNextDueForUser,
   readPublicApiStatusForUser,
   readPublicApiSubscriptionsForUser,
 } from "./public-api";
+import { dateOnlyInZone } from "./subscription-renewal";
+import { telegramBotMessage } from "./telegram-format";
 import type { ApiAppSettings, Env, TelegramBotBindingRow } from "./types";
 
-const TELEGRAM_COMMANDS_VERSION = "v1";
+const TELEGRAM_COMMANDS_VERSION = "v2";
 const TELEGRAM_WEBHOOK_SECRET_HEADER = "X-Telegram-Bot-Api-Secret-Token";
 const TELEGRAM_UPDATE_BODY_LIMIT = 1 << 20;
 const TELEGRAM_DUE_DEFAULT_DAYS = 30;
@@ -165,7 +168,8 @@ export async function telegramWebhook(request: Request, env: Env, bindingId: str
   const reply = await telegramCommandReply(env, binding.user_id, settings, parsed.command, parsed.arg, requestLocale(request));
   const config = telegramSavedConfig(settings);
   if (config && reply) {
-    await telegramSendMessage(config.botToken, binding.chat_id, reply, requestLocale(request)).catch(() => undefined);
+    // 命令已经处理完就推进 update；sendMessage 失败也不让 Telegram 重试造成重复查询和重复 D1 写入。
+    await telegramSendMessage(config.botToken, binding.chat_id, reply, settings.telegramMessageFormat, requestLocale(request)).catch(() => undefined);
   }
   await markTelegramBindingUpdate(env, binding, update.updateId, true);
   return telegramWebhookOk();
@@ -236,10 +240,11 @@ async function bestEffortTelegramRemoteCleanup(botToken: string, chatId: string,
   await telegramPostJson(botToken, "deleteMyCommands", { scope: { type: "chat", chat_id: chatId } }, locale, [chatId]).catch(() => undefined);
 }
 
-async function telegramSendMessage(botToken: string, chatId: string, text: string, locale: AppLocale): Promise<void> {
+async function telegramSendMessage(botToken: string, chatId: string, text: string, format: ApiAppSettings["telegramMessageFormat"], locale: AppLocale): Promise<void> {
+  const message = telegramBotMessage(text, format);
   await telegramPostJson(botToken, "sendMessage", {
     chat_id: chatId,
-    text,
+    ...message,
     link_preview_options: { is_disabled: true },
   }, locale, [chatId]);
 }
@@ -269,26 +274,45 @@ function telegramApiHttpError(error: unknown, locale: AppLocale): HttpError {
 }
 
 function telegramMenuCommands(): TelegramBotCommand[] {
+  // BotCommand.description 是 Telegram 菜单纯文本契约；富文本只属于后续 sendMessage，/due 仅保留手输高级入口。
   return [
     { command: "start", description: "Show Renewlet command help" },
     { command: "help", description: "Show Renewlet command help" },
     { command: "status", description: "Show subscription status summary" },
-    { command: "due", description: "Show upcoming renewals" },
+    { command: "next", description: "Show the next renewal" },
+    { command: "today", description: "Show renewals due today" },
+    { command: "week", description: "Show renewals in the next 7 days" },
+    { command: "month", description: "Show renewals in the next 30 days" },
     { command: "subscriptions", description: "List subscription summaries" },
+    { command: "settings", description: "Show bot and message settings" },
   ];
 }
 
 async function telegramCommandReply(env: Env, userId: string, settings: ApiAppSettings, command: string, arg: string, locale: AppLocale): Promise<string> {
+  // 命令 adapter 只做路由和文本排版；订阅读取必须继续走 Public API owner-scoped service。
   switch (command) {
     case "start":
     case "help":
       return helpText();
     case "status":
       return statusText(await readPublicApiStatusForUser(env, userId));
+    case "next":
+      return nextText(await readPublicApiNextDueForUser(env, userId, { settings }));
+    case "today": {
+      const today = dateOnlyInZone(new Date(), settings.timezone);
+      const due = await readPublicApiDueForUser(env, userId, 1, { settings });
+      return dueText({ ...due, items: due.items.filter((item) => item.dueDate === today) }, "Today's renewals");
+    }
+    case "week":
+      return dueText(await readPublicApiDueForUser(env, userId, 7, { settings }));
+    case "month":
+      return dueText(await readPublicApiDueForUser(env, userId, 30, { settings }));
     case "due":
       return dueText(await readPublicApiDueForUser(env, userId, dueDays(arg), { settings }));
     case "subscriptions":
       return subscriptionsText(await readPublicApiSubscriptionsForUser(env, userId, { limit: TELEGRAM_COMMAND_LIST_LIMIT, locale }));
+    case "settings":
+      return settingsText(settings);
     default:
       return helpText();
   }
@@ -298,8 +322,13 @@ function helpText(): string {
   return [
     "Renewlet Bot commands:",
     "/status - subscription status summary",
+    "/next - next renewal",
+    "/today - renewals due today",
+    "/week - upcoming renewals in 7 days",
+    "/month - upcoming renewals in 30 days",
     "/due [days] - upcoming renewals, default 30 days",
     "/subscriptions - first 10 subscription summaries",
+    "/settings - bot and message settings",
     "/help - show this help",
   ].join("\n");
 }
@@ -316,9 +345,15 @@ function statusText(response: Awaited<ReturnType<typeof readPublicApiStatusForUs
   ].join("\n");
 }
 
-function dueText(response: Awaited<ReturnType<typeof readPublicApiDueForUser>>): string {
+function nextText(item: PublicApiDueItem | null): string {
+  const lines = ["Next renewal"];
+  if (!item) return [...lines, "No upcoming subscriptions."].join("\n");
+  return [...lines, `${item.dueDate}: ${subscriptionName(item)} (${item.dueType})`].join("\n");
+}
+
+function dueText(response: Awaited<ReturnType<typeof readPublicApiDueForUser>>, title = `Upcoming renewals in ${response.days} days`): string {
   const items = [...response.items].sort((left, right) => left.dueDate.localeCompare(right.dueDate) || subscriptionName(left).localeCompare(subscriptionName(right)));
-  const lines = [`Upcoming renewals in ${response.days} days`];
+  const lines = [title];
   if (items.length === 0) return [...lines, "No matching subscriptions."].join("\n");
   const visible = items.slice(0, TELEGRAM_COMMAND_LIST_LIMIT);
   for (const item of visible) lines.push(`- ${item.dueDate}: ${subscriptionName(item)} (${item.dueType})`);
@@ -337,6 +372,15 @@ function subscriptionsText(response: Awaited<ReturnType<typeof readPublicApiSubs
     lines.push(`...and ${total - response.subscriptions.length} more. Open Renewlet Web UI for details.`);
   }
   return lines.join("\n");
+}
+
+function settingsText(settings: ApiAppSettings): string {
+  return [
+    "Renewlet bot settings",
+    `Chat ID: ${settings.telegramChatId.trim() || "Not configured"}`,
+    `Message style: ${settings.telegramMessageFormat === "html" ? "Rich text" : "Plain text"}`,
+    "Manage this in Renewlet Web UI Settings > Notifications.",
+  ].join("\n");
 }
 
 function subscriptionName(item: PublicApiDueItem): string {
@@ -388,6 +432,7 @@ async function readTelegramUpdate(request: Request): Promise<TelegramUpdate> {
 }
 
 async function markTelegramBindingUpdate(env: Env, binding: TelegramBotBindingRow, updateId: number, used: boolean): Promise<void> {
+  // 只有真实命令路径会调用这里；no-op update 不写 last_update_id，避免 foreign chat 抢占后续合法 update。
   await env.DB.prepare(`
     UPDATE telegram_bot_bindings
     SET last_update_id = ?, last_used_at = CASE WHEN ? THEN ? ELSE last_used_at END, updated_at = ?

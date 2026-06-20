@@ -22,7 +22,7 @@ function clearLegacyWebhookExample(value: string, legacyExample: string) {
  * 该函数同时服务产品 API 返回值和历史 settings JSON；不要在页面里绕过它直接消费远端值。
  */
 export function normalizeSettings(value: unknown): AppSettings {
-  const parsed = settingsUpdateBodySchema.safeParse(value);
+  const parsed = settingsUpdateBodySchema.safeParse(normalizeStoredSettingsPatch(value));
   const defaults = { ...DEFAULT_SETTINGS, timezone: getSystemTimeZone("UTC") };
   if (!parsed.success) return defaults;
   // settingsUpdateBodySchema 是 partial；历史设置缺 notificationReminderDays 等字段时只补默认值，不改订阅显式提醒天数。
@@ -43,6 +43,18 @@ export function normalizeSettings(value: unknown): AppSettings {
     webhookHeaders: clearLegacyWebhookExample(settings.webhookHeaders, WEBHOOK_HEADERS_PLACEHOLDER),
     webhookPayload: clearLegacyWebhookExample(settings.webhookPayload, WEBHOOK_PAYLOAD_PLACEHOLDER),
   };
+}
+
+function normalizeStoredSettingsPatch(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+  // 写入边界会拒绝非法格式；这里仅修复历史/手改 settings JSON，避免单个坏枚举拖垮整份设置。
+  const telegramMessageFormat = value["telegramMessageFormat"];
+  if (telegramMessageFormat === undefined || telegramMessageFormat === "plain" || telegramMessageFormat === "html") return value;
+  return { ...value, telegramMessageFormat: "plain" };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** 设置服务统一调用 Renewlet 产品 API；Docker 端也不能回退到 PocketBase collection REST。 */

@@ -257,7 +257,7 @@ export function mergeSettingsPatch(current: ApiAppSettings, patch: ApiAppSetting
 
 export function normalizeSettingsJson(value: string): ApiAppSettings {
   try {
-    const parsed = JSON.parse(value) as unknown;
+    const parsed = normalizeStoredSettingsPatch(JSON.parse(value) as unknown);
     const result = settingsUpdateBodySchema.safeParse(parsed);
     if (result.success) {
       const defaults = createDefaultAppSettings();
@@ -268,6 +268,18 @@ export function normalizeSettingsJson(value: string): ApiAppSettings {
     // D1 里 settings_json 不是可信源；坏 JSON 只能回落默认值，不能拖垮整个 Worker。
   }
   return createDefaultAppSettings();
+}
+
+function normalizeStoredSettingsPatch(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+  // 写入 API 仍严格拒绝非法值；读取坏库时只把 Telegram 样式降回 plain，不让整份 settings 掉默认。
+  const telegramMessageFormat = value["telegramMessageFormat"];
+  if (telegramMessageFormat === undefined || telegramMessageFormat === "plain" || telegramMessageFormat === "html") return value;
+  return { ...value, telegramMessageFormat: "plain" };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** getCustomConfig 保留用户自定义文本原貌；产品内置标签翻译不在 Worker 里生成。 */

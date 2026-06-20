@@ -36,6 +36,7 @@ export function useTelegramBotCommandsController({
   const commands = useTelegramBotCommands();
   const installMutation = useInstallTelegramBotCommands();
   const deleteMutation = useDeleteTelegramBotCommands();
+  // 管理 API 只读取已保存的 Telegram 凭据；草稿变更必须先保存，避免 webhook 安装到用户未提交的 token/chat。
   const savedConfigComplete = Boolean(savedSettings.telegramBotToken.trim() && savedSettings.telegramChatId.trim());
   const telegramConfigDirty = settings.telegramBotToken.trim() !== savedSettings.telegramBotToken.trim()
     || settings.telegramChatId.trim() !== savedSettings.telegramChatId.trim();
