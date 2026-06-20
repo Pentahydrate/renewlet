@@ -7,7 +7,6 @@ export const telegramBotCommandsResponseSchema = z.object({
   installed: z.boolean(),
   status: telegramBotCommandsStatusSchema,
   chatId: z.string().trim().min(1).nullable(),
-  commandsVersion: z.string().trim().min(1).nullable(),
   installedAt: z.string().trim().min(1).nullable(),
   lastUsedAt: z.string().trim().min(1).nullable(),
 }).strict();

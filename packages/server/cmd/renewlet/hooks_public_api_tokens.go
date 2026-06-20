@@ -67,11 +67,6 @@ func normalizeTelegramBotBindingRecord(record *core.Record) error {
 		return errors.New("TELEGRAM_BOT_STATUS_INVALID")
 	}
 	record.Set("status", status)
-	commandsVersion := strings.TrimSpace(record.GetString("commandsVersion"))
-	if commandsVersion == "" || len([]rune(commandsVersion)) > 32 {
-		return errors.New("TELEGRAM_BOT_COMMANDS_VERSION_INVALID")
-	}
-	record.Set("commandsVersion", commandsVersion)
 	if record.GetInt("lastUpdateId") < 0 {
 		return errors.New("TELEGRAM_BOT_UPDATE_ID_INVALID")
 	}

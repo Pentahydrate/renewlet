@@ -151,8 +151,11 @@ export function NotificationChannelConfigPanel({
   const commandStatus = telegramBotCommands?.data?.status ?? "not_configured";
   const commandStatusLabel = t(TELEGRAM_BOT_COMMAND_STATUS_LABEL_KEYS[commandStatus]);
   const commandBindingPresent = commandStatus === "installed" || commandStatus === "installing";
-  const commandInstallDisabled = Boolean(telegramBotCommands?.installDisabledReason) || !telegramBotCommands || telegramBotCommands.isLoading || telegramBotCommands.isDeleting;
-  const commandDeleteDisabled = Boolean(telegramBotCommands?.deleteDisabledReason) || !telegramBotCommands || telegramBotCommands.isLoading || telegramBotCommands.isInstalling || !commandBindingPresent;
+  const commandInstalling = Boolean(telegramBotCommands?.isInstalling) || commandStatus === "installing";
+  const commandInstallDisabled = Boolean(telegramBotCommands?.installDisabledReason) || !telegramBotCommands || telegramBotCommands.isLoading || telegramBotCommands.isDeleting || commandInstalling;
+  const commandDeleteDisabled = Boolean(telegramBotCommands?.deleteDisabledReason) || !telegramBotCommands || telegramBotCommands.isLoading || commandInstalling || !commandBindingPresent;
+  const commandInstallDisabledReason = telegramBotCommands?.installDisabledReason;
+  const commandInstallDisabledReasonVisible = commandInstallDisabledReason && !commandInstalling;
   const commandTime = (value: string | null | undefined) => value
     ? formatDateTime(value, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
     : t("settings.telegramBotCommandsNever");
@@ -248,8 +251,8 @@ export function NotificationChannelConfigPanel({
                     <span>{t("settings.telegramBotCommandsInstalledAt", { time: commandTime(telegramBotCommands.data?.installedAt) })}</span>
                     <span>{t("settings.telegramBotCommandsLastUsedAt", { time: commandTime(telegramBotCommands.data?.lastUsedAt) })}</span>
                   </div>
-                  {telegramBotCommands.installDisabledReason ? (
-                    <p className="mt-2 text-xs font-medium text-muted-foreground">{telegramBotCommands.installDisabledReason}</p>
+                  {commandInstallDisabledReasonVisible ? (
+                    <p className="mt-2 text-xs font-medium text-muted-foreground">{commandInstallDisabledReason}</p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 flex-col gap-2 sm:items-end">
@@ -260,10 +263,10 @@ export function NotificationChannelConfigPanel({
                       void telegramBotCommands.install();
                     }}
                     disabled={commandInstallDisabled}
-                    aria-busy={telegramBotCommands.isInstalling ? true : undefined}
+                    aria-busy={commandInstalling ? true : undefined}
                     className="justify-center"
                   >
-                    <LoadingButtonContent loading={telegramBotCommands.isInstalling} loadingLabel={t("settings.telegramBotCommandsInstalling")}>
+                    <LoadingButtonContent loading={commandInstalling} loadingLabel={t("settings.telegramBotCommandsInstalling")}>
                       {telegramBotCommands.data?.installed ? t("settings.telegramBotCommandsReinstall") : t("settings.telegramBotCommandsInstall")}
                     </LoadingButtonContent>
                   </Button>

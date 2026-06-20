@@ -75,7 +75,6 @@ export interface TelegramBotBindingRow {
   bot_token_hash: string;
   webhook_secret_hash: string;
   status: "installing" | "installed";
-  commands_version: string;
   last_update_id: number;
   last_used_at: string | null;
   created_at: string;

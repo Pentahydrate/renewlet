@@ -437,7 +437,6 @@ describe("useSettingsFormController integrations", () => {
       installed: true,
       status: "installed",
       chatId: "123456",
-      commandsVersion: "v2",
       installedAt: "2026-06-20T00:00:00Z",
       lastUsedAt: null,
     });

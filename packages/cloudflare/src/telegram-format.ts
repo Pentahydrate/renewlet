@@ -30,8 +30,8 @@ export function telegramBotMessage(text: string, format: TelegramMessageFormat):
   const htmlLines = lines.map((line, index) => {
     const escaped = escapeTelegramHtml(line);
     if (index === 0 && escaped.trim()) return `<b>${escaped}</b>`;
-    const countLine = escaped.match(/^([A-Za-z ]+): (\d+)$/);
-    return countLine ? `${countLine[1]}: <b>${countLine[2]}</b>` : escaped;
+    const countLine = escaped.match(/^(.+?)(: |：)(\d+)$/u);
+    return countLine ? `${countLine[1]}${countLine[2]}<b>${countLine[3]}</b>` : escaped;
   });
   return { text: htmlLines.join("\n"), parse_mode: "HTML" };
 }

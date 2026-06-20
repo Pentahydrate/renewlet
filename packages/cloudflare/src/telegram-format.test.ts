@@ -29,10 +29,11 @@ describe("Telegram message formatter", () => {
     expect(notification.text).toContain("A&amp;B &lt;Plan&gt; &quot;Quote&quot;");
     expect(notification.text).not.toContain("<Friends>");
 
-    const bot = telegramBotMessage("Renewlet status\nTotal: 12\nA&B <Pro>", "html");
+    const bot = telegramBotMessage("Renewlet status\nTotal: 12\n总数：12\nA&B <Pro>", "html");
     expect(bot).toMatchObject({ parse_mode: "HTML" });
     expect(bot.text).toContain("<b>Renewlet status</b>");
     expect(bot.text).toContain("Total: <b>12</b>");
+    expect(bot.text).toContain("总数：<b>12</b>");
     expect(bot.text).toContain("A&amp;B &lt;Pro&gt;");
     expect(bot.text).not.toContain("<Pro>");
   });

@@ -41,19 +41,17 @@ export function useTelegramBotCommandsController({
   const telegramConfigDirty = settings.telegramBotToken.trim() !== savedSettings.telegramBotToken.trim()
     || settings.telegramChatId.trim() !== savedSettings.telegramChatId.trim();
   const currentOriginHttps = typeof window === "undefined" || window.location.protocol === "https:";
+  const isInstalling = commands.data?.status === "installing" || installMutation.isPending;
 
   const installDisabledReason = useMemo(() => {
     if (externalIntegrationsDisabled) return t("settings.telegramBotCommandsDemoDisabled");
     if (!currentOriginHttps) return t("settings.telegramBotCommandsHttpsRequired");
     if (!savedConfigComplete) return t("settings.telegramBotCommandsConfigMissing");
     if (telegramConfigDirty) return t("settings.telegramBotCommandsSaveFirst");
-    if (commands.data?.status === "installing" || installMutation.isPending) return t("settings.telegramBotCommandsInstalling");
     return null;
   }, [
-    commands.data?.status,
     currentOriginHttps,
     externalIntegrationsDisabled,
-    installMutation.isPending,
     savedConfigComplete,
     t,
     telegramConfigDirty,
@@ -67,7 +65,7 @@ export function useTelegramBotCommandsController({
   }, [deleteMutation.isPending, externalIntegrationsDisabled, savedConfigComplete, t]);
 
   const install = useCallback(async () => {
-    if (installDisabledReason) return;
+    if (installDisabledReason || isInstalling) return;
     try {
       await installMutation.mutateAsync();
       toast({
@@ -81,7 +79,7 @@ export function useTelegramBotCommandsController({
         variant: "destructive",
       });
     }
-  }, [installDisabledReason, installMutation, t, toast]);
+  }, [installDisabledReason, installMutation, isInstalling, t, toast]);
 
   const deleteCommands = useCallback(async () => {
     if (deleteDisabledReason) return;
@@ -103,7 +101,7 @@ export function useTelegramBotCommandsController({
   return {
     data: commands.data,
     isLoading: commands.isLoading,
-    isInstalling: installMutation.isPending,
+    isInstalling,
     isDeleting: deleteMutation.isPending,
     installDisabledReason,
     deleteDisabledReason,

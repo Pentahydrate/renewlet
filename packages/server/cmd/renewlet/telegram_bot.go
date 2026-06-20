@@ -14,7 +14,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,7 +28,6 @@ import (
 )
 
 const (
-	telegramBotCommandsVersion      = "v2"
 	telegramWebhookSecretBytes      = 32
 	telegramWebhookSecretHeader     = "X-Telegram-Bot-Api-Secret-Token"
 	telegramWebhookUpdateBodyMax    = 1 << 20
@@ -46,13 +44,12 @@ const (
 var telegramBotPostJSON = defaultTelegramBotPostJSON
 
 type telegramBotCommandsResponse struct {
-	ConfigComplete  bool    `json:"configComplete"`
-	Installed       bool    `json:"installed"`
-	Status          string  `json:"status"`
-	ChatID          *string `json:"chatId"`
-	CommandsVersion *string `json:"commandsVersion"`
-	InstalledAt     *string `json:"installedAt"`
-	LastUsedAt      *string `json:"lastUsedAt"`
+	ConfigComplete bool    `json:"configComplete"`
+	Installed      bool    `json:"installed"`
+	Status         string  `json:"status"`
+	ChatID         *string `json:"chatId"`
+	InstalledAt    *string `json:"installedAt"`
+	LastUsedAt     *string `json:"lastUsedAt"`
 }
 
 type telegramBotCommand struct {
@@ -158,7 +155,6 @@ func handleTelegramBotCommandsInstall(app core.App, e *core.RequestEvent) error 
 	// Webhook secret 明文只发给 Telegram setWebhook；本地只保存 hash，用 header 入站时重新计算比对。
 	binding.Set("webhookSecretHash", hashTelegramSecret(secret))
 	binding.Set("status", "installing")
-	binding.Set("commandsVersion", telegramBotCommandsVersion)
 	binding.Set("lastUpdateId", 0)
 	binding.Set("lastUsedAt", "")
 	if err := app.Save(binding); err != nil {
@@ -166,7 +162,8 @@ func handleTelegramBotCommandsInstall(app core.App, e *core.RequestEvent) error 
 	}
 
 	webhookURL := telegramBotWebhookURL(origin, binding.Id)
-	if err := telegramBotInstallRemote(botToken, chatID, webhookURL, secret, locale); err != nil {
+	telegramLocale := normalizeAppLocale(settings.Locale)
+	if err := telegramBotInstallRemote(botToken, chatID, webhookURL, secret, telegramLocale); err != nil {
 		telegramBotBestEffortRemoteCleanup(botToken, chatID, locale)
 		_ = app.Delete(binding)
 		return telegramBotUpstreamError(e, err)
@@ -243,11 +240,12 @@ func handleTelegramWebhook(app core.App, e *core.RequestEvent) error {
 	if err != nil || !telegramBotBindingMatchesSettings(binding, settings) {
 		return telegramWebhookOK(e)
 	}
-	reply := telegramBotCommandReply(app, userID, settings, command, arg)
+	telegramLocale := normalizeAppLocale(settings.Locale)
+	reply := telegramBotCommandReply(app, userID, settings, command, arg, telegramLocale)
 	botToken := strings.TrimSpace(settings.TelegramBotToken)
 	if reply != "" {
 		// 命令已经处理完就推进 update；sendMessage 失败也不让 Telegram 重试造成重复查询和重复写库。
-		_ = telegramBotSendMessage(botToken, binding.GetString("chatId"), reply, settings.TelegramMessageFormat, normalizeAppLocale(settings.Locale))
+		_ = telegramBotSendMessage(botToken, binding.GetString("chatId"), reply, settings.TelegramMessageFormat, telegramLocale)
 	}
 	_ = markTelegramBindingUpdate(app, binding, updateID, true)
 	return telegramWebhookOK(e)
@@ -276,7 +274,6 @@ func telegramBotCommandsDTO(settings appSettings, binding *core.Record) telegram
 	_, chatID, configComplete := telegramBotSavedConfig(settings)
 	status := "not_configured"
 	installed := false
-	var commandsVersion *string
 	var installedAt *string
 	var lastUsedAt *string
 	var chatIDPtr *string
@@ -289,9 +286,6 @@ func telegramBotCommandsDTO(settings appSettings, binding *core.Record) telegram
 	if binding != nil && telegramBotBindingMatchesSettings(binding, settings) {
 		status = binding.GetString("status")
 		installed = status == "installed" && configComplete
-		if version := strings.TrimSpace(binding.GetString("commandsVersion")); version != "" {
-			commandsVersion = &version
-		}
 		if status == "installed" {
 			value := recordTimeString(binding, "created")
 			installedAt = &value
@@ -303,13 +297,12 @@ func telegramBotCommandsDTO(settings appSettings, binding *core.Record) telegram
 		installed = false
 	}
 	return telegramBotCommandsResponse{
-		ConfigComplete:  configComplete,
-		Installed:       installed,
-		Status:          status,
-		ChatID:          chatIDPtr,
-		CommandsVersion: commandsVersion,
-		InstalledAt:     installedAt,
-		LastUsedAt:      lastUsedAt,
+		ConfigComplete: configComplete,
+		Installed:      installed,
+		Status:         status,
+		ChatID:         chatIDPtr,
+		InstalledAt:    installedAt,
+		LastUsedAt:     lastUsedAt,
 	}
 }
 
@@ -352,7 +345,7 @@ func telegramBotInstallRemote(botToken string, chatID string, webhookURL string,
 		return err
 	}
 	return telegramBotPostJSON(botToken, telegramBotAPIMethodSetCommands, telegramBotSetMyCommandsRequest{
-		Commands: telegramBotMenuCommands(),
+		Commands: telegramBotMenuCommands(locale),
 		Scope:    telegramBotCommandScopeChat{Type: "chat", ChatID: chatID},
 	}, locale, chatID)
 }
@@ -397,117 +390,122 @@ func defaultTelegramBotPostJSON(botToken string, method string, payload interfac
 	return channelHTTPErrorFromResponse(locale, "Telegram", resp, secretValues...)
 }
 
-func telegramBotMenuCommands() []telegramBotCommand {
+func telegramBotMenuCommands(locale appLocale) []telegramBotCommand {
 	// BotCommand.Description 是 Telegram 菜单纯文本契约；富文本只属于后续 sendMessage，/due 仅保留手输高级入口。
 	return []telegramBotCommand{
-		{Command: "start", Description: "Show Renewlet command help"},
-		{Command: "help", Description: "Show Renewlet command help"},
-		{Command: "status", Description: "Show subscription status summary"},
-		{Command: "next", Description: "Show the next renewal"},
-		{Command: "today", Description: "Show renewals due today"},
-		{Command: "week", Description: "Show renewals in the next 7 days"},
-		{Command: "month", Description: "Show renewals in the next 30 days"},
-		{Command: "subscriptions", Description: "List subscription summaries"},
-		{Command: "settings", Description: "Show bot and message settings"},
+		{Command: "start", Description: serverText(locale, "telegramBot.menu.start")},
+		{Command: "help", Description: serverText(locale, "telegramBot.menu.help")},
+		{Command: "status", Description: serverText(locale, "telegramBot.menu.status")},
+		{Command: "next", Description: serverText(locale, "telegramBot.menu.next")},
+		{Command: "today", Description: serverText(locale, "telegramBot.menu.today")},
+		{Command: "week", Description: serverText(locale, "telegramBot.menu.week")},
+		{Command: "month", Description: serverText(locale, "telegramBot.menu.month")},
+		{Command: "subscriptions", Description: serverText(locale, "telegramBot.menu.subscriptions")},
+		{Command: "settings", Description: serverText(locale, "telegramBot.menu.settings")},
 	}
 }
 
-func telegramBotCommandReply(app core.App, userID string, settings appSettings, command string, arg string) string {
+func telegramBotCommandReply(app core.App, userID string, settings appSettings, command string, arg string, locale appLocale) string {
 	// 命令 adapter 只做路由和文本排版；订阅读取必须继续走 Public API owner-scoped service。
 	switch command {
 	case "start", "help":
-		return telegramBotHelpText()
+		return telegramBotHelpText(locale)
 	case "status":
 		status, err := publicAPIStatusForUser(app, userID)
 		if err != nil {
-			return "Renewlet status is temporarily unavailable."
+			return serverText(locale, "telegramBot.error.statusUnavailable")
 		}
-		return telegramBotStatusText(status)
+		return telegramBotStatusText(status, locale)
 	case "next":
 		item, err := publicAPINextDueForUserWithSettings(app, userID, settings)
 		if err != nil {
-			return "Renewlet next renewal is temporarily unavailable."
+			return serverText(locale, "telegramBot.error.nextUnavailable")
 		}
-		return telegramBotNextText(item)
+		return telegramBotNextText(item, locale)
 	case "today":
 		due, err := publicAPIDueForUserWithSettings(app, userID, 1, settings)
 		if err != nil {
-			return "Renewlet upcoming renewals are temporarily unavailable."
+			return serverText(locale, "telegramBot.error.dueUnavailable")
 		}
 		today := todayDateOnly(time.Now().UTC(), settings.Timezone)
 		due.Items = filterPublicAPIDueItemsByDate(due.Items, today)
-		return telegramBotDueTextWithTitle(due, "Today's renewals")
+		return telegramBotDueTextWithTitle(due, locale, serverText(locale, "telegramBot.due.todayTitle"))
 	case "week":
 		due, err := publicAPIDueForUserWithSettings(app, userID, 7, settings)
 		if err != nil {
-			return "Renewlet upcoming renewals are temporarily unavailable."
+			return serverText(locale, "telegramBot.error.dueUnavailable")
 		}
-		return telegramBotDueText(due)
+		return telegramBotDueText(due, locale)
 	case "month":
 		due, err := publicAPIDueForUserWithSettings(app, userID, 30, settings)
 		if err != nil {
-			return "Renewlet upcoming renewals are temporarily unavailable."
+			return serverText(locale, "telegramBot.error.dueUnavailable")
 		}
-		return telegramBotDueText(due)
+		return telegramBotDueText(due, locale)
 	case "due":
 		days := telegramBotDueDays(arg)
 		due, err := publicAPIDueForUserWithSettings(app, userID, days, settings)
 		if err != nil {
-			return "Renewlet upcoming renewals are temporarily unavailable."
+			return serverText(locale, "telegramBot.error.dueUnavailable")
 		}
-		return telegramBotDueText(due)
+		return telegramBotDueText(due, locale)
 	case "subscriptions":
 		list, err := publicAPISubscriptionsForUser(app, userID, telegramBotCommandListLimit, "")
 		if err != nil {
-			return "Renewlet subscriptions are temporarily unavailable."
+			return serverText(locale, "telegramBot.error.subscriptionsUnavailable")
 		}
-		return telegramBotSubscriptionsText(list)
+		return telegramBotSubscriptionsText(list, locale)
 	case "settings":
-		return telegramBotSettingsText(settings)
+		return telegramBotSettingsText(settings, locale)
 	default:
-		return telegramBotHelpText()
+		return telegramBotHelpText(locale)
 	}
 }
 
-func telegramBotHelpText() string {
+func telegramBotHelpText(locale appLocale) string {
 	return strings.Join([]string{
-		"Renewlet Bot commands:",
-		"/status - subscription status summary",
-		"/next - next renewal",
-		"/today - renewals due today",
-		"/week - upcoming renewals in 7 days",
-		"/month - upcoming renewals in 30 days",
-		"/due [days] - upcoming renewals, default 30 days",
-		"/subscriptions - first 10 subscription summaries",
-		"/settings - bot and message settings",
-		"/help - show this help",
+		serverText(locale, "telegramBot.help.title"),
+		serverText(locale, "telegramBot.help.status"),
+		serverText(locale, "telegramBot.help.next"),
+		serverText(locale, "telegramBot.help.today"),
+		serverText(locale, "telegramBot.help.week"),
+		serverText(locale, "telegramBot.help.month"),
+		serverFormat(locale, "telegramBot.help.due", map[string]interface{}{"days": telegramBotCommandDueDefault}),
+		serverFormat(locale, "telegramBot.help.subscriptions", map[string]interface{}{"limit": telegramBotCommandListLimit}),
+		serverText(locale, "telegramBot.help.settings"),
+		serverText(locale, "telegramBot.help.help"),
 	}, "\n")
 }
 
-func telegramBotStatusText(response publicAPIStatusResponse) string {
+func telegramBotStatusText(response publicAPIStatusResponse, locale appLocale) string {
 	lines := []string{
-		"Renewlet status",
-		fmt.Sprintf("Total: %d", response.Total),
+		serverText(locale, "telegramBot.status.title"),
+		serverFormat(locale, "telegramBot.status.total", map[string]interface{}{"count": response.Total}),
 	}
 	for _, status := range []string{"trial", "active", "expired", "paused", "cancelled"} {
-		lines = append(lines, fmt.Sprintf("%s: %d", status, response.ByStatus[status]))
+		lines = append(lines, serverFormat(locale, "telegramBot.status."+status, map[string]interface{}{"count": response.ByStatus[status]}))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func telegramBotDueText(response publicAPIDueResponse) string {
-	return telegramBotDueTextWithTitle(response, fmt.Sprintf("Upcoming renewals in %d days", response.Days))
+func telegramBotDueText(response publicAPIDueResponse, locale appLocale) string {
+	title := serverFormat(locale, "telegramBot.due.title", map[string]interface{}{"days": response.Days})
+	return telegramBotDueTextWithTitle(response, locale, title)
 }
 
-func telegramBotNextText(item *publicAPIDueItem) string {
-	lines := []string{"Next renewal"}
+func telegramBotNextText(item *publicAPIDueItem, locale appLocale) string {
+	lines := []string{serverText(locale, "telegramBot.next.title")}
 	if item == nil {
-		return strings.Join(append(lines, "No upcoming subscriptions."), "\n")
+		return strings.Join(append(lines, serverText(locale, "telegramBot.next.empty")), "\n")
 	}
-	return strings.Join(append(lines, fmt.Sprintf("%s: %s (%s)", item.DueDate, publicAPISubscriptionName(item.Subscription), item.DueType)), "\n")
+	return strings.Join(append(lines, serverFormat(locale, "telegramBot.next.item", map[string]interface{}{
+		"date": item.DueDate,
+		"name": telegramBotSubscriptionName(item.Subscription, locale),
+		"type": telegramBotDueTypeText(locale, item.DueType),
+	})), "\n")
 }
 
-func telegramBotDueTextWithTitle(response publicAPIDueResponse, title string) string {
+func telegramBotDueTextWithTitle(response publicAPIDueResponse, locale appLocale, title string) string {
 	items := append([]publicAPIDueItem(nil), response.Items...)
 	sort.SliceStable(items, func(i, j int) bool {
 		if items[i].DueDate == items[j].DueDate {
@@ -517,31 +515,37 @@ func telegramBotDueTextWithTitle(response publicAPIDueResponse, title string) st
 	})
 	lines := []string{title}
 	if len(items) == 0 {
-		return strings.Join(append(lines, "No matching subscriptions."), "\n")
+		return strings.Join(append(lines, serverText(locale, "telegramBot.due.empty")), "\n")
 	}
 	visible := items
 	if len(visible) > telegramBotCommandListLimit {
 		visible = visible[:telegramBotCommandListLimit]
 	}
 	for _, item := range visible {
-		lines = append(lines, fmt.Sprintf("- %s: %s (%s)", item.DueDate, publicAPISubscriptionName(item.Subscription), item.DueType))
+		lines = append(lines, serverFormat(locale, "telegramBot.due.item", map[string]interface{}{
+			"date": item.DueDate,
+			"name": telegramBotSubscriptionName(item.Subscription, locale),
+			"type": telegramBotDueTypeText(locale, item.DueType),
+		}))
 	}
 	if remaining := len(items) - len(visible); remaining > 0 {
-		lines = append(lines, fmt.Sprintf("...and %d more. Open Renewlet Web UI for details.", remaining))
+		lines = append(lines, serverFormat(locale, "telegramBot.due.truncated", map[string]interface{}{"count": remaining}))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func telegramBotSettingsText(settings appSettings) string {
-	messageStyle := "Plain text"
+func telegramBotSettingsText(settings appSettings, locale appLocale) string {
+	messageStyle := serverText(locale, "telegramBot.settings.messageStyle.plain")
 	if settings.TelegramMessageFormat == telegramMessageFormatHTML {
-		messageStyle = "Rich text"
+		messageStyle = serverText(locale, "telegramBot.settings.messageStyle.html")
 	}
 	return strings.Join([]string{
-		"Renewlet bot settings",
-		fmt.Sprintf("Chat ID: %s", fallbackText(strings.TrimSpace(settings.TelegramChatID), "Not configured")),
-		fmt.Sprintf("Message style: %s", messageStyle),
-		"Manage this in Renewlet Web UI Settings > Notifications.",
+		serverText(locale, "telegramBot.settings.title"),
+		serverFormat(locale, "telegramBot.settings.chatId", map[string]interface{}{
+			"chatId": fallbackText(strings.TrimSpace(settings.TelegramChatID), serverText(locale, "telegramBot.settings.notConfigured")),
+		}),
+		serverFormat(locale, "telegramBot.settings.messageStyle", map[string]interface{}{"style": messageStyle}),
+		serverText(locale, "telegramBot.settings.manage"),
 	}, "\n")
 }
 
@@ -555,18 +559,29 @@ func filterPublicAPIDueItemsByDate(items []publicAPIDueItem, date string) []publ
 	return out
 }
 
-func telegramBotSubscriptionsText(response subscriptionsListResponse) string {
-	lines := []string{fmt.Sprintf("Subscriptions (%d total)", response.Total)}
+func telegramBotSubscriptionsText(response subscriptionsListResponse, locale appLocale) string {
+	lines := []string{serverFormat(locale, "telegramBot.subscriptions.title", map[string]interface{}{"total": response.Total})}
 	if len(response.Subscriptions) == 0 {
-		return strings.Join(append(lines, "No subscriptions yet."), "\n")
+		return strings.Join(append(lines, serverText(locale, "telegramBot.subscriptions.empty")), "\n")
 	}
 	for _, subscription := range response.Subscriptions {
-		lines = append(lines, fmt.Sprintf("- %s: %s, next %s", publicAPISubscriptionName(subscription), publicAPISubscriptionStatus(subscription), publicAPISubscriptionNextDate(subscription)))
+		lines = append(lines, serverFormat(locale, "telegramBot.subscriptions.item", map[string]interface{}{
+			"name":   telegramBotSubscriptionName(subscription, locale),
+			"status": telegramBotSubscriptionStatus(subscription, locale),
+			"date":   telegramBotSubscriptionNextDate(subscription, locale),
+		}))
 	}
 	if response.Total > int64(len(response.Subscriptions)) {
-		lines = append(lines, fmt.Sprintf("...and %d more. Open Renewlet Web UI for details.", response.Total-int64(len(response.Subscriptions))))
+		lines = append(lines, serverFormat(locale, "telegramBot.subscriptions.truncated", map[string]interface{}{"count": response.Total - int64(len(response.Subscriptions))}))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func telegramBotSubscriptionName(subscription map[string]interface{}, locale appLocale) string {
+	if value, ok := subscription["name"].(string); ok && strings.TrimSpace(value) != "" {
+		return strings.TrimSpace(value)
+	}
+	return serverText(locale, "telegramBot.subscription.unnamed")
 }
 
 func publicAPISubscriptionName(subscription map[string]interface{}) string {
@@ -576,18 +591,36 @@ func publicAPISubscriptionName(subscription map[string]interface{}) string {
 	return "Unnamed subscription"
 }
 
-func publicAPISubscriptionStatus(subscription map[string]interface{}) string {
+func telegramBotSubscriptionStatus(subscription map[string]interface{}, locale appLocale) string {
 	if value, ok := subscription["status"].(string); ok && strings.TrimSpace(value) != "" {
-		return strings.TrimSpace(value)
+		return telegramBotStatusLabel(locale, strings.TrimSpace(value))
 	}
-	return "unknown"
+	return serverText(locale, "telegramBot.subscriptionStatus.unknown")
 }
 
-func publicAPISubscriptionNextDate(subscription map[string]interface{}) string {
+func telegramBotSubscriptionNextDate(subscription map[string]interface{}, locale appLocale) string {
 	if value, ok := subscription["nextBillingDate"].(string); ok && strings.TrimSpace(value) != "" {
 		return strings.TrimSpace(value)
 	}
-	return "unknown"
+	return serverText(locale, "telegramBot.subscription.unknown")
+}
+
+func telegramBotDueTypeText(locale appLocale, dueType string) string {
+	switch dueType {
+	case "renewal", "trial", "expiry":
+		return serverText(locale, "telegramBot.dueType."+dueType)
+	default:
+		return serverText(locale, "telegramBot.subscription.unknown")
+	}
+}
+
+func telegramBotStatusLabel(locale appLocale, status string) string {
+	switch status {
+	case "trial", "active", "expired", "paused", "cancelled":
+		return serverText(locale, "telegramBot.subscriptionStatus."+status)
+	default:
+		return serverText(locale, "telegramBot.subscriptionStatus.unknown")
+	}
 }
 
 func telegramBotDueDays(arg string) int {

@@ -1,7 +1,8 @@
 // Public API 与 Telegram command controller 测试独立成文件，避免通用 integrations 测试继续膨胀。
 import { act } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  BASE_SETTINGS,
   mocks,
   renderSettingsFormController,
   setupSettingsFormControllerTestEnvironment,
@@ -68,5 +69,31 @@ describe("useSettingsFormController public API integrations", () => {
     }));
     expect(mocks.telegramBotCommands.refetch).toHaveBeenCalledTimes(1);
     expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it("keeps Telegram install loading out of disabled reason text", () => {
+    vi.stubGlobal("location", { ...window.location, protocol: "https:" });
+    mocks.remoteSettings = {
+      ...BASE_SETTINGS,
+      telegramBotToken: "123456:bot-token",
+      telegramChatId: "123456",
+    };
+    mocks.telegramBotCommands = {
+      data: {
+        configComplete: true,
+        installed: false,
+        status: "installing",
+        chatId: "123456",
+        installedAt: null,
+        lastUsedAt: null,
+      },
+      isLoading: false,
+      refetch: vi.fn(),
+    };
+
+    const { result } = renderSettingsFormController();
+
+    expect(result.current.telegramBotCommands.isInstalling).toBe(true);
+    expect(result.current.telegramBotCommands.installDisabledReason).toBeNull();
   });
 });

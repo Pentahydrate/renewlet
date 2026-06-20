@@ -151,7 +151,6 @@ describe("SettingsScreen Public API and Telegram commands", () => {
           installed: true,
           status: "installed",
           chatId: "123456",
-          commandsVersion: "v2",
           installedAt: "2026-06-20T00:00:00Z",
           lastUsedAt: null,
         },
@@ -224,7 +223,6 @@ describe("SettingsScreen Public API and Telegram commands", () => {
           installed: false,
           status: "installing",
           chatId: "123456",
-          commandsVersion: "v2",
           installedAt: null,
           lastUsedAt: null,
         },
@@ -238,7 +236,9 @@ describe("SettingsScreen Public API and Telegram commands", () => {
 
     const notificationsSection = document.getElementById("settings-notifications");
     expect(notificationsSection).not.toBeNull();
-    expect(within(notificationsSection as HTMLElement).getByRole("button", { name: "安装中..." })).toHaveAttribute("aria-busy", "true");
+    const telegramPanel = within(notificationsSection as HTMLElement);
+    expect(telegramPanel.getByRole("button", { name: "安装中..." })).toHaveAttribute("aria-busy", "true");
+    expect(telegramPanel.queryAllByText("安装中...")).toHaveLength(1);
   });
 
   it("shows Telegram command delete loading label", () => {
@@ -254,7 +254,6 @@ describe("SettingsScreen Public API and Telegram commands", () => {
           installed: true,
           status: "installed",
           chatId: "123456",
-          commandsVersion: "v2",
           installedAt: "2026-06-20T00:00:00Z",
           lastUsedAt: null,
         },

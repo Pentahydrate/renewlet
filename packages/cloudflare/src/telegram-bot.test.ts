@@ -46,7 +46,7 @@ function d1Result<T = unknown>(results: T[] = [], changes = 0): D1Result<T> {
 
 function settings(overrides: Partial<ApiAppSettings> = {}): ApiAppSettings {
   return {
-    ...createDefaultAppSettings({ locale: "en-US" }),
+    ...createDefaultAppSettings({ locale: "zh-CN" }),
     timezone: "UTC",
     telegramBotToken: BOT_TOKEN,
     telegramChatId: CHAT_ID,
@@ -134,14 +134,13 @@ class TelegramBotTestStatement {
 
   async run(): Promise<D1Result> {
     if (this.sql.includes("INSERT INTO telegram_bot_bindings")) {
-      const [id, userId, chatId, botTokenHash, webhookSecretHash, status, commandsVersion, lastUpdateId, createdAt, updatedAt] = this.values as [
+      const [id, userId, chatId, botTokenHash, webhookSecretHash, status, lastUpdateId, createdAt, updatedAt] = this.values as [
         string,
         string,
         string,
         string,
         string,
         TelegramBotBindingRow["status"],
-        string,
         number,
         string,
         string,
@@ -154,7 +153,6 @@ class TelegramBotTestStatement {
         bot_token_hash: botTokenHash,
         webhook_secret_hash: webhookSecretHash,
         status,
-        commands_version: commandsVersion,
         last_update_id: lastUpdateId,
         last_used_at: null,
         created_at: existingIndex >= 0 ? this.state.bindings[existingIndex]!.created_at : createdAt,
@@ -231,7 +229,9 @@ describe("Cloudflare Telegram Bot commands", () => {
 
     const install = await installTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands", { method: "POST" }), env);
 
-    await expect(install.json()).resolves.toMatchObject({ status: "installed", installed: true, commandsVersion: "v2" });
+    const installBody = await install.json() as Record<string, unknown>;
+    expect(installBody).toMatchObject({ status: "installed", installed: true });
+    expect(installBody).not.toHaveProperty("commandsVersion");
     expect(env.__state.bindings).toHaveLength(1);
     expect(env.__state.bindings[0]!.bot_token_hash).not.toBe(BOT_TOKEN);
     expect(env.__state.bindings[0]!.webhook_secret_hash).not.toBe(SECRET_TOKEN);
@@ -247,13 +247,14 @@ describe("Cloudflare Telegram Bot commands", () => {
     const commands = telegramCalls[1]!.body["commands"] as Array<{ command: string; description: string }>;
     expect(commands.map((item) => item.command)).toEqual(["start", "help", "status", "next", "today", "week", "month", "subscriptions", "settings"]);
     expect(commands).not.toContainEqual(expect.objectContaining({ command: "due" }));
+    expect(commands).toContainEqual({ command: "status", description: "查看订阅状态摘要" });
+    expect(telegramCalls[1]!.body).not.toHaveProperty("language_code");
 
     env.__state.settingsJson = JSON.stringify(settings({ telegramBotToken: "123456:another-token" }));
     const mismatched = await readTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands"), env);
     await expect(mismatched.json()).resolves.toMatchObject({
       status: "not_installed",
       installed: false,
-      commandsVersion: null,
     });
     env.__state.settingsJson = JSON.stringify(settings());
 
@@ -272,7 +273,7 @@ describe("Cloudflare Telegram Bot commands", () => {
       link_preview_options: { is_disabled: true },
     });
     expect(telegramCalls[2]!.body).not.toHaveProperty("parse_mode");
-    expect(String(telegramCalls[2]!.body["text"])).toContain("Total: 2");
+    expect(String(telegramCalls[2]!.body["text"])).toContain("总数：2");
     expect(binding.last_update_id).toBe(1);
     expect(binding.last_used_at).not.toBeNull();
 
@@ -297,11 +298,11 @@ describe("Cloudflare Telegram Bot commands", () => {
     const dueQueryStart = env.__state.queries.length;
     await telegramWebhook(webhookRequest(binding.id, SECRET_TOKEN, { update_id: 4, message: { chat: { id: Number(CHAT_ID) }, text: "/due 30abc" } }), env, binding.id);
     expect(telegramCalls).toHaveLength(5);
-    expect(String(telegramCalls[4]!.body["text"])).toContain("Upcoming renewals in 30 days");
+    expect(String(telegramCalls[4]!.body["text"])).toContain("未来 30 天续费");
     expect(countSql(sqlSince(env, dueQueryStart), "SELECT settings_json FROM settings")).toBe(1);
     await telegramWebhook(webhookRequest(binding.id, SECRET_TOKEN, { update_id: 5, message: { chat: { id: Number(CHAT_ID) }, text: "/due 367" } }), env, binding.id);
     expect(telegramCalls).toHaveLength(6);
-    expect(String(telegramCalls[5]!.body["text"])).toContain("Upcoming renewals in 366 days");
+    expect(String(telegramCalls[5]!.body["text"])).toContain("未来 366 天续费");
 
     const deleted = await deleteTelegramBotCommands(authorizedRequest("/api/app/telegram-bot/commands", { method: "DELETE" }), env);
     expect(deleted.status).toBe(200);
@@ -325,6 +326,9 @@ describe("Cloudflare Telegram Bot commands", () => {
     expect(telegramCalls[2]!.body).toMatchObject({ parse_mode: "HTML" });
     expect(String(telegramCalls[2]!.body["text"])).toContain("A&amp;B &lt;Pro&gt; &quot;Plan&quot;");
     expect(String(telegramCalls[2]!.body["text"])).not.toContain("<Pro>");
+    await telegramWebhook(webhookRequest(binding.id, SECRET_TOKEN, { update_id: 2, message: { chat: { id: Number(CHAT_ID) }, text: "/status" } }), env, binding.id);
+    expect(telegramCalls).toHaveLength(4);
+    expect(String(telegramCalls[3]!.body["text"])).toContain("总数：<b>1</b>");
   });
 });
 

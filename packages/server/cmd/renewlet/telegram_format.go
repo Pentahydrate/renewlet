@@ -39,8 +39,8 @@ func formatTelegramBotMessage(text string, format string) telegramFormattedMessa
 			lines[index] = "<b>" + escaped + "</b>"
 			continue
 		}
-		if label, value, ok := strings.Cut(escaped, ": "); ok && isTelegramCountLine(label, value) {
-			lines[index] = label + ": <b>" + value + "</b>"
+		if label, separator, value, ok := telegramCountLineParts(escaped); ok && isTelegramCountLine(label, value) {
+			lines[index] = label + separator + "<b>" + strings.TrimSpace(value) + "</b>"
 			continue
 		}
 		lines[index] = escaped
@@ -54,18 +54,23 @@ func escapeTelegramHTML(value string) string {
 }
 
 func isTelegramCountLine(label string, value string) bool {
-	if label == "" || value == "" {
+	if strings.TrimSpace(label) == "" || strings.TrimSpace(value) == "" {
 		return false
 	}
-	for _, char := range label {
-		if char != ' ' && (char < 'A' || char > 'Z') && (char < 'a' || char > 'z') {
-			return false
-		}
-	}
-	for _, char := range value {
+	for _, char := range strings.TrimSpace(value) {
 		if char < '0' || char > '9' {
 			return false
 		}
 	}
 	return true
+}
+
+func telegramCountLineParts(line string) (string, string, string, bool) {
+	if label, value, ok := strings.Cut(line, ": "); ok {
+		return label, ": ", value, true
+	}
+	if label, value, ok := strings.Cut(line, "："); ok {
+		return label, "：", value, true
+	}
+	return "", "", "", false
 }

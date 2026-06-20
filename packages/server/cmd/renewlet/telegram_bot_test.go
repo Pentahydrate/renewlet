@@ -26,7 +26,7 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	registerRecordHooks(app)
 	user, sessionToken := createRouteTestUser(t, app, "telegram")
 	settings := defaultAppSettings()
-	settings.Locale = "en-US"
+	settings.Locale = "zh-CN"
 	settings.Timezone = "UTC"
 	settings.TelegramBotToken = "123456:telegram-secret-token"
 	settings.TelegramChatID = "12345"
@@ -72,8 +72,11 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	if err := json.Unmarshal(installRes.Body.Bytes(), &installBody); err != nil {
 		t.Fatal(err)
 	}
-	if !installBody.Installed || installBody.Status != "installed" || installBody.CommandsVersion == nil || *installBody.CommandsVersion != telegramBotCommandsVersion {
+	if !installBody.Installed || installBody.Status != "installed" {
 		t.Fatalf("unexpected install response: %#v", installBody)
+	}
+	if strings.Contains(installRes.Body.String(), "commandsVersion") {
+		t.Fatalf("install response leaked removed commandsVersion field: %s", installRes.Body.String())
 	}
 	if len(*calls) != 2 || (*calls)[0].Method != telegramBotAPIMethodSetWebhook || (*calls)[1].Method != telegramBotAPIMethodSetCommands {
 		t.Fatalf("unexpected install API calls: %#v", *calls)
@@ -98,6 +101,12 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	if !telegramBotTestHasCommand(setCommands.Commands, "next") || !telegramBotTestHasCommand(setCommands.Commands, "month") || telegramBotTestHasCommand(setCommands.Commands, "due") {
 		t.Fatalf("unexpected command menu: %#v", setCommands.Commands)
 	}
+	if !telegramBotTestHasCommandDescription(setCommands.Commands, "status", "查看订阅状态摘要") {
+		t.Fatalf("expected zh-CN status command description, got %#v", setCommands.Commands)
+	}
+	if strings.Contains(string((*calls)[1].Payload), "language_code") {
+		t.Fatalf("chat-scoped menu must not set Telegram language_code: %s", string((*calls)[1].Payload))
+	}
 
 	binding := telegramBotTestBinding(t, app, user.Id)
 	if binding.GetString("botTokenHash") == settings.TelegramBotToken || binding.GetString("webhookSecretHash") == setWebhook.SecretToken {
@@ -106,7 +115,7 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	mismatchedSettings := settings
 	mismatchedSettings.TelegramBotToken = "123456:another-token"
 	mismatchedDTO := telegramBotCommandsDTO(mismatchedSettings, binding)
-	if mismatchedDTO.Installed || mismatchedDTO.Status != "not_installed" || mismatchedDTO.CommandsVersion != nil {
+	if mismatchedDTO.Installed || mismatchedDTO.Status != "not_installed" {
 		t.Fatalf("mismatched binding should not be exposed as installed: %#v", mismatchedDTO)
 	}
 
@@ -135,7 +144,7 @@ func TestTelegramBotCommandsInstallWebhookAndDelete(t *testing.T) {
 	if err := json.Unmarshal((*calls)[2].Payload, &statusMessage); err != nil {
 		t.Fatal(err)
 	}
-	if statusMessage.ChatID != settings.TelegramChatID || !strings.Contains(statusMessage.Text, "Total: 2") || statusMessage.LinkPreviewOptions == nil || !statusMessage.LinkPreviewOptions.IsDisabled {
+	if statusMessage.ChatID != settings.TelegramChatID || !strings.Contains(statusMessage.Text, "总数：2") || statusMessage.LinkPreviewOptions == nil || !statusMessage.LinkPreviewOptions.IsDisabled {
 		t.Fatalf("unexpected status reply: %#v", statusMessage)
 	}
 	if statusMessage.ParseMode != "" {
@@ -207,7 +216,7 @@ func TestTelegramBotHTMLRepliesEscapeUserContent(t *testing.T) {
 	registerRecordHooks(app)
 	user, sessionToken := createRouteTestUser(t, app, "telegram-html")
 	settings := defaultAppSettings()
-	settings.Locale = "en-US"
+	settings.Locale = "zh-CN"
 	settings.Timezone = "UTC"
 	settings.TelegramBotToken = "123456:telegram-secret-token"
 	settings.TelegramChatID = "12345"
@@ -248,6 +257,19 @@ func TestTelegramBotHTMLRepliesEscapeUserContent(t *testing.T) {
 	}
 	if !strings.Contains(message.Text, `A&amp;B &lt;Pro&gt; &#34;Plan&#34;`) || strings.Contains(message.Text, `<Pro>`) {
 		t.Fatalf("html reply did not escape subscription name: %q", message.Text)
+	}
+	statusRes := serveTestRequestWithHeaders(t, app, http.MethodPost, "/api/telegram/webhook/"+binding.Id, `{"update_id":2,"message":{"chat":{"id":12345},"text":"/status"}}`, "", map[string]string{
+		telegramWebhookSecretHeader: setWebhook.SecretToken,
+	})
+	if statusRes.Code != http.StatusOK || len(*calls) != 4 {
+		t.Fatalf("expected html status reply, code=%d calls=%#v", statusRes.Code, *calls)
+	}
+	var statusMessage telegramSendMessageRequest
+	if err := json.Unmarshal((*calls)[3].Payload, &statusMessage); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(statusMessage.Text, `总数：<b>1</b>`) {
+		t.Fatalf("html status reply should emphasize zh-CN count line: %q", statusMessage.Text)
 	}
 }
 
@@ -326,6 +348,15 @@ func telegramBotTestBinding(t *testing.T, app core.App, userID string) *core.Rec
 func telegramBotTestHasCommand(commands []telegramBotCommand, command string) bool {
 	for _, item := range commands {
 		if item.Command == command {
+			return true
+		}
+	}
+	return false
+}
+
+func telegramBotTestHasCommandDescription(commands []telegramBotCommand, command string, description string) bool {
+	for _, item := range commands {
+		if item.Command == command && item.Description == description {
 			return true
 		}
 	}

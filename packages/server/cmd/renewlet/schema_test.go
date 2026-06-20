@@ -148,7 +148,6 @@ func TestEnsureSchemaCreatesContractFieldsAndIndexes(t *testing.T) {
 		"botTokenHash":      core.FieldTypeText,
 		"webhookSecretHash": core.FieldTypeText,
 		"status":            core.FieldTypeSelect,
-		"commandsVersion":   core.FieldTypeText,
 		"lastUpdateId":      core.FieldTypeNumber,
 		"lastUsedAt":        core.FieldTypeText,
 		"created":           core.FieldTypeAutodate,

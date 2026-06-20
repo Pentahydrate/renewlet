@@ -35,11 +35,11 @@ func TestTelegramFormatterEscapesHTMLMode(t *testing.T) {
 		t.Fatalf("notification html was not escaped: %q", notification.Text)
 	}
 
-	bot := formatTelegramBotMessage("Renewlet status\nTotal: 12\nA&B <Pro>", telegramMessageFormatHTML)
+	bot := formatTelegramBotMessage("Renewlet status\nTotal: 12\n总数：12\nA&B <Pro>", telegramMessageFormatHTML)
 	if bot.ParseMode != "HTML" {
 		t.Fatalf("expected bot HTML parse mode, got %#v", bot)
 	}
-	if !strings.Contains(bot.Text, "<b>Renewlet status</b>") || !strings.Contains(bot.Text, "Total: <b>12</b>") {
+	if !strings.Contains(bot.Text, "<b>Renewlet status</b>") || !strings.Contains(bot.Text, "Total: <b>12</b>") || !strings.Contains(bot.Text, "总数：<b>12</b>") {
 		t.Fatalf("bot html emphasis missing: %q", bot.Text)
 	}
 	if !strings.Contains(bot.Text, "A&amp;B &lt;Pro&gt;") || strings.Contains(bot.Text, "<Pro>") {

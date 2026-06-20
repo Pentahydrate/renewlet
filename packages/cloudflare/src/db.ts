@@ -111,7 +111,6 @@ const telegramBotBindingColumnNames = [
   "bot_token_hash",
   "webhook_secret_hash",
   "status",
-  "commands_version",
   "last_update_id",
   "last_used_at",
   "created_at",

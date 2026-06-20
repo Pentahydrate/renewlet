@@ -5,7 +5,7 @@ import { getSettings, getTelegramBotBinding, newId, nowIso, TELEGRAM_BOT_BINDING
 import { randomToken, sha256 } from "./crypto";
 import { HttpError, json, ok, requireEmptyBody, requestLocale } from "./http";
 import { requestOrigin } from "./request-origin";
-import { serverText, type AppLocale } from "./server-i18n";
+import { normalizeServerLocale, serverFormat, serverText, type AppLocale } from "./server-i18n";
 import {
   createUpstreamHTTPError,
   createUpstreamNetworkError,
@@ -22,7 +22,6 @@ import { dateOnlyInZone } from "./subscription-renewal";
 import { telegramBotMessage } from "./telegram-format";
 import type { ApiAppSettings, Env, TelegramBotBindingRow } from "./types";
 
-const TELEGRAM_COMMANDS_VERSION = "v2";
 const TELEGRAM_WEBHOOK_SECRET_HEADER = "X-Telegram-Bot-Api-Secret-Token";
 const TELEGRAM_UPDATE_BODY_LIMIT = 1 << 20;
 const TELEGRAM_DUE_DEFAULT_DAYS = 30;
@@ -75,7 +74,6 @@ export async function installTelegramBotCommands(request: Request, env: Env): Pr
     bot_token_hash: await sha256(config.botToken),
     webhook_secret_hash: await sha256(secret),
     status: "installing",
-    commands_version: TELEGRAM_COMMANDS_VERSION,
     last_update_id: 0,
     last_used_at: null,
     created_at: existing?.created_at ?? timestamp,
@@ -84,17 +82,16 @@ export async function installTelegramBotCommands(request: Request, env: Env): Pr
   // installing 行先落库，确保 setWebhook 指向的 bindingId 已存在；失败路径会删除本地行并清理远端状态。
   await env.DB.prepare(`
     INSERT INTO telegram_bot_bindings (
-      id, user_id, chat_id, bot_token_hash, webhook_secret_hash, status, commands_version,
+      id, user_id, chat_id, bot_token_hash, webhook_secret_hash, status,
       last_update_id, last_used_at, created_at, updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET
       id = excluded.id,
       chat_id = excluded.chat_id,
       bot_token_hash = excluded.bot_token_hash,
       webhook_secret_hash = excluded.webhook_secret_hash,
       status = excluded.status,
-      commands_version = excluded.commands_version,
       last_update_id = excluded.last_update_id,
       last_used_at = NULL,
       updated_at = excluded.updated_at
@@ -105,14 +102,13 @@ export async function installTelegramBotCommands(request: Request, env: Env): Pr
     row.bot_token_hash,
     row.webhook_secret_hash,
     row.status,
-    row.commands_version,
     row.last_update_id,
     row.created_at,
     row.updated_at,
   ).run();
 
   try {
-    await installTelegramRemote(config.botToken, config.chatId, `${origin}/api/telegram/webhook/${bindingId}`, secret, locale);
+    await installTelegramRemote(config.botToken, config.chatId, `${origin}/api/telegram/webhook/${bindingId}`, secret, normalizeServerLocale(settings.locale));
     await env.DB.prepare("UPDATE telegram_bot_bindings SET status = 'installed', updated_at = ? WHERE user_id = ? AND id = ?")
       .bind(nowIso(), auth.user.id, bindingId)
       .run();
@@ -165,11 +161,12 @@ export async function telegramWebhook(request: Request, env: Env, bindingId: str
   // settings 读取放在真实命令之后；foreign chat/非命令 no-op 不产生额外 D1 读写，也不刷新 last_update_id。
   const settings = await getSettings(env, binding.user_id);
   if (!await bindingMatchesSettings(binding, settings)) return telegramWebhookOk();
-  const reply = await telegramCommandReply(env, binding.user_id, settings, parsed.command, parsed.arg, requestLocale(request));
+  const telegramLocale = normalizeServerLocale(settings.locale);
+  const reply = await telegramCommandReply(env, binding.user_id, settings, parsed.command, parsed.arg, telegramLocale);
   const config = telegramSavedConfig(settings);
   if (config && reply) {
     // 命令已经处理完就推进 update；sendMessage 失败也不让 Telegram 重试造成重复查询和重复 D1 写入。
-    await telegramSendMessage(config.botToken, binding.chat_id, reply, settings.telegramMessageFormat, requestLocale(request)).catch(() => undefined);
+    await telegramSendMessage(config.botToken, binding.chat_id, reply, settings.telegramMessageFormat, telegramLocale).catch(() => undefined);
   }
   await markTelegramBindingUpdate(env, binding, update.updateId, true);
   return telegramWebhookOk();
@@ -192,7 +189,6 @@ function telegramBotCommandsDto(settings: ApiAppSettings, binding: TelegramBotBi
     installed,
     status,
     chatId: config?.chatId ?? null,
-    commandsVersion: binding && bindingMatches ? binding.commands_version : null,
     installedAt: binding && bindingMatches && binding.status === "installed" ? binding.created_at : null,
     lastUsedAt: binding && bindingMatches ? binding.last_used_at : null,
   });
@@ -225,7 +221,7 @@ async function installTelegramRemote(botToken: string, chatId: string, webhookUr
     secret_token: secret,
   }, locale, [secret, chatId]);
   await telegramPostJson(botToken, "setMyCommands", {
-    commands: telegramMenuCommands(),
+    commands: telegramMenuCommands(locale),
     scope: { type: "chat", chat_id: chatId },
   }, locale, [chatId]);
 }
@@ -273,18 +269,18 @@ function telegramApiHttpError(error: unknown, locale: AppLocale): HttpError {
   return new HttpError(502, serverText(locale, "common.internalError"), "TELEGRAM_API_FAILED", upstreamErrorDetailsFromError(error));
 }
 
-function telegramMenuCommands(): TelegramBotCommand[] {
+function telegramMenuCommands(locale: AppLocale): TelegramBotCommand[] {
   // BotCommand.description 是 Telegram 菜单纯文本契约；富文本只属于后续 sendMessage，/due 仅保留手输高级入口。
   return [
-    { command: "start", description: "Show Renewlet command help" },
-    { command: "help", description: "Show Renewlet command help" },
-    { command: "status", description: "Show subscription status summary" },
-    { command: "next", description: "Show the next renewal" },
-    { command: "today", description: "Show renewals due today" },
-    { command: "week", description: "Show renewals in the next 7 days" },
-    { command: "month", description: "Show renewals in the next 30 days" },
-    { command: "subscriptions", description: "List subscription summaries" },
-    { command: "settings", description: "Show bot and message settings" },
+    { command: "start", description: serverText(locale, "telegramBot.menu.start") },
+    { command: "help", description: serverText(locale, "telegramBot.menu.help") },
+    { command: "status", description: serverText(locale, "telegramBot.menu.status") },
+    { command: "next", description: serverText(locale, "telegramBot.menu.next") },
+    { command: "today", description: serverText(locale, "telegramBot.menu.today") },
+    { command: "week", description: serverText(locale, "telegramBot.menu.week") },
+    { command: "month", description: serverText(locale, "telegramBot.menu.month") },
+    { command: "subscriptions", description: serverText(locale, "telegramBot.menu.subscriptions") },
+    { command: "settings", description: serverText(locale, "telegramBot.menu.settings") },
   ];
 }
 
@@ -293,98 +289,162 @@ async function telegramCommandReply(env: Env, userId: string, settings: ApiAppSe
   switch (command) {
     case "start":
     case "help":
-      return helpText();
+      return helpText(locale);
     case "status":
-      return statusText(await readPublicApiStatusForUser(env, userId));
+      return statusText(await readPublicApiStatusForUser(env, userId), locale);
     case "next":
-      return nextText(await readPublicApiNextDueForUser(env, userId, { settings }));
+      return nextText(await readPublicApiNextDueForUser(env, userId, { settings }), locale);
     case "today": {
       const today = dateOnlyInZone(new Date(), settings.timezone);
       const due = await readPublicApiDueForUser(env, userId, 1, { settings });
-      return dueText({ ...due, items: due.items.filter((item) => item.dueDate === today) }, "Today's renewals");
+      return dueText({ ...due, items: due.items.filter((item) => item.dueDate === today) }, locale, serverText(locale, "telegramBot.due.todayTitle"));
     }
     case "week":
-      return dueText(await readPublicApiDueForUser(env, userId, 7, { settings }));
+      return dueText(await readPublicApiDueForUser(env, userId, 7, { settings }), locale);
     case "month":
-      return dueText(await readPublicApiDueForUser(env, userId, 30, { settings }));
+      return dueText(await readPublicApiDueForUser(env, userId, 30, { settings }), locale);
     case "due":
-      return dueText(await readPublicApiDueForUser(env, userId, dueDays(arg), { settings }));
+      return dueText(await readPublicApiDueForUser(env, userId, dueDays(arg), { settings }), locale);
     case "subscriptions":
-      return subscriptionsText(await readPublicApiSubscriptionsForUser(env, userId, { limit: TELEGRAM_COMMAND_LIST_LIMIT, locale }));
+      return subscriptionsText(await readPublicApiSubscriptionsForUser(env, userId, { limit: TELEGRAM_COMMAND_LIST_LIMIT, locale }), locale);
     case "settings":
-      return settingsText(settings);
+      return settingsText(settings, locale);
     default:
-      return helpText();
+      return helpText(locale);
   }
 }
 
-function helpText(): string {
+function helpText(locale: AppLocale): string {
   return [
-    "Renewlet Bot commands:",
-    "/status - subscription status summary",
-    "/next - next renewal",
-    "/today - renewals due today",
-    "/week - upcoming renewals in 7 days",
-    "/month - upcoming renewals in 30 days",
-    "/due [days] - upcoming renewals, default 30 days",
-    "/subscriptions - first 10 subscription summaries",
-    "/settings - bot and message settings",
-    "/help - show this help",
+    serverText(locale, "telegramBot.help.title"),
+    serverText(locale, "telegramBot.help.status"),
+    serverText(locale, "telegramBot.help.next"),
+    serverText(locale, "telegramBot.help.today"),
+    serverText(locale, "telegramBot.help.week"),
+    serverText(locale, "telegramBot.help.month"),
+    serverFormat(locale, "telegramBot.help.due", { days: TELEGRAM_DUE_DEFAULT_DAYS }),
+    serverFormat(locale, "telegramBot.help.subscriptions", { limit: TELEGRAM_COMMAND_LIST_LIMIT }),
+    serverText(locale, "telegramBot.help.settings"),
+    serverText(locale, "telegramBot.help.help"),
   ].join("\n");
 }
 
-function statusText(response: Awaited<ReturnType<typeof readPublicApiStatusForUser>>): string {
+function statusText(response: Awaited<ReturnType<typeof readPublicApiStatusForUser>>, locale: AppLocale): string {
   return [
-    "Renewlet status",
-    `Total: ${response.total}`,
-    `trial: ${response.byStatus.trial}`,
-    `active: ${response.byStatus.active}`,
-    `expired: ${response.byStatus.expired}`,
-    `paused: ${response.byStatus.paused}`,
-    `cancelled: ${response.byStatus.cancelled}`,
+    serverText(locale, "telegramBot.status.title"),
+    serverFormat(locale, "telegramBot.status.total", { count: response.total }),
+    serverFormat(locale, "telegramBot.status.trial", { count: response.byStatus.trial }),
+    serverFormat(locale, "telegramBot.status.active", { count: response.byStatus.active }),
+    serverFormat(locale, "telegramBot.status.expired", { count: response.byStatus.expired }),
+    serverFormat(locale, "telegramBot.status.paused", { count: response.byStatus.paused }),
+    serverFormat(locale, "telegramBot.status.cancelled", { count: response.byStatus.cancelled }),
   ].join("\n");
 }
 
-function nextText(item: PublicApiDueItem | null): string {
-  const lines = ["Next renewal"];
-  if (!item) return [...lines, "No upcoming subscriptions."].join("\n");
-  return [...lines, `${item.dueDate}: ${subscriptionName(item)} (${item.dueType})`].join("\n");
+function nextText(item: PublicApiDueItem | null, locale: AppLocale): string {
+  const lines = [serverText(locale, "telegramBot.next.title")];
+  if (!item) return [...lines, serverText(locale, "telegramBot.next.empty")].join("\n");
+  return [...lines, serverFormat(locale, "telegramBot.next.item", {
+    date: item.dueDate,
+    name: telegramSubscriptionName(item.subscription, locale),
+    type: telegramDueTypeText(item.dueType, locale),
+  })].join("\n");
 }
 
-function dueText(response: Awaited<ReturnType<typeof readPublicApiDueForUser>>, title = `Upcoming renewals in ${response.days} days`): string {
-  const items = [...response.items].sort((left, right) => left.dueDate.localeCompare(right.dueDate) || subscriptionName(left).localeCompare(subscriptionName(right)));
+function dueText(
+  response: Awaited<ReturnType<typeof readPublicApiDueForUser>>,
+  locale: AppLocale,
+  title = serverFormat(locale, "telegramBot.due.title", { days: response.days }),
+): string {
+  const items = [...response.items].sort((left, right) => (
+    left.dueDate.localeCompare(right.dueDate)
+    || telegramSubscriptionName(left.subscription, locale).localeCompare(telegramSubscriptionName(right.subscription, locale))
+  ));
   const lines = [title];
-  if (items.length === 0) return [...lines, "No matching subscriptions."].join("\n");
+  if (items.length === 0) return [...lines, serverText(locale, "telegramBot.due.empty")].join("\n");
   const visible = items.slice(0, TELEGRAM_COMMAND_LIST_LIMIT);
-  for (const item of visible) lines.push(`- ${item.dueDate}: ${subscriptionName(item)} (${item.dueType})`);
-  if (items.length > visible.length) lines.push(`...and ${items.length - visible.length} more. Open Renewlet Web UI for details.`);
+  for (const item of visible) {
+    lines.push(serverFormat(locale, "telegramBot.due.item", {
+      date: item.dueDate,
+      name: telegramSubscriptionName(item.subscription, locale),
+      type: telegramDueTypeText(item.dueType, locale),
+    }));
+  }
+  if (items.length > visible.length) {
+    lines.push(serverFormat(locale, "telegramBot.due.truncated", { count: items.length - visible.length }));
+  }
   return lines.join("\n");
 }
 
-function subscriptionsText(response: Awaited<ReturnType<typeof readPublicApiSubscriptionsForUser>>): string {
+function subscriptionsText(response: Awaited<ReturnType<typeof readPublicApiSubscriptionsForUser>>, locale: AppLocale): string {
   const total = response.total ?? response.subscriptions.length;
-  const lines = [`Subscriptions (${total} total)`];
-  if (response.subscriptions.length === 0) return [...lines, "No subscriptions yet."].join("\n");
+  const lines = [serverFormat(locale, "telegramBot.subscriptions.title", { total })];
+  if (response.subscriptions.length === 0) return [...lines, serverText(locale, "telegramBot.subscriptions.empty")].join("\n");
   for (const subscription of response.subscriptions) {
-    lines.push(`- ${subscription.name}: ${subscription.status}, next ${subscription.nextBillingDate}`);
+    lines.push(serverFormat(locale, "telegramBot.subscriptions.item", {
+      name: telegramSubscriptionName(subscription, locale),
+      status: telegramSubscriptionStatus(subscription, locale),
+      date: telegramSubscriptionNextDate(subscription, locale),
+    }));
   }
   if (total > response.subscriptions.length) {
-    lines.push(`...and ${total - response.subscriptions.length} more. Open Renewlet Web UI for details.`);
+    lines.push(serverFormat(locale, "telegramBot.subscriptions.truncated", { count: total - response.subscriptions.length }));
   }
   return lines.join("\n");
 }
 
-function settingsText(settings: ApiAppSettings): string {
+function settingsText(settings: ApiAppSettings, locale: AppLocale): string {
+  const messageStyle = settings.telegramMessageFormat === "html"
+    ? serverText(locale, "telegramBot.settings.messageStyle.html")
+    : serverText(locale, "telegramBot.settings.messageStyle.plain");
   return [
-    "Renewlet bot settings",
-    `Chat ID: ${settings.telegramChatId.trim() || "Not configured"}`,
-    `Message style: ${settings.telegramMessageFormat === "html" ? "Rich text" : "Plain text"}`,
-    "Manage this in Renewlet Web UI Settings > Notifications.",
+    serverText(locale, "telegramBot.settings.title"),
+    serverFormat(locale, "telegramBot.settings.chatId", {
+      chatId: settings.telegramChatId.trim() || serverText(locale, "telegramBot.settings.notConfigured"),
+    }),
+    serverFormat(locale, "telegramBot.settings.messageStyle", { style: messageStyle }),
+    serverText(locale, "telegramBot.settings.manage"),
   ].join("\n");
 }
 
-function subscriptionName(item: PublicApiDueItem): string {
-  return item.subscription.name.trim() || "Unnamed subscription";
+type TelegramApiSubscription = PublicApiDueItem["subscription"];
+
+function telegramSubscriptionName(subscription: TelegramApiSubscription, locale: AppLocale): string {
+  return subscription.name.trim() || serverText(locale, "telegramBot.subscription.unnamed");
+}
+
+function telegramSubscriptionStatus(subscription: TelegramApiSubscription, locale: AppLocale): string {
+  switch (subscription.status) {
+    case "trial":
+      return serverText(locale, "telegramBot.subscriptionStatus.trial");
+    case "active":
+      return serverText(locale, "telegramBot.subscriptionStatus.active");
+    case "expired":
+      return serverText(locale, "telegramBot.subscriptionStatus.expired");
+    case "paused":
+      return serverText(locale, "telegramBot.subscriptionStatus.paused");
+    case "cancelled":
+      return serverText(locale, "telegramBot.subscriptionStatus.cancelled");
+    default:
+      return serverText(locale, "telegramBot.subscriptionStatus.unknown");
+  }
+}
+
+function telegramSubscriptionNextDate(subscription: TelegramApiSubscription, locale: AppLocale): string {
+  return subscription.nextBillingDate.trim() || serverText(locale, "telegramBot.subscription.unknown");
+}
+
+function telegramDueTypeText(dueType: PublicApiDueItem["dueType"], locale: AppLocale): string {
+  switch (dueType) {
+    case "renewal":
+      return serverText(locale, "telegramBot.dueType.renewal");
+    case "trial":
+      return serverText(locale, "telegramBot.dueType.trial");
+    case "expiry":
+      return serverText(locale, "telegramBot.dueType.expiry");
+    default:
+      return serverText(locale, "telegramBot.subscription.unknown");
+  }
 }
 
 function dueDays(arg: string): number {

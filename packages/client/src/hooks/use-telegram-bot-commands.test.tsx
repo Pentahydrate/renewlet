@@ -22,7 +22,6 @@ function commandsResponse(overrides: Partial<TelegramBotCommandsResponse> = {}):
     installed: false,
     status: "not_installed",
     chatId: "12345",
-    commandsVersion: null,
     installedAt: null,
     lastUsedAt: null,
     ...overrides,

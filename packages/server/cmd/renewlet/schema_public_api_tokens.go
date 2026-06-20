@@ -51,7 +51,6 @@ func ensureTelegramBotBindingsCollection(app core.App, users *core.Collection) e
 			&core.TextField{Name: "botTokenHash", Required: true, Max: 128, Pattern: `^[A-Za-z0-9_-]{43}$`},
 			&core.TextField{Name: "webhookSecretHash", Required: true, Max: 128, Pattern: `^[A-Za-z0-9_-]{43}$`},
 			&core.SelectField{Name: "status", Required: true, Values: []string{"installing", "installed"}},
-			&core.TextField{Name: "commandsVersion", Required: true, Max: 32},
 			&core.NumberField{Name: "lastUpdateId", OnlyInt: true, Min: types.Pointer(0.0)},
 			&core.TextField{Name: "lastUsedAt", Max: 40},
 		}
@@ -63,6 +62,7 @@ func ensureTelegramBotBindingsCollection(app core.App, users *core.Collection) e
 		if err := ensureAutodates(c); err != nil {
 			return err
 		}
+		c.Fields.RemoveByName("commandsVersion")
 		c.AddIndex("idx_telegram_bot_bindings_user_unique", true, "user", "")
 		c.AddIndex("idx_telegram_bot_bindings_webhook_secret", false, "webhookSecretHash", "")
 		return nil
