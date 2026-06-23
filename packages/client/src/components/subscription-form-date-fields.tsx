@@ -53,7 +53,7 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
     : t("subscription.field.nextBillingDate");
   const dateValidationKind = errors.dates ? getSubscriptionDateValidationKind(formData) : null;
   const dateErrorTarget: "start" | "next" | null =
-    dateValidationKind === "startDateRequired" || dateValidationKind === "startDateRequiredForAutoCalculate"
+    dateValidationKind === "purchaseDateRequired" || dateValidationKind === "startDateRequiredForAutoCalculate"
       ? "start"
       : dateValidationKind === "nextBillingDateRequired" || dateValidationKind === "dateOrderInvalid"
         ? "next"
@@ -90,10 +90,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
 
       <FormFieldRow
         rowClassName={cn("items-start", !isOneTimeBuyout && "sm:grid-cols-2")}
-        errors={[
-          { id: startDateErrorId, message: startDateHasError ? errors.dates : undefined },
-          { id: nextBillingDateErrorId, message: nextBillingDateHasError ? errors.dates : undefined },
-        ]}
       >
         <FormField
           id={startDateId}
@@ -102,7 +98,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
           describedBy={isOneTimeBuyout ? startDateHelpId : undefined}
           error={startDateHasError ? errors.dates : undefined}
           errorId={startDateErrorId}
-          renderError={false}
         >
           {(field) => (
             <>
@@ -161,7 +156,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
             describedBy={nextBillingDateHelp ? nextBillingDateHelpId : undefined}
             error={nextBillingDateHasError ? errors.dates : undefined}
             errorId={nextBillingDateErrorId}
-            renderError={false}
           >
             {(field) => (
               <>

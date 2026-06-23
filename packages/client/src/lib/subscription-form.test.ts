@@ -310,7 +310,7 @@ describe("subscription-form", () => {
       nextBillingDate: undefined,
     });
 
-    expect(getSubscriptionDraftValidationError(form)).toBe("请选择开始日期");
+    expect(getSubscriptionDraftValidationError(form)).toBe("请选择购买日期");
     expect(toSubscriptionDraft(form)).toBeNull();
   });
 

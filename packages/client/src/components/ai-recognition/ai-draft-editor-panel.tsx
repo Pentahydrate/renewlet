@@ -34,7 +34,9 @@ const AI_DRAFT_BLOCKING_ISSUE_LABEL_KEYS: Record<AIDraftBlockingIssueCode, Messa
   price: "aiRecognition.draftIssuePriceRequired",
   currency: "aiRecognition.draftIssueCurrencyRequired",
   billingCycle: "aiRecognition.draftIssueBillingCycleRequired",
-  dates: "aiRecognition.draftIssueDatesRequired",
+  purchaseDate: "subscription.validation.purchaseDateRequired",
+  nextBillingDate: "subscription.validation.nextBillingDateRequired",
+  autoCalculateStartDate: "subscription.validation.startDateRequiredForAutoCalculate",
   customCycle: "aiRecognition.draftIssueCustomCycleRequired",
 };
 

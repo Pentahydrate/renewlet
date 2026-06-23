@@ -263,7 +263,7 @@ describe("SubscriptionDialog reminders", () => {
 
     await user.click(screen.getByRole("button", { name: "添加订阅" }));
 
-    const dateError = screen.getByText("请选择开始日期");
+    const dateError = screen.getByText("请选择购买日期");
     const invalidPurchaseDateButton = screen.getByRole("button", { name: /购买日期.*选择日期/ });
     const describedBy = invalidPurchaseDateButton.getAttribute("aria-describedby");
     expect(describedBy).toContain(dateError.id);

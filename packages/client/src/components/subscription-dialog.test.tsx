@@ -104,11 +104,14 @@ describe("SubscriptionDialog", () => {
       throw new Error("Date buttons were not rendered");
     }
     const dateError = screen.getByText("请选择到期日期");
+    const startDateField = startDateButton.closest('[data-slot="form-field"]');
+    const nextBillingDateField = nextBillingDateButton.closest('[data-slot="form-field"]');
     expect(dateError).toBeInTheDocument();
     expect(startDateButton).toHaveAttribute("aria-invalid", "false");
     expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
     expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "nextBillingDate-error");
-    expect(nextBillingDateButton.closest('[data-slot="form-field-row"]')).toContainElement(dateError);
+    expect(nextBillingDateField).toContainElement(dateError);
+    expect(startDateField).not.toContainElement(dateError);
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

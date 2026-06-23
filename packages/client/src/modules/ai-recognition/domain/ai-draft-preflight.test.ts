@@ -50,7 +50,7 @@ describe("AI draft preflight", () => {
       "price",
       "currency",
       "billingCycle",
-      "dates",
+      "nextBillingDate",
     ]);
   });
 
@@ -78,19 +78,32 @@ describe("AI draft preflight", () => {
       startDate: null,
       nextBillingDate: null,
       autoCalculateNextBillingDate: false,
-    })).map((issue) => issue.code)).toEqual(["dates"]);
+    })).map((issue) => issue.code)).toEqual(["nextBillingDate"]);
   });
 
-  it("requires start dates for one-time drafts and automatic date calculation", () => {
+  it("requires purchase dates for one-time drafts", () => {
     expect(getAIDraftBlockingIssues(draft({
       billingCycle: "one-time",
       startDate: null,
+      nextBillingDate: null,
       autoCalculateNextBillingDate: false,
-    })).map((issue) => issue.code)).toEqual(["dates"]);
+    })).map((issue) => issue.code)).toEqual(["purchaseDate"]);
 
     expect(getAIDraftBlockingIssues(draft({
+      billingCycle: "one-time",
+      startDate: "2026-06-01",
+      nextBillingDate: null,
+      oneTimeTermCount: 1,
+      oneTimeTermUnit: "month",
+      autoCalculateNextBillingDate: false,
+    }))).toEqual([]);
+  });
+
+  it("requires start dates for automatic date calculation", () => {
+    expect(getAIDraftBlockingIssues(draft({
       startDate: null,
+      nextBillingDate: null,
       autoCalculateNextBillingDate: true,
-    })).map((issue) => issue.code)).toEqual(["dates"]);
+    })).map((issue) => issue.code)).toEqual(["autoCalculateStartDate"]);
   });
 });

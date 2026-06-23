@@ -36,7 +36,7 @@ import { toReminderDays } from "@/lib/subscription-form";
 import { customCycleUnitLabelKey } from "@/lib/subscription-billing";
 import { useI18n } from "@/i18n/I18nProvider";
 import { localizedLabel } from "@/i18n/locales";
-import { errorFieldByFormKey, type SubscriptionFormErrors, type SubscriptionFormFieldsProps } from "@/components/subscription-form-fields-model";
+import { getErrorFieldsToClearForFormChange, type SubscriptionFormErrors, type SubscriptionFormFieldsProps } from "@/components/subscription-form-fields-model";
 
 export type { SubscriptionFormReminderType };
 export type { SubscriptionFormState };
@@ -132,11 +132,8 @@ export const SubscriptionFormFields = memo(function SubscriptionFormFields({
       }
       return { ...prev, [key]: value };
     });
-    const errorField = errorFieldByFormKey[key];
-    if (errorField) onClearFieldError?.(errorField);
-    if (key === "billingCycle") {
-      onClearFieldError?.("customDays");
-      onClearFieldError?.("oneTimeTerm");
+    for (const errorField of getErrorFieldsToClearForFormChange(key)) {
+      onClearFieldError?.(errorField);
     }
     // onFieldChange 是外层识别“用户明确修改过某字段”的钩子，例如新增订阅默认货币同步策略。
     // 这里保持泛型 key/value 绑定，避免调用方把字段和值的类型拆散。

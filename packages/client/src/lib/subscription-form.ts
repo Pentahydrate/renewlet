@@ -151,7 +151,7 @@ export function isRenewalDateBeforeStartDate(
 }
 
 export type SubscriptionDateValidationKind =
-  | "startDateRequired"
+  | "purchaseDateRequired"
   | "nextBillingDateRequired"
   | "startDateRequiredForAutoCalculate"
   | "dateOrderInvalid";
@@ -161,7 +161,7 @@ export function getSubscriptionDateValidationKind(formData: Pick<
   "billingCycle" | "oneTimeMode" | "startDate" | "nextBillingDate" | "autoCalculate"
 >): SubscriptionDateValidationKind | null {
   const isOneTime = formData.billingCycle === "one-time";
-  if (isOneTime && !formData.startDate) return "startDateRequired";
+  if (isOneTime && !formData.startDate) return "purchaseDateRequired";
   if (!isOneTime && formData.autoCalculate && !formData.startDate) {
     return "startDateRequiredForAutoCalculate";
   }
@@ -174,8 +174,8 @@ export function getSubscriptionDateValidationKind(formData: Pick<
 
 export function subscriptionDateValidationMessageKey(kind: SubscriptionDateValidationKind): MessageKey {
   switch (kind) {
-    case "startDateRequired":
-      return "subscription.validation.startDateRequired";
+    case "purchaseDateRequired":
+      return "subscription.validation.purchaseDateRequired";
     case "nextBillingDateRequired":
       return "subscription.validation.nextBillingDateRequired";
     case "startDateRequiredForAutoCalculate":

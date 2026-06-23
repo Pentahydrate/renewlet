@@ -4,7 +4,9 @@ export const AI_DRAFT_BLOCKING_ISSUE_CODES = [
   "price",
   "currency",
   "billingCycle",
-  "dates",
+  "purchaseDate",
+  "nextBillingDate",
+  "autoCalculateStartDate",
   "customCycle",
 ] as const;
 
@@ -30,14 +32,28 @@ export function getAIDraftBlockingIssues(draft: AiRecognizedSubscriptionDraft): 
   } else if (draft.billingCycle === "custom" && (!draft.customDays || !draft.customCycleUnit)) {
     issues.push({ code: "customCycle", field: "customDays" });
   }
-  const requiresStartDate =
-    draft.billingCycle === "one-time" ||
-    (draft.billingCycle !== null && draft.autoCalculateNextBillingDate === true);
-  if (!draft.nextBillingDate || (requiresStartDate && !draft.startDate)) {
-    issues.push({ code: "dates", field: "dates" });
+  const dateIssue = getAIDraftDateBlockingIssue(draft);
+  if (dateIssue) {
+    issues.push(dateIssue);
   }
 
   return issues;
+}
+
+function getAIDraftDateBlockingIssue(draft: AiRecognizedSubscriptionDraft): AIDraftBlockingIssue | null {
+  if (draft.billingCycle === "one-time") {
+    if (!draft.startDate) {
+      return { code: "purchaseDate", field: "dates" };
+    }
+    return null;
+  }
+  if (draft.billingCycle !== null && draft.autoCalculateNextBillingDate === true && !draft.startDate) {
+    return { code: "autoCalculateStartDate", field: "dates" };
+  }
+  if (!draft.nextBillingDate) {
+    return { code: "nextBillingDate", field: "dates" };
+  }
+  return null;
 }
 
 export function hasAIDraftBlockingIssues(draft: AiRecognizedSubscriptionDraft): boolean {

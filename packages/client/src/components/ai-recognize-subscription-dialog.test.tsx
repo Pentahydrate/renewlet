@@ -415,7 +415,7 @@ describe("AIRecognizeSubscriptionDialog", () => {
     expect(screen.queryByRole("button", { name: "取消" })).not.toBeInTheDocument();
   });
 
-  it("草稿缺少日期时在草稿阶段拦截导入预览", async () => {
+  it("周期草稿缺少到期日期时在草稿阶段拦截导入预览", async () => {
     const user = userEvent.setup();
     mocks.recognizeSubscriptionsStream.mockResolvedValue(makeResponse([
       makeDraft({
@@ -438,7 +438,42 @@ describe("AIRecognizeSubscriptionDialog", () => {
     expect(startDateButton).toHaveAttribute("aria-invalid", "false");
     expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
     expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-nextBillingDate-error");
-    expect(nextBillingDateButton.closest('[data-slot="form-field-row"]')).toHaveTextContent("请选择续费或到期日期。自动计算或一次性购买还需要开始日期。");
+    expect(nextBillingDateButton.closest('[data-slot="form-field"]')).toHaveTextContent("请选择到期日期");
+    expect(startDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择到期日期");
+    expect(startDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择购买日期");
+    expect(screen.getByRole("button", { name: "生成导入预览" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "生成导入预览" }));
+    expect(mocks.previewPrepared).not.toHaveBeenCalled();
+  });
+
+  it("一次性购买固定服务期缺购买日期时在购买日期字段提示", async () => {
+    const user = userEvent.setup();
+    mocks.recognizeSubscriptionsStream.mockResolvedValue(makeResponse([
+      makeDraft({
+        billingCycle: "one-time",
+        startDate: null,
+        nextBillingDate: null,
+        oneTimeTermCount: 1,
+        oneTimeTermUnit: "month",
+        autoCalculateNextBillingDate: false,
+      }),
+    ]));
+    renderDialog();
+
+    await user.type(screen.getByPlaceholderText("粘贴记事本、备忘录或从 Excel 复制出的订阅列表..."), "apple 50刀 买断");
+    await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
+
+    expect(await screen.findByText("1 条草稿还有 1 个必填项待补全，补全后才能生成导入预览。")).toBeInTheDocument();
+    const purchaseDateButton = document.getElementById("ai-draft-1-startDate");
+    const expiryDateButton = document.getElementById("ai-draft-1-nextBillingDate");
+    if (!(purchaseDateButton instanceof HTMLButtonElement) || !(expiryDateButton instanceof HTMLButtonElement)) {
+      throw new Error("AI draft one-time date buttons were not rendered");
+    }
+    expect(purchaseDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(purchaseDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-startDate-error");
+    expect(purchaseDateButton.closest('[data-slot="form-field"]')).toHaveTextContent("请选择购买日期");
+    expect(expiryDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(expiryDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择到期日期");
     expect(screen.getByRole("button", { name: "生成导入预览" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "生成导入预览" }));
     expect(mocks.previewPrepared).not.toHaveBeenCalled();
