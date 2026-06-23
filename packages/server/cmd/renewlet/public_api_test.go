@@ -31,10 +31,12 @@ func TestPublicAPITokenLifecycleAndReadRoutes(t *testing.T) {
 	trialDate := addDateOnly(today, 5)
 	expiryDate := addDateOnly(today, 8)
 	renewal := createRouteTestSubscription(t, app, user.Id, map[string]interface{}{
-		"name":            "Renewal Plan",
-		"status":          "active",
-		"nextBillingDate": renewalDate,
-		"notes":           "private note stays in the owner DTO",
+		"name":                         "Renewal Plan",
+		"status":                       "active",
+		"startDate":                    "",
+		"nextBillingDate":              renewalDate,
+		"autoCalculateNextBillingDate": false,
+		"notes":                        "private note stays in the owner DTO",
 	})
 	trial := createRouteTestSubscription(t, app, user.Id, map[string]interface{}{
 		"name":            "Trial Plan",
@@ -141,9 +143,28 @@ func TestPublicAPITokenLifecycleAndReadRoutes(t *testing.T) {
 		t.Fatalf("public API subscription DTO must not expose owner relation: %#v", listBody.Subscriptions[0])
 	}
 
+	listAllRes := serveTestRequest(t, app, http.MethodGet, "/api/public/v1/subscriptions?limit=3", "", publicToken)
+	if listAllRes.Code != http.StatusOK {
+		t.Fatalf("expected full public subscriptions 200, got %d: %s", listAllRes.Code, listAllRes.Body.String())
+	}
+	var listAllBody subscriptionsListResponse
+	if err := json.Unmarshal(listAllRes.Body.Bytes(), &listAllBody); err != nil {
+		t.Fatal(err)
+	}
+	if !publicAPITestListContainsStartDateNull(listAllBody.Subscriptions, renewal.Id) {
+		t.Fatalf("expected public API list to preserve startDate null, got %#v", listAllBody.Subscriptions)
+	}
+
 	detailRes := serveTestRequest(t, app, http.MethodGet, "/api/public/v1/subscriptions/"+renewal.Id, "", publicToken)
 	if detailRes.Code != http.StatusOK || !strings.Contains(detailRes.Body.String(), `"name":"Renewal Plan"`) {
 		t.Fatalf("expected own subscription detail 200, got %d: %s", detailRes.Code, detailRes.Body.String())
+	}
+	var detailBody subscriptionResponse
+	if err := json.Unmarshal(detailRes.Body.Bytes(), &detailBody); err != nil {
+		t.Fatal(err)
+	}
+	if value, ok := detailBody.Subscription["startDate"]; !ok || value != nil {
+		t.Fatalf("expected public subscription detail to preserve startDate null, got %#v", detailBody.Subscription)
 	}
 	foreignRes := serveTestRequest(t, app, http.MethodGet, "/api/public/v1/subscriptions/"+foreign.Id, "", publicToken)
 	if foreignRes.Code != http.StatusNotFound {
@@ -189,6 +210,11 @@ func TestPublicAPITokenLifecycleAndReadRoutes(t *testing.T) {
 	if strings.Contains(dueRes.Body.String(), foreign.Id) {
 		t.Fatalf("due response leaked another user's subscription: %s", dueRes.Body.String())
 	}
+	for _, item := range dueBody.Items {
+		if item.Subscription["id"] == renewal.Id && item.Subscription["startDate"] != nil {
+			t.Fatalf("expected due item to preserve startDate null, got %#v", item.Subscription)
+		}
+	}
 
 	foreignDeleteRes := serveTestRequest(t, app, http.MethodDelete, "/api/app/api-tokens/"+createBody.Token.ID, "", otherSessionToken)
 	if foreignDeleteRes.Code != http.StatusNotFound {
@@ -218,6 +244,15 @@ func publicAPITestDueContains(items []publicAPIDueItem, subscriptionID string, d
 		}
 		if item.Subscription["id"] == subscriptionID {
 			return true
+		}
+	}
+	return false
+}
+
+func publicAPITestListContainsStartDateNull(items []map[string]interface{}, subscriptionID string) bool {
+	for _, item := range items {
+		if item["id"] == subscriptionID {
+			return item["startDate"] == nil
 		}
 	}
 	return false

@@ -22,6 +22,7 @@ import {
 } from "@renewlet/shared/runtime";
 import { getApiLocale } from "@/i18n/api-locale";
 import { translate } from "@/i18n/messages";
+import type { MessageKey } from "@/i18n/messages";
 import { compareDateOnly } from "@/lib/time/date-only";
 import { calculateOneTimeTermEndDate } from "@/lib/subscription-billing";
 
@@ -149,15 +150,48 @@ export function isRenewalDateBeforeStartDate(
   );
 }
 
+export type SubscriptionDateValidationKind =
+  | "purchaseDateRequired"
+  | "nextBillingDateRequired"
+  | "startDateRequiredForAutoCalculate"
+  | "dateOrderInvalid";
+
+export function getSubscriptionDateValidationKind(formData: Pick<
+  SubscriptionFormState,
+  "billingCycle" | "oneTimeMode" | "startDate" | "nextBillingDate" | "autoCalculate"
+>): SubscriptionDateValidationKind | null {
+  const isOneTime = formData.billingCycle === "one-time";
+  if (isOneTime && !formData.startDate) return "purchaseDateRequired";
+  if (!isOneTime && formData.autoCalculate && !formData.startDate) {
+    return "startDateRequiredForAutoCalculate";
+  }
+  if (!isOneTime && !formData.nextBillingDate) return "nextBillingDateRequired";
+  if (!isOneTime && isRenewalDateBeforeStartDate(formData)) {
+    return "dateOrderInvalid";
+  }
+  return null;
+}
+
+export function subscriptionDateValidationMessageKey(kind: SubscriptionDateValidationKind): MessageKey {
+  switch (kind) {
+    case "purchaseDateRequired":
+      return "subscription.validation.purchaseDateRequired";
+    case "nextBillingDateRequired":
+      return "subscription.validation.nextBillingDateRequired";
+    case "startDateRequiredForAutoCalculate":
+      return "subscription.validation.startDateRequiredForAutoCalculate";
+    case "dateOrderInvalid":
+      return "subscription.validation.dateOrderInvalid";
+  }
+}
+
 /** 返回订阅草稿的首个阻塞性校验错误；用于提交前给用户明确反馈。 */
 export function getSubscriptionDraftValidationError(formData: SubscriptionFormState): string | null {
   const locale = getApiLocale();
   if (!formData.name.trim()) return translate(locale, "subscription.validation.nameRequired");
-  if (!formData.startDate || (formData.billingCycle !== "one-time" && !formData.nextBillingDate)) {
-    return translate(locale, "subscription.validation.datesRequired");
-  }
-  if (formData.billingCycle !== "one-time" && isRenewalDateBeforeStartDate(formData)) {
-    return translate(locale, "subscription.validation.dateOrderInvalid");
+  const dateValidationKind = getSubscriptionDateValidationKind(formData);
+  if (dateValidationKind) {
+    return translate(locale, subscriptionDateValidationMessageKey(dateValidationKind));
   }
   if (parseNonNegativeFiniteNumberInput(formData.price) === null) return translate(locale, "subscription.validation.amountInvalid");
   const reminderInput = formData.reminderType === "custom" ? formData.customReminderDays : formData.reminderDays;
@@ -199,7 +233,7 @@ export function getSubscriptionDraftValidationError(formData: SubscriptionFormSt
  * 将 UI 表单状态转换为可保存的订阅对象（不含 id）。
  *
  * 说明：
- * - 非一次性购买若 startDate/nextBillingDate 缺失则返回 null（由调用方决定如何处理）
+ * - 周期订阅可提交未知 startDate；nextBillingDate 仍是通知和日历的事实源
  * - 该函数不关心“是否允许提交”（例如上传中、必填校验），只负责数据形态转换
  */
 export function toSubscriptionDraft(formData: SubscriptionFormState): SubscriptionDraft | null {
@@ -213,17 +247,18 @@ export function toSubscriptionDraft(formData: SubscriptionFormState): Subscripti
   const oneTimeTermCount = formData.billingCycle === "one-time" && formData.oneTimeMode === "term"
     ? parsePositiveIntegerInput(formData.oneTimeTermCount)
     : undefined;
-  const { startDate } = formData;
+  const startDate = formData.startDate ?? null;
   const nextBillingDate = formData.billingCycle === "one-time"
-    ? formData.oneTimeMode === "term" && startDate && oneTimeTermCount
-      ? calculateOneTimeTermEndDate(startDate, oneTimeTermCount, formData.oneTimeTermUnit)
-      : startDate
+    ? formData.oneTimeMode === "term" && formData.startDate && oneTimeTermCount
+      ? calculateOneTimeTermEndDate(formData.startDate, oneTimeTermCount, formData.oneTimeTermUnit)
+      : formData.startDate
     : formData.nextBillingDate;
   if (
     price === null ||
     reminderDays === null ||
-    !startDate ||
     !nextBillingDate ||
+    (formData.billingCycle === "one-time" && !formData.startDate) ||
+    (formData.billingCycle !== "one-time" && formData.autoCalculate && !formData.startDate) ||
     (formData.billingCycle === "custom" && customDays === null) ||
     (formData.billingCycle === "one-time" && formData.oneTimeMode === "term" && oneTimeTermCount === null)
   ) {

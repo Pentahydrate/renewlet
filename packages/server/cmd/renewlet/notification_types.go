@@ -30,6 +30,7 @@ const (
 	// 默认 plain 表示不发送 Telegram parse_mode；HTML 只能通过 formatter 固定模板输出。
 	telegramMessageFormatPlain = "plain"
 	telegramMessageFormatHTML  = "html"
+	discordContentMaxRunes     = 2000
 )
 
 var (
@@ -42,6 +43,8 @@ var (
 		"email":      {},
 		"bark":       {},
 		"serverchan": {},
+		"discord":    {},
+		"pushplus":   {},
 	}
 )
 
@@ -91,6 +94,10 @@ type appSettings struct {
 	BarkDeviceKey            string                    `json:"barkDeviceKey"`
 	BarkSilentPush           bool                      `json:"barkSilentPush"`
 	ServerChanSendKey        string                    `json:"serverchanSendKey"`
+	DiscordWebhookURL        string                    `json:"discordWebhookUrl"`
+	DiscordBotUsername       string                    `json:"discordBotUsername"`
+	DiscordBotAvatarURL      string                    `json:"discordBotAvatarUrl"`
+	PushPlusToken            string                    `json:"pushplusToken"`
 }
 
 type themeCustomColor struct {
@@ -392,6 +399,30 @@ type serverChanSendResponse struct {
 	Detail  string `json:"detail"`
 }
 
+type discordAllowedMentions struct {
+	Parse []string `json:"parse"`
+}
+
+type discordWebhookRequest struct {
+	Content         string                 `json:"content"`
+	AllowedMentions discordAllowedMentions `json:"allowed_mentions"`
+	Username        string                 `json:"username,omitempty"`
+	AvatarURL       string                 `json:"avatar_url,omitempty"`
+}
+
+type pushPlusSendRequest struct {
+	Token    string `json:"token"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	Template string `json:"template"`
+}
+
+type pushPlusSendResponse struct {
+	Code *int   `json:"code"`
+	Msg  string `json:"msg"`
+	Data string `json:"data"`
+}
+
 func defaultAppSettings() appSettings {
 	return appSettings{
 		AdminUsername:        "admin",
@@ -423,5 +454,9 @@ func defaultAppSettings() appSettings {
 		WebhookMethod:            "POST",
 		WechatMessageType:        "text",
 		BarkServerURL:            "https://api.day.app",
+		DiscordWebhookURL:        "",
+		DiscordBotUsername:       "",
+		DiscordBotAvatarURL:      "",
+		PushPlusToken:            "",
 	}
 }

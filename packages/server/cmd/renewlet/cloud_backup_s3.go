@@ -29,6 +29,7 @@ type s3ProviderResponseCapture struct {
 	mu            sync.Mutex
 	response      *cloudBackupProviderResponse
 	attemptedHost string
+	localError    string
 }
 
 type s3CaptureHTTPClient struct {
@@ -39,8 +40,9 @@ type s3CaptureHTTPClient struct {
 
 func newS3CloudBackupClient(settings cloudBackupS3Settings, secret string) *s3CloudBackupClient {
 	capture := &s3ProviderResponseCapture{}
+	// AWS SDK 负责签名和协议序列化；custom HTTP client 只把 S3 外发纳入统一超时、代理和脱敏错误边界。
 	httpClient := &s3CaptureHTTPClient{
-		client:  &http.Client{Timeout: 45 * time.Second},
+		client:  defaultUpstreamHTTPClient(45 * time.Second),
 		capture: capture,
 		secrets: []string{settings.AccessKeyID, secret},
 	}
@@ -322,12 +324,15 @@ func (client *s3CaptureHTTPClient) Do(request *http.Request) (*http.Response, er
 	client.capture.setAttemptedRequest(request)
 	response, err := client.client.Do(request)
 	if err != nil || response == nil {
+		if err != nil {
+			client.capture.setLocalError(request, "S3", err, client.secrets, upstreamEffectiveTimeout(45*time.Second, client.client))
+		}
 		return response, err
 	}
 	if response.StatusCode < 400 {
 		return response, nil
 	}
-	// SDK 还要继续读取错误响应；这里重放 body，同时只捕获脱敏后的上游 status/header/body 给当前请求。
+	// SDK 还要继续反序列化错误响应；这里重放 body，同时只捕获脱敏后的上游 status/header/body 给当前请求。
 	captured, body := cloudBackupProviderResponseAndBodyFromHTTPResponse(response, client.secrets)
 	response.Body.Close()
 	response.Body = io.NopCloser(strings.NewReader(body))
@@ -340,6 +345,7 @@ func (capture *s3ProviderResponseCapture) reset() {
 	defer capture.mu.Unlock()
 	capture.response = nil
 	capture.attemptedHost = ""
+	capture.localError = ""
 }
 
 func (capture *s3ProviderResponseCapture) set(response *cloudBackupProviderResponse) {
@@ -369,7 +375,32 @@ func (capture *s3ProviderResponseCapture) attemptedHostValue() string {
 	return capture.attemptedHost
 }
 
+func (capture *s3ProviderResponseCapture) setLocalError(request *http.Request, provider string, err error, secrets []string, timeout time.Duration) {
+	if request == nil {
+		return
+	}
+	timedOut := upstreamNetErrorTimedOut(err) || errors.Is(request.Context().Err(), context.DeadlineExceeded)
+	// 本地 DNS/TLS/代理错误没有 HTTP body；仍用同一 redacted request context，避免 attempted URL 或签名 query 原样泄露。
+	message := upstreamTransportDiagnosticMessage(request, upstreamHTTPRequestOptions{
+		Provider: provider,
+		Timeout:  timeout,
+		Secrets:  secrets,
+	}, err, timeout, timedOut)
+	capture.mu.Lock()
+	defer capture.mu.Unlock()
+	capture.localError = message
+}
+
 func (capture *s3ProviderResponseCapture) describeLocalError(err error) error {
+	capture.mu.Lock()
+	localError := capture.localError
+	capture.mu.Unlock()
+	if strings.TrimSpace(localError) != "" {
+		return &cloudBackupRemoteError{
+			code:    "CLOUD_BACKUP_S3_LOCAL_FAILED",
+			details: &cloudBackupErrorDetails{RawResponseText: optionalCloudBackupString(localError)},
+		}
+	}
 	attemptedHost := capture.attemptedHostValue()
 	var wrapped error
 	if err == nil {

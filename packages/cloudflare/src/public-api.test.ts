@@ -290,7 +290,9 @@ describe("Cloudflare Public API", () => {
           id: "sub_renewal",
           name: "Renewal Plan",
           status: "active",
+          start_date: null,
           next_billing_date: addDateOnlyDays(today, 10),
+          auto_calculate_next_billing_date: 0,
           created_at: "2026-06-20T00:00:03.000Z",
         }),
         subscriptionRow({
@@ -363,8 +365,14 @@ describe("Cloudflare Public API", () => {
     expect(subscriptionsBody.nextCursor).toEqual(expect.any(String));
     expect(subscriptionsBody.subscriptions[0]).not.toHaveProperty("user");
 
+    const allSubscriptionsResponse = await publicApiSubscriptions(publicRequest("/api/public/v1/subscriptions?limit=3"), env);
+    const allSubscriptionsBody = await allSubscriptionsResponse.json() as { subscriptions: Array<Record<string, unknown>> };
+    expect(allSubscriptionsBody.subscriptions.find((item) => item["id"] === "sub_renewal")).toMatchObject({ startDate: null });
+
     const detailResponse = await publicApiSubscription(publicRequest("/api/public/v1/subscriptions/sub_renewal"), env, "sub_renewal");
-    expect(await detailResponse.json()).toMatchObject({ subscription: { id: "sub_renewal", name: "Renewal Plan" } });
+    expect(await detailResponse.json()).toMatchObject({
+      subscription: { id: "sub_renewal", name: "Renewal Plan", startDate: null },
+    });
     await expect(publicApiSubscription(publicRequest("/api/public/v1/subscriptions/sub_other"), env, "sub_other"))
       .rejects.toMatchObject({ status: 404 });
 
@@ -375,12 +383,13 @@ describe("Cloudflare Public API", () => {
     });
 
     const dueResponse = await publicApiDue(publicRequest("/api/public/v1/due?days=30"), env);
-    const dueBody = await dueResponse.json() as { items: Array<{ dueType: string; subscription: { id: string } }> };
+    const dueBody = await dueResponse.json() as { items: Array<{ dueType: string; subscription: { id: string; startDate: string | null } }> };
     expect(dueBody.items.map((item) => [item.subscription.id, item.dueType])).toEqual(expect.arrayContaining([
       ["sub_renewal", "renewal"],
       ["sub_trial", "trial"],
       ["sub_expiry", "expiry"],
     ]));
+    expect(dueBody.items.find((item) => item.subscription.id === "sub_renewal")?.subscription.startDate).toBeNull();
     expect(dueBody.items.map((item) => item.subscription.id)).not.toContain("sub_other");
 
     authMocks.requireAuth.mockResolvedValueOnce({ user: { id: OTHER_USER_ID }, session: { id: "ses_other" }, token: "session-token" });

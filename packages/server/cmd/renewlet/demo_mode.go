@@ -55,6 +55,10 @@ type demoProtectedSettingsSnapshot struct {
 	BarkDeviceKey           string
 	BarkSilentPush          bool
 	ServerChanSendKey       string
+	DiscordWebhookURL       string
+	DiscordBotUsername      string
+	DiscordBotAvatarURL     string
+	PushPlusToken           string
 }
 
 var demoModePolicy = renewletDemoPolicy{
@@ -387,5 +391,9 @@ func demoProtectedSettingsSnapshotFrom(settings appSettings) demoProtectedSettin
 		BarkDeviceKey:           strings.TrimSpace(settings.BarkDeviceKey),
 		BarkSilentPush:          settings.BarkSilentPush,
 		ServerChanSendKey:       strings.TrimSpace(settings.ServerChanSendKey),
+		DiscordWebhookURL:       strings.TrimSpace(settings.DiscordWebhookURL),
+		DiscordBotUsername:      strings.TrimSpace(settings.DiscordBotUsername),
+		DiscordBotAvatarURL:     strings.TrimSpace(settings.DiscordBotAvatarURL),
+		PushPlusToken:           strings.TrimSpace(settings.PushPlusToken),
 	}
 }

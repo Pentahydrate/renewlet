@@ -283,6 +283,39 @@ func TestImportPreviewRejectsSubscriptionStorageErrors(t *testing.T) {
 	}
 }
 
+func TestImportPreviewAndApplyAcceptRecurringSubscriptionWithoutStartDate(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	registerRecordHooks(app)
+	user, token := createRouteTestUser(t, app, "user")
+	body := importRequestBodyWithBillingCycleUnit("skip", "monthly", nil, nil, false, 12)
+	var decoded map[string]interface{}
+	_ = json.Unmarshal([]byte(body), &decoded)
+	payload := decoded["payload"].(map[string]interface{})
+	subscriptions := payload["subscriptions"].([]interface{})
+	subscription := subscriptions[0].(map[string]interface{})
+	subscription["startDate"] = nil
+	data, _ := json.Marshal(decoded)
+
+	preview := serveTestRequest(t, app, http.MethodPost, "/api/app/import/preview", string(data), token)
+	if preview.Code != http.StatusOK || !strings.Contains(preview.Body.String(), `"errors":0`) {
+		t.Fatalf("expected preview without start date to succeed, got %d: %s", preview.Code, preview.Body.String())
+	}
+	apply := serveTestRequest(t, app, http.MethodPost, "/api/app/import/apply", string(data), token)
+	if apply.Code != http.StatusOK {
+		t.Fatalf("expected apply without start date to succeed, got %d: %s", apply.Code, apply.Body.String())
+	}
+	rows, err := app.FindAllRecords("subscriptions", dbx.HashExp{"user": user.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].GetString("startDate") != "" || rows[0].GetBool("autoCalculateNextBillingDate") {
+		t.Fatalf("expected nullable start date and manual anchor, rows=%d start=%q auto=%v", len(rows), rows[0].GetString("startDate"), rows[0].GetBool("autoCalculateNextBillingDate"))
+	}
+}
+
 func TestImportApplyAcceptsOneTimeBillingCycle(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {

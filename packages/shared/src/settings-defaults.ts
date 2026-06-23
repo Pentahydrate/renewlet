@@ -58,6 +58,10 @@ export function createDefaultAppSettings(options: DefaultSettingsOptions = {}): 
     barkDeviceKey: "",
     barkSilentPush: false,
     serverchanSendKey: "",
+    discordWebhookUrl: "",
+    discordBotUsername: "",
+    discordBotAvatarUrl: "",
+    pushplusToken: "",
     aiRecognition: {
       providerType: "openai",
       transportProtocol: "openai-chat",

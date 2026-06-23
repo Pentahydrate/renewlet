@@ -7,11 +7,9 @@ import { HttpError, json, ok, requireEmptyBody, requestLocale } from "./http";
 import { requestOrigin } from "./request-origin";
 import { normalizeServerLocale, serverFormat, serverText, type AppLocale } from "./server-i18n";
 import {
-  createUpstreamHTTPError,
-  createUpstreamNetworkError,
   upstreamErrorDetailsFromError,
-  upstreamProviderResponseFromFetchResponse,
 } from "./upstream-response";
+import { requireUpstreamHttpOk, sendUpstreamJson } from "./upstream-http";
 import {
   readPublicApiDueForUser,
   readPublicApiNextDueForUser,
@@ -246,22 +244,12 @@ async function telegramSendMessage(botToken: string, chatId: string, text: strin
 }
 
 async function telegramPostJson(botToken: string, method: string, payload: unknown, locale: AppLocale, secrets: readonly string[] = []): Promise<void> {
-  let response: Response;
   const secretValues = [botToken, ...secrets];
-  try {
-    response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch (error) {
-    throw createUpstreamNetworkError({ provider: "Telegram", error, secrets: secretValues });
-  }
-  if (!response.ok) {
-    const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets: secretValues });
-    throw createUpstreamHTTPError({ provider: "Telegram", response, providerResponse });
-  }
-  if (response.body) await response.body.cancel().catch(() => undefined);
+  const response = await sendUpstreamJson(`https://api.telegram.org/bot${botToken}/${method}`, payload, {
+    provider: "Telegram",
+    secrets: secretValues,
+  });
+  await requireUpstreamHttpOk(response, { provider: "Telegram", secrets: secretValues });
   void locale;
 }
 

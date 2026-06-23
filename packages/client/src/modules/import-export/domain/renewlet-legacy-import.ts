@@ -86,8 +86,8 @@ function buildLegacySubscription(
   const name = normalizeName(row["name"]);
   const localWarnings: string[] = [];
   const billingCycle = normalizeBillingCycle(row["billingCycle"], localWarnings);
-  const startDate = normalizeDateOnly(row["startDate"], context.today, localWarnings, "renewletStartDate");
-  const nextBillingDate = normalizeDateOnly(row["nextBillingDate"], startDate, localWarnings, "renewletDueDate");
+  const startDate = normalizeOptionalDateOnly(row["startDate"], localWarnings, "renewletStartDate");
+  const nextBillingDate = normalizeDateOnly(row["nextBillingDate"], context.today, localWarnings, "renewletDueDate");
   const logo = normalizeLegacyLogo(row["logo"], index, assets, assetFiles, localWarnings);
   const extra = isRecord(row["extra"]) ? { ...row["extra"] } : {};
   const sourceId = normalizeLegacySourceId(row);
@@ -109,7 +109,7 @@ function buildLegacySubscription(
     startDate,
     nextBillingDate,
     autoRenew: billingCycle === "one-time" ? false : normalizeBoolean(row["autoRenew"], false),
-    autoCalculateNextBillingDate: billingCycle === "one-time" ? false : normalizeBoolean(row["autoCalculateNextBillingDate"], true),
+    autoCalculateNextBillingDate: billingCycle === "one-time" ? false : startDate !== null && normalizeBoolean(row["autoCalculateNextBillingDate"], false),
     trialEndDate: normalizeNullableDateOnly(row["trialEndDate"], localWarnings),
     website,
     notes: normalizeNullableText(row["notes"]),
@@ -358,6 +358,14 @@ function normalizeDateOnly(value: unknown, fallback: string, warnings: string[],
   if (isValidDateOnly(text)) return text;
   warnings.push(importMessage(IMPORT_MESSAGE_CODES.dateInvalid, label, fallback));
   return fallback;
+}
+
+function normalizeOptionalDateOnly(value: unknown, warnings: string[], label: string): string | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+  if (isValidDateOnly(text)) return text;
+  warnings.push(importMessage(IMPORT_MESSAGE_CODES.dateInvalid, label, "empty"));
+  return null;
 }
 
 function normalizeFallbackDateOnly(value: unknown, fallback: string): string {

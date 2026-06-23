@@ -15,8 +15,10 @@ import {
 } from "@renewlet/shared/schemas/ai-recognition";
 import { resolveAIProviderEndpoint } from "@renewlet/shared/ai-provider-endpoints";
 import { extractAIModelText, finishReasonText } from "./ai-recognition-diagnostics";
+import { sendUpstreamRequest } from "./upstream-http";
 
 const AI_RECOGNITION_TEST_TEXT = "Reply with OK.";
+export const AI_RECOGNITION_PROVIDER_TIMEOUT_MS = 90_000;
 
 export type AIRecognitionRuntimeInput = {
   text: string;
@@ -56,31 +58,35 @@ export function createAIRecognitionModel(settings: AiRecognitionSettings, captur
 
 /** 按 canonical transport 选择 AI SDK provider，避免 providerType 与 transportProtocol 历史错配。 */
 export function createAIRecognitionLanguageModel(settings: AiRecognitionSettings, runtimeBaseUrl: string) {
+  const upstreamFetch = createAIRecognitionUpstreamFetch(settings);
   if (settings.transportProtocol === "anthropic-messages") {
     return createAnthropic({
       apiKey: settings.apiKey,
       baseURL: runtimeBaseUrl,
+      fetch: upstreamFetch,
     })(settings.model);
   }
   if (settings.transportProtocol === "gemini-generate-content") {
     return createGoogleGenerativeAI({
       apiKey: settings.apiKey,
       baseURL: runtimeBaseUrl,
+      fetch: upstreamFetch,
     })(settings.model);
   }
   if (settings.providerType === "openai") {
-    return createOpenAI({ apiKey: settings.apiKey, baseURL: runtimeBaseUrl }).chat(settings.model);
+    return createOpenAI({ apiKey: settings.apiKey, baseURL: runtimeBaseUrl, fetch: upstreamFetch }).chat(settings.model);
   }
   return createOpenAICompatible({
     name: settings.providerType,
     baseURL: runtimeBaseUrl,
     ...(settings.apiKey ? { apiKey: settings.apiKey } : {}),
     supportsStructuredOutputs: true,
+    fetch: upstreamFetch,
   })(settings.model);
 }
 
 /** connection test 只验证最小文本生成能力，不触发订阅 schema、图片输入或 repair 链路。 */
-export async function runAIRecognitionConnectionTest(settings: AiRecognitionSettings): Promise<void> {
+export async function runAIRecognitionConnectionTest(settings: AiRecognitionSettings, abortSignal?: AbortSignal): Promise<void> {
   const canonicalSettings = aiRecognitionSettingsSchema.parse(settings);
   // 连接测试刻意绕开 schema/repair/thinking/retry，只验证当前协议能完成最小文本生成。
   await generateText({
@@ -88,7 +94,27 @@ export async function runAIRecognitionConnectionTest(settings: AiRecognitionSett
     prompt: AI_RECOGNITION_TEST_TEXT,
     maxOutputTokens: 16,
     maxRetries: 0,
+    ...(abortSignal ? { abortSignal } : {}),
+    timeout: { totalMs: AI_RECOGNITION_PROVIDER_TIMEOUT_MS },
   });
+}
+
+function createAIRecognitionUpstreamFetch(settings: AiRecognitionSettings): typeof fetch {
+  const secrets = settings.apiKey ? [settings.apiKey] : [];
+  const provider = aiRecognitionProviderLabel(settings);
+  // AI SDK provider 内部隐藏实际 fetch；custom fetch 只接管网络边界，不改变 prompt、schema 或 provider 协议。
+  return async (input, init) => await sendUpstreamRequest(input, init ?? {}, {
+    provider,
+    secrets,
+    timeoutMs: AI_RECOGNITION_PROVIDER_TIMEOUT_MS,
+  });
+}
+
+function aiRecognitionProviderLabel(settings: AiRecognitionSettings): string {
+  if (settings.transportProtocol === "anthropic-messages") return "Anthropic";
+  if (settings.transportProtocol === "gemini-generate-content") return "Gemini";
+  if (settings.providerType === "openai") return "OpenAI";
+  return `${settings.providerType} AI`;
 }
 
 /** 判断 thinking control 是否属于当前 provider；错配值只能丢弃，不能跨 provider 复用。 */

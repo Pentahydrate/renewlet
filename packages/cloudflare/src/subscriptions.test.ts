@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { subscriptionNormalizationFixtures } from "@renewlet/shared/contract-fixtures";
 import { toApiSubscription } from "./db";
-import { toSubscriptionRow, updateSubscription, type SubscriptionBody } from "./subscriptions";
+import { normalizeSubscriptionBodyForStorage, toSubscriptionRow, updateSubscription, type SubscriptionBody } from "./subscriptions";
 import type { Env, SubscriptionRow } from "./types";
 
 const authMocks = vi.hoisted(() => ({
@@ -156,6 +156,38 @@ describe("Cloudflare subscription mapper", () => {
     });
   });
 
+  it("accepts manual recurring subscriptions without a start date", () => {
+    const body = normalizeSubscriptionBodyForStorage(subscriptionBody({
+      startDate: null,
+      nextBillingDate: "2026-06-21",
+      autoCalculateNextBillingDate: false,
+    }));
+    const row = toSubscriptionRow("sub_unknown_start", "usr_custom", body, "2026-06-05T00:00:00.000Z", "2026-06-05T00:00:00.000Z");
+
+    expect(row.start_date).toBeNull();
+    expect(toApiSubscription(row)).toMatchObject({
+      startDate: null,
+      nextBillingDate: "2026-06-21",
+      autoCalculateNextBillingDate: false,
+    });
+  });
+
+  it("rejects missing start dates when automatic date calculation needs a start anchor", () => {
+    expect(() => normalizeSubscriptionBodyForStorage(subscriptionBody({
+      startDate: null,
+      autoCalculateNextBillingDate: true,
+    }))).toThrow();
+  });
+
+  it("rejects one-time subscriptions without a purchase date", () => {
+    expect(() => normalizeSubscriptionBodyForStorage(subscriptionBody({
+      billingCycle: "one-time",
+      startDate: null,
+      nextBillingDate: "2026-06-21",
+      autoCalculateNextBillingDate: false,
+    }))).toThrow();
+  });
+
   it("persists public hidden through the API mapper", () => {
     const row = toSubscriptionRow("sub_private", "usr_custom", subscriptionBody({
       publicHidden: true,
@@ -254,6 +286,7 @@ describe("Cloudflare subscription mapper", () => {
     const schedulerStateMigration = readFileSync(resolve("migrations/0017_subscription_scheduler_state.sql"), "utf8");
     const costSharingMigration = readFileSync(resolve("migrations/0018_subscription_cost_sharing.sql"), "utf8");
     const costSharingCurrentUserPayerMigration = readFileSync(resolve("migrations/0019_subscription_cost_sharing_current_user_payer.sql"), "utf8");
+    const nullableStartDateMigration = readFileSync(resolve("migrations/0024_nullable_subscription_start_date.sql"), "utf8");
 
     expect(initialMigration).not.toContain("custom_cycle_unit");
     expect(initialMigration).not.toContain("one_time_term");
@@ -291,5 +324,11 @@ describe("Cloudflare subscription mapper", () => {
     expect(costSharingCurrentUserPayerMigration).toContain("json_remove(cost_sharing_json, '$.payerMemberId', '$.selfMemberId')");
     expect(costSharingCurrentUserPayerMigration).toContain("json_remove(value, '$.included')");
     expect(costSharingCurrentUserPayerMigration).toContain("json_extract(value, '$.id') != json_extract(cost_sharing_json, '$.selfMemberId')");
+    expect(nullableStartDateMigration).toContain("CREATE TABLE subscriptions_new");
+    expect(nullableStartDateMigration).toContain("INSERT INTO subscriptions_new");
+    expect(nullableStartDateMigration).toContain("ALTER TABLE subscriptions_new RENAME TO subscriptions");
+    expect(nullableStartDateMigration).toContain("start_date TEXT,");
+    expect(nullableStartDateMigration).toContain("CREATE INDEX IF NOT EXISTS idx_subscriptions_user_auto_renew_due");
+    expect(nullableStartDateMigration).toContain("idx_subscriptions_user_repeat_trial_reminder");
   });
 });

@@ -111,6 +111,17 @@ describe("AI recognition form mapping", () => {
     expect(buyout.repeatReminderEnabled).toBe(false);
   });
 
+  it("maps manual recurring AI drafts without start dates to an optional start-date form state", () => {
+    const formData = aiDraftToSubscriptionFormState(draft({
+      startDate: null,
+      autoCalculateNextBillingDate: null,
+    }), context);
+
+    expect(formData.startDate).toBeUndefined();
+    expect(formData.nextBillingDate).toBe("2026-07-01");
+    expect(formData.autoCalculate).toBe(false);
+  });
+
   it("maps edited subscription form state back to an AI draft patch", () => {
     const patch = subscriptionFormStateToAIDraftPatch(createSubscriptionFormState({
       name: "Netflix Premium",

@@ -23,6 +23,47 @@ import {
 } from "@/lib/api/schemas/auth";
 import { writeProductSession } from "@/services/product-session";
 
+type PasskeyAuthenticationOptions = { useBrowserAutofill?: boolean };
+
+/** Passkey 登录的浏览器 ceremony 结果；`cancelled` 是用户/浏览器中止，不等同于认证失败。 */
+export type PasskeyAuthenticationResult =
+  | { status: "authenticated"; session: SessionResponse }
+  | { status: "cancelled" };
+
+function recordFromError(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function errorName(value: unknown): string | null {
+  if (value instanceof Error && value.name) return value.name;
+  const record = recordFromError(value);
+  const name = record?.["name"];
+  return typeof name === "string" && name.trim() ? name : null;
+}
+
+function errorCode(value: unknown): string | null {
+  const record = recordFromError(value);
+  const code = record?.["code"];
+  return typeof code === "string" && code.trim() ? code : null;
+}
+
+function errorCause(value: unknown): unknown {
+  return recordFromError(value)?.["cause"];
+}
+
+// SimpleWebAuthn 和浏览器会把“取消/未选择凭据”包装成不同 Error 形状；只有用户中性退出才静默，RP/origin 等安全错误继续 fail closed。
+function isWebAuthnAuthenticationCancelled(error: unknown): boolean {
+  const code = errorCode(error);
+  if (code === "ERROR_CEREMONY_ABORTED") return true;
+
+  const name = errorName(error);
+  if (name === "AbortError" || name === "NotAllowedError") return true;
+
+  return code === "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY" && errorName(errorCause(error)) === "NotAllowedError";
+}
+
 /** 通行密钥是独立 WebAuthn 登录能力；它不消费 MFA ticket，也不出现在身份验证器 methods 中。 */
 export const passkeyService = {
   cancelActiveCeremony(): void {
@@ -66,7 +107,7 @@ export const passkeyService = {
     });
   },
 
-  async authenticate(options: { useBrowserAutofill?: boolean } = {}): Promise<SessionResponse> {
+  async authenticate(options: PasskeyAuthenticationOptions = {}): Promise<PasskeyAuthenticationResult> {
     const webAuthnOptions = await passkeyService.startAuthentication();
     // 前端只把服务端 challenge 交给浏览器凭据 API；origin/RP/counter 由后端 WebAuthn 库验证并签 session。
     const authenticationOptions: { optionsJSON: PublicKeyCredentialRequestOptionsJSON; useBrowserAutofill?: boolean } = {
@@ -75,16 +116,24 @@ export const passkeyService = {
     if (typeof options.useBrowserAutofill === "boolean") {
       authenticationOptions.useBrowserAutofill = options.useBrowserAutofill;
     }
-    const response = await startAuthentication(authenticationOptions);
+    let response: Awaited<ReturnType<typeof startAuthentication>>;
+    try {
+      response = await startAuthentication(authenticationOptions);
+    } catch (error) {
+      // options 请求会先建立短期 challenge；没有浏览器 credential 时绝不能 verify、写 session 或上报成登录失败。
+      if (isWebAuthnAuthenticationCancelled(error)) return { status: "cancelled" };
+      throw error;
+    }
     const verifyPayload = passkeyAuthenticateVerifyBodySchema.parse({
       challengeId: webAuthnOptions.challengeId,
       response,
     });
-    return await apiFetch("/api/app/auth/passkeys/authenticate/verify", sessionResponseSchema, {
+    const session = await apiFetch("/api/app/auth/passkeys/authenticate/verify", sessionResponseSchema, {
       authMode: "none",
       method: "POST",
       body: JSON.stringify(verifyPayload),
     });
+    return { status: "authenticated", session };
   },
 
   async delete(id: string, body: PasskeyDeleteBody): Promise<void> {

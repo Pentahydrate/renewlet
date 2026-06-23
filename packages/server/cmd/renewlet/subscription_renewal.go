@@ -56,13 +56,20 @@ type subscriptionRecordReader interface {
 	GetInt(string) int
 }
 
+func hasRenewalAnchor(input subscriptionRenewalInput) bool {
+	if input.AutoCalculateNextBillingDate {
+		return isValidDateOnly(input.StartDate)
+	}
+	return isValidDateOnly(input.NextBillingDate)
+}
+
 func isAutoRenewEligible(input subscriptionRenewalInput, today string) bool {
 	// 自动续订只处理已经落后于用户本地 today 的 active/trial 周期订阅，缺省 false 不能被解释成授权。
 	return input.AutoRenew &&
 		input.BillingCycle != "one-time" &&
 		(input.Status == "active" || input.Status == "trial") &&
-		isValidDateOnly(input.StartDate) &&
 		isValidDateOnly(input.NextBillingDate) &&
+		hasRenewalAnchor(input) &&
 		isValidDateOnly(today) &&
 		input.NextBillingDate < today
 }
@@ -72,8 +79,8 @@ func isManualRenewEligible(input subscriptionRenewalInput) bool {
 	return !input.AutoRenew &&
 		input.BillingCycle != "one-time" &&
 		(input.Status == "active" || input.Status == "trial" || input.Status == "expired") &&
-		isValidDateOnly(input.StartDate) &&
-		isValidDateOnly(input.NextBillingDate)
+		isValidDateOnly(input.NextBillingDate) &&
+		hasRenewalAnchor(input)
 }
 
 func advanceSubscriptionRenewal(input subscriptionRenewalInput, today string, mode renewalMode) (subscriptionRenewalResult, bool, error) {

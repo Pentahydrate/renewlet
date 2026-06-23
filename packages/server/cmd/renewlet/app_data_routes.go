@@ -530,7 +530,7 @@ func applySubscriptionWriteRequest(record *core.Record, body subscriptionWriteRe
 	if err := setStringRecordField(record, "paymentMethod", body.PaymentMethod, false, true, true); err != nil {
 		return err
 	}
-	if err := setStringRecordField(record, "startDate", body.StartDate, create, false, true); err != nil {
+	if err := setStringRecordField(record, "startDate", body.StartDate, false, true, true); err != nil {
 		return err
 	}
 	if err := setStringRecordField(record, "nextBillingDate", body.NextBillingDate, create, false, true); err != nil {

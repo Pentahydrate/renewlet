@@ -16,7 +16,7 @@ const builtInIconRegistryFetchTimeout = 15 * time.Second
 const builtInIconRegistryJSONLimitBytes = 16 * 1024 * 1024
 
 var safeBuiltInIconPathPartRE = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
-var builtInIconIndexHTTPClient = &http.Client{Timeout: builtInIconRegistryFetchTimeout}
+var builtInIconIndexHTTPClient = defaultUpstreamHTTPClient(builtInIconRegistryFetchTimeout)
 
 type builtInIconProviderSourceRef struct {
 	Provider string
@@ -111,9 +111,13 @@ func fetchRegistryJSON(ctx context.Context, url string, label string, target any
 		return err
 	}
 	req.Header.Set("Accept", "application/json")
-	res, err := builtInIconIndexHTTPClient.Do(req)
+	res, err := sendUpstreamHTTPRequest(req, upstreamHTTPRequestOptions{
+		Provider: label,
+		Timeout:  builtInIconRegistryFetchTimeout,
+		Client:   builtInIconIndexHTTPClient,
+	})
 	if err != nil {
-		return createUpstreamNetworkError(label, err, nil)
+		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode >= 300 {

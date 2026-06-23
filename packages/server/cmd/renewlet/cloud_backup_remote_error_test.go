@@ -251,7 +251,7 @@ func TestCloudBackupLocalErrorDetails(t *testing.T) {
 	}
 }
 
-func TestS3CloudBackupLocalNetworkErrorIncludesAttemptedHost(t *testing.T) {
+func TestS3CloudBackupLocalNetworkErrorUsesRedactedRequestContext(t *testing.T) {
 	transport := cloudBackupRoundTripFunc(func(request *http.Request) (*http.Response, error) {
 		return nil, errors.New("Network connection lost.")
 	})
@@ -279,14 +279,55 @@ func TestS3CloudBackupLocalNetworkErrorIncludesAttemptedHost(t *testing.T) {
 		t.Fatalf("expected structured local S3 error, got %#v", err)
 	}
 	details := remoteErr.details
-	if details.RawResponseText == nil || !strings.Contains(*details.RawResponseText, "attempted host: https://cloud-storage-1234567890.cloud-storage.example.com") {
-		t.Fatalf("missing attempted host in local error: %#v", details)
+	if details.RawResponseText == nil || !strings.Contains(*details.RawResponseText, "S3 GET request to https://cloud-storage-1234567890.cloud-storage.example.com/") {
+		t.Fatalf("missing S3 request target in local error: %#v", details)
+	}
+	if !strings.Contains(*details.RawResponseText, "failed before response headers: Get ") || !strings.Contains(*details.RawResponseText, "Network connection lost.") {
+		t.Fatalf("missing transport phase in local error: %q", *details.RawResponseText)
+	}
+	if !strings.Contains(*details.RawResponseText, `"authorization":"[redacted]"`) {
+		t.Fatalf("missing redacted S3 authorization header: %q", *details.RawResponseText)
 	}
 	serialized := fmt.Sprintf("%#v", details)
 	for _, leaked := range []string{"access-key", "secret-key", "Authorization", "X-Amz-Signature"} {
 		if strings.Contains(serialized, leaked) {
 			t.Fatalf("sensitive value %q leaked in local raw response: %s", leaked, serialized)
 		}
+	}
+}
+
+func TestWebDAVCloudBackupLocalNetworkErrorUsesRedactedRequestContext(t *testing.T) {
+	capture := &webDAVProviderResponseCapture{}
+	client := newWebDAVCloudBackupClient(cloudBackupWebDAVSettings{
+		URL:      "https://webdav.example.com/remote.php/dav/files/alice",
+		Username: "alice",
+		Path:     "renewlet",
+	}, "webdav-secret")
+	client.capture = capture
+	client.client.SetTransport(&webDAVCaptureTransport{
+		base: cloudBackupRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return nil, errors.New("Network connection lost for " + request.URL.String() + " webdav-secret")
+		}),
+		capture: capture,
+		secrets: []string{"webdav-secret"},
+	})
+
+	_, err := client.List(context.Background())
+	remoteErr := cloudBackupRemoteErrorFrom(err)
+	if remoteErr == nil || remoteErr.code != "CLOUD_BACKUP_WEBDAV_MKCOL_FAILED" || remoteErr.details == nil || remoteErr.details.RawResponseText == nil {
+		t.Fatalf("expected structured WebDAV local error, got %#v", err)
+	}
+	raw := *remoteErr.details.RawResponseText
+	for _, want := range []string{
+		"WebDAV MKCOL request to https://webdav.example.com/remote.php/dav/files/alice/renewlet/ failed before response headers",
+		"Network connection lost for https://webdav.example.com/remote.php/dav/files/alice/renewlet/ [redacted]",
+	} {
+		if !strings.Contains(raw, want) {
+			t.Fatalf("expected WebDAV diagnostic to contain %q, got %q", want, raw)
+		}
+	}
+	if strings.Contains(raw, "webdav-secret") {
+		t.Fatalf("WebDAV diagnostic leaked password: %q", raw)
 	}
 }
 

@@ -161,6 +161,24 @@ describe("Cloudflare import", () => {
     expect(db.batch).not.toHaveBeenCalled();
   });
 
+  it("applies manual recurring imports with nullable start dates", async () => {
+    const { env, db, statements } = envFixture();
+    const response = await applyImport(requestFor("/api/app/import/apply", importPayload([
+      importSubscription({
+        startDate: null,
+        nextBillingDate: "2026-06-21",
+        autoCalculateNextBillingDate: false,
+      }),
+    ])), env);
+
+    expect(response.status).toBe(200);
+    expect(db.batch).toHaveBeenCalledTimes(1);
+    const insert = statements.find((statement) => statement.sql.includes("INSERT INTO subscriptions"));
+    expect(insert?.values[16]).toBeNull();
+    expect(insert?.values[17]).toBe("2026-06-21");
+    expect(insert?.values[19]).toBe(0);
+  });
+
   it("normalizes one-time imports before binding D1 statements", async () => {
     const { env, db, statements } = envFixture();
     const response = await applyImport(requestFor("/api/app/import/apply", importPayload([

@@ -51,3 +51,22 @@ export const errorFieldByFormKey: Partial<Record<keyof SubscriptionFormState, ke
   website: "website",
   tags: "tags",
 } satisfies Partial<Record<keyof SubscriptionFormState, keyof SubscriptionFormErrors>>;
+
+const structuralErrorFieldsByFormKey: Partial<Record<keyof SubscriptionFormState, readonly (keyof SubscriptionFormErrors)[]>> = {
+  // 这些字段会重塑日期/提醒控件含义；旧提交错误必须失效，下一次提交再按当前形态重新生成。
+  billingCycle: ["billingCycle", "dates", "customDays", "oneTimeTerm", "reminderDays"],
+  oneTimeMode: ["dates", "oneTimeTerm", "reminderDays"],
+  autoCalculate: ["dates"],
+};
+
+export function getErrorFieldsToClearForFormChange(
+  key: keyof SubscriptionFormState,
+): readonly (keyof SubscriptionFormErrors)[] {
+  const fields = new Set<keyof SubscriptionFormErrors>();
+  const directField = errorFieldByFormKey[key];
+  if (directField) fields.add(directField);
+  for (const structuralField of structuralErrorFieldsByFormKey[key] ?? []) {
+    fields.add(structuralField);
+  }
+  return Array.from(fields);
+}

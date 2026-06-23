@@ -100,7 +100,7 @@ function normalizeSubscriptionRecord(row: unknown): unknown {
     billingCycle: row["billingCycle"],
     category: row["category"],
     status: row["status"],
-    startDate: row["startDate"],
+    startDate: row["startDate"] ?? null,
     nextBillingDate: row["nextBillingDate"],
     // 旧 PocketBase 行可能没有 autoRenew；缺字段按手动续订读取，避免把历史沉默数据当作自动续订授权。
     autoRenew: row["billingCycle"] === "one-time" ? false : row["autoRenew"] === true,
@@ -149,7 +149,7 @@ function normalizeSubscriptionRecord(row: unknown): unknown {
  */
 export function fromApiSubscription(row: ApiSubscription | LegacySubscriptionRecord): Subscription {
   const parsedRow: ApiSubscription = apiSubscriptionSchema.parse(normalizeSubscriptionRecord(row));
-  const startDate = assertDateOnly(parsedRow.startDate);
+  const startDate = parsedRow.startDate === null ? null : assertDateOnly(parsedRow.startDate);
   const nextBillingDate = assertDateOnly(parsedRow.nextBillingDate);
   const trialEndDate = parsedRow.trialEndDate ? assertDateOnly(parsedRow.trialEndDate) : undefined;
   const base = {

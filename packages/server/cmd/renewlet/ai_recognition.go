@@ -364,7 +364,7 @@ func aiRecognitionJSONError(e *core.RequestEvent, status int, message string, co
 		Message: message,
 		Code:    code,
 		Details: aiRecognitionErrorDetails{
-			RawResponseText: optionalUpstreamBody(firstNonBlank(aiProviderResponseBody(aiProviderResponseFromError(err)), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason)),
+			RawResponseText: optionalUpstreamBody(firstNonBlank(upstreamRawResponseTextFromError(err), aiProviderResponseBody(aiProviderResponseFromError(err)), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason)),
 		},
 	})
 }
@@ -374,7 +374,7 @@ func aiRecognitionProviderResponseJSONError(e *core.RequestEvent, status int, me
 		"message": message,
 		"code":    code,
 		"details": map[string]interface{}{
-			"rawResponseText": firstNonBlank(aiProviderResponseBody(providerResponse), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason),
+			"rawResponseText": firstNonBlank(upstreamRawResponseTextFromError(err), aiProviderResponseBody(providerResponse), optionalStringValue(safeAIRecognitionProviderMessage(err)), reason),
 		},
 	})
 }

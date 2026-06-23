@@ -102,6 +102,7 @@ describe("Login page", () => {
         user: { id: "user-1", email: "passkey@example.com", name: "Passkey", role: "user", banned: false },
       },
       error: null,
+      cancelled: false,
     });
     mocks.verifyMfa.mockReset();
     mocks.verifyMfa.mockResolvedValue({ error: null });
@@ -271,6 +272,7 @@ describe("Login page", () => {
         user: { id: "user-1", email: "passkey@example.com", name: "Passkey", role: "user", banned: false },
       },
       error: null,
+      cancelled: false,
     });
     await Promise.resolve();
     await Promise.resolve();
@@ -531,6 +533,31 @@ describe("Login page", () => {
     expect(localStorage.getItem(rememberedLoginEmailStorageKey)).toBe("passkey@example.com");
   });
 
+  it("keeps explicit passkey cancellation neutral without reporting a login failure", async () => {
+    const user = userEvent.setup();
+    const passkey = createDeferred<Awaited<ReturnType<typeof mocks.signInPasskey>>>();
+    mocks.signInPasskey.mockReturnValueOnce(passkey.promise);
+    renderLogin();
+
+    await user.click(screen.getByRole("button", { name: "Sign in with passkey" }));
+    await waitFor(() => {
+      expect(mocks.signInPasskey).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Verifying passkey..." })).toBeDisabled();
+    });
+
+    passkey.resolve({ data: null, error: null, cancelled: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Sign in with passkey" })).toBeEnabled();
+    });
+    expect(mocks.signInEmail).not.toHaveBeenCalled();
+    expect(mocks.verifyMfa).not.toHaveBeenCalled();
+    expect(mocks.reportClientError).not.toHaveBeenCalled();
+    expect(localStorage.getItem(rememberedLoginEmailStorageKey)).toBeNull();
+  });
+
   it("keeps passkey sign-in independent from MFA verification after password verification", async () => {
     const user = userEvent.setup();
     mocks.signInEmail.mockResolvedValueOnce({
@@ -555,6 +582,38 @@ describe("Login page", () => {
       expect(mocks.signInPasskey).toHaveBeenCalledTimes(1);
     });
     expect(mocks.verifyMfa).not.toHaveBeenCalled();
+  });
+
+  it("keeps the MFA dialog state when passkey sign-in is cancelled from MFA verification", async () => {
+    const user = userEvent.setup();
+    mocks.signInEmail.mockResolvedValueOnce({
+      data: {
+        type: "mfa_required",
+        ticketId: "ticket-1",
+        expiresAt: "2026-07-01T00:00:00.000Z",
+        methods: ["totp"],
+      },
+      error: null,
+    });
+    mocks.signInPasskey.mockResolvedValueOnce({ data: null, error: null, cancelled: true });
+    renderLogin();
+
+    await user.type(screen.getByLabelText("Email"), "alice@example.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+    const dialog = await screen.findByRole("dialog", { name: "Complete sign-in verification" });
+
+    await user.type(within(dialog).getByLabelText("Code"), "123456");
+    await user.click(within(dialog).getByRole("button", { name: "Sign in with passkey" }));
+
+    await waitFor(() => {
+      expect(mocks.signInPasskey).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByRole("dialog", { name: "Complete sign-in verification" })).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Code")).toHaveValue("123456");
+    expect(mocks.verifyMfa).not.toHaveBeenCalled();
+    expect(mocks.reportClientError).not.toHaveBeenCalled();
+    expect(localStorage.getItem(rememberedLoginEmailStorageKey)).toBeNull();
   });
 
   it("ignores stale MFA verification results after the dialog is closed", async () => {

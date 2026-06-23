@@ -90,7 +90,7 @@ export function createSubscriptionFormState(
     startDate: undefined,
     nextBillingDate: undefined,
     autoRenew: false,
-    autoCalculate: true,
+    autoCalculate: false,
     reminderType: "inherit",
     reminderDays: "-1",
     customReminderDays: "",

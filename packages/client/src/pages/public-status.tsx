@@ -392,12 +392,14 @@ function PublicSubscriptionCard({ subscription }: { subscription: PublicStatusSu
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Clock3 className="h-3.5 w-3.5" />
-              <span className="text-xs">
-                {t("publicStatus.startDate", { date: formatDateOnly(subscription.startDate) })}
-              </span>
-            </div>
+            {subscription.startDate ? (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                <span className="text-xs">
+                  {t("publicStatus.startDate", { date: formatDateOnly(subscription.startDate) })}
+                </span>
+              </div>
+            ) : null}
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <CalendarClock className="h-3.5 w-3.5" />
               <span className="text-xs">
@@ -453,7 +455,7 @@ export default function PublicStatusPage() {
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("publicStatus.listLabel")}>
             {data.subscriptions.map((subscription, index) => (
               <div
-                key={`${subscription.name}-${subscription.startDate}-${subscription.nextBillingDate}-${index}`}
+                key={`${subscription.name}-${subscription.startDate ?? "unknown"}-${subscription.nextBillingDate}-${index}`}
                 className="h-full animate-fade-in"
                 style={{ animationDelay: `${index * 40}ms` }}
               >

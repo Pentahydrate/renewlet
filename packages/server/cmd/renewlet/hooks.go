@@ -312,17 +312,22 @@ func normalizeSubscriptionRecord(record *core.Record) error {
 	}
 
 	startDate := strings.TrimSpace(record.GetString("startDate"))
-	if err := requireDateOnly(startDate, "START_DATE"); err != nil {
-		return err
+	if startDate != "" {
+		if err := requireDateOnly(startDate, "START_DATE"); err != nil {
+			return err
+		}
 	}
 	record.Set("startDate", startDate)
 	nextBillingDate := strings.TrimSpace(record.GetString("nextBillingDate"))
 	if err := requireDateOnly(nextBillingDate, "NEXT_BILLING_DATE"); err != nil {
 		return err
 	}
-	// 两端都已通过 requireDateOnly，固定宽度 YYYY-MM-DD 的字典序等同于日历顺序；
-	// 这里避免再次 Parse，保存边界仍能用 O(1) 字符串比较守住日期不变量。
-	if nextBillingDate < startDate {
+	// 周期订阅可不知道开始日；只有 one-time 或自动日期锚点需要真实 startDate。
+	if startDate == "" && (billingCycle == "one-time" || record.GetBool("autoCalculateNextBillingDate")) {
+		return errors.New("START_DATE_REQUIRED")
+	}
+	// 两端都存在且已通过 requireDateOnly 时，固定宽度 YYYY-MM-DD 的字典序等同于日历顺序。
+	if startDate != "" && nextBillingDate < startDate {
 		return errors.New("NEXT_BILLING_DATE_BEFORE_START_DATE")
 	}
 	record.Set("nextBillingDate", nextBillingDate)

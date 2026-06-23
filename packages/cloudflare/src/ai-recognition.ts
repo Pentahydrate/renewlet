@@ -27,7 +27,7 @@ import {
   safeAIRecognitionError,
 } from "./ai-recognition-diagnostics";
 import { providerResponseFromError } from "./ai-provider-response";
-import { redactUpstreamSecrets } from "./upstream-response";
+import { redactUpstreamSecrets, upstreamErrorDetailsFromError } from "./upstream-response";
 import {
   runAIRecognitionConnectionTest,
   thinkingControlMatchesSettings,
@@ -84,6 +84,7 @@ export async function recognizeSubscriptions(request: Request, env: Env): Promis
       configContext: runContext.configContext,
       thinkingControl: runContext.thinkingControl,
       maxOutputTokens: 12000,
+      abortSignal: request.signal,
     });
     if (response.subscriptions.length === 0) {
       throw new HttpError(400, serverText(runContext.locale, "aiRecognition.noSubscriptions"), "AI_RECOGNITION_EMPTY", aiRecognitionErrorDetails("empty", null, response.diagnostics));
@@ -186,9 +187,9 @@ function createAIRecognitionStreamAbortSignal(externalSignal: AbortSignal, timeo
   // Worker 没有 Go context deadline；用 AbortController 同时收拢浏览器断连和 provider 超时。
   const timeout = setTimeout(() => {
     timedOut = true;
-    controller.abort(new DOMException("AI recognition timed out", "TimeoutError"));
+    controller.abort();
   }, timeoutMs);
-  const abortFromExternal = () => controller.abort(externalSignal.reason);
+  const abortFromExternal = () => controller.abort();
   if (externalSignal.aborted) {
     abortFromExternal();
   } else {
@@ -241,7 +242,7 @@ export async function testAIRecognitionConnection(request: Request, env: Env): P
   const settings = body.settings;
   assertAIRecognitionSettings(settings, locale);
   try {
-    await runAIRecognitionConnectionTest(settings);
+    await runAIRecognitionConnectionTest(settings, request.signal);
     return json(aiRecognitionTestResponseSchema.parse({
       ok: true,
       providerType: settings.providerType,
@@ -250,11 +251,12 @@ export async function testAIRecognitionConnection(request: Request, env: Env): P
     }));
   } catch (error) {
     if (error instanceof HttpError) throw error;
+    const upstreamDetails = upstreamErrorDetailsFromError(error);
     throw new HttpError(
       400,
       serverText(locale, "aiRecognition.testFailed"),
       "AI_RECOGNITION_TEST_FAILED",
-      {
+      upstreamDetails ?? {
         rawResponseText: redactUpstreamSecrets(redactAIRecognitionSecrets(providerResponseFromError(error)?.body || ""), [settings.apiKey]) || safeAIRecognitionError(error),
       },
     );

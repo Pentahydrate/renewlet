@@ -80,7 +80,7 @@ type publicStatusSubscriptionView struct {
 	Logo             string                   `json:"logo,omitempty"`
 	Category         publicStatusCategoryView `json:"category"`
 	Status           string                   `json:"status"`
-	StartDate        string                   `json:"startDate"`
+	StartDate        *string                  `json:"startDate"`
 	NextBillingDate  string                   `json:"nextBillingDate"`
 	UpdatedAt        string                   `json:"updatedAt"`
 	Price            *float64                 `json:"price,omitempty"`
@@ -331,7 +331,7 @@ func publicStatusSubscriptionFromRecord(request *http.Request, token string, row
 		Logo:            publicStatusLogoURL(request, token, row.GetString("logo")),
 		Category:        resolver.Category(row.GetString("category")),
 		Status:          publicStatusEffectiveStatus(row, today),
-		StartDate:       row.GetString("startDate"),
+			StartDate:       nullableStringPointer(row.GetString("startDate")),
 		NextBillingDate: row.GetString("nextBillingDate"),
 		UpdatedAt:       row.GetDateTime("updated").Time().UTC().Format(time.RFC3339),
 	}
@@ -354,6 +354,14 @@ func publicStatusSubscriptionFromRecord(request *http.Request, token string, row
 		}
 	}
 	return item
+}
+
+func nullableStringPointer(value string) *string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }
 
 func effectivePublicStatusCurrency(settings appSettings) string {

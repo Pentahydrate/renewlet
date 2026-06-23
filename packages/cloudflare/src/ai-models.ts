@@ -20,6 +20,7 @@ import { serverText, type AppLocale } from "./server-i18n";
 import type { Env } from "./types";
 import { providerResponseFromFetchResponse } from "./ai-provider-response";
 import type { UpstreamProviderResponse as AiProviderResponse } from "./upstream-response";
+import { UpstreamRequestError, sendUpstreamRequest } from "./upstream-http";
 
 const AI_MODEL_LIST_TIMEOUT_MS = 15_000;
 const AI_MODEL_LIST_RESPONSE_BYTES = 1 << 20;
@@ -112,28 +113,27 @@ function buildAIModelListEndpoint(input: AiModelListRequest): ModelListEndpoint 
 }
 
 async function fetchAIModelListJSON(endpoint: ModelListEndpoint, locale: AppLocale): Promise<unknown> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_MODEL_LIST_TIMEOUT_MS);
   let response: Response;
   try {
     // 这是用户显式点击刷新后才触发的第三方请求；请求 API key 只在 Worker 侧使用，不回显、不持久化。
-    response = await fetch(endpoint.url, {
+    response = await sendUpstreamRequest(endpoint.url, {
       method: "GET",
       headers: endpoint.headers,
-      signal: controller.signal,
+    }, {
+      provider: `${endpoint.providerType} models`,
+      secrets: endpoint.secrets,
+      timeoutMs: AI_MODEL_LIST_TIMEOUT_MS,
     });
   } catch (error) {
-    if (isAbortError(error)) {
+    if (error instanceof UpstreamRequestError && error.timedOut) {
       throw new HttpError(
         408,
         serverText(locale, "aiRecognition.modelListTimeout"),
         "AI_MODEL_LIST_TIMEOUT",
-        aiModelListErrorDetails("timeout", null),
+        aiModelListErrorDetails("timeout", error),
       );
     }
     throw error;
-  } finally {
-    clearTimeout(timeout);
   }
 
   const body = await readAIModelListResponseText(response, locale);
@@ -343,12 +343,4 @@ function aiModelListErrorDetails(reason: string, providerMessage: unknown, provi
   return aiModelListErrorDetailsSchema.parse({
     rawResponseText: providerResponse?.body || message || reason,
   });
-}
-
-function isAbortError(error: unknown): boolean {
-  return (
-    error instanceof DOMException && error.name === "AbortError"
-  ) || (
-    error instanceof Error && error.name === "AbortError"
-  );
 }

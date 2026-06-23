@@ -19,6 +19,8 @@ interface AIRecognitionInputTabsProps {
   textInputRef: RefObject<HTMLTextAreaElement | null>;
   images: AIRecognitionImageItem[];
   disabled: boolean;
+  imageProcessing: boolean;
+  imageProcessingCount: number;
   onAddImages: (files: File[]) => void;
   onRemoveImage: (id: string) => void;
   layout?: "default" | "mobile-compact";
@@ -32,6 +34,8 @@ export function AIRecognitionInputTabs({
   textInputRef,
   images,
   disabled,
+  imageProcessing,
+  imageProcessingCount,
   onAddImages,
   onRemoveImage,
   layout = "default",
@@ -42,7 +46,7 @@ export function AIRecognitionInputTabs({
   const [previewImage, setPreviewImage] = useState<AIRecognitionImageItem | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const mobileCompact = layout === "mobile-compact";
-  const canAddMoreImages = images.length < AI_RECOGNITION_MAX_IMAGES && !disabled;
+  const canAddMoreImages = images.length < AI_RECOGNITION_MAX_IMAGES && !disabled && !imageProcessing;
 
   // 图片墙缩略图跟随 File 项存在；放大预览单独创建短命 URL，关闭即可释放而不破坏列表缩略图。
   useEffect(() => {
@@ -91,8 +95,13 @@ export function AIRecognitionInputTabs({
 
   const uploadLabel = images.length >= AI_RECOGNITION_MAX_IMAGES
     ? t("aiRecognition.imageMaxReached")
-    : images.length > 0 ? t("aiRecognition.addMoreImages") : t("aiRecognition.addImages");
+    : imageProcessing
+      ? t("aiRecognition.imageOptimizing")
+      : images.length > 0 ? t("aiRecognition.addMoreImages") : t("aiRecognition.addImages");
   const imageCountLabel = t("aiRecognition.imageCount", { count: images.length, max: AI_RECOGNITION_MAX_IMAGES });
+  const uploadStatusLabel = imageProcessing
+    ? t("aiRecognition.imageOptimizingCount", { count: imageProcessingCount })
+    : imageCountLabel;
   const uploadButton = (
     <button
       type="button"
@@ -122,7 +131,7 @@ export function AIRecognitionInputTabs({
       </span>
       <span className="min-w-0 max-w-full truncate text-xs font-medium text-foreground">{uploadLabel}</span>
       <span className={cn("min-w-0 max-w-full truncate text-[11px] leading-none text-muted-foreground", mobileCompact && images.length > 0 && "ml-auto")}>
-        {imageCountLabel}
+        {uploadStatusLabel}
       </span>
     </button>
   );
@@ -144,7 +153,12 @@ export function AIRecognitionInputTabs({
         )}
         <span className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-background/90 px-2 py-1 text-left text-xs text-muted-foreground backdrop-blur">
           <Maximize2 className="h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0 truncate">{image.file.name}</span>
+          <span className="min-w-0 truncate">
+            {image.file.name} · {formatImageSize(image.file.size, t)}
+            {image.optimized && typeof image.originalSizeBytes === "number"
+              ? ` · ${t("aiRecognition.imageOptimizedFrom", { size: formatImageSize(image.originalSizeBytes, t) })}`
+              : ""}
+          </span>
         </span>
       </button>
       <Button
@@ -262,6 +276,12 @@ export function AIRecognitionInputTabs({
       </TabsContent>
     </Tabs>
   );
+}
+
+function formatImageSize(bytes: number, t: ReturnType<typeof useI18n>["t"]): string {
+  if (bytes < 1024) return t("aiRecognition.imageSizeBytes", { size: bytes });
+  if (bytes < 1024 * 1024) return t("aiRecognition.imageSizeKb", { size: Math.max(1, Math.round(bytes / 1024)) });
+  return t("aiRecognition.imageSizeMb", { size: (bytes / 1024 / 1024).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0) });
 }
 
 function createPreviewObjectUrl(file: File): string | null {

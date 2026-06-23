@@ -8,6 +8,7 @@ import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { AppLocale } from "./http";
 import { DEFAULT_SERVER_I18N_LOCALE, serverFormat, serverText } from "./server-i18n";
 import { NotificationChannelError } from "./notification-errors";
+import { sendNotificationJson } from "./notification-http";
 import {
   createUpstreamErrorDetails,
   providerMessageFromResponse,
@@ -25,25 +26,10 @@ type ServerChanResponse = {
 export async function sendServerChan(settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale): Promise<void> {
   const sendKey = required(settings.serverchanSendKey, serverText(locale, "service.serverchanSendKey"), locale);
   const endpoint = serverChanEndpoint(sendKey, locale);
-  let response: Response;
-  try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        title: message.title,
-        desp: `${message.content}\n\n${message.timestamp}`,
-      }),
-    });
-  } catch (error) {
-    const message = error instanceof Error ? redactUpstreamSecrets(error.message, [sendKey]) : serverText(locale, "service.serverchanRequestFailed");
-    throw new NotificationChannelError(serverFormat(locale, "notification.httpRequestFailed", {
-      service: "ServerChan",
-      error: message,
-    }), createUpstreamErrorDetails({
-      responseText: message,
-    }));
-  }
+  const response = await sendNotificationJson(endpoint, {
+    title: message.title,
+    desp: `${message.content}\n\n${message.timestamp}`,
+  }, "ServerChan", locale, { secrets: [sendKey] });
   await requireServerChanSuccess(response, locale, sendKey, endpoint);
 }
 

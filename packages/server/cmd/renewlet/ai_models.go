@@ -131,7 +131,7 @@ func (e *aiModelListHTTPError) Error() string {
 	return e.reason
 }
 
-var aiModelListHTTPClient = &http.Client{Timeout: aiModelListTimeout}
+var aiModelListHTTPClient = defaultUpstreamHTTPClient(aiModelListTimeout)
 
 func handleAIModelsList(app core.App, e *core.RequestEvent) error {
 	locale := requestLocale(e.Request)
@@ -211,8 +211,6 @@ func buildAIModelListEndpoint(input aiModelListRequest) (aiModelListEndpoint, er
 }
 
 func fetchAIModelListJSON(ctx context.Context, endpoint aiModelListEndpoint, locale appLocale) (map[string]interface{}, error) {
-	ctx, cancel := context.WithTimeout(ctx, aiModelListTimeout)
-	defer cancel()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.URL, nil)
 	if err != nil {
 		return nil, err
@@ -223,12 +221,18 @@ func fetchAIModelListJSON(ctx context.Context, endpoint aiModelListEndpoint, loc
 		}
 	}
 	// 模型列表刷新是用户显式动作；第三方凭证只参与服务端代理请求，不写库、不回传浏览器。
-	response, err := aiModelListHTTPClient.Do(request)
+	response, err := sendUpstreamHTTPRequest(request, upstreamHTTPRequestOptions{
+		Provider: aiModelListProviderLabel(endpoint),
+		Timeout:  aiModelListTimeout,
+		Secrets:  endpoint.Secrets,
+		Client:   aiModelListHTTPClient,
+	})
 	if err != nil {
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(err, context.DeadlineExceeded) {
-			return nil, &aiModelListHTTPError{status: http.StatusRequestTimeout, code: "AI_MODEL_LIST_TIMEOUT", reason: "timeout"}
+		message := firstNonBlank(upstreamRawResponseTextFromError(err), err.Error())
+		if upstreamOperationTimedOut(err) || errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, &aiModelListHTTPError{status: http.StatusRequestTimeout, code: "AI_MODEL_LIST_TIMEOUT", reason: "timeout", message: optionalUpstreamBody(message)}
 		}
-		return nil, err
+		return nil, &aiModelListHTTPError{status: http.StatusBadRequest, code: "AI_MODEL_LIST_FAILED", reason: "network", message: optionalUpstreamBody(message)}
 	}
 	defer func() { _ = response.Body.Close() }()
 	body, err := readAIModelListResponseBody(response.Body, locale)
@@ -257,6 +261,13 @@ func fetchAIModelListJSON(ctx context.Context, endpoint aiModelListEndpoint, loc
 		}
 	}
 	return raw, nil
+}
+
+func aiModelListProviderLabel(endpoint aiModelListEndpoint) string {
+	if strings.TrimSpace(endpoint.ProviderType) == "" {
+		return "AI models"
+	}
+	return endpoint.ProviderType + " models"
 }
 
 func readAIModelListResponseBody(reader io.Reader, locale appLocale) ([]byte, error) {

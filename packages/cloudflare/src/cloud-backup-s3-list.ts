@@ -4,8 +4,9 @@ import {
   type CloudBackupErrorDetails,
 } from "@renewlet/shared/schemas/cloud-backup";
 import { UPSTREAM_RAW_RESPONSE_TEXT_CAPTURE_MAX_CHARS } from "@renewlet/shared/schemas/upstream";
-import type { UpstreamProviderResponse } from "./upstream-response";
+import { upstreamErrorDetailsFromError, type UpstreamProviderResponse } from "./upstream-response";
 import { XMLParser } from "fast-xml-parser";
+import { sendUpstreamRequest } from "./upstream-http";
 
 type CloudBackupProviderResponse = UpstreamProviderResponse;
 
@@ -38,12 +39,26 @@ const s3ListXmlParser = new XMLParser({
   isArray: (tagName) => tagName === "Contents",
 });
 
+const S3_SIGNED_FETCH_TIMEOUT_MS = 45_000;
+
 export async function listS3ObjectsV2ViaSignedFetch(request: S3ListObjectsRequest): Promise<S3ListObjectsPage> {
   const signedUrl = await getSignedUrl(request.client, request.command, { expiresIn: 60 });
   const url = new URL(signedUrl);
   request.setAttemptedHost(`${url.protocol}//${url.host}`);
-  // 预签名 URL 只在进程内使用；错误 details 只记录 host 摘要，不把 query 签名或凭据带回前端。
-  const response = await fetch(url.toString(), { method: "GET" });
+  let response: Response;
+  try {
+    // 预签名 URL 的 path/query 可用于定位 S3 兼容服务偏移，但签名、凭据和临时 token 必须在统一边界脱敏。
+    response = await sendUpstreamRequest(url.toString(), { method: "GET" }, {
+      provider: "S3 ListObjectsV2",
+      secrets: request.secrets,
+      timeoutMs: S3_SIGNED_FETCH_TIMEOUT_MS,
+    });
+  } catch (error) {
+    const details = upstreamErrorDetailsFromError(error);
+    throw new S3ListObjectsError("CLOUD_BACKUP_S3_LOCAL_FAILED", {
+      rawResponseText: details?.rawResponseText ?? (error instanceof Error ? error.message : String(error)),
+    });
+  }
   const providerResponse = await s3ListProviderResponse(response, request.secrets);
   if (!response.ok) {
     throw new S3ListObjectsError(

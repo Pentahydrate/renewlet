@@ -217,13 +217,17 @@ export const authClient = {
     async passkey(options: PasskeySignInOptions = {}) {
       try {
         const { shouldPersistSession, ...passkeyOptions } = options;
-        const session = await passkeyService.authenticate(passkeyOptions);
-        if (shouldPersistSession?.(session) ?? true) {
-          writeProductSession(session);
+        const result = await passkeyService.authenticate(passkeyOptions);
+        if (result.status === "cancelled") {
+          // authClient 是产品 session 写入边界；取消必须交还 UI 状态机，不能落入通用登录失败路径。
+          return { data: null, error: null, cancelled: true };
         }
-        return { data: session, error: null };
+        if (shouldPersistSession?.(result.session) ?? true) {
+          writeProductSession(result.session);
+        }
+        return { data: result.session, error: null, cancelled: false };
       } catch (error) {
-        return { data: null, error };
+        return { data: null, error, cancelled: false };
       }
     },
   },

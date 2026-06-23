@@ -13,19 +13,16 @@ import {
 } from "@/components/ai-recognition/ai-recognition-dialog-layout";
 import { AIRecognitionInputTabs } from "@/components/ai-recognition/ai-recognition-input-tabs";
 import { AIRecognitionStreamPanel } from "@/components/ai-recognition/ai-recognition-stream-panel";
+import { useAIRecognitionImages } from "@/components/ai-recognition/use-ai-recognition-images";
 import {
   appendLimitedText,
-  createObjectUrl,
   hasBlockingAIImportWarnings,
   isAbortedApiError,
   nextDraftId,
-  nextImageId,
   recognitionElapsedSeconds,
-  revokeImageItem,
-  revokeImageItems,
   thinkingOptionIdOrNull,
 } from "@/components/ai-recognition/ai-recognition-dialog-utils";
-import type { AIDraftListItem, AIRecognitionImageItem, AIRecognitionInputMode } from "@/components/ai-recognition/ai-recognition-dialog-types";
+import type { AIDraftListItem, AIRecognitionInputMode } from "@/components/ai-recognition/ai-recognition-dialog-types";
 import Link from "@/components/router-link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,8 +33,6 @@ import { createAIErrorDetails, type AIErrorDetails } from "@/lib/ai-error-detail
 import { getDisplayErrorMessage } from "@/lib/display-error";
 import { todayDateOnlyInTimeZone } from "@/lib/time/date-only";
 import {
-  AI_RECOGNITION_MAX_IMAGE_BYTES,
-  AI_RECOGNITION_MAX_IMAGES,
   type AiRecognizedSubscriptionDraft,
   type AiRecognitionStreamEvent,
   type AiRecognitionStreamStage,
@@ -68,7 +63,6 @@ interface AIRecognizeSubscriptionDialogProps {
 
 type AIRecognitionStage = "input" | "draft" | "preview";
 type AIRecognitionStreamStatus = "running" | "complete" | "error" | "stopped";
-const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const AI_RECOGNITION_TEXT_PREVIEW_MAX_CHARS = 360;
 const AI_RECOGNITION_REASONING_PREVIEW_MAX_CHARS = 1600;
 export function AIRecognizeSubscriptionDialog({
@@ -81,8 +75,6 @@ export function AIRecognizeSubscriptionDialog({
   const { t } = useI18n();
   const isMobile = useMediaQuery("(max-width: 639px)");
   const textInputRef = useRef<HTMLTextAreaElement>(null);
-  const imageItemsRef = useRef<AIRecognitionImageItem[]>([]);
-  const imageIdRef = useRef(0);
   const draftIdRef = useRef(0);
   const recognitionRunRef = useRef(0);
   const recognitionAbortRef = useRef<AbortController | null>(null);
@@ -90,7 +82,6 @@ export function AIRecognizeSubscriptionDialog({
   const recognitionElapsedSecondsRef = useRef<number | null>(null);
   const [inputMode, setInputMode] = useState<AIRecognitionInputMode>("text");
   const [text, setText] = useState("");
-  const [images, setImages] = useState<AIRecognitionImageItem[]>([]);
   const [drafts, setDrafts] = useState<AIDraftListItem[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
   const [recognitionWarnings, setRecognitionWarnings] = useState<string[]>([]);
@@ -136,6 +127,17 @@ export function AIRecognizeSubscriptionDialog({
     handleSkipChange,
     handleApply,
   } = useImportPreviewApply({ onApplied: () => handleOpenChange(false) });
+  const {
+    images,
+    imageProcessing,
+    imageProcessingCount,
+    addImages,
+    removeImage,
+    resetImages,
+  } = useAIRecognitionImages({
+    setError,
+    onInputChanged: markDraftsStaleFromInputChange,
+  });
   const hasBlockingImportWarnings = prepared ? hasBlockingAIImportWarnings(prepared.warnings) : false;
   const draftBlockingIssuesById = useMemo(
     () => new Map(drafts.map((item) => [item.id, getAIDraftBlockingIssues(item.draft)])),
@@ -148,7 +150,7 @@ export function AIRecognizeSubscriptionDialog({
   const hasDraftBlockingIssues = firstBlockingDraftId !== null;
   const activeText = inputMode === "text" ? text.trim() : "";
   const activeImages = inputMode === "image" ? images : [];
-  const canGenerate = !settingsBlocker && (activeText.length > 0 || activeImages.length > 0) && !recognizing;
+  const canGenerate = !settingsBlocker && (activeText.length > 0 || activeImages.length > 0) && !recognizing && !imageProcessing;
   const workflowExpanded = stage !== "input";
   const inputStageVisible = stage === "input";
   const draftStageVisible = stage === "draft";
@@ -163,13 +165,8 @@ export function AIRecognizeSubscriptionDialog({
     ? 3
     : draftStageVisible ? 1 : previewStageVisible ? 2 : 0;
 
-  useEffect(() => {
-    imageItemsRef.current = images;
-  }, [images]);
-
   useEffect(() => () => {
     recognitionAbortRef.current?.abort();
-    revokeImageItems(imageItemsRef.current);
   }, []);
 
   useEffect(() => {
@@ -198,13 +195,10 @@ export function AIRecognizeSubscriptionDialog({
   function reset() {
     cancelActiveRecognitionRun();
     recognitionRunRef.current += 1;
-    revokeImageItems(imageItemsRef.current);
-    imageItemsRef.current = [];
-    imageIdRef.current = 0;
     draftIdRef.current = 0;
     setInputMode("text");
     setText("");
-    setImages([]);
+    resetImages();
     setDrafts([]);
     setSelectedDraftId(null);
     setRecognitionWarnings([]);
@@ -223,42 +217,6 @@ export function AIRecognizeSubscriptionDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) reset();
     onOpenChange(nextOpen);
-  }
-
-  function addImages(files: File[]) {
-    if (files.length === 0) return;
-    setError(null);
-    const nextImages = [...imageItemsRef.current];
-    const previousCount = nextImages.length;
-    let nextError: string | null = null;
-    for (const file of files) {
-      if (nextImages.length >= AI_RECOGNITION_MAX_IMAGES) {
-        nextError = t("aiRecognition.imageLimit", { count: AI_RECOGNITION_MAX_IMAGES });
-        break;
-      }
-      if (!ALLOWED_IMAGE_TYPES.has(file.type) || file.size > AI_RECOGNITION_MAX_IMAGE_BYTES) {
-        nextError = t("aiRecognition.imageInvalid");
-        continue;
-      }
-      nextImages.push({
-        id: nextImageId(imageIdRef),
-        file,
-        thumbnailUrl: createObjectUrl(file),
-      });
-    }
-    imageItemsRef.current = nextImages;
-    setImages(nextImages);
-    if (nextImages.length !== previousCount) markDraftsStaleFromInputChange();
-    if (nextError) setError(nextError);
-  }
-
-  function removeImage(id: string) {
-    const removed = imageItemsRef.current.find((image) => image.id === id);
-    const nextImages = imageItemsRef.current.filter((image) => image.id !== id);
-    if (removed) revokeImageItem(removed);
-    imageItemsRef.current = nextImages;
-    setImages(nextImages);
-    if (removed) markDraftsStaleFromInputChange();
   }
 
   function handleInputModeChange(nextMode: AIRecognitionInputMode) {
@@ -480,7 +438,9 @@ export function AIRecognizeSubscriptionDialog({
       onTextChange={handleTextChange}
       textInputRef={textInputRef}
       images={images}
-      disabled={recognizing}
+      disabled={recognizing || imageProcessing}
+      imageProcessing={imageProcessing}
+      imageProcessingCount={imageProcessingCount}
       onAddImages={addImages}
       onRemoveImage={removeImage}
       layout={isMobile ? "mobile-compact" : "default"}
@@ -495,7 +455,7 @@ export function AIRecognizeSubscriptionDialog({
       imageCount={images.length}
       thinkingOptions={thinkingOptions}
       selectedThinkingId={selectedThinkingId}
-      disabled={recognizing}
+      disabled={recognizing || imageProcessing}
       layout={isMobile ? "mobile-bar" : "default"}
       onThinkingChange={handleThinkingChange}
     />

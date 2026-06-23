@@ -141,7 +141,7 @@ describe("subscription-form", () => {
       customDays: 45,
       customCycleUnit: "year",
       reminderDays: 0,
-      autoCalculateNextBillingDate: true,
+      autoCalculateNextBillingDate: false,
     });
 
     expect(toSubscriptionDraft({ ...valid, customDays: "45.5" })).toBeNull();
@@ -202,6 +202,37 @@ describe("subscription-form", () => {
 
     expect(toSubscriptionDraft({ ...base, autoCalculate: true })?.autoCalculateNextBillingDate).toBe(true);
     expect(toSubscriptionDraft({ ...base, autoCalculate: false })?.autoCalculateNextBillingDate).toBe(false);
+  });
+
+  it("allows recurring subscriptions to omit start date when the next billing date is known", () => {
+    const form = createSubscriptionFormState({
+      name: "QQ Music",
+      price: "18",
+      startDate: undefined,
+      nextBillingDate: assertDateOnly("2026-08-01"),
+      autoCalculate: false,
+    });
+
+    expect(getSubscriptionDraftValidationError(form)).toBeNull();
+    expect(toSubscriptionDraft(form)).toMatchObject({
+      billingCycle: "monthly",
+      startDate: null,
+      nextBillingDate: "2026-08-01",
+      autoCalculateNextBillingDate: false,
+    });
+  });
+
+  it("requires start date when automatic date calculation is enabled", () => {
+    const form = createSubscriptionFormState({
+      name: "Auto anchor",
+      price: "18",
+      startDate: undefined,
+      nextBillingDate: assertDateOnly("2026-08-01"),
+      autoCalculate: true,
+    });
+
+    expect(getSubscriptionDraftValidationError(form)).toBe("开启自动计算时需要开始日期");
+    expect(toSubscriptionDraft(form)).toBeNull();
   });
 
   it("saves one-time purchases without auto-calculation or custom days", () => {
@@ -267,6 +298,19 @@ describe("subscription-form", () => {
     });
 
     expect(getSubscriptionDraftValidationError(form)).toBe("服务时长必须是 1 到 3650 之间的整数");
+    expect(toSubscriptionDraft(form)).toBeNull();
+  });
+
+  it("still requires purchase date for one-time subscriptions", () => {
+    const form = createSubscriptionFormState({
+      name: "Lifetime license",
+      price: "199",
+      billingCycle: "one-time",
+      startDate: undefined,
+      nextBillingDate: undefined,
+    });
+
+    expect(getSubscriptionDraftValidationError(form)).toBe("请选择购买日期");
     expect(toSubscriptionDraft(form)).toBeNull();
   });
 

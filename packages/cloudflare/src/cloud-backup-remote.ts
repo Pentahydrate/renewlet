@@ -29,8 +29,10 @@ import {
   recordToUpstreamHeaders,
   redactUpstreamSecrets,
   type UpstreamProviderResponse,
+  upstreamErrorDetailsFromError,
   upstreamProviderResponseFromFetchResponse,
 } from "./upstream-response";
+import { sendUpstreamRequest, upstreamTransportDiagnosticMessage } from "./upstream-http";
 
 /**
  * Worker 云备份远端适配层。
@@ -39,6 +41,7 @@ import {
  * 调用方只处理 CloudBackupRemoteClient，不直接依赖 webdav/AWS SDK 的异常结构。
  */
 const textEncoder = new TextEncoder();
+const CLOUD_BACKUP_UPSTREAM_TIMEOUT_MS = 45_000;
 type CloudBackupProviderResponse = UpstreamProviderResponse;
 
 /** 远端存储失败的产品化错误；details 只能随当前认证请求返回，不写入 last_error 或备份包。 */
@@ -170,6 +173,8 @@ export class WebDAVCloudBackupClient implements CloudBackupRemoteClient {
       const finalCode = webDAVErrorCodeForStatus(code, providerResponse);
       return new CloudBackupRemoteError(finalCode, cloudBackupRemoteErrorDetailsFromProviderResponse(finalCode, providerResponse));
     }
+    const upstreamDetails = upstreamErrorDetailsFromError(error);
+    if (upstreamDetails) return new CloudBackupRemoteError(code, upstreamDetails);
     const message = error instanceof Error ? error.message : String(error);
     return new Error(`${message} (attempted host: ${this.attemptedHost})`);
   }
@@ -202,7 +207,13 @@ function webDAVResponseFromError(error: unknown): Response | null {
 
 function ensureWebDAVUsesGlobalFetch(): void {
   const patcher = getPatcher();
-  if (!patcher.isPatched("fetch")) patcher.patch("fetch", async (...args: unknown[]) => await globalThis.fetch(args[0] as RequestInfo | URL, args[1] as RequestInit | undefined));
+  if (!patcher.isPatched("fetch")) {
+    // webdav/web 在 Worker 下最终仍走 fetch；这里把库内部 PROPFIND/PUT/GET 也纳入统一超时和 Full redacted 诊断。
+    patcher.patch("fetch", async (...args: unknown[]) => await sendUpstreamRequest(args[0] as RequestInfo | URL, (args[1] as RequestInit | undefined) ?? {}, {
+      provider: "WebDAV",
+      timeoutMs: CLOUD_BACKUP_UPSTREAM_TIMEOUT_MS,
+    }));
+  }
 }
 
 function isWebDAVClientError(error: unknown): error is WebDAVClientError {
@@ -234,7 +245,7 @@ export class S3CloudBackupClient implements CloudBackupRemoteClient {
     private readonly settings: CloudBackupS3Config,
     private readonly secret: string,
   ) {
-    this.capture = new S3ProviderResponseCapture();
+    this.capture = new S3ProviderResponseCapture(this.secretValues());
     this.endpointMode = s3EndpointMode(settings);
     this.client = new S3Client({
       endpoint: settings.endpoint,
@@ -404,10 +415,14 @@ type S3CommandOutput = DeleteObjectCommandOutput | GetObjectCommandOutput | Head
 class S3ProviderResponseCapture {
   private response: CloudBackupProviderResponse | null = null;
   private attemptedHost: string | null = null;
+  private attemptedRequest: { url: string; init: RequestInit } | null = null;
+
+  constructor(private readonly secrets: readonly string[]) {}
 
   reset(): void {
     this.response = null;
     this.attemptedHost = null;
+    this.attemptedRequest = null;
   }
 
   set(response: CloudBackupProviderResponse): void {
@@ -416,7 +431,16 @@ class S3ProviderResponseCapture {
 
   setAttemptedRequest(request: HttpRequest): void {
     const port = request.port ? `:${request.port}` : "";
-    this.setAttemptedHost(`${request.protocol}//${request.hostname}${port}`);
+    const origin = `${request.protocol}//${request.hostname}${port}`;
+    this.setAttemptedHost(origin);
+    this.attemptedRequest = {
+      url: `${origin}${request.path}${smithyQueryString(request.query)}`,
+      init: {
+        method: request.method,
+        headers: request.headers,
+        ...(request.body ? { body: request.body as BodyInit } : {}),
+      },
+    };
   }
 
   setAttemptedHost(host: string): void {
@@ -428,12 +452,39 @@ class S3ProviderResponseCapture {
   }
 
   describeLocalError(error: unknown): CloudBackupRemoteError {
-    const message = error instanceof Error ? error.message : String(error);
-    // 本地 SDK/DNS/TLS 错误没有上游响应；只把非密 host 摘要拼进一次性 raw 文本，仍不回显签名 query 或凭据。
+    if (this.attemptedRequest) {
+      return new CloudBackupRemoteError("CLOUD_BACKUP_S3_LOCAL_FAILED", {
+        rawResponseText: upstreamTransportDiagnosticMessage(
+          this.attemptedRequest.url,
+          this.attemptedRequest.init,
+          { provider: "S3", secrets: this.secrets },
+          error,
+          CLOUD_BACKUP_UPSTREAM_TIMEOUT_MS,
+          false,
+        ),
+      });
+    }
+    const message = error instanceof Error ? redactUpstreamSecrets(error.message, this.secrets) : redactUpstreamSecrets(String(error), this.secrets);
+    // SDK 还没构造 HttpRequest 就失败时没有 path/query；只能退回非密 host 摘要，仍不回显签名 query 或凭据。
     return new CloudBackupRemoteError("CLOUD_BACKUP_S3_LOCAL_FAILED", {
       rawResponseText: this.attemptedHost ? `${message} (attempted host: ${this.attemptedHost})` : message,
     });
   }
+}
+
+function smithyQueryString(query: HttpRequest["query"]): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (typeof value === "string") {
+      params.append(key, value);
+    } else if (value === null) {
+      params.append(key, "");
+    }
+  }
+  const text = params.toString();
+  return text ? `?${text}` : "";
 }
 
 class S3CaptureRequestHandler implements RequestHandler<HttpRequest, HttpResponse, HttpHandlerOptions> {
@@ -453,7 +504,7 @@ class S3CaptureRequestHandler implements RequestHandler<HttpRequest, HttpRespons
     this.capture.setAttemptedRequest(request);
     const output = await this.handler.handle(request, options);
     if (output.response.statusCode < 400) return output;
-    // SDK 仍需继续反序列化错误；读取后把 body 放回 response，同时只保存脱敏后的可见上游响应。
+    // AWS SDK 仍需继续反序列化错误；读取后重放 body，同时只保存脱敏后的可见上游响应。
     const body = await readSmithyProviderResponseBody(output.response.body);
     this.capture.set({
       status: output.response.statusCode,

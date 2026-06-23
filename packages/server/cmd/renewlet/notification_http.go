@@ -7,9 +7,7 @@ package main
 //
 // 注意： responseOK 会消费并关闭响应体；调用方读取错误详情时必须在 responseOK 之前完成。
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io"
@@ -36,38 +34,29 @@ func postJSON[T interface{}](endpoint string, payload T, serviceLabel string, lo
 }
 
 func sendHTTPRequest(method, endpoint string, headers map[string]string, body []byte, serviceLabel string, locale appLocale, secrets ...string) (*http.Response, error) {
-	var reader io.Reader
-	if body != nil {
-		reader = bytes.NewReader(body)
-	}
-	req, err := http.NewRequest(method, endpoint, reader)
-	if err != nil {
-		return nil, err
-	}
+	requestHeaders := http.Header{}
 	for key, value := range headers {
-		req.Header.Set(key, value)
+		requestHeaders.Set(key, value)
 	}
-	client := notificationHTTPClientFactory()
-	resp, err := client.Do(req)
+	resp, err := sendUpstreamRequestBytes(method, endpoint, requestHeaders, body, upstreamHTTPRequestOptions{
+		Provider: serviceLabel,
+		Timeout:  10 * time.Second,
+		Secrets:  secrets,
+		Client:   notificationHTTPClientFactory(),
+	})
 	if err != nil {
-		message := redactUpstreamSecrets(err.Error(), secrets)
+		message := err.Error()
 		return nil, newNotificationChannelError(
 			serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": serviceLabel, "error": message}),
-			createUpstreamErrorDetails(nil, message),
+			upstreamErrorDetailsFromError(err),
 		)
 	}
 	return resp, nil
 }
 
 func defaultNotificationHTTPClient() *http.Client {
-	// 该函数只负责统一 HTTP 客户端策略；用户可配置 URL 必须在调用前先经过 assertSafeOutboundURL。
-	return &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			// 外发通知只接受 TLS 1.2+，避免把 token/邮件内容发送到弱 TLS 连接。
-			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
-		},
-	}
+	// 用户可配置 URL 必须先过 assertSafeOutboundURL；HTTP client 只统一代理、TLS 和超时策略。
+	return defaultUpstreamHTTPClient(10 * time.Second)
 }
 
 func channelHTTPError(locale appLocale, channel string, statusCode int, detail string) error {

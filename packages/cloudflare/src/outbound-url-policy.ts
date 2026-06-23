@@ -1,10 +1,12 @@
 import { serverText } from "./server-i18n";
 import type { AppLocale } from "./http";
+import { sendUpstreamRequest } from "./upstream-http";
 
 type OutboundResolver = (hostname: string) => Promise<string[]>;
 type Ipv4Octets = [number, number, number, number];
 
 const DNS_JSON_ENDPOINT = "https://cloudflare-dns.com/dns-query";
+const DNS_JSON_TIMEOUT_MS = 5_000;
 const LOCAL_HOSTNAMES = new Set(["localhost"]);
 
 /**
@@ -35,13 +37,21 @@ export async function assertSafeOutboundUrl(raw: string, locale: AppLocale, reso
   return url;
 }
 
+export function isUnsafeOutboundHostLiteral(hostname: string): boolean {
+  const literal = parseIpLiteral(hostname.toLowerCase());
+  return literal ? isUnsafeOutboundIp(literal) : false;
+}
+
 async function resolveHostViaDoh(hostname: string): Promise<string[]> {
   // Workers 没有 Node DNS API；用 Cloudflare DoH 同时查 A/AAAA，避免只检查字面 hostname 而漏掉内网解析。
   const results = await Promise.all(["A", "AAAA"].map(async (type) => {
     const url = new URL(DNS_JSON_ENDPOINT);
     url.searchParams.set("name", hostname);
     url.searchParams.set("type", type);
-    const response = await fetch(url, { headers: { accept: "application/dns-json" } });
+    const response = await sendUpstreamRequest(url, { headers: { accept: "application/dns-json" } }, {
+      provider: "Cloudflare DNS",
+      timeoutMs: DNS_JSON_TIMEOUT_MS,
+    });
     if (!response.ok) return [];
     const payload = await response.json() as { Answer?: Array<{ data?: string }> };
     return (payload.Answer ?? [])

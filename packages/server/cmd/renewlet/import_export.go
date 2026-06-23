@@ -62,7 +62,7 @@ type importSubscription struct {
 	Pinned                       bool                   `json:"pinned"`
 	PublicHidden                 bool                   `json:"publicHidden"`
 	PaymentMethod                *string                `json:"paymentMethod,omitempty"`
-	StartDate                    string                 `json:"startDate"`
+	StartDate                    *string                `json:"startDate"`
 	NextBillingDate              string                 `json:"nextBillingDate"`
 	AutoRenew                    bool                   `json:"autoRenew"`
 	AutoCalculateNextBillingDate bool                   `json:"autoCalculateNextBillingDate"`
@@ -382,7 +382,7 @@ func setImportSubscriptionRecord(record *core.Record, userID string, subscriptio
 	record.Set("pinned", subscription.Pinned)
 	record.Set("publicHidden", subscription.PublicHidden)
 	record.Set("paymentMethod", optionalString(subscription.PaymentMethod))
-	record.Set("startDate", subscription.StartDate)
+	record.Set("startDate", optionalString(subscription.StartDate))
 	record.Set("nextBillingDate", subscription.NextBillingDate)
 	record.Set("autoRenew", subscription.BillingCycle != "one-time" && subscription.AutoRenew)
 	record.Set("autoCalculateNextBillingDate", subscription.AutoCalculateNextBillingDate)

@@ -70,7 +70,7 @@ export function buildSubscriptionsCsv(
       formatBillingCycleLabel(subscription, labelMaps.locale),
       labelMaps.categoryLabelByValue.get(subscription.category) ?? subscription.category,
       labelMaps.statusLabelByValue.get(effectiveStatus) ?? effectiveStatus,
-      subscription.startDate,
+      subscription.startDate ?? "",
       subscription.nextBillingDate,
       reminderDays,
       costSharingSummary.enabled ? costSharingSummary.yourShare : "",

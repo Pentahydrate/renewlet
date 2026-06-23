@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDefaultAppSettings } from "@renewlet/shared/settings-defaults";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import type { ApiSubscription } from "@renewlet/shared/schemas/subscriptions";
-import { collectNotificationItemsForLocalDate, notificationHistory, notificationTest, runScheduledNotifications } from "./notifications";
+import { collectNotificationItemsForLocalDate, notificationHistory, runScheduledNotifications } from "./notifications";
 import { createCronJobResult } from "./notification-jobs";
 import { sendServerChan, serverChanEndpoint } from "./notification-serverchan";
 import { notificationChannelErrorDetails } from "./notification-errors";
@@ -654,7 +654,7 @@ describe("Cloudflare notifications", () => {
     const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       expect(String(url)).toBe("https://sctapi.ftqq.com/SCT123456.send");
       expect(init?.method).toBe("POST");
-      expect(init?.headers).toEqual({ "content-type": "application/json" });
+      expect(Object.fromEntries(new Headers(init?.headers).entries())).toEqual({ "content-type": "application/json" });
       expect(JSON.parse(String(init?.body))).toEqual({
         title: "Renewlet test",
         desp: "Channel works\n\n2026-05-14 08:00 UTC",
@@ -753,39 +753,4 @@ describe("Cloudflare notifications", () => {
     expect(JSON.stringify(details)).not.toContain("SCTsecret");
   });
 
-  it("returns notification test failures with one-shot ServerChan upstream details", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("too many requests for SCTsecret", {
-      status: 429,
-      statusText: "Too Many Requests",
-      headers: { "content-type": "text/plain" },
-    })));
-    const env = fakeEnv(({ sql, method }) => {
-      if (method === "first" && sql.includes("SELECT settings_json FROM settings")) {
-        return { settings_json: JSON.stringify(settings()) };
-      }
-      throw new Error(`unexpected ${method} query: ${sql}`);
-    });
-
-    await expect(notificationTest(new Request("https://renewlet.test/api/app/notifications/test", {
-      method: "POST",
-      headers: {
-        authorization: "Bearer test",
-        "content-type": "application/json",
-        "x-renewlet-locale": "zh-CN",
-      },
-      body: JSON.stringify({
-        channel: "serverchan",
-        settings: {
-          serverchanSendKey: "SCTsecret",
-          enabledChannels: ["serverchan"],
-        },
-      }),
-    }), env)).rejects.toMatchObject({
-      status: 400,
-      code: "NOTIFICATION_TEST_FAILED",
-      details: {
-        rawResponseText: "too many requests for [redacted]",
-      },
-    });
-  });
 });

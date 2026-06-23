@@ -98,6 +98,26 @@ describe("aiRecognitionService", () => {
     expect(body.get("thinkingControl")).toBe(JSON.stringify({ provider: "openai", effort: "high" }));
   });
 
+  it("sends prepared image files in multipart requests", async () => {
+    const optimizedImage = new File([new Uint8Array(1536 * 1024)], "bill.webp", { type: "image/webp" });
+
+    await aiRecognitionService.recognizeSubscriptions({
+      text: "",
+      images: [optimizedImage],
+      thinkingControl: null,
+    });
+
+    const init = mocks.apiFetch.mock.calls[0]?.[2] as RequestInit;
+    const body = init.body as FormData;
+    const image = body.get("images[]");
+    expect(image).toBeInstanceOf(File);
+    expect(image).toMatchObject({
+      name: "bill.webp",
+      type: "image/webp",
+      size: 1536 * 1024,
+    });
+  });
+
   it("streams recognition events through the authenticated app API", async () => {
     const events: unknown[] = [];
     const controller = new AbortController();

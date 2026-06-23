@@ -116,6 +116,10 @@ const appSettingsShape = {
   barkDeviceKey: z.string().trim().max(256),
   barkSilentPush: z.boolean(),
   serverchanSendKey: z.string().trim().max(256),
+  discordWebhookUrl: optionalHttpsUrlSchema,
+  discordBotUsername: z.string().trim().max(80),
+  discordBotAvatarUrl: optionalHttpsUrlSchema,
+  pushplusToken: z.string().trim().max(256),
   aiRecognition: aiRecognitionSettingsSchema,
 };
 

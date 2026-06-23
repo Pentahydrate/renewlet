@@ -21,7 +21,7 @@ export const CUSTOM_CYCLE_UNITS = ["day", "week", "month", "year"] as const;
 export type CustomCycleUnit = (typeof CUSTOM_CYCLE_UNITS)[number];
 
 /** 通知渠道枚举同时约束设置 payload、cron result 和历史面板筛选。 */
-export const NOTIFICATION_CHANNELS = ["telegram", "notifyx", "webhook", "wechat", "email", "bark", "serverchan"] as const;
+export const NOTIFICATION_CHANNELS = ["telegram", "notifyx", "webhook", "wechat", "email", "bark", "serverchan", "discord", "pushplus"] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
 export const REPEAT_REMINDER_INTERVALS = ["1h", "3h", "6h", "12h", "24h"] as const;

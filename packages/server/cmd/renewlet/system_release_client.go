@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,18 +15,17 @@ import (
 
 // defaultSystemReleaseClient 返回只信任 GitHub Release feed 和下载边界的 HTTP 客户端。
 func defaultSystemReleaseClient() systemReleaseClient {
+	downloadClient := defaultUpstreamHTTPClient(systemUpdateDownloadTimeout)
+	downloadClient.CheckRedirect = func(request *http.Request, via []*http.Request) error {
+		if len(via) >= 5 {
+			return errors.New("too many redirects")
+		}
+		// GitHub Release 会跳到对象存储；每一跳都重验 host，避免可信首跳被开放重定向带出边界。
+		return validateTrustedDownloadURL(request.URL.String())
+	}
 	return &httpSystemReleaseClient{
-		metadataClient: &http.Client{Timeout: systemUpdateCheckTimeout},
-		downloadClient: &http.Client{
-			Timeout: systemUpdateDownloadTimeout,
-			CheckRedirect: func(request *http.Request, via []*http.Request) error {
-				if len(via) >= 5 {
-					return errors.New("too many redirects")
-				}
-				// GitHub Release 会跳到对象存储；每一跳都重验 host，避免可信首跳被开放重定向带出边界。
-				return validateTrustedDownloadURL(request.URL.String())
-			},
-		},
+		metadataClient: defaultUpstreamHTTPClient(systemUpdateCheckTimeout),
+		downloadClient: downloadClient,
 	}
 }
 
@@ -39,9 +37,13 @@ func (client *httpSystemReleaseClient) FetchReleases(ctx context.Context) ([]sys
 		return nil, err
 	}
 	applySystemReleaseFeedHeaders(request)
-	response, err := client.metadataClient.Do(request)
+	response, err := sendUpstreamHTTPRequest(request, upstreamHTTPRequestOptions{
+		Provider: "GitHub Release feed",
+		Timeout:  systemUpdateCheckTimeout,
+		Client:   client.metadataClient,
+	})
 	if err != nil {
-		return nil, classifySystemReleaseNetworkError(err)
+		return nil, newSystemReleaseNetworkError(err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -84,7 +86,11 @@ func (client *httpSystemReleaseClient) probeReleaseAsset(ctx context.Context, so
 		return 0, false
 	}
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
-	response, err := client.downloadClient.Do(request)
+	response, err := sendUpstreamHTTPRequest(request, upstreamHTTPRequestOptions{
+		Provider: "GitHub Release asset",
+		Timeout:  systemUpdateDownloadTimeout,
+		Client:   client.downloadClient,
+	})
 	if err != nil {
 		return 0, false
 	}
@@ -108,9 +114,13 @@ func (client *httpSystemReleaseClient) DownloadFile(ctx context.Context, sourceU
 		return err
 	}
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
-	response, err := client.downloadClient.Do(request)
+	response, err := sendUpstreamHTTPRequest(request, upstreamHTTPRequestOptions{
+		Provider: "GitHub",
+		Timeout:  systemUpdateDownloadTimeout,
+		Client:   client.downloadClient,
+	})
 	if err != nil {
-		return createUpstreamNetworkError("GitHub", err, nil)
+		return err
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -145,9 +155,13 @@ func (client *httpSystemReleaseClient) FetchText(ctx context.Context, sourceURL 
 		return nil, err
 	}
 	request.Header.Set("User-Agent", "Renewlet/"+Version)
-	response, err := client.downloadClient.Do(request)
+	response, err := sendUpstreamHTTPRequest(request, upstreamHTTPRequestOptions{
+		Provider: "GitHub",
+		Timeout:  systemUpdateDownloadTimeout,
+		Client:   client.downloadClient,
+	})
 	if err != nil {
-		return nil, createUpstreamNetworkError("GitHub", err, nil)
+		return nil, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -194,19 +208,13 @@ func newSystemReleaseHTTPError(response *http.Response) error {
 	return checkError
 }
 
-func classifySystemReleaseNetworkError(err error) error {
-	if err == nil {
-		return nil
+func newSystemReleaseNetworkError(err error) error {
+	message := firstNonBlank(upstreamRawResponseTextFromError(err), err.Error())
+	return &systemReleaseCheckError{
+		status:  "network error",
+		message: message,
+		details: upstreamErrorDetailsFromError(err),
 	}
-	var netError net.Error
-	if errors.Is(err, io.EOF) || errors.As(err, &netError) {
-		message := err.Error()
-		return &systemReleaseCheckError{
-			message: message,
-			details: createUpstreamErrorDetails(nil, message),
-		}
-	}
-	return err
 }
 
 type systemReleaseAtomFeed struct {

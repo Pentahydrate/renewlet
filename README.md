@@ -37,7 +37,7 @@ Sign in with `demo@renewlet.local` / `renewlet-demo`. The demo resets regularly,
 
 - Subscription records with billing cycles, statuses, tags, websites, notes, logos, categories, and payment methods.
 - Reminder jobs based on each user's IANA time zone, local notification time, reminder days, repeat reminders, delivery history, and failed-send retries.
-- Notifications through Telegram, Notifyx, Webhook, WeCom Bot, SMTP email, Bark, and ServerChan.
+- Notifications through Telegram, Notifyx, Webhook, WeCom Bot, SMTP email, Bark, ServerChan, Discord, and PushPlus.
 - Account security with authenticator codes, one-time recovery codes, and passkey sign-in.
 - Monthly and yearly cost normalization, budget usage, category charts, payment-method charts, and inactive-subscription savings.
 - AI recognition for bill screenshots, notes, CSV/TSV, and pasted table text; drafts are reviewed before import.
@@ -70,7 +70,7 @@ The deploy script creates `docker-compose.yml`, `.env`, and `data/`, then writes
 For production, pin a stable image tag:
 
 ```bash
-sed -i.bak 's#RENEWLET_IMAGE=.*#RENEWLET_IMAGE="zhiyingzzhou/renewlet:0.2.2"#' .env
+sed -i.bak 's#RENEWLET_IMAGE=.*#RENEWLET_IMAGE="zhiyingzzhou/renewlet:0.2.3"#' .env
 docker compose pull
 docker compose up -d
 ```
@@ -78,7 +78,7 @@ docker compose up -d
 If Docker Hub is unavailable, use GHCR:
 
 ```env
-RENEWLET_IMAGE="ghcr.io/zhiyingzzhou/renewlet:0.2.2"
+RENEWLET_IMAGE="ghcr.io/zhiyingzzhou/renewlet:0.2.3"
 ```
 
 ## Cloudflare Workers
@@ -100,7 +100,7 @@ tar -czf renewlet-backup-$(date +%F).tgz .env docker-compose.yml data
 Upgrade with Docker Compose:
 
 ```bash
-sed -i.bak 's#RENEWLET_IMAGE=.*#RENEWLET_IMAGE="zhiyingzzhou/renewlet:0.2.2"#' .env
+sed -i.bak 's#RENEWLET_IMAGE=.*#RENEWLET_IMAGE="zhiyingzzhou/renewlet:0.2.3"#' .env
 docker compose pull
 docker compose up -d
 docker compose logs -f

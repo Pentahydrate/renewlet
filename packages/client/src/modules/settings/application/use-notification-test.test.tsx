@@ -49,6 +49,7 @@ describe("useNotificationTest", () => {
     expect(call?.[2]).toEqual({
       method: "POST",
       body: JSON.stringify({ channel: "telegram", settings: DEFAULT_SETTINGS }),
+      timeoutMs: 20_000,
     });
     expect(mocks.toast).not.toHaveBeenCalledWith(expect.objectContaining({
       title: "正在发送测试通知…",

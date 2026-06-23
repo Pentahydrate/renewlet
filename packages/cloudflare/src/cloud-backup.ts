@@ -150,9 +150,8 @@ const SECRET_SETTING_KEYS: Array<keyof ApiAppSettings> = [
   "smtpFrom",
   "smtpReplyTo",
   "recipientEmail",
-  "barkServerUrl",
-  "barkDeviceKey",
-  "serverchanSendKey",
+  "barkServerUrl", "barkDeviceKey", "serverchanSendKey",
+  "discordWebhookUrl", "discordBotUsername", "discordBotAvatarUrl", "pushplusToken",
 ];
 
 export async function readCloudBackupConfig(request: Request, env: Env): Promise<Response> {
@@ -651,9 +650,9 @@ async function buildCloudBackupExportZip(env: Env, userId: string): Promise<{ co
   return { content: createStoredZip(zipEntries, exportedAt), exportedAt };
 }
 
-function sanitizeSettingsForCloudBackup(settings: ApiAppSettings): Partial<ApiAppSettings> {
+export function sanitizeSettingsForCloudBackup(settings: ApiAppSettings): Partial<ApiAppSettings> {
   const sanitized = { ...settings } as Partial<ApiAppSettings> & Record<string, unknown>;
-  // 普通云快照用于恢复订阅数据，不是 secrets 备份；通知、AI、Webhook 和云存储凭据都不能进入 ZIP。
+  // 普通云快照用于恢复订阅数据，不是 secrets 备份；新增外部通知字段必须进入这组剔除边界。
   for (const key of SECRET_SETTING_KEYS) delete sanitized[key];
   if (sanitized.aiRecognition) {
     sanitized.aiRecognition = {

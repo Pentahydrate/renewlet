@@ -158,7 +158,7 @@ export interface SubscriptionRow {
   pinned: number;
   public_hidden: number;
   payment_method: string | null;
-  start_date: string;
+  start_date: string | null;
   next_billing_date: string;
   auto_renew: number;
   auto_calculate_next_billing_date: number;

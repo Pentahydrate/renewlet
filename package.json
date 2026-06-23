@@ -2,7 +2,7 @@
   "name": "renewlet",
   "private": true,
   "license": "MIT",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "packageManager": "pnpm@11.1.2",
   "engines": {
     "node": ">=22.13.0"
@@ -49,6 +49,7 @@
     "check:file-lines": "node scripts/check-file-lines.mjs",
     "cloudflare:config:ci": "node scripts/generate-cloudflare-wrangler-config.mjs",
     "dev:cloudflare": "pnpm build:cloudflare && node scripts/prepare-cloudflare-local-headers.mjs && pnpm cloudflare:migrations:apply:local && node scripts/cloudflare-dev-hint.mjs && wrangler dev --test-scheduled",
+    "probe:workerd-upstream": "node scripts/workerd-upstream-probe.mjs",
     "cloudflare:migrations:apply:local": "CI=1 wrangler d1 migrations apply DB --local",
     "cloudflare:migrations:apply": "wrangler d1 migrations apply DB --remote",
     "deploy:cloudflare": "pnpm build:cloudflare && pnpm deploy",

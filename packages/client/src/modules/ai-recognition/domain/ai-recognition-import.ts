@@ -60,8 +60,14 @@ function buildAIImportSubscription(draft: AiRecognizedSubscriptionDraft, state: 
   const currency = normalizeCurrency(draft.currency, state, warnings);
   const category = resolveConfigValue("category", draft.category, state) ?? "other";
   const paymentMethod = resolveConfigValue("payment", draft.paymentMethod, state);
-  const startDate = draft.startDate ?? defaultDate(state, warnings);
-  const nextBillingDate = draft.nextBillingDate ?? defaultDate(state, warnings);
+  const autoCalculateNextBillingDate =
+    billingCycle !== "one-time" &&
+    draft.autoCalculateNextBillingDate === true &&
+    draft.startDate !== null;
+  const startDate = billingCycle === "one-time" || autoCalculateNextBillingDate
+    ? requiredDate(draft.startDate)
+    : draft.startDate ?? null;
+  const nextBillingDate = requiredDate(draft.nextBillingDate);
   const websiteWarnings: string[] = [];
   const website = normalizeWebsite(draft.website?.value, websiteWarnings);
   const notes = normalizeAIRecognitionUsefulNotes(draft.notes?.value);
@@ -84,10 +90,10 @@ function buildAIImportSubscription(draft: AiRecognizedSubscriptionDraft, state: 
     pinned: false,
     publicHidden: false,
     paymentMethod,
-    startDate: startDate as DateOnly,
-    nextBillingDate: nextBillingDate as DateOnly,
+    startDate,
+    nextBillingDate,
     autoRenew: false,
-    autoCalculateNextBillingDate: billingCycle === "one-time" ? false : draft.autoCalculateNextBillingDate ?? true,
+    autoCalculateNextBillingDate,
     trialEndDate: draft.status === "trial" ? draft.trialEndDate : null,
     website: website ?? null,
     notes,
@@ -169,9 +175,9 @@ function configMatchKey(value: string): string {
   return value.normalize("NFKC").trim().toLowerCase().replace(/[\s_\-—–/\\|&+，,、.。:：()（）[\]【】]+/g, "");
 }
 
-function defaultDate(state: AIImportBuildState, warnings: string[]): DateOnly | string {
-  warnings.push(IMPORT_MESSAGE_CODES.aiDateDefaulted);
-  return state.today;
+function requiredDate(value: DateOnly | string | null): DateOnly | string {
+  if (value) return value;
+  throw new Error("AI_RECOGNITION_DRAFT_DATE_REQUIRED");
 }
 
 function nextAISourceId(draft: AiRecognizedSubscriptionDraft, state: AIImportBuildState): string {

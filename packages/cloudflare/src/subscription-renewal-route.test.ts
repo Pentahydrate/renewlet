@@ -140,4 +140,22 @@ describe("Cloudflare subscription renewal route", () => {
 
     expect(fixture.updateParams).toBeNull();
   });
+
+  it("advances manual recurring subscriptions that do not know their start date", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-01T08:00:00.000Z"));
+    authMocks.requireAuth.mockResolvedValue({ user: { id: "usr_owner" }, session: { id: "ses" }, token: "test" });
+    const fixture = envFixture(subscriptionRow({
+      start_date: null,
+      auto_calculate_next_billing_date: 0,
+    }));
+
+    const response = await renewSubscription(requestFixture({}), fixture.env, "sub_manual");
+    const json = await response.json() as { subscription: { startDate: string | null; nextBillingDate: string } };
+
+    expect(response.status).toBe(200);
+    expect(fixture.updateParams?.[0]).toBe("2026-02-28");
+    expect(json.subscription.startDate).toBeNull();
+    expect(json.subscription.nextBillingDate).toBe("2026-02-28");
+  });
 });

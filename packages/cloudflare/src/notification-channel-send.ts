@@ -6,20 +6,21 @@ import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
 import { notificationSmtpConfig, sendSmtpEmail } from "./smtp";
 import { assertSafeOutboundUrl } from "./outbound-url-policy";
 import { sendServerChan } from "./notification-serverchan";
+import { sendDiscord } from "./notification-discord";
+import { sendPushPlus } from "./notification-pushplus";
 import { plainNotificationMessage, telegramNotificationMessage } from "./telegram-format";
 import { NotificationChannelError } from "./notification-errors";
 import {
   createUpstreamErrorDetails,
-  providerMessageFromResponse,
   redactUpstreamSecrets,
-  upstreamProviderResponseFromFetchResponse,
 } from "./upstream-response";
+import { requireNotificationHttpOk, sendNotificationJson, sendNotificationRequest } from "./notification-http";
 import { serverFormat, serverText } from "./server-i18n";
 import type { Env } from "./types";
 import type { AppLocale } from "./http";
 import type { Channel, SendSummary } from "./notification-jobs";
 
-// 这里是 Worker 通知渠道唯一外发边界：请求侧 secret 只参与发送和脱敏，返回给前端的 details 只能是一份一次性 rawResponseText。
+// 这里是 Worker 通知渠道分发边界；真正 HTTP 外发统一收口到 notification-http，避免渠道绕过超时和脱敏策略。
 export async function sendChannels(
   env: Env,
   channels: Channel[],
@@ -94,7 +95,8 @@ export async function sendChannel(
     }
     case "bark": {
       const deviceKey = required(settings.barkDeviceKey, serverText(locale, "service.barkDeviceKey"), locale);
-      await fetchOk(await barkUrl(settings, message, locale), { method: "GET" }, "Bark", locale, { secrets: [deviceKey, settings.barkServerUrl] });
+      const response = await sendNotificationRequest(await barkUrl(settings, message, locale), { method: "GET" }, "Bark", locale, { secrets: [deviceKey, settings.barkServerUrl] });
+      await requireNotificationHttpOk(response, "Bark", locale, { secrets: [deviceKey, settings.barkServerUrl] });
       return;
     }
     case "email":
@@ -102,6 +104,12 @@ export async function sendChannel(
       return;
     case "serverchan":
       await sendServerChan(settings, message, locale);
+      return;
+    case "discord":
+      await sendDiscord(settings, message, locale);
+      return;
+    case "pushplus":
+      await sendPushPlus(settings, message, locale);
       return;
   }
 }
@@ -117,14 +125,16 @@ async function sendWebhook(settings: ApiAppSettings, message: NotificationEmailM
     url.searchParams.set("title", message.title);
     url.searchParams.set("content", message.content);
     url.searchParams.set("timestamp", message.timestamp);
-    await fetchOk(url, { method: "GET", headers }, "Webhook", locale, { secrets });
+    const response = await sendNotificationRequest(url, { method: "GET", headers }, "Webhook", locale, { secrets });
+    await requireNotificationHttpOk(response, "Webhook", locale, { secrets });
     return;
   }
   headers.set("content-type", headers.get("content-type") ?? "application/json");
   const body = settings.webhookPayload.trim()
     ? applyTemplate(settings.webhookPayload, message)
     : JSON.stringify({ title: message.title, content: message.content, timestamp: message.timestamp });
-  await fetchOk(endpoint, { method: "POST", headers, body }, "Webhook", locale, { secrets });
+  const response = await sendNotificationRequest(endpoint, { method: "POST", headers, body }, "Webhook", locale, { secrets });
+  await requireNotificationHttpOk(response, "Webhook", locale, { secrets });
 }
 
 async function sendEmail(env: Env, settings: ApiAppSettings, message: NotificationEmailMessage, locale: AppLocale, appUrl?: string): Promise<void> {
@@ -151,45 +161,11 @@ async function postJson(
   headers?: Record<string, string>,
   options: { secrets?: readonly string[] } = {},
 ): Promise<void> {
-  await fetchOk(url, { method: "POST", headers: { "content-type": "application/json", ...(headers ?? {}) }, body: JSON.stringify(payload) }, channel, locale, options);
-}
-
-async function fetchOk(url: string | URL, init: RequestInit, channel: string, locale: AppLocale, options: { secrets?: readonly string[] } = {}): Promise<void> {
-  const secrets = options.secrets ?? [];
-  let response: Response;
-  try {
-    response = await fetch(url, init);
-  } catch (error) {
-    const message = error instanceof Error ? redactUpstreamSecrets(error.message, secrets) : serverText(locale, "common.internalError");
-    throw new NotificationChannelError(
-      serverFormat(locale, "notification.httpRequestFailed", { service: channel, error: message }),
-      createUpstreamErrorDetails({
-        responseText: message,
-      }),
-    );
-  }
-  if (!response.ok) {
-    // 非 2xx 必须先有界读取 body，再生成用户可复制的 rawResponseText；Server酱 429 text/plain 不能再被改写丢失。
-    const providerResponse = await upstreamProviderResponseFromFetchResponse(response, { secrets });
-    const providerMessage = providerMessageFromResponse(providerResponse) ?? response.statusText;
-    throw new NotificationChannelError(
-      externalHttpError(channel, response.status, providerMessage, locale),
-      createUpstreamErrorDetails({
-        responseText: providerMessage,
-        providerResponse,
-      }),
-    );
-  }
-  if (response.body) await response.body.cancel().catch(() => undefined);
-}
-
-function externalHttpError(channel: string, status: number, providerMessage: string, locale: AppLocale): string {
-  const detail = providerMessage.trim().slice(0, 800);
-  return serverFormat(locale, "notification.httpSendFailed", {
-    channel,
-    status,
-    detail,
+  const response = await sendNotificationJson(url, payload, channel, locale, {
+    ...(headers ? { headers } : {}),
+    ...(options.secrets ? { secrets: options.secrets } : {}),
   });
+  await requireNotificationHttpOk(response, channel, locale, options);
 }
 
 async function safeHttpsUrl(raw: string, locale: AppLocale): Promise<string> {

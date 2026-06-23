@@ -13,7 +13,7 @@ import { requireAuth } from "./auth";
 import type { Env, SubscriptionRow } from "./types";
 import { z } from "zod";
 
-const subscriptionStorageBodySchema = subscriptionCreateBodySchema.refine((body) => body.nextBillingDate >= body.startDate, {
+const subscriptionStorageBodySchema = subscriptionCreateBodySchema.refine((body) => body.startDate === null || body.nextBillingDate >= body.startDate, {
   path: ["nextBillingDate"],
   message: "NEXT_BILLING_DATE_BEFORE_START_DATE",
 });

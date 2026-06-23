@@ -93,7 +93,7 @@ describe("authClient.useSession", () => {
     mocks.fetch.mockReset();
     mocks.authStoreOnChange.mockReset();
     mocks.authStoreClear.mockReset();
-    mocks.authenticatePasskey.mockReset().mockResolvedValue(sessionFixture);
+    mocks.authenticatePasskey.mockReset().mockResolvedValue({ status: "authenticated", session: sessionFixture });
     mocks.cancelActivePasskeyCeremony.mockReset();
     window.localStorage.clear();
   });
@@ -162,9 +162,28 @@ describe("authClient.useSession", () => {
   it("stores the product session after passkey sign-in succeeds", async () => {
     const result = await authClient.signIn.passkey();
 
-    expect(result).toMatchObject({ error: null, data: { type: "session", session: { id: "token-1" } } });
+    expect(result).toMatchObject({ error: null, cancelled: false, data: { type: "session", session: { id: "token-1" } } });
     expect(mocks.authenticatePasskey).toHaveBeenCalledTimes(1);
     expect(readProductSession()?.session.id).toBe("token-1");
+  });
+
+  it("does not persist a session when passkey sign-in is cancelled", async () => {
+    mocks.authenticatePasskey.mockResolvedValueOnce({ status: "cancelled" });
+
+    const result = await authClient.signIn.passkey();
+
+    expect(result).toEqual({ data: null, error: null, cancelled: true });
+    expect(readProductSession()).toBeNull();
+  });
+
+  it("returns real passkey sign-in errors without persisting a session", async () => {
+    const error = new Error("RP ID mismatch");
+    mocks.authenticatePasskey.mockRejectedValueOnce(error);
+
+    const result = await authClient.signIn.passkey();
+
+    expect(result).toEqual({ data: null, error, cancelled: false });
+    expect(readProductSession()).toBeNull();
   });
 
   it("allows stale conditional passkey sessions to be ignored before persistence", async () => {
@@ -173,7 +192,7 @@ describe("authClient.useSession", () => {
       shouldPersistSession: () => false,
     });
 
-    expect(result).toMatchObject({ error: null, data: { type: "session", session: { id: "token-1" } } });
+    expect(result).toMatchObject({ error: null, cancelled: false, data: { type: "session", session: { id: "token-1" } } });
     expect(mocks.authenticatePasskey).toHaveBeenCalledWith({ useBrowserAutofill: true });
     expect(readProductSession()).toBeNull();
   });

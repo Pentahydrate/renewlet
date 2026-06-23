@@ -14,7 +14,7 @@ export type RenewalMode = "auto" | "manual";
 export interface SubscriptionRenewalInput {
   billingCycle: BillingCycle;
   status: SubscriptionStatus;
-  startDate: string;
+  startDate: string | null;
   nextBillingDate: string;
   autoRenew: boolean;
   autoCalculateNextBillingDate: boolean;
@@ -25,7 +25,7 @@ export interface SubscriptionRenewalInput {
 /** 账单日纯计算入口使用同一字段集，避免表单自动日期与后端续订算法分叉。 */
 export interface AdvanceBillingDateInput {
   billingCycle: BillingCycle;
-  startDate: string;
+  startDate: string | null;
   nextBillingDate: string;
   autoCalculateNextBillingDate: boolean;
   customDays?: number | null | undefined;
@@ -40,6 +40,12 @@ export interface SubscriptionRenewalResult {
 
 const MAX_ADVANCE_CYCLES = 20_000;
 
+function hasRenewalAnchor(input: Pick<AdvanceBillingDateInput, "autoCalculateNextBillingDate" | "nextBillingDate" | "startDate">): boolean {
+  return input.autoCalculateNextBillingDate
+    ? typeof input.startDate === "string" && isValidDateOnly(input.startDate)
+    : isValidDateOnly(input.nextBillingDate);
+}
+
 /**
  * 判断订阅是否可由后台维护任务自动推进。
  *
@@ -50,8 +56,8 @@ export function isAutoRenewEligible(subscription: SubscriptionRenewalInput, toda
     subscription.autoRenew &&
     subscription.billingCycle !== "one-time" &&
     (subscription.status === "active" || subscription.status === "trial") &&
-    isValidDateOnly(subscription.startDate) &&
     isValidDateOnly(subscription.nextBillingDate) &&
+    hasRenewalAnchor(subscription) &&
     isValidDateOnly(today) &&
     compareDateOnly(subscription.nextBillingDate, today) < 0
   );
@@ -67,8 +73,8 @@ export function isManualRenewEligible(subscription: SubscriptionRenewalInput): b
     !subscription.autoRenew &&
     subscription.billingCycle !== "one-time" &&
     (subscription.status === "active" || subscription.status === "trial" || subscription.status === "expired") &&
-    isValidDateOnly(subscription.startDate) &&
-    isValidDateOnly(subscription.nextBillingDate)
+    isValidDateOnly(subscription.nextBillingDate) &&
+    hasRenewalAnchor(subscription)
   );
 }
 
@@ -95,6 +101,7 @@ export function advanceSubscriptionRenewal(
  * 计算下一账单日，不改变状态。
  *
  * `autoCalculateNextBillingDate=true` 以 startDate 作周期锚点；否则保留用户手动修正过的 nextBillingDate 锚点。
+ * 周期订阅允许未知 startDate，因此只有自动锚点模式才需要 startDate。
  */
 export function advanceBillingDate(
   input: AdvanceBillingDateInput,
@@ -103,7 +110,7 @@ export function advanceBillingDate(
 ): DateOnly {
   assertRenewableBillingCycle(input.billingCycle);
   const original = assertDateOnly(input.nextBillingDate);
-  const anchor = assertDateOnly(input.autoCalculateNextBillingDate ? input.startDate : input.nextBillingDate);
+  const anchor = assertDateOnly(input.autoCalculateNextBillingDate ? input.startDate ?? "" : input.nextBillingDate);
   const threshold = mode === "manual" && compareDateOnly(original, today) > 0 ? original : assertDateOnly(today);
   const strict = mode === "manual";
 

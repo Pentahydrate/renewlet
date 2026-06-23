@@ -354,6 +354,10 @@ func TestDemoModeAllowsNormalSettingsButProtectsExternalIntegrationSettings(t *t
 	if protected.Code != http.StatusForbidden {
 		t.Fatalf("expected protected settings save to be forbidden, got %d: %s", protected.Code, protected.Body.String())
 	}
+	protectedDiscord := serveTestRequest(t, app, http.MethodPut, "/api/app/settings", `{"discordWebhookUrl":"https://discord.com/api/webhooks/123/secret","pushplusToken":"secret"}`, token)
+	if protectedDiscord.Code != http.StatusForbidden {
+		t.Fatalf("expected Discord/PushPlus settings save to be forbidden, got %d: %s", protectedDiscord.Code, protectedDiscord.Body.String())
+	}
 	settingsRecord, err = app.FindFirstRecordByFilter("settings", "user = {:user}", dbx.Params{"user": demo.Id})
 	if err != nil {
 		t.Fatal(err)

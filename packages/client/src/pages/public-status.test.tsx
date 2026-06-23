@@ -219,6 +219,29 @@ describe("PublicStatusPage", () => {
     expect(screen.queryByText("显示金额")).not.toBeInTheDocument();
   });
 
+  it("hides the start-date line when a public subscription has no known start date", () => {
+    mocks.usePublicStatus.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        ...baseResponse,
+        subscriptions: [
+          {
+            ...baseResponse.subscriptions[0]!,
+            startDate: null,
+          },
+        ],
+      },
+    });
+
+    renderPage();
+
+    expect(screen.getByText("Visible Plan")).toBeInTheDocument();
+    expect(screen.queryByText("开始：null")).not.toBeInTheDocument();
+    expect(screen.queryByText("开始：2026-05-01")).not.toBeInTheDocument();
+    expect(screen.getByText("到期/续费：2099-06-01")).toBeInTheDocument();
+  });
+
   it("renders a not-found state for revoked or unknown tokens", () => {
     mocks.usePublicStatus.mockReturnValue({
       isPending: false,

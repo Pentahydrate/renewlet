@@ -139,6 +139,7 @@ function addAmortizedTrend(
 
   // 固定服务期 one-time 的到期日是权益结束边界，不是下一次扣费；只把服务覆盖月份计入摊销。
   if (!subscription.oneTimeTermCount) return;
+  if (!subscription.startDate) return;
   for (const bucket of buckets) {
     const overlapsServiceWindow =
       compareDateOnly(subscription.startDate, bucket.endDate) < 0 &&

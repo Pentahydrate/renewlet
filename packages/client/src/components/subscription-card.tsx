@@ -175,8 +175,10 @@ export function SubscriptionCard({
   const isRenewingSoon = !isExpired && !isBuyout && daysUntilRenewal <= 7 && daysUntilRenewal >= 0;
   const isTrialEndingSoon = !isExpired && subscription.status === 'trial' && daysUntilTrialEnd !== null &&
     daysUntilTrialEnd <= 3 && daysUntilTrialEnd >= 0;
-  const billingDateText = isBuyout
+  const billingDateText = isBuyout && subscription.startDate
     ? t("subscription.card.oneTimeDate", { date: formatDateOnly(subscription.startDate) })
+    : isBuyout
+      ? null
     : isFixedTermOneTime
       ? t("subscription.card.expiresPrefix", { date: formatDateOnly(subscription.nextBillingDate) })
       : t("subscription.card.duePrefix", { date: formatDateOnly(subscription.nextBillingDate) });
@@ -209,18 +211,22 @@ export function SubscriptionCard({
       : subscription.paymentMethod
     : null;
   const metaItems: SubscriptionCardMetaItem[] = [
-    {
-      key: "start-date",
-      icon: <CalendarClock className="h-3.5 w-3.5 shrink-0" />,
-      text: `${t("subscription.card.startPrefix")} ${formatDateOnly(subscription.startDate)}`,
-      tone: "muted",
-    },
-    {
-      key: "billing-date",
-      icon: <Calendar className="h-3.5 w-3.5 shrink-0" />,
-      text: billingDateText,
-      tone: "muted",
-    },
+    ...(subscription.startDate
+      ? [{
+          key: "start-date",
+          icon: <CalendarClock className="h-3.5 w-3.5 shrink-0" />,
+          text: `${t("subscription.card.startPrefix")} ${formatDateOnly(subscription.startDate)}`,
+          tone: "muted" as const,
+        }]
+      : []),
+    ...(billingDateText
+      ? [{
+          key: "billing-date",
+          icon: <Calendar className="h-3.5 w-3.5 shrink-0" />,
+          text: billingDateText,
+          tone: "muted" as const,
+        }]
+      : []),
     ...(paymentMethodLabel
       ? [{
           key: "payment-method",

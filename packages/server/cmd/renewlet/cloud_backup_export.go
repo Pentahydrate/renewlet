@@ -146,11 +146,12 @@ func cloudBackupExportSettings(app core.App, user *core.Record) (map[string]inte
 	if err := json.Unmarshal(data, &out); err != nil {
 		return nil, false, err
 	}
-	// 普通云快照永远剔除通知、AI、Webhook 等 secret；云存储凭据也不在 settings 内导出。
+	// 普通云快照永远剔除通知、AI、Webhook 等 secret；新增外部渠道字段必须进入这组边界。
 	for _, key := range []string{
 		"testPhone", "telegramBotToken", "telegramChatId", "notifyxApiKey", "webhookUrl", "webhookHeaders", "webhookPayload",
 		"wechatWebhookUrl", "wechatAtPhones", "smtpHost", "smtpPort", "smtpSecure", "smtpUser", "smtpPassword",
 		"smtpFrom", "smtpReplyTo", "recipientEmail", "barkServerUrl", "barkDeviceKey", "serverchanSendKey",
+		"discordWebhookUrl", "discordBotUsername", "discordBotAvatarUrl", "pushplusToken",
 	} {
 		delete(out, key)
 	}

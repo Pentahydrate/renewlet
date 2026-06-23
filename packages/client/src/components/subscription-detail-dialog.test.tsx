@@ -156,6 +156,21 @@ describe("SubscriptionDetailDialog", () => {
     expect(within(dialog).getByText(/负责人：Alice/)).toBeInTheDocument();
   });
 
+  it("hides the start-date row when a recurring subscription has an unknown start date", () => {
+    renderDetailDialog({
+      subscription: {
+        ...baseSubscription,
+        startDate: null,
+        autoCalculateNextBillingDate: false,
+      },
+    });
+
+    const dialog = screen.getByRole("dialog", { name: "Fastmail" });
+
+    expect(within(dialog).queryByText("开始日期")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("2026年6月15日")).toBeInTheDocument();
+  });
+
   it("closes the detail dialog before opening the edit flow", () => {
     const onOpenChange = vi.fn();
     const onEditSubscription = vi.fn();

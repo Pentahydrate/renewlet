@@ -32,8 +32,9 @@ type upstreamErrorDetails struct {
 
 // upstreamOperationError 让 AI、GitHub、图标和通知等不同调用点共享同一错误传播通道，同时保留普通 error message。
 type upstreamOperationError struct {
-	message string
-	details *upstreamErrorDetails
+	message  string
+	details  *upstreamErrorDetails
+	timedOut bool
 }
 
 var upstreamSignedQueryValueRe = regexp.MustCompile(`(?i)([?&](?:X-Amz-Signature|X-Amz-Credential|X-Amz-Security-Token|AWSAccessKeyId|Signature|Expires|access_key|accessKey|api_key|apikey|token|sendkey|sendKey|key)=)[^&\s"'<>]+`)
@@ -49,12 +50,29 @@ func newUpstreamOperationError(message string, details *upstreamErrorDetails) er
 	return &upstreamOperationError{message: message, details: details}
 }
 
+func newUpstreamTransportError(message string, timedOut bool) error {
+	return &upstreamOperationError{message: message, details: createUpstreamErrorDetails(nil, message), timedOut: timedOut}
+}
+
 func upstreamErrorDetailsFromError(err error) *upstreamErrorDetails {
 	var upstreamErr *upstreamOperationError
 	if errors.As(err, &upstreamErr) {
 		return upstreamErr.details
 	}
 	return nil
+}
+
+func upstreamRawResponseTextFromError(err error) string {
+	details := upstreamErrorDetailsFromError(err)
+	if details == nil || details.RawResponseText == nil {
+		return ""
+	}
+	return *details.RawResponseText
+}
+
+func upstreamOperationTimedOut(err error) bool {
+	var upstreamErr *upstreamOperationError
+	return errors.As(err, &upstreamErr) && upstreamErr.timedOut
 }
 
 func persistentUpstreamErrorMessage(err error) string {
@@ -127,14 +145,6 @@ func createUpstreamHTTPError(provider string, resp *http.Response, providerRespo
 		message += ": " + providerMessage
 	}
 	return newUpstreamOperationError(message, createUpstreamErrorDetails(providerResponse, providerMessage))
-}
-
-func createUpstreamNetworkError(provider string, err error, secrets []string) error {
-	message := ""
-	if err != nil {
-		message = redactUpstreamSecrets(err.Error(), secrets)
-	}
-	return newUpstreamOperationError(message, createUpstreamErrorDetails(nil, message))
 }
 
 func upstreamProviderMessage(response *upstreamProviderResponse) string {

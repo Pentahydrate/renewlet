@@ -407,6 +407,19 @@ func TestNormalizeSubscriptionRecordValidatesDateOrder(t *testing.T) {
 	if err := normalizeSubscriptionRecord(base("2026-05-14", "2026-05-14")); err != nil {
 		t.Fatalf("expected same-day renewal date to be accepted: %v", err)
 	}
+	if err := normalizeSubscriptionRecord(base("", "2026-05-14")); err != nil {
+		t.Fatalf("expected manual recurring subscription without start date to be accepted: %v", err)
+	}
+	autoCalculated := base("", "2026-05-14")
+	autoCalculated.Set("autoCalculateNextBillingDate", true)
+	if err := normalizeSubscriptionRecord(autoCalculated); err == nil || !strings.Contains(err.Error(), "START_DATE_REQUIRED") {
+		t.Fatalf("expected auto calculated subscription without start date to fail, got %v", err)
+	}
+	oneTime := base("", "2026-05-14")
+	oneTime.Set("billingCycle", "one-time")
+	if err := normalizeSubscriptionRecord(oneTime); err == nil || !strings.Contains(err.Error(), "START_DATE_REQUIRED") {
+		t.Fatalf("expected one-time subscription without start date to fail, got %v", err)
+	}
 }
 
 func TestNormalizeSubscriptionRecordValidatesLogoReferences(t *testing.T) {

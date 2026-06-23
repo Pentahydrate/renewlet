@@ -1,5 +1,5 @@
 // Worker AI 模型列表测试保护认证代理、provider 形状归一和原始错误回显，避免请求 API key 进入响应 headers。
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { listAIModels } from "./ai-models";
 import type { Env } from "./types";
 
@@ -43,9 +43,14 @@ function requestFor(body: unknown): Request {
 
 describe("Cloudflare AI model list proxy", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     authMocks.requireAuth.mockReset();
     authMocks.requireAuth.mockResolvedValue({ user: authUser, session: { id: "ses" }, token: "test" });
     vi.unstubAllGlobals();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("loads and normalizes OpenAI shape models", async () => {
@@ -227,16 +232,28 @@ describe("Cloudflare AI model list proxy", () => {
   });
 
   it("returns a readable timeout error", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new DOMException("aborted", "AbortError")));
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+    }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(listAIModels(requestFor({
+    const caughtPromise = listAIModels(requestFor({
       providerType: "gemini",
       baseUrl: "",
       apiKey: "AIza-test-secret",
-    }), envFixture())).rejects.toMatchObject({
+    }), envFixture()).catch((error: unknown) => error);
+
+    await vi.advanceTimersByTimeAsync(15_000);
+    const caught = await caughtPromise;
+
+    expect(caught).toMatchObject({
       status: 408,
       code: "AI_MODEL_LIST_TIMEOUT",
-      details: { rawResponseText: "timeout" },
+      details: {
+        rawResponseText: expect.stringContaining("gemini models GET request to https://generativelanguage.googleapis.com/v1beta/models timed out after 15s before response headers"),
+      },
     });
+    expect(JSON.stringify(caught)).not.toContain("AIza-test-secret");
   });
 });

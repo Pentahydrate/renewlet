@@ -13,6 +13,12 @@ const listenUrl = `http://0.0.0.0:${devPort}`;
 const lanUrls = localLanUrls(devPort);
 const scheduledCommand = `curl "${localUrl}/__scheduled?cron=*+*+*+*+*"`;
 const lanLine = lanUrls.length > 0 ? lanUrls.join(", ") : `http://<this-machine-LAN-IP>:${devPort}`;
+const proxyHintLines = hasProxyEnvironment()
+  ? [
+      "  Proxy: HTTP_PROXY/HTTPS_PROXY detected; curl, Node fetch, and local workerd fetch may use different egress paths.",
+      "  For Discord/PushPlus Worker tests, verify with `pnpm probe:workerd-upstream` or a deployed Cloudflare Worker.",
+    ]
+  : [];
 
 // Wrangler 的默认 /cdn-cgi scheduled 提示会误导 Workers Static Assets 项目；Renewlet 本地固定走 --test-scheduled 注入的 /__scheduled。
 console.log([
@@ -23,6 +29,7 @@ console.log([
   `  LAN: ${lanLine}`,
   "  HTTP LAN: use http://<LAN-IP>:8787; local dev headers keep static assets on HTTP.",
   "  If Network shows https://<LAN-IP>:8787/assets/..., rerun `pnpm dev:cloudflare` so dist _headers is prepared.",
+  ...proxyHintLines,
   `  Manual Cron: ${scheduledCommand}`,
   "  Expected response: Ran scheduled event",
   "  Do not use /cdn-cgi/handler/scheduled here; Workers Static Assets may return a bare exception.",
@@ -38,4 +45,9 @@ function localLanUrls(port) {
     }
   }
   return Array.from(new Set(urls)).sort();
+}
+
+function hasProxyEnvironment() {
+  // 只提示代理变量“存在”，不打印具体值；本地代理地址可能携带认证信息或公司网络细节。
+  return ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"].some((key) => Boolean(process.env[key]));
 }

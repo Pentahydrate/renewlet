@@ -27,6 +27,7 @@ type webDAVProviderResponseCapture struct {
 	mu            sync.Mutex
 	response      *cloudBackupProviderResponse
 	attemptedHost string
+	localError    string
 	ctx           context.Context
 }
 
@@ -40,8 +41,9 @@ func newWebDAVCloudBackupClient(settings cloudBackupWebDAVSettings, password str
 	capture := &webDAVProviderResponseCapture{}
 	sdkClient := gowebdav.NewClient(settings.URL, settings.Username, password)
 	sdkClient.SetTimeout(45 * time.Second)
+	// gowebdav 负责 PROPFIND/PUT/GET 协议；custom transport 只收敛超时、TLS/代理策略和脱敏诊断。
 	sdkClient.SetTransport(&webDAVCaptureTransport{
-		base:    http.DefaultTransport,
+		base:    defaultUpstreamHTTPTransport(),
 		capture: capture,
 		secrets: []string{password},
 	})
@@ -208,7 +210,7 @@ func (client *webDAVCloudBackupClient) captureWebDAVError(ctx context.Context, c
 		if response := client.capture.last(); response != nil {
 			return cloudBackupRemoteHTTPErrorFromProviderResponse(webDAVErrorCodeForStatus(code, response), response)
 		}
-		return client.capture.describeLocalError(err)
+		return client.capture.describeLocalError(code, err)
 	}
 	return nil
 }
@@ -232,6 +234,9 @@ func (transport *webDAVCaptureTransport) RoundTrip(request *http.Request) (*http
 	}
 	response, err := base.RoundTrip(request)
 	if err != nil || response == nil {
+		if err != nil {
+			transport.capture.setLocalError(request, "WebDAV", err, transport.secrets, 45*time.Second)
+		}
 		return response, err
 	}
 	if response.StatusCode < 400 {
@@ -250,6 +255,7 @@ func (capture *webDAVProviderResponseCapture) reset(ctx context.Context) {
 	defer capture.mu.Unlock()
 	capture.response = nil
 	capture.attemptedHost = ""
+	capture.localError = ""
 	capture.ctx = ctx
 }
 
@@ -280,14 +286,40 @@ func (capture *webDAVProviderResponseCapture) setAttemptedRequest(request *http.
 	capture.attemptedHost = request.URL.Scheme + "://" + request.URL.Host
 }
 
-func (capture *webDAVProviderResponseCapture) describeLocalError(err error) error {
+func (capture *webDAVProviderResponseCapture) setLocalError(request *http.Request, provider string, err error, secrets []string, timeout time.Duration) {
+	if request == nil {
+		return
+	}
+	timedOut := upstreamNetErrorTimedOut(err) || errors.Is(request.Context().Err(), context.DeadlineExceeded)
+	// 没有 HTTP response 的 WebDAV 失败也必须走统一脱敏口径，避免 Basic Auth 或路径凭据进入 rawResponseText。
+	message := upstreamTransportDiagnosticMessage(request, upstreamHTTPRequestOptions{
+		Provider: provider,
+		Timeout:  timeout,
+		Secrets:  secrets,
+	}, err, timeout, timedOut)
 	capture.mu.Lock()
+	defer capture.mu.Unlock()
+	capture.localError = message
+}
+
+func (capture *webDAVProviderResponseCapture) describeLocalError(code string, err error) error {
+	capture.mu.Lock()
+	localError := capture.localError
 	attemptedHost := capture.attemptedHost
 	capture.mu.Unlock()
+	if strings.TrimSpace(localError) != "" {
+		return &cloudBackupRemoteError{
+			code:    code,
+			details: &cloudBackupErrorDetails{RawResponseText: optionalCloudBackupString(localError)},
+		}
+	}
 	if attemptedHost == "" || err == nil {
 		return err
 	}
-	return errors.New(err.Error() + " (attempted host: " + attemptedHost + ")")
+	return &cloudBackupRemoteError{
+		code:    code,
+		details: cloudBackupLocalErrorDetails(errors.New(err.Error() + " (attempted host: " + attemptedHost + ")")),
+	}
 }
 
 func webDAVErrorCodeForStatus(fallback string, response *cloudBackupProviderResponse) string {

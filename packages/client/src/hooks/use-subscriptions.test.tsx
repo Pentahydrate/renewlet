@@ -30,7 +30,7 @@ type SubscriptionWritePayload = {
   pinned: boolean;
   publicHidden: boolean;
   paymentMethod: string | null;
-  startDate: string;
+  startDate: string | null;
   nextBillingDate: string;
   autoRenew: boolean;
   autoCalculateNextBillingDate: boolean;
@@ -211,6 +211,25 @@ describe("use-subscriptions mutations", () => {
       autoRenew: false,
     });
     expect(parseRequestBody(0)).not.toHaveProperty("user");
+  });
+
+  it("sends nullable start dates for manual recurring creates", async () => {
+    const { result } = renderHook(() => useCreateSubscription(), { wrapper: createWrapper() });
+    const draft = subscriptionDraft({
+      startDate: null,
+      nextBillingDate: assertDateOnly("2026-08-01"),
+      autoCalculateNextBillingDate: false,
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync(draft);
+    });
+
+    expect(parseRequestBody(0)).toMatchObject({
+      startDate: null,
+      nextBillingDate: "2026-08-01",
+      autoCalculateNextBillingDate: false,
+    });
   });
 
   it("keeps tags as an empty array when updating a subscription through the product API", async () => {

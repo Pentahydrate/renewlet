@@ -180,9 +180,7 @@ const Login = () => {
     if (!options.silent) {
       suppressConditionalPasskeyRef.current = true;
       invalidateMfaVerifyFlows();
-      setMfaState(null);
-      setMfaCode("");
-      setMfaErrors({});
+      // 显式 Passkey 可从 MFA 弹窗启动；启动 ceremony 时不能清 mfaState，否则取消会丢掉“密码已通过”的上下文。
       setIsPasskeyLoading(true);
     }
     const isCurrentFlow = () => isPasskeyFlowActive(flowId);
@@ -190,10 +188,12 @@ const Login = () => {
       const passkeyOptions = typeof options.useBrowserAutofill === "boolean"
         ? { useBrowserAutofill: options.useBrowserAutofill }
         : {};
-      const { data, error } = await authClient.signIn.passkey(options.silent
+      // 条件式 Passkey Promise 可能晚于密码登录返回；silent 模式用持久化守卫阻止旧流程写 session。
+      const { data, error, cancelled } = await authClient.signIn.passkey(options.silent
         ? { ...passkeyOptions, shouldPersistSession: () => isCurrentFlow() }
         : passkeyOptions);
       if (!isCurrentFlow()) return;
+      if (cancelled) return;
       if (error) {
         if (!options.silent) {
           reportClientError(error, { source: "login-passkey" });

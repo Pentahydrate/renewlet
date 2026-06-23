@@ -122,6 +122,13 @@ describe("AI recognition prompt contract", () => {
     expect(promptText).toContain("website: null");
     expect(promptText).toContain("never output {\"value\": null, \"source\": \"suggested\"}");
   });
+
+  it("tells models not to infer unknown recurring start dates", () => {
+    const promptText = aiRecognitionPromptSpec.fieldRules.join("\n");
+
+    expect(promptText).toContain("Recurring subscriptions may use startDate: null");
+    expect(promptText).toContain("If startDate is null, set autoCalculateNextBillingDate to false");
+  });
 });
 
 describe("AI recognition diagnostics schema", () => {

@@ -82,11 +82,17 @@ describe("useSettingsFormController", () => {
 
     act(() => {
       result.current.updateSetting("recipientEmail", "billing@example.com");
+      result.current.updateSetting("discordWebhookUrl", "https://discord.com/api/webhooks/123/secret");
+      result.current.updateSetting("pushplusToken", "push-token");
       result.current.toggleChannel("telegram");
+      result.current.toggleChannel("discord");
       void result.current.handleTestConnection("telegram");
+      void result.current.handleTestConnection("discord");
     });
 
     expect(result.current.settings.recipientEmail).toBe("");
+    expect(result.current.settings.discordWebhookUrl).toBe("");
+    expect(result.current.settings.pushplusToken).toBe("");
     expect(result.current.settings.enabledChannels).toEqual([]);
     expect(mocks.testConnection).not.toHaveBeenCalled();
     expect(result.current.hasUnsavedChanges).toBe(false);

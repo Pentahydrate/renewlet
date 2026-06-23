@@ -133,7 +133,7 @@ describe("SubscriptionDialog reminders", () => {
     await user.click(screen.getByRole("switch", { name: "到期提醒" }));
     await user.type(screen.getByLabelText("服务名称"), "Quiet SaaS");
     await user.type(screen.getByLabelText("价格"), "10");
-    await user.click(screen.getByRole("button", { name: /开始日期.*选择日期/ }));
+    await user.click(screen.getByRole("button", { name: /到期日期.*选择日期/ }));
     await user.click(await screen.findByRole("button", { name: /2026年6月8日/ }));
     await user.click(screen.getByRole("button", { name: "添加订阅" }));
 
@@ -263,7 +263,7 @@ describe("SubscriptionDialog reminders", () => {
 
     await user.click(screen.getByRole("button", { name: "添加订阅" }));
 
-    const dateError = screen.getByText("请选择开始日期和下次扣费日期");
+    const dateError = screen.getByText("请选择购买日期");
     const invalidPurchaseDateButton = screen.getByRole("button", { name: /购买日期.*选择日期/ });
     const describedBy = invalidPurchaseDateButton.getAttribute("aria-describedby");
     expect(describedBy).toContain(dateError.id);

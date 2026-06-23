@@ -95,6 +95,7 @@ func TestEnsureSchemaCreatesContractFieldsAndIndexes(t *testing.T) {
 	})
 	assertNumberField(t, app, "subscriptions", "price", false, 0, maxSubscriptionPrice)
 	assertNumberField(t, app, "subscriptions", "reminderDays", false, disabledReminderDays, maxReminderDays)
+	assertTextFieldRequired(t, app, "subscriptions", "startDate", false)
 	assertSelectFieldValues(t, app, "subscriptions", "billingCycle", "weekly", "monthly", "quarterly", "semi-annual", "annual", "custom", "one-time")
 	assertSelectFieldValues(t, app, "subscriptions", "customCycleUnit", "day", "week", "month", "year")
 	assertNumberField(t, app, "subscriptions", "oneTimeTermCount", false, 0, maxReminderDays)
@@ -536,6 +537,21 @@ func assertNumberField(t *testing.T, app core.App, collectionName string, fieldN
 	}
 	if field.Max == nil || *field.Max != max {
 		t.Fatalf("collection %s field %s max = %v, want %v", collectionName, fieldName, field.Max, max)
+	}
+}
+
+func assertTextFieldRequired(t *testing.T, app core.App, collectionName string, fieldName string, required bool) {
+	t.Helper()
+	collection, err := app.FindCollectionByNameOrId(collectionName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	field, ok := collection.Fields.GetByName(fieldName).(*core.TextField)
+	if !ok {
+		t.Fatalf("collection %s field %s is not a text field", collectionName, fieldName)
+	}
+	if field.Required != required {
+		t.Fatalf("collection %s field %s required = %v, want %v", collectionName, fieldName, field.Required, required)
 	}
 }
 

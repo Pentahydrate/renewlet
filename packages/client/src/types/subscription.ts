@@ -123,7 +123,7 @@ export type BuiltInPaymentMethod = (typeof PAYMENT_METHODS)[number];
  */
 export type PaymentMethod = BuiltInPaymentMethod | (string & {});
 
-export const NOTIFICATION_CHANNELS = ['telegram', 'notifyx', 'webhook', 'wechat', 'email', 'bark', 'serverchan'] as const;
+export const NOTIFICATION_CHANNELS = ['telegram', 'notifyx', 'webhook', 'wechat', 'email', 'bark', 'serverchan', 'discord', 'pushplus'] as const;
 /** 通知渠道（用于配置页选择 + 后续通知任务）。 */
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
@@ -170,8 +170,8 @@ interface SubscriptionBase {
   autoRenew: boolean;
   /** 是否自动根据开始日期和扣费周期计算下次扣费日期。 */
   autoCalculateNextBillingDate: boolean;
-  /** 开始日期。 */
-  startDate: DateOnly;
+  /** 开始日期；周期订阅可为空，one-time 与自动计算仍由写入契约要求非空。 */
+  startDate: DateOnly | null;
   /** 试用结束日期（仅试用状态可选）。 */
   trialEndDate: DateOnly | undefined;
   /** 官网地址（可选）。 */
@@ -340,6 +340,14 @@ export interface AppSettings {
   barkSilentPush: boolean;
   /** Server酱 SendKey。 */
   serverchanSendKey: string;
+  /** Discord Webhook URL。 */
+  discordWebhookUrl: string;
+  /** Discord Webhook 覆盖用户名。 */
+  discordBotUsername: string;
+  /** Discord Webhook 覆盖头像 URL。 */
+  discordBotAvatarUrl: string;
+  /** PushPlus token。 */
+  pushplusToken: string;
 }
 
 export const CATEGORY_LABELS: Record<BuiltInCategory, LocalizedLabels> = {
@@ -394,6 +402,8 @@ export const CHANNEL_LABELS: Record<NotificationChannel, LocalizedLabels> = {
   email: labelsFromCatalog("channel.email"),
   bark: labelsFromCatalog("channel.bark"),
   serverchan: labelsFromCatalog("channel.serverchan"),
+  discord: labelsFromCatalog("channel.discord"),
+  pushplus: labelsFromCatalog("channel.pushplus"),
 };
 
 export const PAYMENT_METHOD_LABELS: Record<BuiltInPaymentMethod, LocalizedLabels> = {

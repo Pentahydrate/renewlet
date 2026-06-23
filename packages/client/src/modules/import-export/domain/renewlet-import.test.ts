@@ -273,8 +273,9 @@ describe("renewlet import", () => {
       currency: "USD",
       billingCycle: "monthly",
       status: "active",
-      startDate: context.today,
+      startDate: null,
       nextBillingDate: context.today,
+      autoCalculateNextBillingDate: false,
       trialEndDate: null,
       website: null,
       reminderDays: MAX_REMINDER_DAYS,
@@ -286,7 +287,7 @@ describe("renewlet import", () => {
     expect(prepared.warnings).toContain("IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_RENEWLET_LEGACY_CURRENCY_DEFAULTED|USD");
     expect(prepared.warnings).toContain("IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_RENEWLET_LEGACY_BILLING_CYCLE_DEFAULTED|monthly");
     expect(prepared.warnings).toContain("IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_RENEWLET_LEGACY_STATUS_DEFAULTED|active");
-    expect(prepared.warnings).toContain(`IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_DATE_INVALID|renewletStartDate|${context.today}`);
+    expect(prepared.warnings).toContain("IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_DATE_INVALID|renewletStartDate|empty");
     expect(prepared.warnings).toContain(`IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_DATE_INVALID|renewletDueDate|${context.today}`);
     expect(prepared.warnings).toContain("IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_DATE_INVALID|renewletTrialEndDate|empty");
     expect(prepared.warnings).toContain(`IMPORT_WARNING_FOR_SUBSCRIPTION|Legacy Invalid|IMPORT_WARNING_RENEWLET_LEGACY_REMINDER_DAYS_DEFAULTED|${MAX_REMINDER_DAYS}`);

@@ -92,10 +92,12 @@ func fetchGitHubAtomFeed(ctx context.Context, url string, etag string, label str
 	if etag != "" {
 		req.Header.Set("If-None-Match", etag)
 	}
-	client := &http.Client{Timeout: builtInIconGitHubFetchTimeout}
-	res, err := client.Do(req)
+	res, err := sendUpstreamHTTPRequest(req, upstreamHTTPRequestOptions{
+		Provider: label,
+		Timeout:  builtInIconGitHubFetchTimeout,
+	})
 	if err != nil {
-		return nil, "", false, createUpstreamNetworkError(label, err, nil)
+		return nil, "", false, err
 	}
 	defer res.Body.Close()
 	nextETag := res.Header.Get("ETag")

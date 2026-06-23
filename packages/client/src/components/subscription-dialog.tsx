@@ -3,11 +3,11 @@
  *
  * 架构位置：
  * - Add/Edit 适配器只负责打开方式。
- * - 本组件负责表单状态初始化、自动计算下次扣费日、上传状态阻塞和提交转换。
+ * - useSubscriptionDialogSession 负责表单草稿生命周期，本组件负责 UI、自动日期和提交转换。
  *
  * 状态链路：
  * ```
- * props(open/subscription) -> 初始化 formData
+ * props(open/subscription) -> session 初始化 formData
  * 用户编辑 -> SubscriptionFormFields
  * 提交 -> toSubscriptionDraft -> onSubmit(create/update)
  * ```
@@ -22,27 +22,27 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { SubscriptionFormFields, type SubscriptionFormErrors } from "@/components/subscription-form-fields";
 import { CostSharingMemberManagerView } from "@/components/subscription-cost-sharing-fields";
-import type { UploadStatus as LogoUploadStatus } from "@/components/logo-picker";
 import {
   isOptionalHttpUrl,
   getTagsValidationError,
-  isRenewalDateBeforeStartDate,
   normalizeTagsArray,
   parseTagsInput,
   parseNonNegativeFiniteNumberInput,
   parseNonNegativeIntegerInput,
   parseReminderDaysInput,
   parsePositiveIntegerInput,
+  getSubscriptionDateValidationKind,
+  subscriptionDateValidationMessageKey,
   toSubscriptionDraft,
 } from "@/lib/subscription-form";
 import { useCustomConfig } from "@/contexts/CustomConfigContext";
-import { useDeferredDialogCleanup } from "@/hooks/use-deferred-dialog-cleanup";
 import { useExchangeRates } from "@/hooks/use-exchange-rates";
+import { useSubscriptionDialogSession } from "@/hooks/use-subscription-dialog-session";
 import { useSubscriptionFormAutoDates } from "@/hooks/use-subscription-form-auto-dates";
 import { useSettings } from "@/hooks/use-settings";
 import type { Subscription, SubscriptionDraft } from "@/types/subscription";
-import { CURRENCY_OPTIONS, DEFAULT_NOTIFICATION_REMINDER_DAYS, DISABLED_REMINDER_DAYS, INHERIT_REMINDER_DAYS, REMINDER_DAYS_OPTIONS } from "@/types/subscription";
-import { createSubscriptionFormState, type SubscriptionFormState } from "@/types/subscription-form";
+import { CURRENCY_OPTIONS, DEFAULT_NOTIFICATION_REMINDER_DAYS, DISABLED_REMINDER_DAYS, INHERIT_REMINDER_DAYS } from "@/types/subscription";
+import type { SubscriptionFormState } from "@/types/subscription-form";
 import { useI18n } from "@/i18n/I18nProvider";
 import { todayDateOnlyInTimeZone } from "@/lib/time/date-only";
 import { getSystemTimeZone } from "@/lib/time/time-zone";
@@ -104,39 +104,38 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     if (enabledCurrencyValues.includes(statisticCurrency)) return statisticCurrency;
     return enabledCurrencyValues[0] ?? statisticCurrency;
   }, [enabledCurrencyValues, statisticCurrency]);
+  const editSubscription = props.mode === "edit" ? props.subscription : null;
   const billingReferenceDate = useMemo(
     () => todayDateOnlyInTimeZone(new Date(), settings?.timezone ?? getSystemTimeZone("UTC")),
     [settings?.timezone],
   );
 
-  const [logoUploadStatus, setLogoUploadStatus] = useState<LogoUploadStatus>("idle");
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<SubscriptionFormErrors>({});
-  const [createCurrencyManuallySelected, setCreateCurrencyManuallySelected] = useState(false);
   // 父子都保持 Radix modal：FocusScope 会暂停下层焦点，避免 non-modal 父层把子层聚焦误判成外部关闭。
   const [costSharingMemberDialogOpen, setCostSharingMemberDialogOpenState] = useState(false);
   const costSharingMemberDialogOpenRef = useRef(false);
-  const [formData, setFormData] = useState<SubscriptionFormState>(() =>
-    props.mode === "edit"
-      ? createSubscriptionFormState()
-      : createSubscriptionFormState({ currency: defaultCreateCurrency }),
-  );
+  const {
+    formData,
+    setFormData,
+    logoUploadStatus,
+    setLogoUploadStatus,
+    submitError,
+    setSubmitError,
+    formErrors,
+    setFormErrors,
+    clearFieldError,
+    handleFieldChange,
+  } = useSubscriptionDialogSession({
+    mode: props.mode,
+    open: props.open,
+    editSubscription,
+    defaultCreateCurrency,
+    enabledCurrencyValues,
+  });
   const setCostSharingMemberDialogOpen = useCallback((open: boolean) => {
     costSharingMemberDialogOpenRef.current = open;
     setCostSharingMemberDialogOpenState(open);
   }, []);
   const memberDialogOpen = props.open && costSharingMemberDialogOpen;
-
-  const resetTransientDialogState = useCallback(() => {
-    setLogoUploadStatus("idle");
-    setSubmitError(null);
-    setFormErrors({});
-    setCostSharingMemberDialogOpen(false);
-  }, [setCostSharingMemberDialogOpen]);
-  const { scheduleCleanup: scheduleTransientCleanup, cancelCleanup: cancelTransientCleanup } =
-    useDeferredDialogCleanup(resetTransientDialogState);
-
-  const editSubscription = props.mode === "edit" ? props.subscription : null;
 
   const idPrefix = props.mode === "edit" ? "edit-" : "";
   const id = (name: string) => `${idPrefix}${name}`;
@@ -172,108 +171,15 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     onDialogOpenChange(open);
   }, [onDialogOpenChange, setCostSharingMemberDialogOpen]);
 
-  // 弹窗关闭动画开始后再重置临时状态，避免关闭交互帧叠加额外 setState。
   useEffect(() => {
-    if (props.open) {
-      cancelTransientCleanup();
-      return;
-    }
+    if (props.open) return;
+    // 父弹窗被外层关闭时，嵌套成员管理器必须同步结束，避免下次打开继承子弹窗焦点上下文。
     setCostSharingMemberDialogOpen(false);
-    scheduleTransientCleanup();
-  }, [cancelTransientCleanup, props.open, scheduleTransientCleanup, setCostSharingMemberDialogOpen]);
-
-  // 新增模式：当弹窗打开且表单处于“空白态”时，同步默认货币为统计货币（或启用的第一项）。
-  // 这样用户在设置页切换统计货币后，新增订阅的默认货币也会跟随更新。
-  useEffect(() => {
-    if (props.mode !== "create") return;
-    if (!props.open) return;
-
-    const isPristine =
-      formData.name.trim().length === 0 &&
-      formData.price.trim().length === 0 &&
-      formData.website.trim().length === 0 &&
-      formData.notes.trim().length === 0 &&
-      formData.tags.length === 0;
-
-    const currencyDisabled = !enabledCurrencyValues.includes(formData.currency);
-    const shouldSync = (!createCurrencyManuallySelected && isPristine) || currencyDisabled;
-
-    // 只在空白态同步默认货币，是为了避免用户输入到一半时被 settings 异步刷新覆盖；
-    // 但当前货币已被禁用时必须强制修正，否则提交会写入不可选配置值。
-    if (shouldSync && formData.currency !== defaultCreateCurrency) {
-      setFormData((prev) => ({ ...prev, currency: defaultCreateCurrency }));
-    }
-  }, [
-    defaultCreateCurrency,
-    enabledCurrencyValues,
-    createCurrencyManuallySelected,
-    formData.currency,
-    formData.name,
-    formData.notes,
-    formData.price,
-    formData.tags,
-    formData.website,
-    props.mode,
-    props.open,
-  ]);
-
-  // 编辑模式：每次打开（或 subscription 变化）都用 subscription 重新初始化表单，避免“关闭后再打开仍保留未保存修改”。
-  useEffect(() => {
-    if (props.mode !== "edit") return;
-    if (!props.open) return;
-    if (!editSubscription) return;
-
-    const subscription = editSubscription;
-    const isDisabledReminder = subscription.reminderDays === DISABLED_REMINDER_DAYS;
-    const isInheritReminder = subscription.reminderDays === INHERIT_REMINDER_DAYS;
-    const isPresetReminder = REMINDER_DAYS_OPTIONS.some((opt) => opt.value === subscription.reminderDays);
-
-    setFormData({
-      name: subscription.name,
-      logo: subscription.logo,
-      price: subscription.price.toString(),
-      currency: subscription.currency,
-      billingCycle: subscription.billingCycle,
-      customDays: subscription.customDays?.toString() || "",
-      customCycleUnit: subscription.customCycleUnit ?? "day",
-      oneTimeMode: subscription.billingCycle === "one-time" && subscription.oneTimeTermCount && subscription.oneTimeTermUnit ? "term" : "buyout",
-      oneTimeTermCount: subscription.billingCycle === "one-time" && subscription.oneTimeTermCount ? subscription.oneTimeTermCount.toString() : "1",
-      oneTimeTermUnit: subscription.billingCycle === "one-time" ? subscription.oneTimeTermUnit ?? "month" : "month",
-      category: subscription.category,
-      status: subscription.status,
-      publicHidden: subscription.publicHidden,
-      paymentMethod: subscription.paymentMethod || "",
-      startDate: subscription.startDate,
-      nextBillingDate: subscription.nextBillingDate,
-      autoRenew: subscription.billingCycle === "one-time" ? false : subscription.autoRenew,
-      autoCalculate: subscription.autoCalculateNextBillingDate,
-      reminderType: isDisabledReminder ? "disabled" : isInheritReminder ? "inherit" : isPresetReminder ? "preset" : "custom",
-      reminderDays: isDisabledReminder ? String(DISABLED_REMINDER_DAYS) : isInheritReminder ? String(INHERIT_REMINDER_DAYS) : isPresetReminder ? subscription.reminderDays.toString() : "3",
-      customReminderDays: !isDisabledReminder && !isInheritReminder && !isPresetReminder ? subscription.reminderDays.toString() : "",
-      repeatReminderEnabled: isDisabledReminder ? false : subscription.repeatReminderEnabled,
-      repeatReminderInterval: subscription.repeatReminderInterval,
-      repeatReminderWindow: subscription.repeatReminderWindow,
-      costSharing: subscription.costSharing,
-      website: subscription.website ?? "",
-      notes: subscription.notes ?? "",
-      tags: subscription.tags ?? [],
-    });
-    setLogoUploadStatus("idle");
-    setFormErrors({});
-  }, [editSubscription, props.mode, props.open]);
+  }, [props.open, setCostSharingMemberDialogOpen]);
 
   useSubscriptionFormAutoDates(formData, setFormData, billingReferenceDate);
 
   /** 表单提交：create → 回传 draft；edit → merge id 后回传完整 Subscription。 */
-  const handleFieldChange = useCallback(
-    (key: keyof SubscriptionFormState) => {
-      if (props.mode === "create" && key === "currency") {
-        setCreateCurrencyManuallySelected(true);
-      }
-    },
-    [props.mode],
-  );
-
   const getSubmissionFormData = useCallback(() => {
     const pendingTags = Array.from(
       formRef.current?.querySelectorAll<HTMLInputElement>("[data-subscription-tag-pending-input]") ?? [],
@@ -292,10 +198,9 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     if (parseNonNegativeFiniteNumberInput(nextFormData.price) === null) {
       errors.price = t("subscription.validation.amountInvalid");
     }
-    if (!nextFormData.startDate || (nextFormData.billingCycle !== "one-time" && !nextFormData.nextBillingDate)) {
-      errors.dates = t("subscription.validation.datesRequired");
-    } else if (nextFormData.billingCycle !== "one-time" && isRenewalDateBeforeStartDate(nextFormData)) {
-      errors.dates = t("subscription.validation.dateOrderInvalid");
+    const dateValidationKind = getSubscriptionDateValidationKind(nextFormData);
+    if (dateValidationKind) {
+      errors.dates = t(subscriptionDateValidationMessageKey(dateValidationKind));
     }
     if (nextFormData.billingCycle === "custom" && parsePositiveIntegerInput(nextFormData.customDays) === null) {
       errors.customDays = t("subscription.validation.customCycleInvalid");
@@ -336,23 +241,13 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     return errors;
   }, [t]);
 
-  const clearFieldError = useCallback((field: keyof SubscriptionFormErrors) => {
-    setSubmitError(null);
-    setFormErrors((prev) => {
-      if (!prev[field]) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }, []);
-
   const updateCostSharingFormField = useCallback(<K extends keyof SubscriptionFormState>(
     key: K,
     value: SubscriptionFormState[K],
   ) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
     if (key === "costSharing") clearFieldError("costSharing");
-  }, [clearFieldError]);
+  }, [clearFieldError, setFormData]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -384,10 +279,6 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
 
     if (props.mode === "create") {
       props.onSubmit(draft);
-      setFormData(createSubscriptionFormState({ currency: defaultCreateCurrency }));
-      setCreateCurrencyManuallySelected(false);
-      setLogoUploadStatus("idle");
-      setFormErrors({});
       handleOpenChange(false);
       return;
     }
@@ -444,6 +335,7 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
         {"trigger" in props && props.trigger ? <DialogTrigger asChild>{props.trigger}</DialogTrigger> : null}
 
         <DialogContent
+          closeLabel={t("common.close")}
           dismissMode="explicit"
           layout="frame"
           className="h5-dialog-frame h5-subscription-dialog-panel border-border bg-card p-0 sm:max-w-2xl"
@@ -526,6 +418,7 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
         description={t("subscription.costSharing.manageMembersDescription")}
         backLabel={t("subscription.costSharing.backToForm")}
         doneLabel={t("subscription.costSharing.doneManagingMembers")}
+        closeLabel={t("common.close")}
       />
     </>
   );
@@ -547,6 +440,7 @@ type CostSharingMemberDialogProps = {
   description: string;
   backLabel: string;
   doneLabel: string;
+  closeLabel: string;
 };
 
 function CostSharingMemberDialog({
@@ -565,10 +459,12 @@ function CostSharingMemberDialog({
   description,
   backLabel,
   doneLabel,
+  closeLabel,
 }: CostSharingMemberDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        closeLabel={closeLabel}
         dismissMode="explicit"
         layout="frame"
         className="h5-dialog-frame h5-subscription-dialog-panel border-border bg-card p-0 sm:max-w-2xl"

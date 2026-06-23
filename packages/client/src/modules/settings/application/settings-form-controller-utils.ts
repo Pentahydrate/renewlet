@@ -92,6 +92,10 @@ export const EXTERNAL_INTEGRATION_SETTING_KEYS = new Set<keyof AppSettings>([
   "barkDeviceKey",
   "barkSilentPush",
   "serverchanSendKey",
+  "discordWebhookUrl",
+  "discordBotUsername",
+  "discordBotAvatarUrl",
+  "pushplusToken",
 ]);
 
 export function createDraftSettingsFromRemote(

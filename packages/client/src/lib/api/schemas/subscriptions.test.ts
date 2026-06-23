@@ -138,6 +138,33 @@ describe("subscription API schemas", () => {
     }
   });
 
+  it("allows nullable start dates only when no start-date anchor is required", () => {
+    expect(subscriptionCreateBodySchema.safeParse({
+      ...validSubscriptionCreateBody,
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+    }).success).toBe(true);
+
+    expect(apiSubscriptionSchema.safeParse({
+      ...validSubscriptionResponseBody,
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+    }).success).toBe(true);
+
+    expect(subscriptionCreateBodySchema.safeParse({
+      ...validSubscriptionCreateBody,
+      startDate: null,
+      autoCalculateNextBillingDate: true,
+    }).success).toBe(false);
+
+    expect(subscriptionCreateBodySchema.safeParse({
+      ...validSubscriptionCreateBody,
+      billingCycle: "one-time",
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+    }).success).toBe(false);
+  });
+
   it("accepts equal and custom cost sharing payloads", () => {
     const equalSharing = {
       enabled: true,

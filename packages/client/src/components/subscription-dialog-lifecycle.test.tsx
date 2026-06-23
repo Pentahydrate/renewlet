@@ -1,0 +1,196 @@
+// 订阅弹窗生命周期测试守住 create/edit 草稿 session，避免关闭重开再次继承未提交输入。
+import { useState } from "react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { assertDateOnly } from "@/lib/time/date-only";
+import type { Subscription, SubscriptionDraft } from "@/types/subscription";
+import { SubscriptionDialog } from "./subscription-dialog";
+
+const mocks = vi.hoisted(() => ({
+  config: {
+    categories: [{ id: "productivity", value: "productivity", labels: { "zh-CN": "效率工具", "en-US": "Productivity" } }],
+    statuses: [{ id: "active", value: "active", labels: { "zh-CN": "活跃", "en-US": "Active" } }],
+    paymentMethods: [{ id: "alipay", value: "alipay", labels: { "zh-CN": "支付宝", "en-US": "Alipay" } }],
+    currencies: [
+      { id: "CNY", value: "CNY", labels: { "zh-CN": "¥ 人民币 (CNY)", "en-US": "¥ Chinese Yuan (CNY)" }, enabled: true },
+      { id: "USD", value: "USD", labels: { "zh-CN": "$ 美元 (USD)", "en-US": "$ US Dollar (USD)" }, enabled: true },
+    ],
+  },
+}));
+
+vi.mock("@/contexts/CustomConfigContext", () => ({
+  useCustomConfig: () => ({ config: mocks.config }),
+}));
+
+vi.mock("@/hooks/use-settings", () => ({
+  useSettings: () => ({
+    data: { defaultCurrency: "USD", notificationReminderDays: 5 },
+  }),
+}));
+
+vi.mock("@/components/logo-picker", () => ({
+  LogoPicker: () => null,
+}));
+
+beforeAll(() => {
+  Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+  Element.prototype.setPointerCapture ??= vi.fn();
+  Element.prototype.releasePointerCapture ??= vi.fn();
+});
+
+function makeSubscription(overrides: Partial<Subscription> = {}): Subscription {
+  return {
+    id: "sub-1",
+    name: "Original SaaS",
+    logo: undefined,
+    price: 29,
+    currency: "USD",
+    billingCycle: "monthly",
+    customDays: undefined,
+    customCycleUnit: undefined,
+    category: "productivity",
+    status: "active",
+    publicHidden: false,
+    paymentMethod: "alipay",
+    startDate: assertDateOnly("2026-05-14"),
+    nextBillingDate: assertDateOnly("2026-06-14"),
+    autoCalculateNextBillingDate: false,
+    trialEndDate: undefined,
+    website: undefined,
+    notes: undefined,
+    reminderDays: 3,
+    tags: [],
+    repeatReminderEnabled: true,
+    repeatReminderInterval: "1h",
+    repeatReminderWindow: "72h",
+    pinned: false,
+    ...overrides,
+  } as Subscription;
+}
+
+function CreateDialogHarness({
+  onSubmit = vi.fn<(subscription: SubscriptionDraft) => void>(),
+}: {
+  onSubmit?: (subscription: SubscriptionDraft) => void;
+} = {}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <button type="button" onClick={() => setOpen(true)}>打开新增弹窗</button>
+      <SubscriptionDialog
+        mode="create"
+        open={open}
+        onOpenChange={setOpen}
+        onSubmit={onSubmit}
+      />
+    </TooltipProvider>
+  );
+}
+
+function EditDialogHarness() {
+  const [open, setOpen] = useState(false);
+  const subscription = makeSubscription();
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <button type="button" onClick={() => setOpen(true)}>打开编辑弹窗</button>
+      <SubscriptionDialog
+        mode="edit"
+        open={open}
+        onOpenChange={setOpen}
+        onSubmit={vi.fn()}
+        subscription={subscription}
+      />
+    </TooltipProvider>
+  );
+}
+
+describe("SubscriptionDialog lifecycle", () => {
+  it("clears an unsubmitted create draft after cancelling and reopening", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateDialogHarness />);
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+    await user.type(screen.getByLabelText("服务名称"), "Lingering SaaS");
+    await user.type(screen.getByLabelText("价格"), "12");
+    await user.click(screen.getByRole("button", { name: "取消" }));
+
+    expect(screen.queryByRole("dialog", { name: "添加新订阅" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+
+    expect(screen.getByLabelText("服务名称")).toHaveValue("");
+    expect(screen.getByLabelText("价格")).toHaveValue("");
+  });
+
+  it("clears an unsubmitted create draft after using the close button", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateDialogHarness />);
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+    await user.type(screen.getByLabelText("服务名称"), "Close Button SaaS");
+    await user.click(screen.getByRole("button", { name: "关闭" }));
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+
+    expect(screen.getByLabelText("服务名称")).toHaveValue("");
+  });
+
+  it("resets the create currency to the current default after reopening", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateDialogHarness />);
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+    expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("$ 美元 (USD)");
+
+    await user.click(screen.getByRole("combobox", { name: "选择货币" }));
+    await user.click(await screen.findByText("¥ 人民币 (CNY)"));
+    expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("¥ 人民币 (CNY)");
+
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+
+    expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("$ 美元 (USD)");
+  });
+
+  it("keeps user input after create validation fails", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<(subscription: SubscriptionDraft) => void>();
+
+    render(<CreateDialogHarness onSubmit={onSubmit} />);
+
+    await user.click(screen.getByRole("button", { name: "打开新增弹窗" }));
+    await user.type(screen.getByLabelText("服务名称"), "Needs Fixing");
+    await user.type(screen.getByLabelText("价格"), "1000000001");
+    await user.click(screen.getByRole("button", { name: "添加订阅" }));
+
+    expect(screen.getByLabelText("服务名称")).toHaveValue("Needs Fixing");
+    expect(screen.getByLabelText("价格")).toHaveValue("1,000,000,001");
+    expect(screen.getByText("金额必须是 0 到 1,000,000,000 之间的有效数字")).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("reopens edit mode from the subscription snapshot instead of unsaved edits", async () => {
+    const user = userEvent.setup();
+
+    render(<EditDialogHarness />);
+
+    await user.click(screen.getByRole("button", { name: "打开编辑弹窗" }));
+    expect(await screen.findByDisplayValue("Original SaaS")).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("服务名称"));
+    await user.type(screen.getByLabelText("服务名称"), "Unsaved SaaS");
+    await user.click(screen.getByRole("button", { name: "取消" }));
+
+    await user.click(screen.getByRole("button", { name: "打开编辑弹窗" }));
+
+    expect(await screen.findByDisplayValue("Original SaaS")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Unsaved SaaS")).not.toBeInTheDocument();
+  });
+});

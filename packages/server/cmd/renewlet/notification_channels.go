@@ -2,12 +2,11 @@ package main
 
 // notification_channels.go 负责非邮件通知渠道和渠道分发。
 //
-// 架构位置：统一 notificationMessage 在这里被转换为 Telegram/NotifyX/Webhook/WeCom/Bark 的外部请求。
+// 架构位置：统一 notificationMessage 在这里被转换为各通知渠道的外部请求。
 // 外部服务失败被收敛为 channelFailure，调度层据此决定 sent/failed 和后续重试范围。
 //
-// 注意： Webhook、WeCom、Bark 都可能携带用户配置 URL，必须经过 SSRF/公网 HTTPS 防护后才能请求。
+// 注意： Webhook、WeCom、Bark 和 Discord 都可能携带用户配置 URL，必须经过对应公网 HTTPS 防护后才能请求。
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -60,6 +59,10 @@ func sendToChannel(app core.App, channel string, settings appSettings, message n
 		return sendBark(settings, message)
 	case "serverchan":
 		return sendServerChan(settings, message)
+	case "discord":
+		return sendDiscord(settings, message)
+	case "pushplus":
+		return sendPushPlus(settings, message)
 	default:
 		return errors.New(serverFormat(locale, "notification.channelUnknown", map[string]interface{}{"channel": channel}))
 	}
@@ -127,6 +130,86 @@ func sendNotifyx(settings appSettings, message notificationMessage) error {
 		return nil
 	}
 	return channelHTTPErrorFromResponse(normalizeAppLocale(settings.Locale), "NotifyX", resp, apiKey)
+}
+
+// sendDiscord 发送 Discord Webhook 消息。
+func sendDiscord(settings appSettings, message notificationMessage) error {
+	locale := normalizeAppLocale(settings.Locale)
+	rawWebhook, err := requireNonEmptyLocalized(locale, serverText(locale, "service.discordWebhookURL"), settings.DiscordWebhookURL)
+	if err != nil {
+		return err
+	}
+	endpoint, err := discordWebhookEndpoint(rawWebhook, locale)
+	if err != nil {
+		return err
+	}
+	payload := discordWebhookRequest{
+		Content: truncateRunes(buildTextMessage(message), discordContentMaxRunes),
+		// Discord 默认会解析 @everyone、用户和角色提及；通知内容含订阅名/备注，必须固定禁止误 ping。
+		AllowedMentions: discordAllowedMentions{Parse: []string{}},
+	}
+	if username := strings.TrimSpace(settings.DiscordBotUsername); username != "" {
+		payload.Username = username
+	}
+	if rawAvatar := strings.TrimSpace(settings.DiscordBotAvatarURL); rawAvatar != "" {
+		avatar := safePublicHTTPSIconURL(rawAvatar)
+		if avatar == "" {
+			return errors.New(serverFormat(locale, "url.invalid", map[string]interface{}{"label": serverText(locale, "service.discordBotAvatarURL")}))
+		}
+		payload.AvatarURL = avatar
+	}
+	secrets := discordWebhookSecrets(rawWebhook, endpoint, payload.AvatarURL)
+	resp, err := postJSON(endpoint, payload, "Discord", locale, secrets...)
+	if err != nil {
+		return err
+	}
+	if responseOK(resp) {
+		return nil
+	}
+	return channelHTTPErrorFromResponse(locale, "Discord", resp, secrets...)
+}
+
+func discordWebhookEndpoint(rawURL string, locale appLocale) (string, error) {
+	parsed, err := url.Parse(strings.TrimSpace(rawURL))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return "", errors.New(serverFormat(locale, "url.invalid", map[string]interface{}{"label": serverText(locale, "service.discordWebhookURL")}))
+	}
+	if parsed.Scheme != "https" {
+		return "", errors.New(serverFormat(locale, "url.mustUseHttps", map[string]interface{}{"label": serverText(locale, "service.discordWebhookURL")}))
+	}
+	if parsed.User != nil || strings.ToLower(parsed.Hostname()) != "discord.com" || parsed.Port() != "" {
+		return "", errors.New(serverFormat(locale, "url.invalid", map[string]interface{}{"label": serverText(locale, "service.discordWebhookURL")}))
+	}
+	parts := strings.Split(strings.Trim(strings.TrimPrefix(parsed.Path, "/api/webhooks/"), "/"), "/")
+	if !strings.HasPrefix(parsed.Path, "/api/webhooks/") || len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", errors.New(serverFormat(locale, "url.invalid", map[string]interface{}{"label": serverText(locale, "service.discordWebhookURL")}))
+	}
+	query := parsed.Query()
+	query.Set("wait", "true")
+	parsed.RawQuery = query.Encode()
+	return parsed.String(), nil
+}
+
+func discordWebhookSecrets(rawWebhook, endpoint, avatarURL string) []string {
+	token := ""
+	if parsed, err := url.Parse(endpoint); err == nil {
+		parts := strings.Split(strings.Trim(strings.TrimPrefix(parsed.Path, "/api/webhooks/"), "/"), "/")
+		if len(parts) == 2 {
+			token = parts[1]
+		}
+	}
+	return []string{rawWebhook, endpoint, token, avatarURL}
+}
+
+func truncateRunes(value string, limit int) string {
+	if limit < 0 {
+		return ""
+	}
+	runes := []rune(value)
+	if len(runes) <= limit {
+		return value
+	}
+	return string(runes[:limit])
 }
 
 // sendWebhook 发送用户自定义 Webhook。
@@ -341,25 +424,66 @@ func sendServerChan(settings appSettings, message notificationMessage) error {
 	return requireServerChanSuccess(resp, locale, sendKey)
 }
 
-func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale appLocale, sendKey string) (*http.Response, error) {
-	body, err := json.Marshal(payload)
+// sendPushPlus 发送 PushPlus 消息。
+func sendPushPlus(settings appSettings, message notificationMessage) error {
+	locale := normalizeAppLocale(settings.Locale)
+	token, err := requireNonEmptyLocalized(locale, serverText(locale, "service.pushplusToken"), settings.PushPlusToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
+	resp, err := postJSON("https://www.pushplus.plus/send", pushPlusSendRequest{
+		Token:    token,
+		Title:    message.Title,
+		Content:  message.Content + "\n\n" + message.Timestamp,
+		Template: "txt",
+	}, "PushPlus", locale, token)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	req.Header.Set("content-type", "application/json")
-	resp, err := notificationHTTPClientFactory().Do(req)
+	// PushPlus 2xx 只代表 HTTP 成功；官方业务 code=200 才表示请求被接收，渠道内不重试以免撞频率/额度限制。
+	return requirePushPlusSuccess(resp, locale, token)
+}
+
+func requirePushPlusSuccess(resp *http.Response, locale appLocale, token string) error {
+	if resp == nil {
+		return channelHTTPError(locale, "PushPlus", 0, "")
+	}
+	providerResponse, rawBody, err := captureUpstreamProviderResponse(resp, []string{token})
 	if err != nil {
-		message := redactUpstreamSecrets(err.Error(), []string{sendKey})
-		return nil, newNotificationChannelError(
-			serverFormat(locale, "notification.httpRequestFailed", map[string]interface{}{"service": "ServerChan", "error": message}),
-			createUpstreamErrorDetails(nil, message),
+		return err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		detail := fallbackText(upstreamProviderMessage(providerResponse), serverText(locale, "service.pushplusResponseInvalid"))
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "PushPlus", resp.StatusCode, detail),
+			createUpstreamErrorDetails(providerResponse, detail),
 		)
 	}
-	return resp, nil
+	var result pushPlusSendResponse
+	if err := json.Unmarshal([]byte(rawBody), &result); err != nil {
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "PushPlus", resp.StatusCode, fallbackText(upstreamProviderMessage(providerResponse), serverText(locale, "service.pushplusResponseInvalid"))),
+			createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
+		)
+	}
+	if result.Code == nil {
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "PushPlus", resp.StatusCode, serverText(locale, "service.pushplusResponseInvalid")),
+			createUpstreamErrorDetails(providerResponse, upstreamProviderMessage(providerResponse)),
+		)
+	}
+	if *result.Code != 200 {
+		detail := fallbackText(redactUpstreamSecrets(firstNonBlank(result.Msg, result.Data), []string{token}), serverText(locale, "service.pushplusResponseInvalid"))
+		return newNotificationChannelError(
+			channelHTTPErrorMessage(locale, "PushPlus", resp.StatusCode, detail),
+			createUpstreamErrorDetails(providerResponse, detail),
+		)
+	}
+	return nil
+}
+
+func postServerChanJSON(endpoint string, payload serverChanSendRequest, locale appLocale, sendKey string) (*http.Response, error) {
+	return postJSON(endpoint, payload, "ServerChan", locale, sendKey)
 }
 
 func buildServerChanEndpoint(sendKey string, locale appLocale) (string, error) {

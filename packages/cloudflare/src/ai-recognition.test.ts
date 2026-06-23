@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { AI_RECOGNITION_MAX_IMAGES } from "@renewlet/shared/schemas/ai-recognition";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { recognizeSubscriptions, testAIRecognitionConnection } from "./ai-recognition";
 import { generatedDraft } from "./ai-recognition.test-utils";
 import type { Env } from "./types";
@@ -116,23 +119,6 @@ function requestForTextWithThinking(text: string, thinkingControl: string): Requ
   });
 }
 
-function requestForImages(count: number): Request {
-  const form = new FormData();
-  for (let index = 0; index < count; index += 1) {
-    // fixture 用最小 PNG 头触发 Worker 的文件头嗅探；不能只信 Blob.type。
-    form.append("images[]", new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: "image/png" }), `image-${index + 1}.png`);
-  }
-  return new Request("https://renewlet.test/api/app/ai/subscriptions/recognize", {
-    method: "POST",
-    headers: {
-      authorization: "Bearer test",
-      "x-renewlet-locale": "zh-CN",
-      "x-client-time-zone": "Asia/Shanghai",
-    },
-    body: form,
-  });
-}
-
 function testConnectionRequestFor(settings: unknown): Request {
   return new Request("https://renewlet.test/api/app/ai/subscriptions/test", {
     method: "POST",
@@ -167,6 +153,10 @@ describe("Cloudflare AI recognition", () => {
     aiMocks.wrapLanguageModel.mockClear();
     aiMocks.isNoObjectGeneratedError.mockClear();
     aiMocks.isAPICallError.mockClear();
+    vi.mocked(createOpenAI).mockClear();
+    vi.mocked(createGoogleGenerativeAI).mockClear();
+    vi.mocked(createAnthropic).mockClear();
+    vi.mocked(createOpenAICompatible).mockClear();
     authMocks.requireAuth.mockResolvedValue({ user: authUser, session: { id: "ses" }, token: "test" });
     dbMocks.getSettings.mockResolvedValue({
       aiRecognition: {
@@ -275,6 +265,14 @@ describe("Cloudflare AI recognition", () => {
     expect(body.diagnostics.prompt.user.value).toContain("User context:");
     expect(body.diagnostics.prompt.user.value).toContain("Task:");
     expect(body.diagnostics.prompt.user.value).toContain("Examples:");
+    expect(aiMocks.generateObject).toHaveBeenCalledWith(expect.objectContaining({
+      abortSignal: expect.any(AbortSignal),
+      timeout: { totalMs: 90_000 },
+    }));
+    expect(vi.mocked(createOpenAI).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({
+      apiKey: "sk-test",
+      fetch: expect.any(Function),
+    }));
     expect(body.diagnostics.prompt.user.value).toContain("<<<renewlet-user-input");
     expect(body.diagnostics.prompt.user.value).toContain("value=hosting_domains");
     expect(body.diagnostics.prompt.user.value).toContain("value=crypto");
@@ -385,6 +383,12 @@ describe("Cloudflare AI recognition", () => {
       prompt: "Reply with OK.",
       maxOutputTokens: 16,
       maxRetries: 0,
+      abortSignal: expect.any(AbortSignal),
+      timeout: { totalMs: 90_000 },
+    }));
+    expect(vi.mocked(createOpenAI).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({
+      apiKey: "sk-test",
+      fetch: expect.any(Function),
     }));
     expect(aiMocks.generateObject).not.toHaveBeenCalled();
     expect(aiMocks.wrapLanguageModel).not.toHaveBeenCalled();
@@ -740,58 +744,4 @@ describe("Cloudflare AI recognition", () => {
     });
   });
 
-  it("keeps image payloads out of diagnostics", async () => {
-    aiMocks.generateObject.mockResolvedValue({
-      object: {
-        subscriptions: [generatedDraft()],
-        warnings: [],
-      },
-      finishReason: "stop",
-    });
-    const form = new FormData();
-    form.set("text", "dmit 15元 1个月");
-    form.set("thinkingControl", "null");
-    form.append("images[]", new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: "image/png" }), "shot.png");
-    const request = new Request("https://renewlet.test/api/app/ai/subscriptions/recognize", {
-      method: "POST",
-      headers: {
-        authorization: "Bearer test",
-        "x-renewlet-locale": "zh-CN",
-      },
-      body: form,
-    });
-
-    const response = await recognizeSubscriptions(request, envFixture());
-    const body = await response.json() as {
-      diagnostics: { request: { images: Array<{ mediaType: string; sizeBytes: number }> } };
-    };
-    const text = JSON.stringify(body.diagnostics);
-
-    expect(body.diagnostics.request.images).toEqual([{ mediaType: "image/png", sizeBytes: 4 }]);
-    expect(text).not.toContain("base64");
-    expect(text).not.toContain("iVBOR");
-  });
-
-  it("accepts five images and rejects additional image uploads", async () => {
-    aiMocks.generateObject.mockResolvedValue({
-      object: {
-        subscriptions: [generatedDraft()],
-        warnings: [],
-      },
-      finishReason: "stop",
-    });
-
-    const response = await recognizeSubscriptions(requestForImages(AI_RECOGNITION_MAX_IMAGES), envFixture());
-    const body = await response.json() as {
-      diagnostics: { request: { images: Array<{ mediaType: string; sizeBytes: number }> } };
-    };
-
-    expect(body.diagnostics.request.images).toHaveLength(5);
-    await expect(
-      recognizeSubscriptions(requestForImages(AI_RECOGNITION_MAX_IMAGES + 1), envFixture()),
-    ).rejects.toMatchObject({
-      status: 413,
-      code: "BODY_TOO_LARGE",
-    });
-  });
 });

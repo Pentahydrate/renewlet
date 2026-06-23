@@ -16,6 +16,7 @@ import {
   importMessage,
   IMPORT_MESSAGE_CODES,
   normalizeDateOnly,
+  normalizeNullableDateOnly,
   normalizeWebsite,
   stableHash,
   toBillingCycleFromDays,
@@ -239,7 +240,7 @@ export function buildFromWallosDisplayRows(
       currency: price.currency,
       category: category.value,
       paymentMethod,
-      startDate: normalizeDateOnly(row["Next Payment"], base.today, localWarnings, "wallosDueDate"),
+      startDate: null,
       nextBillingDate: normalizeDateOnly(row["Next Payment"], base.today, localWarnings, "wallosDueDate"),
       website,
       notes: [String(row["Notes"] ?? "").trim(), buildDisplayWallosNotes(row)].filter(Boolean).join("\n\n"),
@@ -300,8 +301,8 @@ function mapWallosRow(
   } else if (logo) {
     localWarnings.push(IMPORT_MESSAGE_CODES.missingLogoFile);
   }
-  const startDate = normalizeDateOnly(row["start_date"] ?? row["next_payment"], context.today, localWarnings, "wallosStartDate");
-  const nextBillingDate = normalizeDateOnly(row["next_payment"] ?? row["start_date"], startDate, localWarnings, "wallosDueDate");
+  const startDate = normalizeNullableDateOnly(row["start_date"], localWarnings, "wallosStartDate");
+  const nextBillingDate = normalizeDateOnly(row["next_payment"] ?? row["start_date"], startDate ?? context.today, localWarnings, "wallosDueDate");
   const wallosOnly = buildWallosOnlyNotes(row, related.member);
   const notes = [String(row["notes"] ?? "").trim(), wallosOnly].filter(Boolean).join("\n\n");
   const billing = wallosBilling(row, localWarnings);
@@ -322,7 +323,7 @@ function mapWallosRow(
     reminderDays: wallosReminderDays(row, localWarnings),
     // Wallos auto_renew 是真实续订语义；字段缺失时遵循 Renewlet 默认关闭，不从 cycle 推断 consent。
     autoRenew: row["auto_renew"] !== undefined && Number(row["auto_renew"]) === 1 && Number(row["cycle"] ?? 3) !== 5,
-    autoCalculateNextBillingDate: Number(row["cycle"] ?? 3) !== 5,
+    autoCalculateNextBillingDate: false,
     sourceId: `${String(row["user_id"] ?? "1")}:${String(row["id"] ?? stableHash(JSON.stringify(row)))}`,
     confidence: row["id"] === undefined ? "low" : "high",
     oneTime,
@@ -339,7 +340,7 @@ function makeImportSubscription(input: {
   currency: string;
   category: string;
   paymentMethod?: string | undefined;
-  startDate: DateOnly | string;
+  startDate: DateOnly | string | null;
   nextBillingDate: DateOnly | string;
   website?: string | undefined;
   notes?: string | undefined;
@@ -369,10 +370,10 @@ function makeImportSubscription(input: {
     pinned: false,
     publicHidden: false,
     paymentMethod: input.paymentMethod ?? null,
-    startDate: input.startDate as DateOnly,
+    startDate: input.startDate === null ? null : input.startDate as DateOnly,
     nextBillingDate: input.nextBillingDate as DateOnly,
     autoRenew: input.oneTime ? false : input.autoRenew ?? false,
-    autoCalculateNextBillingDate: input.oneTime ? false : input.autoCalculateNextBillingDate ?? true,
+    autoCalculateNextBillingDate: input.oneTime ? false : input.autoCalculateNextBillingDate ?? false,
     trialEndDate: null,
     website: input.website ?? null,
     notes: truncateImportNotes(input.notes),

@@ -267,4 +267,42 @@ func TestAIModelListTimeout(t *testing.T) {
 	if !errors.As(err, &httpErr) || httpErr.status != http.StatusRequestTimeout || httpErr.code != "AI_MODEL_LIST_TIMEOUT" {
 		t.Fatalf("expected timeout error, got %#v", err)
 	}
+	if httpErr.message == nil || !strings.Contains(*httpErr.message, "openai models GET request to "+server.URL+"/v1/models timed out after 1ms before response headers") {
+		t.Fatalf("expected timeout diagnostic with target, got %#v", httpErr.message)
+	}
+	if strings.Contains(optionalStringValue(httpErr.message), "sk-test-secret") {
+		t.Fatalf("timeout diagnostic leaked API key: %q", optionalStringValue(httpErr.message))
+	}
+}
+
+func TestAIModelListTransportErrorUsesFullRedactedRequestContext(t *testing.T) {
+	previousClient := aiModelListHTTPClient
+	aiModelListHTTPClient = &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		return nil, errors.New("Network connection lost for " + request.URL.String() + " with sk-test-secret")
+	})}
+	t.Cleanup(func() {
+		aiModelListHTTPClient = previousClient
+	})
+
+	_, err := listAIModels(context.Background(), aiModelListRequest{
+		ProviderType: aiProviderTypeOpenAI,
+		APIKey:       "sk-test-secret",
+	}, localeZhCN)
+	var httpErr *aiModelListHTTPError
+	if !errors.As(err, &httpErr) || httpErr.status != http.StatusBadRequest || httpErr.code != "AI_MODEL_LIST_FAILED" {
+		t.Fatalf("expected transport failure, got %#v", err)
+	}
+	message := optionalStringValue(httpErr.message)
+	for _, want := range []string{
+		"openai models GET request to https://api.openai.com/v1/models failed before response headers",
+		"Network connection lost for https://api.openai.com/v1/models with [redacted]",
+		`"authorization":"[redacted]"`,
+	} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("expected transport diagnostic to contain %q, got %q", want, message)
+		}
+	}
+	if strings.Contains(message, "sk-test-secret") {
+		t.Fatalf("transport diagnostic leaked API key: %q", message)
+	}
 }

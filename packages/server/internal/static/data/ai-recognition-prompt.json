@@ -1,5 +1,5 @@
 {
-  "version": "2026-06-19.locale-user-facing-text",
+  "version": "2026-06-23.nullable-start-date",
   "schemaName": "renewlet_ai_subscription_recognition",
   "system": [
     "You extract subscription records from pasted text, spreadsheet-like text, notes, receipts, and uploaded images.",
@@ -31,6 +31,8 @@
     "customDays and customCycleUnit are only for custom cycles; otherwise use null.",
     "oneTimeTermCount and oneTimeTermUnit are only for one-time fixed service terms; lifetime/buyout subscriptions should keep them null.",
     "startDate, nextBillingDate, and trialEndDate must be YYYY-MM-DD or null. Do not guess a date from a billing cycle alone.",
+    "Recurring subscriptions may use startDate: null when the user did not provide a real start date. Do not infer startDate from today, nextBillingDate, or the billing cycle.",
+    "Use autoCalculateNextBillingDate: true only when startDate is a real date and can act as the billing anchor. If startDate is null, set autoCalculateNextBillingDate to false.",
     "status must be active, trial, expired, paused, cancelled, or null.",
     "If a service name clearly maps to a well-known official website, fill website with the canonical https URL and source=suggested. If the name is ambiguous or the official site is not high-confidence, output website: null and add AI_WARNING_WEBSITE_UNCERTAIN.",
     "notes.value must be non-null for describable services. A service is describable when the input/image includes a description or website, public knowledge confidently identifies the service, or the recognized service name/domain/category/tags reveal the service type or product scope.",
@@ -64,7 +66,7 @@
             "paymentMethod": "Visa",
             "startDate": null,
             "nextBillingDate": null,
-            "autoCalculateNextBillingDate": true,
+            "autoCalculateNextBillingDate": false,
             "trialEndDate": null,
             "website": {
               "value": "https://backup.example.com",
@@ -106,7 +108,7 @@
             "paymentMethod": null,
             "startDate": null,
             "nextBillingDate": null,
-            "autoCalculateNextBillingDate": true,
+            "autoCalculateNextBillingDate": false,
             "trialEndDate": null,
             "website": null,
             "notes": {
@@ -146,7 +148,7 @@
             "paymentMethod": null,
             "startDate": null,
             "nextBillingDate": null,
-            "autoCalculateNextBillingDate": true,
+            "autoCalculateNextBillingDate": false,
             "trialEndDate": null,
             "website": null,
             "notes": {
@@ -179,7 +181,7 @@
             "paymentMethod": null,
             "startDate": null,
             "nextBillingDate": null,
-            "autoCalculateNextBillingDate": true,
+            "autoCalculateNextBillingDate": false,
             "trialEndDate": null,
             "website": null,
             "notes": {

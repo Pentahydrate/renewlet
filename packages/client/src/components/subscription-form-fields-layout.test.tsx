@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { assertDateOnly } from "@/lib/time/date-only";
-import { createSubscriptionFormState } from "@/types/subscription-form";
+import { createSubscriptionFormState, type SubscriptionFormState } from "@/types/subscription-form";
 import { SubscriptionFormFields, type SubscriptionFormErrors } from "./subscription-form-fields";
 
 const config = {
@@ -16,11 +17,25 @@ const config = {
   ],
 };
 
-function Harness({ errors }: { errors: SubscriptionFormErrors }) {
+beforeAll(() => {
+  Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+  Element.prototype.setPointerCapture ??= vi.fn();
+  Element.prototype.releasePointerCapture ??= vi.fn();
+});
+
+function Harness({
+  errors,
+  formOverrides = {},
+}: {
+  errors: SubscriptionFormErrors;
+  formOverrides?: Partial<SubscriptionFormState>;
+}) {
+  const [formErrors, setFormErrors] = useState(errors);
   const [formData, setFormData] = useState(() => createSubscriptionFormState({
     currency: "CNY",
     startDate: assertDateOnly("2026-01-01"),
     nextBillingDate: assertDateOnly("2026-02-01"),
+    ...formOverrides,
   }));
 
   return (
@@ -32,7 +47,15 @@ function Harness({ errors }: { errors: SubscriptionFormErrors }) {
         setFormData={setFormData}
         showLogoField={false}
         onLogoUploadStatusChange={vi.fn()}
-        errors={errors}
+        errors={formErrors}
+        onClearFieldError={(field) => {
+          setFormErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+          });
+        }}
         notificationReminderDays={5}
       />
     </TooltipProvider>
@@ -52,5 +75,131 @@ describe("SubscriptionFormFields layout", () => {
     expect(error).toHaveAttribute("id", "price-error");
     expect(priceField).not.toContainElement(error);
     expect(priceRow).toContainElement(error);
+  });
+
+  it("keeps start date before next billing date in the date row", () => {
+    render(<Harness errors={{}} />);
+
+    const startLabel = screen.getByText("开始日期（可选）");
+    const nextLabel = screen.getByText("到期日期");
+
+    expect(Boolean(startLabel.compareDocumentPosition(nextLabel) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+  });
+
+  it("renders missing next billing date errors inside the next billing date field", () => {
+    render(<Harness
+      errors={{ dates: "请选择到期日期" }}
+      formOverrides={{ startDate: undefined, nextBillingDate: undefined }}
+    />);
+
+    const startDateButton = document.getElementById("startDate");
+    const nextBillingDateButton = document.getElementById("nextBillingDate");
+    const dateError = screen.getByRole("alert");
+    const startDateField = startDateButton?.closest('[data-slot="form-field"]');
+    const nextBillingDateField = nextBillingDateButton?.closest('[data-slot="form-field"]');
+
+    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "nextBillingDate-error");
+    expect(dateError).toHaveAttribute("id", "nextBillingDate-error");
+    expect(nextBillingDateField).toContainElement(dateError);
+    expect(startDateField).not.toContainElement(dateError);
+  });
+
+  it("associates auto-calculate start-date errors with the start date button", () => {
+    render(<Harness
+      errors={{ dates: "开启自动计算时需要开始日期" }}
+      formOverrides={{ startDate: undefined, autoCalculate: true }}
+    />);
+
+    const startDateButton = document.getElementById("startDate");
+    const nextBillingDateButton = document.getElementById("nextBillingDate");
+    const dateError = screen.getByRole("alert");
+    const startDateField = startDateButton?.closest('[data-slot="form-field"]');
+    const nextBillingDateField = nextBillingDateButton?.closest('[data-slot="form-field"]');
+
+    expect(startDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(startDateButton).toHaveAttribute("aria-describedby", "startDate-error");
+    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(dateError).toHaveAttribute("id", "startDate-error");
+    expect(startDateField).toContainElement(dateError);
+    expect(nextBillingDateField).not.toContainElement(dateError);
+  });
+
+  it("renders date-order errors inside the next billing date field", () => {
+    render(<Harness
+      errors={{ dates: "到期日期不能早于开始日期" }}
+      formOverrides={{
+        startDate: assertDateOnly("2026-02-01"),
+        nextBillingDate: assertDateOnly("2026-01-01"),
+      }}
+    />);
+
+    const nextBillingDateButton = document.getElementById("nextBillingDate");
+    const dateError = screen.getByRole("alert");
+    const nextBillingDateField = nextBillingDateButton?.closest('[data-slot="form-field"]');
+
+    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "nextBillingDate-error");
+    expect(dateError).toHaveAttribute("id", "nextBillingDate-error");
+    expect(nextBillingDateField).toContainElement(dateError);
+  });
+
+  it("clears stale date errors when switching billing cycle shape", async () => {
+    const user = userEvent.setup();
+    render(<Harness
+      errors={{
+        dates: "请选择到期日期",
+        price: "金额必须是 0 到 1,000,000,000 之间的有效数字",
+      }}
+      formOverrides={{ startDate: undefined, nextBillingDate: undefined }}
+    />);
+
+    await user.click(screen.getByRole("combobox", { name: "扣费周期" }));
+    await user.click(await screen.findByRole("option", { name: "一次性购买" }));
+
+    const purchaseDateButton = document.getElementById("startDate");
+    expect(screen.queryByText("请选择到期日期")).not.toBeInTheDocument();
+    expect(purchaseDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByText("金额必须是 0 到 1,000,000,000 之间的有效数字")).toBeInTheDocument();
+  });
+
+  it("clears one-time date and term errors when switching one-time mode", async () => {
+    const user = userEvent.setup();
+    render(<Harness
+      errors={{
+        dates: "请选择购买日期",
+        oneTimeTerm: "请输入有效的服务时长",
+      }}
+      formOverrides={{
+        billingCycle: "one-time",
+        oneTimeMode: "term",
+        startDate: undefined,
+        nextBillingDate: undefined,
+        oneTimeTermCount: "",
+      }}
+    />);
+
+    expect(screen.getByText("请输入有效的服务时长")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "长期有效" }));
+
+    const purchaseDateButton = document.getElementById("startDate");
+    expect(screen.queryByText("请选择购买日期")).not.toBeInTheDocument();
+    expect(screen.queryByText("请输入有效的服务时长")).not.toBeInTheDocument();
+    expect(purchaseDateButton).toHaveAttribute("aria-invalid", "false");
+  });
+
+  it("clears stale date errors when toggling automatic date calculation", async () => {
+    const user = userEvent.setup();
+    render(<Harness
+      errors={{ dates: "请选择到期日期" }}
+      formOverrides={{ startDate: undefined, nextBillingDate: undefined }}
+    />);
+
+    await user.click(screen.getByRole("switch", { name: "自动计算到期日" }));
+
+    const startDateButton = document.getElementById("startDate");
+    expect(screen.queryByText("请选择到期日期")).not.toBeInTheDocument();
+    expect(startDateButton).toHaveAttribute("aria-invalid", "false");
   });
 });

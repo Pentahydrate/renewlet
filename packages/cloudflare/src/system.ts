@@ -14,12 +14,12 @@ import {
   UpstreamOperationError,
   createUpstreamErrorDetails,
   createUpstreamHTTPError,
-  createUpstreamNetworkError,
   providerMessageFromResponse,
   readUpstreamResponseBody,
   upstreamErrorDetailsFromError,
   upstreamProviderResponseFromBody,
 } from "./upstream-response";
+import { sendUpstreamRequest } from "./upstream-http";
 
 const DEV_VERSION = "0.0.0-dev";
 const SYSTEM_RELEASE_FEED_URL = "https://github.com/zhiyingzzhou/renewlet/releases.atom";
@@ -192,14 +192,10 @@ async function fetchLatestStableRelease(env: Env): Promise<SystemReleaseEntry | 
     "user-agent": `Renewlet/${env.RENEWLET_VERSION?.trim() || rootPackageJson.version}`,
   };
   let response: Response;
-  try {
-    response = await fetch(SYSTEM_RELEASE_FEED_URL, { headers });
-  } catch (error) {
-    throw createUpstreamNetworkError({
-      provider: "GitHub",
-      error,
-    });
-  }
+  response = await sendUpstreamRequest(SYSTEM_RELEASE_FEED_URL, { headers }, {
+    provider: "GitHub",
+    timeoutMs: 15_000,
+  });
   const body = await readUpstreamResponseBody(response, SYSTEM_RELEASE_FEED_LIMIT_BYTES);
   const providerResponse = upstreamProviderResponseFromBody(response, body.text, body.truncated);
   if (!response.ok) {

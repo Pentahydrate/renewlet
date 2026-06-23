@@ -81,6 +81,9 @@ describe("wallos import", () => {
 
     expect(prepared.payload.source).toBe("wallos");
     expect(prepared.payload.subscriptions[0]?.name).toBe("Wallos UI Row");
+    expect(prepared.payload.subscriptions[0]?.startDate).toBeNull();
+    expect(prepared.payload.subscriptions[0]?.nextBillingDate).toBe("2026-06-01");
+    expect(prepared.payload.subscriptions[0]?.autoCalculateNextBillingDate).toBe(false);
     expect(prepared.warnings).toContain("IMPORT_WARNING_WALLOS_DISPLAY_LOW_CONFIDENCE");
   });
 
@@ -110,8 +113,10 @@ describe("wallos import", () => {
     expect(prepared.payload.subscriptions[0]?.billingCycle).toBe("custom");
     expect(prepared.payload.subscriptions[0]?.customDays).toBe(2);
     expect(prepared.payload.subscriptions[0]?.customCycleUnit).toBe("week");
+    expect(prepared.payload.subscriptions[0]?.startDate).toBe("2026-01-01");
     expect(prepared.payload.subscriptions[0]?.reminderDays).toBe(-1);
     expect(prepared.payload.subscriptions[0]?.autoRenew).toBe(true);
+    expect(prepared.payload.subscriptions[0]?.autoCalculateNextBillingDate).toBe(false);
     expect(prepared.payload.subscriptions[0]?.extra.import.sourceId).toBe("7:12");
     expect(prepared.payload.subscriptions[0]?.logo).toBeNull();
     expect(prepared.payload.customConfig?.categories.some((item) => item.labels["en-US"] === "Developer")).toBe(true);
@@ -135,6 +140,27 @@ describe("wallos import", () => {
     }), context);
 
     expect(prepared.payload.subscriptions[0]?.autoRenew).toBe(false);
+  });
+
+  it("preserves unknown Wallos API start dates as null for recurring subscriptions", async () => {
+    const prepared = await parseJsonText(JSON.stringify({
+      success: true,
+      subscriptions: [{
+        id: 45,
+        user_id: 7,
+        name: "Unknown Start",
+        price: 4,
+        currency_id: 1,
+        next_payment: "2026-06-01",
+        cycle: 3,
+        frequency: 1,
+        inactive: 0,
+      }],
+    }), context);
+
+    expect(prepared.payload.subscriptions[0]?.startDate).toBeNull();
+    expect(prepared.payload.subscriptions[0]?.nextBillingDate).toBe("2026-06-01");
+    expect(prepared.payload.subscriptions[0]?.autoCalculateNextBillingDate).toBe(false);
   });
 
   it("keeps Wallos audit metadata bounded and trims notes to the write schema limit", async () => {
@@ -411,6 +437,7 @@ describe("wallos import", () => {
         name: "Lifetime Tool",
         price: 199,
         currency_id: 2,
+        start_date: "2026-07-01",
         next_payment: "2026-07-01",
         cycle: 5,
         frequency: 1,
@@ -435,6 +462,7 @@ describe("wallos import", () => {
         name: "Lifetime Tool",
         price: 199,
         currency_id: 2,
+        start_date: "2026-07-01",
         next_payment: "2026-07-01",
         cycle: 5,
         frequency: 1,

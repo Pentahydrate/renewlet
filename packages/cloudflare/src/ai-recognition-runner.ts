@@ -36,6 +36,7 @@ import {
 } from "./ai-recognition-diagnostics";
 import {
   buildAIRecognitionMessages,
+  AI_RECOGNITION_PROVIDER_TIMEOUT_MS,
   createAIRecognitionLanguageModel,
   createAIRecognitionModel,
   providerOptionsForThinking,
@@ -92,6 +93,7 @@ export async function runAIRecognition({
   configContext,
   thinkingControl,
   maxOutputTokens,
+  abortSignal,
 }: {
   settings: AiRecognitionSettings;
   input: AIRecognitionInput;
@@ -101,6 +103,7 @@ export async function runAIRecognition({
   configContext: AIRecognitionPromptConfigContext;
   thinkingControl: AiThinkingControl | null;
   maxOutputTokens: number;
+  abortSignal?: AbortSignal;
 }): Promise<AiRecognizeResponse> {
   const providerOptions = providerOptionsForThinking(settings, thinkingControl);
   const systemPrompt = buildAIRecognitionSystemPrompt();
@@ -128,6 +131,7 @@ export async function runAIRecognition({
       userPrompt: nextUserPrompt,
       providerOptions,
       maxOutputTokens,
+      ...(abortSignal ? { abortSignal } : {}),
     });
     const initialGeneration = await generateForPrompt(userPrompt);
     return await finalizeAIRecognitionGeneration({
@@ -159,6 +163,7 @@ export async function runAIRecognition({
         userPrompt: nextUserPrompt,
         providerOptions,
         maxOutputTokens,
+        ...(abortSignal ? { abortSignal } : {}),
       });
       try {
         return await finalizeAIRecognitionGeneration({
@@ -440,6 +445,7 @@ async function generateAIRecognitionObject({
   userPrompt,
   providerOptions,
   maxOutputTokens,
+  abortSignal,
 }: {
   settings: AiRecognitionSettings;
   input: AIRecognitionInput;
@@ -447,6 +453,7 @@ async function generateAIRecognitionObject({
   userPrompt: string;
   providerOptions: Record<string, Record<string, JSONValue>> | undefined;
   maxOutputTokens: number;
+  abortSignal?: AbortSignal;
 }): Promise<AIRecognitionGeneration> {
   const capture: AIRecognitionCapture = {
     rawModelText: null,
@@ -464,6 +471,8 @@ async function generateAIRecognitionObject({
       maxOutputTokens,
       ...(providerOptions ? { providerOptions } : {}),
       maxRetries: 1,
+      ...(abortSignal ? { abortSignal } : {}),
+      timeout: { totalMs: AI_RECOGNITION_PROVIDER_TIMEOUT_MS },
     });
     return {
       object: result.object,
@@ -513,6 +522,7 @@ async function generateAIRecognitionObjectStream({
       }),
       maxOutputTokens,
       abortSignal,
+      timeout: { totalMs: AI_RECOGNITION_PROVIDER_TIMEOUT_MS, chunkMs: 30_000 },
       ...(providerOptions ? { providerOptions } : {}),
       maxRetries: 1,
     });

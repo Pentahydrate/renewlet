@@ -37,6 +37,9 @@ type SubscriptionCardHandlers = {
   onTogglePublicHidden?: (id: string) => void;
   onViewDetails?: (id: string) => void;
 };
+type SubscriptionCardRenderOptions = {
+  viewMode?: "grid" | "list";
+};
 
 const mocks = vi.hoisted(() => {
   const longCategoryLabel = "生产力平台和开发者基础设施";
@@ -178,11 +181,16 @@ function createSubscription(overrides: SubscriptionOverrides = {}): Subscription
   };
 }
 
-function renderSubscriptionCard(overrides: SubscriptionOverrides = {}, handlers: SubscriptionCardHandlers = {}) {
+function renderSubscriptionCard(
+  overrides: SubscriptionOverrides = {},
+  handlers: SubscriptionCardHandlers = {},
+  options: SubscriptionCardRenderOptions = {},
+) {
   return render(
     <TooltipProvider delayDuration={0}>
       <SubscriptionCard
         subscription={createSubscription(overrides)}
+        {...(options.viewMode ? { viewMode: options.viewMode } : {})}
         timeZone="Asia/Shanghai"
         inheritedReminderDays={5}
         categoryByValue={new Map(mocks.categories.map((category) => [category.value, category]))}
@@ -674,6 +682,18 @@ describe("SubscriptionCard", () => {
     expectMetaFlowItemsInOrder("开始: 2026/5/15", "到期: 2026/6/15", "28 天后续费");
   });
 
+  it("hides the start-date meta item when a recurring subscription has an unknown start date", () => {
+    renderSubscriptionCard({
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+      nextBillingDate: assertDateOnly("2026-06-15"),
+    });
+
+    const metaFlow = expectMetaFlowItemsInOrder("到期: 2026/6/15", "28 天后续费");
+
+    expect(within(metaFlow).queryByText(/开始:/)).not.toBeInTheDocument();
+  });
+
   it("keeps start date, billing date, payment method, and relative days in the intended order", () => {
     renderSubscriptionCard({
       paymentMethod: "credit_card",
@@ -759,39 +779,13 @@ describe("SubscriptionCard", () => {
   });
 
   it("renders inherited reminder days with the current global setting", () => {
-    render(
-      <TooltipProvider delayDuration={0}>
-        <SubscriptionCard
-          subscription={createSubscription({ reminderDays: -1 })}
-          viewMode="list"
-          timeZone="Asia/Shanghai"
-          inheritedReminderDays={5}
-          categoryByValue={new Map(mocks.categories.map((category) => [category.value, category]))}
-          paymentMethodByValue={new Map(mocks.paymentMethods.map((method) => [method.value, method]))}
-          onEdit={vi.fn()}
-          onDelete={vi.fn()}
-        />
-      </TooltipProvider>,
-    );
+    renderSubscriptionCard({ reminderDays: -1 }, {}, { viewMode: "list" });
 
     expect(screen.getByText("默认提醒：提前 5 天")).toBeInTheDocument();
   });
 
   it("renders disabled reminder days", () => {
-    render(
-      <TooltipProvider delayDuration={0}>
-        <SubscriptionCard
-          subscription={createSubscription({ reminderDays: -2 })}
-          viewMode="list"
-          timeZone="Asia/Shanghai"
-          inheritedReminderDays={5}
-          categoryByValue={new Map(mocks.categories.map((category) => [category.value, category]))}
-          paymentMethodByValue={new Map(mocks.paymentMethods.map((method) => [method.value, method]))}
-          onEdit={vi.fn()}
-          onDelete={vi.fn()}
-        />
-      </TooltipProvider>,
-    );
+    renderSubscriptionCard({ reminderDays: -2 }, {}, { viewMode: "list" });
 
     expect(screen.getByText("不提醒")).toBeInTheDocument();
   });

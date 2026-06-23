@@ -77,6 +77,37 @@ vi.mock("@/components/subscription-form-fields", () => ({
       >
         填充非法网站订阅
       </button>
+      <button
+        type="button"
+        onClick={() =>
+          setFormData(createSubscriptionFormState({
+            name: "QQ Music",
+            price: "18",
+            currency: "USD",
+            startDate: undefined,
+            nextBillingDate: assertDateOnly("2026-08-01"),
+            autoCalculate: false,
+          }))
+        }
+      >
+        填充未知开始日期订阅
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          setFormData(createSubscriptionFormState({
+            name: "Auto Date",
+            price: "18",
+            currency: "USD",
+            startDate: undefined,
+            nextBillingDate: assertDateOnly("2026-08-01"),
+            autoCalculate: true,
+          }))
+        }
+      >
+        填充缺少自动计算开始日期订阅
+      </button>
+      {errors?.["dates"] ? <p role="alert">{errors["dates"]}</p> : null}
       {errors?.["website"] ? <p role="alert">{errors["website"]}</p> : null}
     </>
   ),
@@ -148,5 +179,51 @@ describe("SubscriptionDialog submit", () => {
       name: "Free uptime check",
       price: 0,
     }));
+  });
+
+  it("submits manual recurring subscriptions without a start date", () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <TooltipProvider delayDuration={0}>
+        <SubscriptionDialog
+          mode="create"
+          open
+          onOpenChange={vi.fn()}
+          onSubmit={onSubmit}
+        />
+      </TooltipProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "填充未知开始日期订阅" }));
+    fireEvent.click(screen.getByRole("button", { name: "添加订阅" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      name: "QQ Music",
+      startDate: null,
+      nextBillingDate: "2026-08-01",
+      autoCalculateNextBillingDate: false,
+    }));
+  });
+
+  it("blocks automatic date calculation when the start date is missing", () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <TooltipProvider delayDuration={0}>
+        <SubscriptionDialog
+          mode="create"
+          open
+          onOpenChange={vi.fn()}
+          onSubmit={onSubmit}
+        />
+      </TooltipProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "填充缺少自动计算开始日期订阅" }));
+    fireEvent.click(screen.getByRole("button", { name: "添加订阅" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("开启自动计算时需要开始日期");
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

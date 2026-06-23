@@ -48,6 +48,52 @@
     "expectedStatus": "active"
   },
   {
+    "name": "weekly-manual-without-start-date-keeps-next-billing-anchor",
+    "input": {
+      "billingCycle": "weekly",
+      "status": "expired",
+      "startDate": null,
+      "nextBillingDate": "2026-01-08",
+      "autoRenew": false,
+      "autoCalculateNextBillingDate": false
+    },
+    "today": "2026-01-15",
+    "mode": "manual",
+    "eligible": true,
+    "expectedNextBillingDate": "2026-01-22",
+    "expectedStatus": "active"
+  },
+  {
+    "name": "monthly-auto-without-start-date-keeps-next-billing-anchor",
+    "input": {
+      "billingCycle": "monthly",
+      "status": "active",
+      "startDate": null,
+      "nextBillingDate": "2026-01-20",
+      "autoRenew": true,
+      "autoCalculateNextBillingDate": false
+    },
+    "today": "2026-03-01",
+    "mode": "auto",
+    "eligible": true,
+    "expectedNextBillingDate": "2026-03-20",
+    "expectedStatus": "active"
+  },
+  {
+    "name": "auto-calculate-without-start-date-not-eligible",
+    "input": {
+      "billingCycle": "monthly",
+      "status": "active",
+      "startDate": null,
+      "nextBillingDate": "2026-01-20",
+      "autoRenew": true,
+      "autoCalculateNextBillingDate": true
+    },
+    "today": "2026-03-01",
+    "mode": "auto",
+    "eligible": false
+  },
+  {
     "name": "manual-future-date-still-advances-one-cycle",
     "input": {
       "billingCycle": "monthly",

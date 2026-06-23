@@ -65,7 +65,8 @@ describe("AI recognition import mapping", () => {
         currency: null,
         billingCycle: null,
         startDate: null,
-        nextBillingDate: null,
+        nextBillingDate: "2026-07-01",
+        autoCalculateNextBillingDate: false,
       }),
     ], context);
 
@@ -73,14 +74,25 @@ describe("AI recognition import mapping", () => {
     expect(subscription?.price).toBe(0);
     expect(subscription?.currency).toBe("USD");
     expect(subscription?.billingCycle).toBe("monthly");
-    expect(subscription?.startDate).toBe("2026-06-05");
-    expect(subscription?.nextBillingDate).toBe("2026-06-05");
+    expect(subscription?.startDate).toBeNull();
+    expect(subscription?.nextBillingDate).toBe("2026-07-01");
+    expect(subscription?.autoCalculateNextBillingDate).toBe(false);
     expect(prepared.warnings).toEqual(expect.arrayContaining([
       `IMPORT_WARNING_FOR_SUBSCRIPTION|Netflix|${IMPORT_MESSAGE_CODES.aiPriceDefaulted}`,
       `IMPORT_WARNING_FOR_SUBSCRIPTION|Netflix|${IMPORT_MESSAGE_CODES.aiCurrencyDefaulted}`,
       `IMPORT_WARNING_FOR_SUBSCRIPTION|Netflix|${IMPORT_MESSAGE_CODES.aiBillingCycleDefaulted}`,
-      `IMPORT_WARNING_FOR_SUBSCRIPTION|Netflix|${IMPORT_MESSAGE_CODES.aiDateDefaulted}`,
     ]));
+    expect(prepared.warnings.join("\n")).not.toContain(IMPORT_MESSAGE_CODES.aiDateDefaulted);
+  });
+
+  it("does not default missing next billing dates", () => {
+    expect(() => buildPreparedImportFromAIDrafts([
+      draft({
+        startDate: null,
+        nextBillingDate: null,
+        autoCalculateNextBillingDate: false,
+      }),
+    ], context)).toThrow("AI_RECOGNITION_DRAFT_DATE_REQUIRED");
   });
 
   it("keeps useful suggested notes without adding a preview warning", () => {

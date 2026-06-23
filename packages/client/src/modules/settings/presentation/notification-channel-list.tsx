@@ -35,6 +35,10 @@ function getNotificationChannelSummary(settings: AppSettings, channel: Notificat
       return settings.barkDeviceKey.trim() ? t("settings.channel.barkReady") : t("settings.channel.barkTodo");
     case 'serverchan':
       return settings.serverchanSendKey.trim() ? t("settings.channel.serverchanReady") : t("settings.channel.serverchanTodo");
+    case 'discord':
+      return settings.discordWebhookUrl.trim() ? t("settings.channel.discordReady") : t("settings.channel.discordTodo");
+    case 'pushplus':
+      return settings.pushplusToken.trim() ? t("settings.channel.pushplusReady") : t("settings.channel.pushplusTodo");
   }
 }
 

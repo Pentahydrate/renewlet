@@ -71,7 +71,10 @@ describe("passkeyService", () => {
       })
       .mockResolvedValueOnce(sessionResponse);
 
-    await expect(passkeyService.authenticate({ useBrowserAutofill: true })).resolves.toEqual(sessionResponse);
+    await expect(passkeyService.authenticate({ useBrowserAutofill: true })).resolves.toEqual({
+      status: "authenticated",
+      session: sessionResponse,
+    });
 
     const optionsInit = mocks.apiFetch.mock.calls[0]?.[2] as RequestInit & { authMode?: string };
     const verifyInit = mocks.apiFetch.mock.calls[1]?.[2] as RequestInit & { authMode?: string };
@@ -86,6 +89,44 @@ describe("passkeyService", () => {
       challengeId: "challenge-1",
       response: { id: "credential-id" },
     });
+  });
+
+  it("treats user cancellation as a neutral passkey result and skips verification", async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      challengeId: "challenge-1",
+      expiresAt: "2026-07-03T00:00:00.000Z",
+      options: { challenge: "challenge-value", rpId: "renewlet.example" },
+    });
+    const cause = Object.assign(new Error("The operation either timed out or was not allowed."), {
+      name: "NotAllowedError",
+    });
+    mocks.startAuthentication.mockRejectedValueOnce(Object.assign(new Error("The operation either timed out or was not allowed."), {
+      name: "WebAuthnError",
+      code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+      cause,
+    }));
+
+    await expect(passkeyService.authenticate()).resolves.toEqual({ status: "cancelled" });
+
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(1);
+    expect(mocks.apiFetch.mock.calls[0]?.[0]).toBe("/api/app/auth/passkeys/authenticate/options");
+  });
+
+  it("treats an aborted WebAuthn ceremony as a neutral passkey result and skips verification", async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      challengeId: "challenge-1",
+      expiresAt: "2026-07-03T00:00:00.000Z",
+      options: { challenge: "challenge-value", rpId: "renewlet.example" },
+    });
+    mocks.startAuthentication.mockRejectedValueOnce(Object.assign(new Error("Manually cancelling existing WebAuthn API call"), {
+      name: "WebAuthnError",
+      code: "ERROR_CEREMONY_ABORTED",
+    }));
+
+    await expect(passkeyService.authenticate()).resolves.toEqual({ status: "cancelled" });
+
+    expect(mocks.apiFetch).toHaveBeenCalledTimes(1);
+    expect(mocks.apiFetch.mock.calls[0]?.[0]).toBe("/api/app/auth/passkeys/authenticate/options");
   });
 
   it("stores the renewed session after registering a passkey", async () => {

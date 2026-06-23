@@ -1,6 +1,7 @@
 // Worker AI SSE 测试保护 final-only 草稿事实源、diagnostics 脱敏和流式事件契约。
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AiRecognitionStreamEvent } from "@renewlet/shared/schemas/ai-recognition";
+import { createOpenAI } from "@ai-sdk/openai";
 import { recognizeSubscriptionsStream } from "./ai-recognition";
 import { generatedDraft } from "./ai-recognition.test-utils";
 import type { Env } from "./types";
@@ -166,6 +167,7 @@ describe("Cloudflare AI recognition stream", () => {
     aiMocks.wrapLanguageModel.mockClear();
     aiMocks.isNoObjectGeneratedError.mockClear();
     aiMocks.isAPICallError.mockClear();
+    vi.mocked(createOpenAI).mockClear();
     authMocks.requireAuth.mockResolvedValue({ user: authUser, session: { id: "ses" }, token: "test" });
     dbMocks.getSettings.mockResolvedValue({
       aiRecognition: {
@@ -228,6 +230,14 @@ describe("Cloudflare AI recognition stream", () => {
     expect(types).toContain("recognition/text-delta");
     expect(types).toContain("recognition/reasoning-delta");
     expect(types.at(-1)).toBe("recognition/final");
+    expect(aiMocks.streamText).toHaveBeenCalledWith(expect.objectContaining({
+      abortSignal: expect.any(AbortSignal),
+      timeout: { totalMs: 90_000, chunkMs: 30_000 },
+    }));
+    expect(vi.mocked(createOpenAI).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({
+      apiKey: "sk-test",
+      fetch: expect.any(Function),
+    }));
     expect(events).toContainEqual({ type: "recognition/progress", stage: "input-read" });
     expect(events).toContainEqual({ type: "recognition/progress", stage: "model-start" });
     expect(events).toContainEqual({ type: "recognition/partial", subscriptionsSeen: 1, warningsSeen: 1 });

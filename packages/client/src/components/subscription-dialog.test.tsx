@@ -103,14 +103,15 @@ describe("SubscriptionDialog", () => {
     if (!(startDateButton instanceof HTMLButtonElement) || !(nextBillingDateButton instanceof HTMLButtonElement)) {
       throw new Error("Date buttons were not rendered");
     }
-    const dateError = screen.getByText("请选择开始日期和下次扣费日期");
+    const dateError = screen.getByText("请选择到期日期");
+    const startDateField = startDateButton.closest('[data-slot="form-field"]');
+    const nextBillingDateField = nextBillingDateButton.closest('[data-slot="form-field"]');
     expect(dateError).toBeInTheDocument();
-    const autoCalculateHelp = screen.getByText("根据开始日期和扣费周期自动计算");
-    expect(startDateButton).toHaveAttribute("aria-invalid", "true");
-    expect(startDateButton).toHaveAttribute("aria-describedby", "startDate-error");
-    expect(startDateButton.closest('[data-slot="form-field-row"]')).toContainElement(dateError);
-    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "false");
-    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", autoCalculateHelp.id);
+    expect(startDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "nextBillingDate-error");
+    expect(nextBillingDateField).toContainElement(dateError);
+    expect(startDateField).not.toContainElement(dateError);
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -231,7 +232,7 @@ describe("SubscriptionDialog", () => {
     await user.click(screen.getByRole("button", { name: "管理成员" }));
     const reopenedMemberDialog = screen.getByRole("dialog", { name: "管理共享成员" });
     expect(reopenedMemberDialog).toBeInTheDocument();
-    await user.click(within(reopenedMemberDialog).getByRole("button", { name: "Close" }));
+    await user.click(within(reopenedMemberDialog).getByRole("button", { name: "关闭" }));
     expect(screen.queryByRole("dialog", { name: "管理共享成员" })).not.toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "编辑订阅" })).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
@@ -331,7 +332,7 @@ describe("SubscriptionDialog", () => {
     await user.click(autoRenewSwitch);
     await user.type(screen.getByLabelText("服务名称"), "Opt-in SaaS");
     await user.type(screen.getByLabelText("价格"), "10");
-    await user.click(screen.getByRole("button", { name: /开始日期.*选择日期/ }));
+    await user.click(screen.getByRole("button", { name: /到期日期.*选择日期/ }));
     await user.click(await screen.findByRole("button", { name: /2026年6月8日/ }));
     await user.click(screen.getByRole("button", { name: "添加订阅" }));
 

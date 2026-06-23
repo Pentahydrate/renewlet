@@ -173,12 +173,22 @@ function SubscriptionDetailContent({
             <span className="break-words">{paymentMethod ? label(paymentMethod.labels) : subscription.paymentMethod}</span>
           </DetailRow>
         ) : null}
-        <DetailRow label={nextBillingLabel}>
-          {formatDateOnly(isBuyout ? subscription.startDate : subscription.nextBillingDate, "full")}
-        </DetailRow>
-        <DetailRow label={t("subscription.detail.startDate")}>
-          {formatDateOnly(subscription.startDate, "full")}
-        </DetailRow>
+        {isBuyout ? (
+          subscription.startDate ? (
+            <DetailRow label={nextBillingLabel}>
+              {formatDateOnly(subscription.startDate, "full")}
+            </DetailRow>
+          ) : null
+        ) : (
+          <DetailRow label={nextBillingLabel}>
+            {formatDateOnly(subscription.nextBillingDate, "full")}
+          </DetailRow>
+        )}
+        {subscription.startDate ? (
+          <DetailRow label={t("subscription.detail.startDate")}>
+            {formatDateOnly(subscription.startDate, "full")}
+          </DetailRow>
+        ) : null}
         {subscription.trialEndDate ? (
           <DetailRow label={t("subscription.detail.trialEndDate")}>
             {formatDateOnly(subscription.trialEndDate, "full")}

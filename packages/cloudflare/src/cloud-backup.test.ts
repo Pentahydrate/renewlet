@@ -8,6 +8,7 @@ import {
   downloadCloudBackup,
   listCloudBackups,
   runDueCloudBackups,
+  sanitizeSettingsForCloudBackup,
   testCloudBackupConfig,
   updateCloudBackupConfig,
 } from "./cloud-backup";
@@ -403,6 +404,23 @@ describe("Cloudflare cloud backup", () => {
     expect(calls.some((call) => call.includes("dav.example.com"))).toBe(false);
   });
 
+  it("strips Discord and PushPlus secrets from cloud backup settings", () => {
+    const sanitized = sanitizeSettingsForCloudBackup({
+      ...createDefaultAppSettings(),
+      discordWebhookUrl: "https://discord.com/api/webhooks/123/secret",
+      discordBotUsername: "Renewlet",
+      discordBotAvatarUrl: "https://cdn.example.com/avatar.png",
+      pushplusToken: "push-token",
+    });
+
+    expect(sanitized).not.toHaveProperty("discordWebhookUrl");
+    expect(sanitized).not.toHaveProperty("discordBotUsername");
+    expect(sanitized).not.toHaveProperty("discordBotAvatarUrl");
+    expect(sanitized).not.toHaveProperty("pushplusToken");
+    expect(JSON.stringify(sanitized)).not.toContain("secret");
+    expect(JSON.stringify(sanitized)).not.toContain("push-token");
+  });
+
   it("returns a cloud backup provider error when manual snapshot provider is missing", async () => {
     const env = fakeEnvForRows([cloudBackupRow("webdav")]);
 
@@ -668,7 +686,8 @@ describe("Cloudflare cloud backup", () => {
       },
     } satisfies Partial<HttpError>);
     const details = error?.details as { rawResponseText?: string | null } | undefined;
-    expect(details?.rawResponseText).toContain("attempted host: https://renewlet.storage.example.com");
+    expect(details?.rawResponseText).toContain("S3");
+    expect(details?.rawResponseText).toContain("https://renewlet.storage.example.com/");
     expect(JSON.stringify(error?.details)).not.toContain("secret-key");
     expect(JSON.stringify(error?.details)).not.toContain("X-Amz-Signature");
   });

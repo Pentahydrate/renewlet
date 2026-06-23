@@ -68,7 +68,7 @@ const publicStatusSubscriptionSchema = z.object({
     color: z.string().trim().max(80).optional(),
   }).strict(),
   status: z.enum(SUBSCRIPTION_STATUSES),
-  startDate: z.string().refine(isValidDateOnly),
+  startDate: z.string().refine(isValidDateOnly).nullable(),
   nextBillingDate: z.string().refine(isValidDateOnly),
   updatedAt: z.string().trim().min(1),
   price: z.number().finite().nonnegative().max(1_000_000_000).optional(),

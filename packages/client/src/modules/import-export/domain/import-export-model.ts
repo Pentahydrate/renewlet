@@ -3,6 +3,7 @@ import type { AppSettings, BillingCycle, CustomCycleUnit, Subscription } from "@
 import type { ConfigItem, CustomConfig } from "@/types/config";
 import { labels } from "@/i18n/locales";
 import type { DateOnly } from "@/lib/time/date-only";
+import { isValidDateOnly } from "@renewlet/shared/runtime";
 
 /**
  * 导入文件大小上限。
@@ -115,6 +116,10 @@ const SECRET_SETTING_KEYS = new Set<keyof AppSettings>([
   "barkServerUrl",
   "barkDeviceKey",
   "serverchanSendKey",
+  "discordWebhookUrl",
+  "discordBotUsername",
+  "discordBotAvatarUrl",
+  "pushplusToken",
 ]);
 
 type RenewletExportSubscription = RenewletExportV1["data"]["subscriptions"][number];
@@ -122,7 +127,7 @@ type RenewletExportSubscription = RenewletExportV1["data"]["subscriptions"][numb
 /**
  * sanitizeSettingsForExport 移除默认不应进入备份的通知和账号 secret。
  *
- * includeSecrets 只由用户显式选择触发；普通备份不能意外携带 SMTP、Webhook、Bark 等凭证。
+ * includeSecrets 只由用户显式选择触发；普通备份不能意外携带通知、Webhook、PushPlus 等凭证。
  */
 export function sanitizeSettingsForExport(settings: AppSettings, includeSecrets: boolean): Partial<AppSettings> {
   const entries = Object.entries(settings).filter(([key]) => includeSecrets || !SECRET_SETTING_KEYS.has(key as keyof AppSettings));
@@ -255,11 +260,22 @@ export function makeConfigItem(value: string, label: string): ConfigItem {
 /** normalizeDateOnly 在导入边界把坏日期降级到 fallback，并留下可本地化 warning。 */
 export function normalizeDateOnly(value: unknown, fallback: DateOnly | string, warnings: string[], label: string): DateOnly {
   const text = typeof value === "string" ? value.trim() : "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(`${text}T00:00:00Z`))) {
+  if (isValidDateOnly(text)) {
     return text as DateOnly;
   }
   warnings.push(importMessage(IMPORT_MESSAGE_CODES.dateInvalid, label, fallback));
   return fallback as DateOnly;
+}
+
+/** nullable startDate 只保留来源真实日期；缺失不再回填今天或到期日。 */
+export function normalizeNullableDateOnly(value: unknown, warnings: string[], label: string): DateOnly | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+  if (isValidDateOnly(text)) {
+    return text as DateOnly;
+  }
+  warnings.push(importMessage(IMPORT_MESSAGE_CODES.dateInvalid, label, "empty"));
+  return null;
 }
 
 /** normalizeWebsite 只接受 http(s)，避免导入把 javascript/blob/data 等不可审计 URL 写入订阅。 */

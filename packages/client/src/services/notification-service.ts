@@ -8,6 +8,8 @@ import {
 } from "@/lib/api/schemas/notifications";
 import type { AppSettings, NotificationChannel } from "@/types/subscription";
 
+const NOTIFICATION_TEST_TIMEOUT_MS = 20_000;
+
 /** 通知服务层集中承接历史查询、临时测试发送和手动运行，所有响应都经过 Zod schema 收窄。 */
 export const notificationService = {
   async history(status: NotificationHistoryStatusFilter, limit: number, offset: number, signal?: AbortSignal): Promise<NotificationHistoryResponse> {
@@ -24,6 +26,7 @@ export const notificationService = {
     await apiFetch("/api/app/notifications/test", notificationsTestResponseSchema, {
       method: "POST",
       body: JSON.stringify({ channel, settings }),
+      timeoutMs: NOTIFICATION_TEST_TIMEOUT_MS,
     });
   },
 

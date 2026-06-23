@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -421,34 +422,29 @@ func newAIRecognitionModel(settings aiRecognitionSettings) (provider.LanguageMod
 	endpoint := resolveAIProviderEndpoint(settings)
 	switch settings.TransportProtocol {
 	case aiProtocolOpenAIChat:
+		httpClient := aiProviderRuntimeHTTPClient(endpoint, "")
 		if settings.ProviderType != aiProviderTypeOpenAI {
-			options := []compat.Option{compat.WithBaseURL(endpoint.RuntimeBaseURL)}
+			options := []compat.Option{compat.WithBaseURL(endpoint.RuntimeBaseURL), compat.WithHTTPClient(httpClient)}
 			if settings.APIKey != "" {
 				options = append(options, compat.WithAPIKey(settings.APIKey))
 			}
 			return aiRecognitionRuntimeModel{LanguageModel: compat.Chat(settings.Model, options...), providerType: settings.ProviderType, transportProtocol: settings.TransportProtocol}, nil
 		}
-		options := []openai.Option{openai.WithAPIKey(settings.APIKey)}
+		options := []openai.Option{openai.WithAPIKey(settings.APIKey), openai.WithHTTPClient(httpClient)}
 		if endpoint.RuntimeBaseURL != "" {
 			options = append(options, openai.WithBaseURL(endpoint.RuntimeBaseURL))
 		}
 		return aiRecognitionRuntimeModel{LanguageModel: openai.Chat(settings.Model, options...), providerType: settings.ProviderType, transportProtocol: settings.TransportProtocol}, nil
 	case aiProtocolGeminiGenerateContent:
-		options := []google.Option{google.WithAPIKey(settings.APIKey)}
+		options := []google.Option{google.WithAPIKey(settings.APIKey), google.WithHTTPClient(aiProviderRuntimeHTTPClient(endpoint, "v1beta"))}
 		if baseURL := goAIBaseURLForEndpoint(endpoint); baseURL != "" {
 			options = append(options, google.WithBaseURL(baseURL))
 		}
-		if client := aiProviderRuntimeHTTPClient(endpoint, "v1beta"); client != nil {
-			options = append(options, google.WithHTTPClient(client))
-		}
 		return aiRecognitionRuntimeModel{LanguageModel: google.Chat(settings.Model, options...), providerType: settings.ProviderType, transportProtocol: settings.TransportProtocol}, nil
 	case aiProtocolAnthropicMessages:
-		options := []anthropic.Option{anthropic.WithAPIKey(settings.APIKey)}
+		options := []anthropic.Option{anthropic.WithAPIKey(settings.APIKey), anthropic.WithHTTPClient(aiProviderRuntimeHTTPClient(endpoint, "v1"))}
 		if baseURL := goAIBaseURLForEndpoint(endpoint); baseURL != "" {
 			options = append(options, anthropic.WithBaseURL(baseURL))
-		}
-		if client := aiProviderRuntimeHTTPClient(endpoint, "v1"); client != nil {
-			options = append(options, anthropic.WithHTTPClient(client))
 		}
 		return aiRecognitionRuntimeModel{LanguageModel: anthropic.Chat(settings.Model, options...), providerType: settings.ProviderType, transportProtocol: settings.TransportProtocol}, nil
 	default:
@@ -562,19 +558,19 @@ func goAIBaseURLForEndpoint(endpoint aiProviderEndpoint) string {
 }
 
 func aiProviderRuntimeHTTPClient(endpoint aiProviderEndpoint, version string) *http.Client {
-	if !endpoint.AutoVersionDisabled {
-		return nil
-	}
-	return &http.Client{Transport: aiProviderRuntimeTransport{
+	// GoAI provider 内部负责组装协议请求；这里仅替换网络边界，让模型调用共享环境代理、TLS 下限和脱敏诊断。
+	return &http.Client{Timeout: aiRecognitionProviderTimeout, Transport: aiProviderRuntimeTransport{
 		baseURL:                endpoint.RuntimeBaseURL,
+		provider:               endpoint.ProviderType + " provider",
 		version:                version,
 		rewriteInsertedVersion: endpoint.AutoVersionDisabled,
-		inner:                  http.DefaultTransport,
+		inner:                  defaultUpstreamHTTPTransport(),
 	}}
 }
 
 type aiProviderRuntimeTransport struct {
 	baseURL                string
+	provider               string
 	version                string
 	rewriteInsertedVersion bool
 	inner                  http.RoundTripper
@@ -585,16 +581,17 @@ func (transport aiProviderRuntimeTransport) RoundTrip(request *http.Request) (*h
 	if inner == nil {
 		inner = http.DefaultTransport
 	}
-	if !transport.rewriteInsertedVersion {
-		return inner.RoundTrip(request)
+	if !transport.rewriteInsertedVersion || strings.TrimSpace(transport.version) == "" {
+		return transport.roundTripWithDiagnostics(inner, request)
 	}
 	parsed, err := url.Parse(transport.baseURL)
 	if err != nil {
-		return inner.RoundTrip(request)
+		return transport.roundTripWithDiagnostics(inner, request)
 	}
 	prefix := strings.TrimRight(parsed.Path, "/")
 	insertedVersionPath := prefix + "/" + transport.version
 	if strings.HasPrefix(request.URL.Path, insertedVersionPath+"/") || request.URL.Path == insertedVersionPath {
+		// GoAI 对部分 provider 会再次插入版本段；只在 SDK 边界修正 URL，避免 shared endpoint 契约为 Docker 分叉。
 		clone := request.Clone(request.Context())
 		nextURL := *request.URL
 		nextURL.Path = prefix + strings.TrimPrefix(request.URL.Path, insertedVersionPath)
@@ -602,9 +599,25 @@ func (transport aiProviderRuntimeTransport) RoundTrip(request *http.Request) (*h
 			nextURL.Path = "/"
 		}
 		clone.URL = &nextURL
-		return inner.RoundTrip(clone)
+		return transport.roundTripWithDiagnostics(inner, clone)
 	}
-	return inner.RoundTrip(request)
+	return transport.roundTripWithDiagnostics(inner, request)
+}
+
+func (transport aiProviderRuntimeTransport) roundTripWithDiagnostics(inner http.RoundTripper, request *http.Request) (*http.Response, error) {
+	response, err := inner.RoundTrip(request)
+	if err == nil {
+		return response, nil
+	}
+	provider := strings.TrimSpace(transport.provider)
+	if provider == "" {
+		provider = "AI provider"
+	}
+	timedOut := upstreamNetErrorTimedOut(err) || errors.Is(request.Context().Err(), context.DeadlineExceeded)
+	return response, newUpstreamTransportError(upstreamTransportDiagnosticMessage(request, upstreamHTTPRequestOptions{
+		Provider: provider,
+		Timeout:  aiRecognitionProviderTimeout,
+	}, err, aiRecognitionProviderTimeout, timedOut), timedOut)
 }
 
 func aiRecognitionOutputTokenLimit(input aiRecognitionInput) int {

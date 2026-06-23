@@ -163,13 +163,13 @@ describe("S3CloudBackupClient endpoint addressing", () => {
     expect(error).toMatchObject({
       code: "CLOUD_BACKUP_S3_LOCAL_FAILED",
       details: {
-        rawResponseText: expect.stringContaining("attempted host: https://cloudstorage.iam.storage.dev"),
+        rawResponseText: expect.stringContaining("S3 ListObjectsV2 GET request to https://cloudstorage.iam.storage.dev/"),
       },
     } satisfies Partial<CloudBackupRemoteError>);
     const serialized = JSON.stringify(error?.details);
+    expect(serialized).toContain("X-Amz-Signature=%5Bredacted%5D");
     expect(serialized).not.toContain("access-key");
     expect(serialized).not.toContain("secret-key");
-    expect(serialized).not.toContain("X-Amz-Signature");
   });
 
   it("follows pagination but stops on repeated continuation tokens", async () => {

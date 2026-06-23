@@ -76,7 +76,7 @@ export function createUpstreamErrorDetails(input: {
   providerResponse?: UpstreamProviderResponse | null;
   fallbackText?: string | null;
 }): UpstreamErrorDetails | undefined {
-  // 弹窗只需要原始可见 body；status/headers/attempts 只参与内部取 message 和脱敏，不再成为前端展示契约。
+  // rawResponseText 可承载 provider body 或脱敏后的请求诊断；完整结构仍不持久化，避免 headers/query/body 变成日志契约。
   const rawResponseText = input.providerResponse?.body || input.responseText || input.fallbackText || null;
   return rawResponseText ? upstreamErrorDetailsSchema.parse({ rawResponseText }) : undefined;
 }
@@ -94,19 +94,6 @@ export function createUpstreamHTTPError(input: {
   return new UpstreamOperationError(message, createUpstreamErrorDetails({
     responseText: providerMessage,
     providerResponse: input.providerResponse,
-  }));
-}
-
-export function createUpstreamNetworkError(input: {
-  provider: string;
-  error: unknown;
-  secrets?: readonly string[];
-}): UpstreamOperationError {
-  const message = input.error instanceof Error
-    ? redactUpstreamSecrets(input.error.message, input.secrets ?? [])
-    : redactUpstreamSecrets(String(input.error), input.secrets ?? []);
-  return new UpstreamOperationError(message, createUpstreamErrorDetails({
-    responseText: message,
   }));
 }
 

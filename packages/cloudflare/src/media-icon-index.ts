@@ -32,11 +32,11 @@ import { HttpError, json, requireEmptyBody, requestLocale } from "./http";
 import type { Env, MediaIconIndexRow } from "./types";
 import {
   createUpstreamHTTPError,
-  createUpstreamNetworkError,
   providerMessageFromResponse,
   upstreamErrorDetailsFromError,
   upstreamProviderResponseFromFetchResponse,
 } from "./upstream-response";
+import { sendUpstreamRequest } from "./upstream-http";
 
 const MEDIA_ICON_INDEX_KEY = "active";
 const MEDIA_ICON_INDEX_R2_PREFIX = "system/media-icon-index";
@@ -461,30 +461,19 @@ async function fetchGitHubAtomFeed(
     "user-agent": `Renewlet/${env.RENEWLET_VERSION?.trim() || "cloudflare"}`,
   };
   if (etag) headers["if-none-match"] = etag;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
-  try {
-    let response: Response;
-    try {
-      response = await fetch(url, { headers, signal: controller.signal });
-    } catch (error) {
-      throw createUpstreamNetworkError({
-        provider: label,
-        error,
-      });
-    }
-    const nextEtag = response.headers.get("etag") ?? "";
-    if (response.status === 304) return { text: "", etag: nextEtag, notModified: true };
-    if (!response.ok) throw await githubAtomFeedError(response, label);
-    // provider check 故意读 GitHub Atom feed 而不是 REST API；错误 raw 仍只随当前管理员操作返回，不进入持久状态。
-    return {
-      text: await readResponseTextUpToLimit(response, label, GITHUB_ATOM_FEED_LIMIT_BYTES),
-      etag: nextEtag,
-      notModified: false,
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
+  const response = await sendUpstreamRequest(url, { headers }, {
+    provider: label,
+    timeoutMs: REGISTRY_FETCH_TIMEOUT_MS,
+  });
+  const nextEtag = response.headers.get("etag") ?? "";
+  if (response.status === 304) return { text: "", etag: nextEtag, notModified: true };
+  if (!response.ok) throw await githubAtomFeedError(response, label);
+  // provider check 故意读 GitHub Atom feed 而不是 REST API；错误 raw 仍只随当前管理员操作返回，不进入持久状态。
+  return {
+    text: await readResponseTextUpToLimit(response, label, GITHUB_ATOM_FEED_LIMIT_BYTES),
+    etag: nextEtag,
+    notModified: false,
+  };
 }
 
 async function githubAtomFeedError(response: Response, label: string): Promise<Error> {
@@ -551,34 +540,22 @@ function gitHubAtomFeedUrl(owner: string, repo: string, feedPath: string): strin
 }
 
 const registryFetcher: BuiltInIconRegistryFetcher = async (url, label) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
-  try {
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        headers: { accept: "application/json" },
-        signal: controller.signal,
-      });
-    } catch (error) {
-      throw createUpstreamNetworkError({
-        provider: label,
-        error,
-      });
-    }
-    if (!response.ok) {
-      const providerResponse = await upstreamProviderResponseFromFetchResponse(response);
-      throw createUpstreamHTTPError({
-        provider: label,
-        response,
-        providerResponse,
-        providerMessage: providerMessageFromResponse(providerResponse) || `${label} HTTP ${response.status}`,
-      });
-    }
-    return JSON.parse(await readResponseTextUpToLimit(response, label));
-  } finally {
-    clearTimeout(timeout);
+  const response = await sendUpstreamRequest(url, {
+    headers: { accept: "application/json" },
+  }, {
+    provider: label,
+    timeoutMs: REGISTRY_FETCH_TIMEOUT_MS,
+  });
+  if (!response.ok) {
+    const providerResponse = await upstreamProviderResponseFromFetchResponse(response);
+    throw createUpstreamHTTPError({
+      provider: label,
+      response,
+      providerResponse,
+      providerMessage: providerMessageFromResponse(providerResponse) || `${label} HTTP ${response.status}`,
+    });
   }
+  return JSON.parse(await readResponseTextUpToLimit(response, label));
 };
 
 async function readResponseTextUpToLimit(response: Response, label: string, limitBytes = REGISTRY_JSON_LIMIT_BYTES): Promise<string> {

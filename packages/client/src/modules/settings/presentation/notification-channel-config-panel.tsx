@@ -3,7 +3,7 @@
  *
  * 架构位置：按渠道展示凭据、模板和测试按钮；敏感配置的校验与发送仍由后端通知模块负责。
  *
- * 注意： Webhook/WeCom/Bark URL 最终会触发后端外连，展示层不能把“看起来像 URL”当作安全保证。
+ * 注意： Webhook/WeCom/Bark/Discord URL 最终会触发后端外连，展示层不能把“看起来像 URL”当作安全保证。
  */
 import { useState } from 'react';
 import { Bot, ExternalLink, Check, Trash2 } from 'lucide-react';
@@ -46,6 +46,8 @@ const NOTIFICATION_TEST_LABEL_KEYS: Record<NotificationChannel, MessageKey> = {
   email: "settings.testChannel.email",
   bark: "settings.testChannel.bark",
   serverchan: "settings.testChannel.serverchan",
+  discord: "settings.testChannel.discord",
+  pushplus: "settings.testChannel.pushplus",
 };
 
 const TELEGRAM_BOT_COMMAND_STATUS_LABEL_KEYS = {
@@ -118,6 +120,10 @@ function getNotificationChannelHelp(channel: NotificationChannel, t: Translate):
       return { href: 'https://www.notifyx.cn/help', label: t("settings.help.notifyx") };
     case 'serverchan':
       return { href: 'https://sct.ftqq.com/', label: t("settings.help.serverchan") };
+    case 'discord':
+      return { href: 'https://docs.discord.com/developers/resources/webhook', label: t("settings.help.discord") };
+    case 'pushplus':
+      return { href: 'https://www.pushplus.plus/doc/guide/api.html', label: t("settings.help.pushplus") };
     case 'email':
       return null;
   }
@@ -704,6 +710,80 @@ export function NotificationChannelConfigPanel({
               onTest={onTest}
               disabled={disabled}
             />
+          </div>
+        </>
+      ) : null}
+
+      {channel === 'discord' ? (
+        <>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="discordWebhookUrl">{t("settings.discordWebhookUrl")}</Label>
+              <Input
+                id="discordWebhookUrl"
+                type="url"
+                inputMode="url"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="https://discord.com/api/webhooks/..."
+                value={settings.discordWebhookUrl}
+                disabled={disabled}
+                onChange={(e) => updateSetting('discordWebhookUrl', e.target.value)}
+                className="border-border bg-secondary"
+              />
+              <p className="text-xs text-muted-foreground">{t("settings.discordWebhookHelp")}</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="discordBotUsername">{t("settings.discordBotUsername")}</Label>
+                <Input
+                  id="discordBotUsername"
+                  value={settings.discordBotUsername}
+                  disabled={disabled}
+                  onChange={(e) => updateSetting('discordBotUsername', e.target.value)}
+                  className="border-border bg-secondary"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="discordBotAvatarUrl">{t("settings.discordBotAvatarUrl")}</Label>
+                <Input
+                  id="discordBotAvatarUrl"
+                  type="url"
+                  inputMode="url"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="https://cdn.example.com/avatar.png"
+                  value={settings.discordBotAvatarUrl}
+                  disabled={disabled}
+                  onChange={(e) => updateSetting('discordBotAvatarUrl', e.target.value)}
+                  className="border-border bg-secondary"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <NotificationTestButton channel="discord" label={testChannelLabel} testingChannel={testingChannel} onTest={onTest} disabled={disabled} />
+          </div>
+        </>
+      ) : null}
+
+      {channel === 'pushplus' ? (
+        <>
+          <div className="grid gap-2">
+            <Label htmlFor="pushplusToken">{t("settings.pushplusToken")}</Label>
+            <Input
+              id="pushplusToken"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={settings.pushplusToken}
+              disabled={disabled}
+              onChange={(e) => updateSetting('pushplusToken', e.target.value)}
+              className="border-border bg-secondary"
+            />
+            <p className="text-xs text-muted-foreground">{t("settings.pushplusHelp")}</p>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <NotificationTestButton channel="pushplus" label={testChannelLabel} testingChannel={testingChannel} onTest={onTest} disabled={disabled} />
           </div>
         </>
       ) : null}

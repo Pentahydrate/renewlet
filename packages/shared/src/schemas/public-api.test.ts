@@ -12,7 +12,7 @@ import {
 
 const PLAIN_TOKEN = "rlt_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO12";
 
-function subscription() {
+function subscription(overrides: Record<string, unknown> = {}) {
   return {
     id: "sub_public_api",
     name: "Public API Plan",
@@ -35,6 +35,7 @@ function subscription() {
     extra: { source: "test" },
     createdAt: "2026-06-20T00:00:00.000Z",
     updatedAt: "2026-06-20T00:00:00.000Z",
+    ...overrides,
   };
 }
 
@@ -82,8 +83,8 @@ describe("public API schemas", () => {
       items: [{
         dueDate: "2026-07-01",
         dueType: "renewal",
-        subscription: subscription(),
+        subscription: subscription({ startDate: null, autoCalculateNextBillingDate: false }),
       }],
-    }).items[0]?.subscription.id).toBe("sub_public_api");
+    }).items[0]?.subscription.startDate).toBeNull();
   });
 });

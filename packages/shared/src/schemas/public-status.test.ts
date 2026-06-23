@@ -27,6 +27,25 @@ describe("public status schemas", () => {
     }).subscriptions[0]?.price).toBeUndefined();
   });
 
+  it("accepts public status rows with unknown recurring start dates", () => {
+    expect(publicStatusResponseSchema.parse({
+      page: {
+        title: "Renewlet",
+        showPrices: false,
+        generatedAt: "2026-06-07T00:00:00.000Z",
+        truncated: false,
+      },
+      subscriptions: [{
+        name: "QQ Music",
+        category: { value: "streaming", label: "Streaming" },
+        status: "active",
+        startDate: null,
+        nextBillingDate: "2026-07-01",
+        updatedAt: "2026-06-07T00:00:00.000Z",
+      }],
+    }).subscriptions[0]?.startDate).toBeNull();
+  });
+
   it("requires price and currency to be exposed together", () => {
     // showPrices 是公开账单字段唯一开关；schema 让金额、币种和周期同进同出，避免半公开账单信息。
     expect(publicStatusResponseSchema.safeParse({

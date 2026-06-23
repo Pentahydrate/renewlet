@@ -50,7 +50,7 @@ describe("AI draft preflight", () => {
       "price",
       "currency",
       "billingCycle",
-      "dates",
+      "nextBillingDate",
     ]);
   });
 
@@ -66,5 +66,44 @@ describe("AI draft preflight", () => {
       customDays: 14,
       customCycleUnit: "day",
     }))).toEqual([]);
+  });
+
+  it("allows manual recurring drafts without start dates but still requires the next billing date", () => {
+    expect(getAIDraftBlockingIssues(draft({
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+    }))).toEqual([]);
+
+    expect(getAIDraftBlockingIssues(draft({
+      startDate: null,
+      nextBillingDate: null,
+      autoCalculateNextBillingDate: false,
+    })).map((issue) => issue.code)).toEqual(["nextBillingDate"]);
+  });
+
+  it("requires purchase dates for one-time drafts", () => {
+    expect(getAIDraftBlockingIssues(draft({
+      billingCycle: "one-time",
+      startDate: null,
+      nextBillingDate: null,
+      autoCalculateNextBillingDate: false,
+    })).map((issue) => issue.code)).toEqual(["purchaseDate"]);
+
+    expect(getAIDraftBlockingIssues(draft({
+      billingCycle: "one-time",
+      startDate: "2026-06-01",
+      nextBillingDate: null,
+      oneTimeTermCount: 1,
+      oneTimeTermUnit: "month",
+      autoCalculateNextBillingDate: false,
+    }))).toEqual([]);
+  });
+
+  it("requires start dates for automatic date calculation", () => {
+    expect(getAIDraftBlockingIssues(draft({
+      startDate: null,
+      nextBillingDate: null,
+      autoCalculateNextBillingDate: true,
+    })).map((issue) => issue.code)).toEqual(["autoCalculateStartDate"]);
   });
 });

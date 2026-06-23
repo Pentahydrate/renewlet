@@ -59,11 +59,11 @@ func subscriptionAPIFromRecord(record *core.Record) map[string]interface{} {
 		"currency":                     record.GetString("currency"),
 		"billingCycle":                 billingCycle,
 		"category":                     record.GetString("category"),
-		"status":                       record.GetString("status"),
-		"pinned":                       record.GetBool("pinned"),
-		"publicHidden":                 record.GetBool("publicHidden"),
-		"startDate":                    record.GetString("startDate"),
-		"nextBillingDate":              record.GetString("nextBillingDate"),
+			"status":                       record.GetString("status"),
+			"pinned":                       record.GetBool("pinned"),
+			"publicHidden":                 record.GetBool("publicHidden"),
+			"startDate":                    nullableStringForResponse(record.GetString("startDate")),
+			"nextBillingDate":              record.GetString("nextBillingDate"),
 		"autoRenew":                    billingCycle != "one-time" && record.GetBool("autoRenew"),
 		"autoCalculateNextBillingDate": record.GetBool("autoCalculateNextBillingDate"),
 		"tags":                         jsonValueForResponse(record.Get("tags"), []string{}),
@@ -99,6 +99,13 @@ func subscriptionAPIFromRecord(record *core.Record) map[string]interface{} {
 		out["updatedAt"] = record.GetDateTime("updated").Time().UTC().Format(time.RFC3339Nano)
 	}
 	return out
+}
+
+func nullableStringForResponse(value string) interface{} {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return strings.TrimSpace(value)
 }
 
 func nonEmptyJSONMap(value interface{}) bool {

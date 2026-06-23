@@ -256,6 +256,38 @@ func TestSubscriptionsProductAPIUsesOwnerScopedCRUD(t *testing.T) {
 	}
 }
 
+func TestSubscriptionsProductAPIAcceptsRecurringSubscriptionWithoutStartDate(t *testing.T) {
+	app := newSchemaTestApp(t)
+	if err := ensureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+	registerRecordHooks(app)
+	_, token := createRouteTestUser(t, app, "subscriptions-null-start-api")
+
+	var body map[string]interface{}
+	if err := json.Unmarshal([]byte(subscriptionCreateBody("Unknown Start")), &body); err != nil {
+		t.Fatal(err)
+	}
+	body["startDate"] = nil
+	body["autoCalculateNextBillingDate"] = false
+	data, _ := json.Marshal(body)
+
+	create := serveTestRequest(t, app, http.MethodPost, "/api/app/subscriptions", string(data), token)
+	if create.Code != http.StatusCreated {
+		t.Fatalf("expected subscription create 201, got %d: %s", create.Code, create.Body.String())
+	}
+	var created subscriptionResponse
+	if err := json.Unmarshal(create.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if value, ok := created.Subscription["startDate"]; !ok || value != nil {
+		t.Fatalf("expected startDate JSON null, got %#v in %#v", value, created.Subscription)
+	}
+	if created.Subscription["autoCalculateNextBillingDate"] != false {
+		t.Fatalf("expected manual date anchor, got %#v", created.Subscription["autoCalculateNextBillingDate"])
+	}
+}
+
 func TestSubscriptionsProductAPICursorAdvancesWithoutRepeatingRows(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {

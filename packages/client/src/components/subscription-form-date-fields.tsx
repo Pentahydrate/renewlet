@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/I18nProvider";
+import { getSubscriptionDateValidationKind } from "@/lib/subscription-form";
 import { dateOnlyToLocalDate, dateToDateOnly } from "@/lib/time/date-only";
 import { cn } from "@/lib/utils";
 import type { SubscriptionFormErrors, SubscriptionFormFieldUpdater } from "@/components/subscription-form-fields-model";
@@ -40,17 +41,27 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
   const isNextBillingDateDisabled = formData.autoCalculate || formData.billingCycle === "one-time";
   const isOneTimeBuyout = formData.billingCycle === "one-time" && formData.oneTimeMode === "buyout";
   const showAutoCalculate = formData.billingCycle !== "one-time";
-  const startDateLabel = formData.billingCycle === "one-time"
+  const isRecurringStartDateOptional = formData.billingCycle !== "one-time" && !formData.autoCalculate;
+  const requiredStartDateLabel = formData.billingCycle === "one-time"
     ? t("subscription.field.purchaseDate")
     : t("subscription.field.startDate");
+  const startDateLabel = isRecurringStartDateOptional
+    ? t("subscription.field.startDateOptional")
+    : requiredStartDateLabel;
   const nextBillingDateLabel = formData.billingCycle === "one-time"
     ? t("subscription.field.expiryDate")
     : t("subscription.field.nextBillingDate");
-  const dateErrorTarget: "start" | "next" | null = !errors.dates
-    ? null
-    : !formData.startDate || isNextBillingDateDisabled
+  const dateValidationKind = errors.dates ? getSubscriptionDateValidationKind(formData) : null;
+  const dateErrorTarget: "start" | "next" | null =
+    dateValidationKind === "purchaseDateRequired" || dateValidationKind === "startDateRequiredForAutoCalculate"
       ? "start"
-      : "next";
+      : dateValidationKind === "nextBillingDateRequired" || dateValidationKind === "dateOrderInvalid"
+        ? "next"
+        : errors.dates && isNextBillingDateDisabled
+          ? "start"
+          : errors.dates
+            ? "next"
+            : null;
   const startDateHasError = dateErrorTarget === "start";
   const nextBillingDateHasError = dateErrorTarget === "next";
   const nextBillingDateHelp =
@@ -79,10 +90,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
 
       <FormFieldRow
         rowClassName={cn("items-start", !isOneTimeBuyout && "sm:grid-cols-2")}
-        errors={[
-          { id: startDateErrorId, message: startDateHasError ? errors.dates : undefined },
-          { id: nextBillingDateErrorId, message: nextBillingDateHasError ? errors.dates : undefined },
-        ]}
       >
         <FormField
           id={startDateId}
@@ -91,7 +98,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
           describedBy={isOneTimeBuyout ? startDateHelpId : undefined}
           error={startDateHasError ? errors.dates : undefined}
           errorId={startDateErrorId}
-          renderError={false}
         >
           {(field) => (
             <>
@@ -150,7 +156,6 @@ export function SubscriptionFormDateFields({ id, formData, update, errors }: Sub
             describedBy={nextBillingDateHelp ? nextBillingDateHelpId : undefined}
             error={nextBillingDateHasError ? errors.dates : undefined}
             errorId={nextBillingDateErrorId}
-            renderError={false}
           >
             {(field) => (
               <>

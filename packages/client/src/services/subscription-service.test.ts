@@ -144,6 +144,19 @@ describe("subscription service normalization", () => {
     expect(payload.costSharing).toEqual(subscription.costSharing);
     expect(toSubscriptionWritePayload(fromApiSubscription(apiSubscription)).costSharing).toBeNull();
   });
+
+  it("parses and writes nullable start dates for manual recurring subscriptions", () => {
+    const subscription = fromApiSubscription({
+      ...apiSubscription,
+      startDate: null,
+      autoCalculateNextBillingDate: false,
+    });
+    const payload = toSubscriptionWritePayload(subscription);
+
+    expect(subscription.startDate).toBeNull();
+    expect(payload.startDate).toBeNull();
+    expect(payload.autoCalculateNextBillingDate).toBe(false);
+  });
 });
 
 describe("subscription service API calls", () => {

@@ -33,12 +33,26 @@ const mocks = vi.hoisted(() => ({
   },
   createObjectURL: vi.fn(),
   revokeObjectURL: vi.fn(),
+  imageTargetBytes: vi.fn(),
+  prepareAIRecognitionImage: vi.fn(),
 }));
 
 vi.mock("@/services/ai-recognition-service", () => ({
   aiRecognitionService: {
     recognizeSubscriptionsStream: mocks.recognizeSubscriptionsStream,
   },
+}));
+
+vi.mock("@/modules/ai-recognition/domain/ai-image-preprocess", () => ({
+  AIRecognitionImagePreprocessError: class AIRecognitionImagePreprocessError extends Error {
+    constructor(readonly code: string) {
+      super(code);
+      this.name = "AIRecognitionImagePreprocessError";
+    }
+  },
+  aiRecognitionImageTargetBytes: mocks.imageTargetBytes,
+  isAIRecognitionImageAbort: vi.fn((error: unknown) => Boolean(error && typeof error === "object" && "name" in error && (error as { name?: unknown }).name === "AbortError")),
+  prepareAIRecognitionImage: mocks.prepareAIRecognitionImage,
 }));
 
 vi.mock("@/modules/import-export/application/use-import-preview-apply", () => ({
@@ -124,6 +138,16 @@ describe("AIRecognizeSubscriptionDialog", () => {
     mocks.previewState.error = null;
     mocks.createObjectURL.mockReset();
     mocks.revokeObjectURL.mockReset();
+    mocks.imageTargetBytes.mockReset();
+    mocks.imageTargetBytes.mockReturnValue(2 * 1024 * 1024);
+    mocks.prepareAIRecognitionImage.mockReset();
+    mocks.prepareAIRecognitionImage.mockImplementation(async (file: File) => ({
+      file,
+      originalSizeBytes: file.size,
+      targetSizeBytes: 2 * 1024 * 1024,
+      optimized: false,
+      warning: null,
+    }));
     mocks.setError.mockImplementation((error: string | null) => {
       mocks.previewState.error = error;
     });
@@ -232,8 +256,8 @@ describe("AIRecognizeSubscriptionDialog", () => {
     expect(screen.getByTestId("ai-recognition-image-scrollport")).toHaveClass("min-h-0", "flex-1", "overflow-y-auto");
 
     await user.upload(screen.getByLabelText("添加订阅图片"), image);
+    expect(await screen.findByRole("button", { name: "预览图片 one.png" })).toBeInTheDocument();
     expect(screen.getByTestId("ai-recognition-image-upload-button")).toHaveClass("h-12", "w-full");
-    expect(screen.getByRole("button", { name: "预览图片 one.png" })).toBeInTheDocument();
   });
 
   it("图片输入区只展示一次标题和说明", async () => {
@@ -274,6 +298,8 @@ describe("AIRecognizeSubscriptionDialog", () => {
     expect(screen.queryByTestId("import-preview-panel")).not.toBeInTheDocument();
 
     await user.upload(screen.getByLabelText("添加订阅图片"), [firstImage, secondImage]);
+    await screen.findByRole("button", { name: "预览图片 one.png" });
+    expect(mocks.imageTargetBytes).toHaveBeenCalledWith(2);
     expect(within(screen.getByTestId("ai-recognition-image-panel")).getByRole("button", { name: /继续添加/ })).toBeInTheDocument();
     expect(within(screen.getByTestId("ai-recognition-image-panel")).getByText("2/5 张图片")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "预览图片 one.png" })).toBeInTheDocument();
@@ -292,8 +318,8 @@ describe("AIRecognizeSubscriptionDialog", () => {
     });
 
     expect(pasteAccepted).toBe(false);
+    expect(await screen.findByRole("button", { name: "预览图片 clipboard.png" })).toBeInTheDocument();
     expect(mocks.createObjectURL).toHaveBeenCalledWith(pastedImage);
-    expect(screen.getByRole("button", { name: "预览图片 clipboard.png" })).toBeInTheDocument();
   });
 
   it("图片 tab 粘贴可 fallback 到 clipboardData.files", async () => {
@@ -306,8 +332,8 @@ describe("AIRecognizeSubscriptionDialog", () => {
       clipboardData: clipboardDataWithFiles([pastedImage]),
     });
 
+    expect(await screen.findByRole("button", { name: "预览图片 fallback.webp" })).toBeInTheDocument();
     expect(mocks.createObjectURL).toHaveBeenCalledWith(pastedImage);
-    expect(screen.getByRole("button", { name: "预览图片 fallback.webp" })).toBeInTheDocument();
   });
 
   it("粘贴多张图片时沿用现有数量上限和错误提示", async () => {
@@ -322,6 +348,7 @@ describe("AIRecognizeSubscriptionDialog", () => {
       clipboardData: clipboardDataWithItems(pastedImages.map((file) => ({ file }))),
     });
 
+    expect(await screen.findByRole("button", { name: "预览图片 image-1.png" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "预览图片 image-1.png" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "预览图片 image-5.png" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "预览图片 image-6.png" })).not.toBeInTheDocument();
@@ -362,6 +389,7 @@ describe("AIRecognizeSubscriptionDialog", () => {
 
     await user.click(screen.getByRole("tab", { name: "图片" }));
     await user.upload(screen.getByLabelText("添加订阅图片"), firstImage);
+    await screen.findByRole("button", { name: "预览图片 first.png" });
     await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
     fireEvent.paste(screen.getByTestId("ai-recognition-image-panel"), {
       clipboardData: clipboardDataWithItems([{ file: pastedImage }]),
@@ -415,12 +443,13 @@ describe("AIRecognizeSubscriptionDialog", () => {
     expect(screen.queryByRole("button", { name: "取消" })).not.toBeInTheDocument();
   });
 
-  it("草稿缺少日期时在草稿阶段拦截导入预览", async () => {
+  it("周期草稿缺少到期日期时在草稿阶段拦截导入预览", async () => {
     const user = userEvent.setup();
     mocks.recognizeSubscriptionsStream.mockResolvedValue(makeResponse([
       makeDraft({
         startDate: null,
         nextBillingDate: null,
+        autoCalculateNextBillingDate: false,
       }),
     ]));
     renderDialog();
@@ -434,12 +463,45 @@ describe("AIRecognizeSubscriptionDialog", () => {
     if (!(startDateButton instanceof HTMLButtonElement) || !(nextBillingDateButton instanceof HTMLButtonElement)) {
       throw new Error("AI draft date buttons were not rendered");
     }
-    expect(startDateButton).toHaveAttribute("aria-invalid", "true");
-    expect(startDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-startDate-error");
-    expect(startDateButton.closest('[data-slot="form-field-row"]')).toHaveTextContent("请选择开始日期和续费或到期日期。");
-    const autoCalculateHelp = screen.getByText("根据开始日期和扣费周期自动计算");
-    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "false");
-    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", autoCalculateHelp.id);
+    expect(startDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(nextBillingDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(nextBillingDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-nextBillingDate-error");
+    expect(nextBillingDateButton.closest('[data-slot="form-field"]')).toHaveTextContent("请选择到期日期");
+    expect(startDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择到期日期");
+    expect(startDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择购买日期");
+    expect(screen.getByRole("button", { name: "生成导入预览" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "生成导入预览" }));
+    expect(mocks.previewPrepared).not.toHaveBeenCalled();
+  });
+
+  it("一次性购买固定服务期缺购买日期时在购买日期字段提示", async () => {
+    const user = userEvent.setup();
+    mocks.recognizeSubscriptionsStream.mockResolvedValue(makeResponse([
+      makeDraft({
+        billingCycle: "one-time",
+        startDate: null,
+        nextBillingDate: null,
+        oneTimeTermCount: 1,
+        oneTimeTermUnit: "month",
+        autoCalculateNextBillingDate: false,
+      }),
+    ]));
+    renderDialog();
+
+    await user.type(screen.getByPlaceholderText("粘贴记事本、备忘录或从 Excel 复制出的订阅列表..."), "apple 50刀 买断");
+    await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
+
+    expect(await screen.findByText("1 条草稿还有 1 个必填项待补全，补全后才能生成导入预览。")).toBeInTheDocument();
+    const purchaseDateButton = document.getElementById("ai-draft-1-startDate");
+    const expiryDateButton = document.getElementById("ai-draft-1-nextBillingDate");
+    if (!(purchaseDateButton instanceof HTMLButtonElement) || !(expiryDateButton instanceof HTMLButtonElement)) {
+      throw new Error("AI draft one-time date buttons were not rendered");
+    }
+    expect(purchaseDateButton).toHaveAttribute("aria-invalid", "true");
+    expect(purchaseDateButton).toHaveAttribute("aria-describedby", "ai-draft-1-startDate-error");
+    expect(purchaseDateButton.closest('[data-slot="form-field"]')).toHaveTextContent("请选择购买日期");
+    expect(expiryDateButton).toHaveAttribute("aria-invalid", "false");
+    expect(expiryDateButton.closest('[data-slot="form-field"]')).not.toHaveTextContent("请选择到期日期");
     expect(screen.getByRole("button", { name: "生成导入预览" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "生成导入预览" }));
     expect(mocks.previewPrepared).not.toHaveBeenCalled();
@@ -483,6 +545,7 @@ describe("AIRecognizeSubscriptionDialog", () => {
 
     await user.click(screen.getByRole("tab", { name: "图片" }));
     await user.upload(screen.getByLabelText("添加订阅图片"), image);
+    await screen.findByRole("button", { name: "预览图片 subscriptions.png" });
     await user.click(screen.getByRole("tab", { name: "文本" }));
     await user.type(screen.getByPlaceholderText("粘贴记事本、备忘录或从 Excel 复制出的订阅列表..."), "apple 50刀 1年");
     await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
@@ -504,10 +567,12 @@ describe("AIRecognizeSubscriptionDialog", () => {
     await user.type(screen.getByPlaceholderText("粘贴记事本、备忘录或从 Excel 复制出的订阅列表..."), "apple 50刀 1年");
     await user.click(screen.getByRole("tab", { name: "图片" }));
     await user.upload(screen.getByLabelText("添加订阅图片"), image);
+    await screen.findByRole("button", { name: "预览图片 subscriptions.png" });
     await user.click(screen.getByRole("button", { name: "移除图片" }));
     expect(mocks.revokeObjectURL).toHaveBeenCalledWith("blob:subscriptions.png");
 
     await user.upload(screen.getByLabelText("添加订阅图片"), image);
+    await screen.findByRole("button", { name: "预览图片 subscriptions.png" });
     await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
 
     await waitFor(() => expect(mocks.recognizeSubscriptionsStream).toHaveBeenCalledTimes(1));
@@ -516,6 +581,77 @@ describe("AIRecognizeSubscriptionDialog", () => {
       images: [image],
       thinkingControl: null,
     });
+  });
+
+  it("图片模式提交优化后的文件并展示优化后大小", async () => {
+    const user = userEvent.setup();
+    const original = new File([new Uint8Array(4 * 1024 * 1024)], "bill.png", { type: "image/png" });
+    const optimized = new File([new Uint8Array(1536 * 1024)], "bill.webp", { type: "image/webp" });
+    mocks.prepareAIRecognitionImage.mockResolvedValueOnce({
+      file: optimized,
+      originalSizeBytes: original.size,
+      targetSizeBytes: 2 * 1024 * 1024,
+      optimized: true,
+      warning: null,
+    });
+    mocks.recognizeSubscriptionsStream.mockResolvedValue(makeResponse([makeDraft()]));
+    renderDialog();
+
+    await user.click(screen.getByRole("tab", { name: "图片" }));
+    await user.upload(screen.getByLabelText("添加订阅图片"), original);
+
+    expect(await screen.findByRole("button", { name: "预览图片 bill.webp" })).toBeInTheDocument();
+    expect(screen.getByText(/1.5 MB/)).toBeInTheDocument();
+    expect(screen.getByText(/原图 4.0 MB/)).toBeInTheDocument();
+    expect(mocks.createObjectURL).toHaveBeenCalledWith(optimized);
+
+    await user.click(screen.getByRole("button", { name: "生成订阅草稿" }));
+
+    await waitFor(() => expect(mocks.recognizeSubscriptionsStream).toHaveBeenCalledTimes(1));
+    expectRecognizeStreamCalledWith({
+      text: "",
+      images: [optimized],
+      thinkingControl: null,
+    });
+  });
+
+  it("图片优化中禁用继续添加和生成", async () => {
+    const user = userEvent.setup();
+    const image = new File(["image"], "slow.png", { type: "image/png" });
+    let resolvePrepare: (value: unknown) => void = () => undefined;
+    mocks.prepareAIRecognitionImage.mockReturnValueOnce(new Promise((resolve) => {
+      resolvePrepare = resolve;
+    }));
+    renderDialog();
+
+    await user.click(screen.getByRole("tab", { name: "图片" }));
+    await user.upload(screen.getByLabelText("添加订阅图片"), image);
+
+    expect(await screen.findByText("正在优化")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-recognition-image-upload-button")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "生成订阅草稿" })).toBeDisabled();
+
+    resolvePrepare({
+      file: image,
+      originalSizeBytes: image.size,
+      targetSizeBytes: 2 * 1024 * 1024,
+      optimized: false,
+      warning: null,
+    });
+    expect(await screen.findByRole("button", { name: "预览图片 slow.png" })).toBeInTheDocument();
+  });
+
+  it("超过 5MB 的图片上传前失败，不进入预处理和模型请求", async () => {
+    const user = userEvent.setup();
+    const image = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "too-large.png", { type: "image/png" });
+    renderDialog();
+
+    await user.click(screen.getByRole("tab", { name: "图片" }));
+    await user.upload(screen.getByLabelText("添加订阅图片"), image);
+
+    await waitFor(() => expect(mocks.setError).toHaveBeenCalledWith("图片超过 5MB，请选择更小且清晰的截图。"));
+    expect(mocks.prepareAIRecognitionImage).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "预览图片 too-large.png" })).not.toBeInTheDocument();
   });
 
   it("按当前模型的思考控制选项传入本次识别请求", async () => {

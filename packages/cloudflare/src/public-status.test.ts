@@ -348,6 +348,28 @@ describe("public status worker handlers", () => {
     });
   });
 
+  it("returns null start dates for public recurring subscriptions with unknown starts", async () => {
+    const env = createEnv({
+      pages: [publicPage()],
+      subscriptions: [
+        subscriptionRow({
+          name: "Unknown Start",
+          start_date: null,
+          next_billing_date: "2099-06-01",
+          auto_calculate_next_billing_date: 0,
+        }),
+      ],
+    });
+
+    const response = await readPublicStatus(publicRequest(`/api/public/status/${TOKEN}`), env, TOKEN);
+    const data = await response.json() as { subscriptions: Array<{ startDate: string | null; nextBillingDate: string }> };
+
+    expect(data.subscriptions[0]).toMatchObject({
+      startDate: null,
+      nextBillingDate: "2099-06-01",
+    });
+  });
+
   it("limits public subscriptions and reports truncation", async () => {
     const subscriptions = Array.from({ length: 501 }, (_, index) => subscriptionRow({
       id: `sub_${index}`,
