@@ -21,8 +21,7 @@ wrangler.generated.jsonc
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
-**/pb_data/
-**/pb_data_e2e/
+**/pb_data*/
 **/internal/static/public/*
 !**/internal/static/public/.gitkeep
 /playwright-report/
