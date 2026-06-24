@@ -128,8 +128,27 @@ Common `.env` values:
 | `RENEWLET_DEMO_MODE` | Docker Demo Mode switch, `false` by default. |
 | `RENEWLET_CUSTOM_HEAD_SCRIPT` | Optional deployer-provided external `<script>` injection. Empty by default; leave unset to inject no external script. |
 | `NOTIFICATION_SCHEDULER_ENABLED` | Built-in notification scheduler switch, `true` by default. |
+| `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` | Optional Docker/Go upstream HTTP proxy; lowercase variable names are also supported. |
 
 The full Docker environment template is in `.env.example`.
+
+### Docker Upstream Proxy
+
+If your deployment needs a proxy for Telegram, AI providers, GitHub Release checks, built-in icon indexes, WebDAV, or S3-compatible storage, set the standard proxy variables in `.env`:
+
+```env
+HTTP_PROXY="http://host.docker.internal:7890"
+HTTPS_PROXY="http://host.docker.internal:7890"
+NO_PROXY="localhost,127.0.0.1,.local"
+```
+
+These variables affect Docker/Go server-side HTTP(S) upstream requests only. They do not affect SMTP, browser-loaded images, or Cloudflare Worker deployments. Inside the container, `127.0.0.1` / `localhost` points to the container itself; if the proxy runs on the host, use an address reachable from the container and recreate the container after changing `.env`:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+Go also supports the lowercase variable names `http_proxy`, `https_proxy`, and `no_proxy`.
 
 ### Custom Head Script
 

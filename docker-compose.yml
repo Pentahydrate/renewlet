@@ -8,6 +8,12 @@ services:
       # PB_ENCRYPTION_KEY 必须由部署者提供 32 字符值；空值只适合首次本地试跑，不适合生产升级。
       GOMEMLIMIT: ${GOMEMLIMIT:-128MiB}
       TZ: ${TZ:-Asia/Shanghai}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-}
+      http_proxy: ${http_proxy:-}
+      https_proxy: ${https_proxy:-}
+      no_proxy: ${no_proxy:-}
       APP_URL: ${APP_URL:-http://localhost:3000}
       RENEWLET_DEMO_MODE: ${RENEWLET_DEMO_MODE:-false}
       RENEWLET_CUSTOM_HEAD_SCRIPT: ${RENEWLET_CUSTOM_HEAD_SCRIPT:-}

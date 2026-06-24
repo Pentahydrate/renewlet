@@ -55,6 +55,7 @@ func main() {
 	if err := validateCustomHeadScriptEnv(); err != nil {
 		log.Fatal(err)
 	}
+	logUpstreamHTTPProxyEnvironment(nil)
 
 	app := pocketbase.New()
 	if err := registerSubscriptionRenewalCron(app); err != nil {

@@ -249,6 +249,42 @@ function checkDockerCustomHeadScriptEnv() {
   }
 }
 
+function checkDockerProxyEnv() {
+  const proxyEnvNames = ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"];
+  const docsAndEnvFiles = [
+    ".env.example",
+    "deploy/env.example",
+    "README.md",
+    "README.zh-CN.md",
+  ];
+  const composeFiles = [
+    "docker-compose.yml",
+    "docker-compose.ghcr.yml",
+    "deploy/docker-compose.yml",
+  ];
+
+  // Docker/Go 代理依赖大小写标准 env；文档、env 示例或 compose 漏任一处都会让用户配置静默失效。
+  // Issue #42 只承诺 ProxyFromEnvironment 语义，ALL_PROXY 需要另行设计优先级与 NO_PROXY 行为。
+  for (const relativePath of docsAndEnvFiles) {
+    const content = readFileSync(join(repoRoot, relativePath), "utf8");
+    for (const envName of proxyEnvNames) {
+      if (!content.includes(envName)) {
+        throw new Error(`${relativePath} must document Docker upstream proxy env ${envName}.`);
+      }
+    }
+  }
+
+  for (const relativePath of composeFiles) {
+    const content = readFileSync(join(repoRoot, relativePath), "utf8");
+    for (const envName of proxyEnvNames) {
+      const snippet = `${envName}: \${${envName}:-}`;
+      if (!content.includes(snippet)) {
+        throw new Error(`${relativePath} must pass through Docker upstream proxy env ${envName}.`);
+      }
+    }
+  }
+}
+
 function checkCloudflareDeployMigrationScript() {
   const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
   const deployScript = packageJson.scripts?.deploy;
@@ -501,6 +537,7 @@ checkGeneratedSecrets();
 checkInvalidExistingPBKeyIsRejected();
 checkDockerSelfUpdateLayout();
 checkDockerCustomHeadScriptEnv();
+checkDockerProxyEnv();
 checkCloudflareDeployMigrationScript();
 checkCloudflareStaticAssetHeadersContract();
 checkCloudflareScheduledLocalRoute();

@@ -11,9 +11,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -26,12 +28,30 @@ const (
 
 var upstreamDiagnosticURLRe = regexp.MustCompile(`https?://[^\s<>"'` + "`" + `]+`)
 
+var upstreamProxyEnvSpecs = []struct {
+	name     string
+	proxyURL bool
+}{
+	{name: "HTTP_PROXY", proxyURL: true},
+	{name: "HTTPS_PROXY", proxyURL: true},
+	{name: "NO_PROXY", proxyURL: false},
+	{name: "http_proxy", proxyURL: true},
+	{name: "https_proxy", proxyURL: true},
+	{name: "no_proxy", proxyURL: false},
+}
+
 type upstreamHTTPRequestOptions struct {
 	Provider string
 	Timeout  time.Duration
 	Secrets  []string
 	Client   *http.Client
 	Body     []byte
+}
+
+type upstreamHTTPProxyEnvironmentSummary struct {
+	Variables           []string
+	CredentialVariables []string
+	LoopbackVariables   []string
 }
 
 func defaultUpstreamHTTPClient(timeout time.Duration) *http.Client {
@@ -44,7 +64,7 @@ func defaultUpstreamHTTPClient(timeout time.Duration) *http.Client {
 func defaultUpstreamHTTPTransport() *http.Transport {
 	if base, ok := http.DefaultTransport.(*http.Transport); ok {
 		transport := base.Clone()
-		// 自定义 Transport 会覆盖 Go 默认代理策略；显式补回环境代理，保证 Docker/本地调试与 net/http 约定一致。
+		// 自定义 Transport 会覆盖 Go 默认代理策略；显式补回环境代理，但实际是否代理仍交给 ProxyFromEnvironment 按 scheme 和 NO_PROXY 决定。
 		transport.Proxy = http.ProxyFromEnvironment
 		if transport.TLSClientConfig == nil {
 			transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
@@ -61,6 +81,93 @@ func defaultUpstreamHTTPTransport() *http.Transport {
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
 	}
+}
+
+func logUpstreamHTTPProxyEnvironment(logger *slog.Logger) {
+	summary := upstreamHTTPProxyEnvironmentSummaryFromEnv()
+	if len(summary.Variables) == 0 {
+		return
+	}
+	if logger == nil {
+		logger = slog.Default()
+	}
+	// Docker 代理变量可能携带账号密码；启动日志只暴露变量名和凭据存在性，不打印具体地址。
+	logger.Info("Docker/Go upstream HTTP proxy environment detected",
+		"variables", strings.Join(summary.Variables, ","),
+		"credentials", summary.credentialsStatus(),
+	)
+	if len(summary.LoopbackVariables) > 0 {
+		logger.Warn("Docker/Go upstream HTTP proxy uses a loopback address; inside a container, loopback points to the container itself",
+			"variables", strings.Join(summary.LoopbackVariables, ","),
+		)
+	}
+}
+
+func upstreamHTTPProxyEnvironmentSummaryFromEnv() upstreamHTTPProxyEnvironmentSummary {
+	summary := upstreamHTTPProxyEnvironmentSummary{}
+	// 摘要只为启动诊断服务：记录“配置存在”和 loopback 风险，不在日志里复原代理 URL。
+	for _, spec := range upstreamProxyEnvSpecs {
+		value := strings.TrimSpace(os.Getenv(spec.name))
+		if value == "" {
+			continue
+		}
+		summary.Variables = append(summary.Variables, spec.name)
+		if !spec.proxyURL {
+			continue
+		}
+		if upstreamProxyEnvValueHasCredentials(value) {
+			summary.CredentialVariables = append(summary.CredentialVariables, spec.name)
+		}
+		if upstreamProxyEnvValueUsesLoopback(value) {
+			summary.LoopbackVariables = append(summary.LoopbackVariables, spec.name)
+		}
+	}
+	return summary
+}
+
+func (summary upstreamHTTPProxyEnvironmentSummary) credentialsStatus() string {
+	if len(summary.CredentialVariables) > 0 {
+		return "present"
+	}
+	return "absent"
+}
+
+func upstreamProxyEnvValueHasCredentials(value string) bool {
+	parsed, ok := parseUpstreamProxyEnvURL(value)
+	return ok && parsed.User != nil
+}
+
+func upstreamProxyEnvValueUsesLoopback(value string) bool {
+	parsed, ok := parseUpstreamProxyEnvURL(value)
+	if !ok {
+		return false
+	}
+	host := strings.ToLower(strings.TrimSpace(parsed.Hostname()))
+	if host == "localhost" || strings.HasSuffix(host, ".localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func parseUpstreamProxyEnvURL(value string) (*url.URL, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, false
+	}
+	parsed, err := url.Parse(value)
+	if err == nil && parsed.Scheme != "" && parsed.Host != "" {
+		return parsed, true
+	}
+	if strings.Contains(value, "://") {
+		return nil, false
+	}
+	// Go 的环境代理允许裸 host[:port]；补 scheme 只用于安全摘要解析，不改变真正请求的代理选择。
+	parsed, err = url.Parse("http://" + value)
+	if err != nil || parsed.Host == "" {
+		return nil, false
+	}
+	return parsed, true
 }
 
 func sendUpstreamJSON(endpoint string, payload interface{}, options upstreamHTTPRequestOptions) (*http.Response, error) {
