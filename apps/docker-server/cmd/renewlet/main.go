@@ -21,6 +21,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
+	pbrouter "github.com/pocketbase/pocketbase/tools/router"
 	appstatic "github.com/zhiyingzzhou/renewlet/apps/docker-server/internal/static"
 )
 
@@ -97,10 +98,7 @@ func main() {
 			if err != nil {
 				return err
 			}
-			// SPA fallback 必须在产品 API route 之后注册，避免前端静态兜底吞掉 API 的 404/405 envelope。
-			if !e.Router.HasRoute(http.MethodGet, "/{path...}") {
-				e.Router.GET("/{path...}", staticWithSecurityHeaders(staticFS))
-			}
+			registerStaticFallback(e.Router, staticFS)
 
 			return e.Next()
 		},
@@ -166,6 +164,30 @@ func registerAuthHooks(app core.App) {
 func disablePocketBaseInstaller(e *core.ServeEvent) {
 	// 首装状态机只属于 Renewlet /setup；PocketBase installer 会另开 /_/#/pbinstall，导致 E2E 和用户看到两套入口。
 	e.InstallerFunc = nil
+}
+
+func registerStaticFallback(router *pbrouter.Router[*core.RequestEvent], staticFS fs.FS) {
+	if router.HasRoute("", "/") {
+		return
+	}
+	staticHandler := staticWithSecurityHeaders(staticFS)
+	// Go 1.22+ ServeMux 会拒绝 GET /{path...} 与 /api/app/{path...} 这类非严格子集 pattern；根兜底保留 API wildcard 的优先级。
+	router.Route("", "/", func(e *core.RequestEvent) error {
+		if !shouldServeStaticFallback(e.Request) {
+			return e.NotFoundError(serverText(requestLocale(e.Request), "common.notFound"), nil)
+		}
+		// PocketBase apis.Static 依赖 {path...} 的 PathValue；根兜底必须显式补齐，才能继续复用官方静态文件与 index fallback 行为。
+		e.Request.SetPathValue(apis.StaticWildcardParam, strings.TrimPrefix(e.Request.URL.Path, "/"))
+		return staticHandler(e)
+	})
+}
+
+func shouldServeStaticFallback(request *http.Request) bool {
+	if request.Method != http.MethodGet && request.Method != http.MethodHead {
+		return false
+	}
+	path := request.URL.Path
+	return path != "/api" && !strings.HasPrefix(path, "/api/")
 }
 
 func runHealthcheck() {

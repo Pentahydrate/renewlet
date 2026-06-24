@@ -42,7 +42,7 @@
     "check:server-i18n": "node scripts/generate-server-i18n.mjs --check",
     "generate:worker-types": "wrangler types apps/worker/src/worker-configuration.d.ts --env-file /dev/null --include-runtime false",
     "check:worker-types": "wrangler types apps/worker/src/worker-configuration.d.ts --env-file /dev/null --include-runtime false --check",
-    "start": "pnpm --dir apps/docker-server start",
+    "start": "pnpm run build:client && pnpm run sync:static && pnpm --dir apps/docker-server start",
     "deploy": "node scripts/prepare-cloudflare-local-headers.mjs --check-production && pnpm cloudflare:migrations:apply && wrangler deploy",
     "check:deploy": "node scripts/check-deploy-config.mjs",
     "check:website": "pnpm --filter @renewlet/website lint && pnpm --filter @renewlet/website test && pnpm --filter @renewlet/website build",
