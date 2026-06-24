@@ -276,7 +276,7 @@ function checkCloudflareDeployMigrationScript() {
 }
 
 function checkCloudflareStaticAssetHeadersContract() {
-  const publicHeaders = readFileSync(join(repoRoot, "packages/client/public/_headers"), "utf8");
+  const publicHeaders = readFileSync(join(repoRoot, "apps/web/public/_headers"), "utf8");
   const localHeadersScript = readFileSync(join(repoRoot, "scripts/prepare-cloudflare-local-headers.mjs"), "utf8");
 
   // 生产 Cloudflare HTTPS 入口继续使用强 CSP；只有 ignored 的 dist 文件能被本地 HTTP dev 放宽。
@@ -286,14 +286,14 @@ function checkCloudflareStaticAssetHeadersContract() {
     "upgrade-insecure-requests",
   ]) {
     if (!publicHeaders.includes(snippet)) {
-      throw new Error(`packages/client/public/_headers must keep production CSP snippet: ${snippet}`);
+      throw new Error(`apps/web/public/_headers must keep production CSP snippet: ${snippet}`);
     }
   }
   if (publicHeaders.includes("img-src 'self' data: blob: http: https:")) {
-    throw new Error("packages/client/public/_headers must not use the local HTTP img-src policy.");
+    throw new Error("apps/web/public/_headers must not use the local HTTP img-src policy.");
   }
   for (const snippet of [
-    "packages/client/dist/_headers",
+    "apps/web/dist/_headers",
     "upgrade-insecure-requests",
     "img-src 'self' data: blob: http: https:",
     "--check-production",
@@ -367,7 +367,7 @@ function checkCloudflareDeployButtonVars() {
 }
 
 function checkCloudflareDeployButtonVersionFallback() {
-  const workerSystem = readFileSync(join(repoRoot, "packages/cloudflare/src/system.ts"), "utf8");
+  const workerSystem = readFileSync(join(repoRoot, "apps/worker/src/system.ts"), "utf8");
 
   // Deploy Button 不一定有 CI 版本变量；Worker 缺元信息时必须显示 package stable version，不能再合成 dev 后缀。
   for (const snippet of [

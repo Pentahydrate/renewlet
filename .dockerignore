@@ -2,9 +2,10 @@
 .next
 node_modules
 packages/**/node_modules
-packages/client/dist
-packages/server/dist
-packages/server/pb_data
+apps/**/node_modules
+apps/web/dist
+apps/docker-server/dist
+apps/docker-server/pb_data
 data
 
 *.log

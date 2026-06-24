@@ -14,8 +14,8 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const sourcePath = path.join(rootDir, "packages/shared/data/built-in-config-labels.json");
 const serverI18nDir = path.join(rootDir, "packages/shared/data/server-i18n");
-const workerOutPath = path.join(rootDir, "packages/cloudflare/src/calendar-feed-built-in-labels.ts");
-const goOutPath = path.join(rootDir, "packages/server/cmd/renewlet/calendar_feed_builtin_labels_gen.go");
+const workerOutPath = path.join(rootDir, "apps/worker/src/calendar-feed-built-in-labels.ts");
+const goOutPath = path.join(rootDir, "apps/docker-server/cmd/renewlet/calendar_feed_builtin_labels_gen.go");
 const checkMode = process.argv.includes("--check");
 const requiredLocales = ["zh-CN", "en-US"];
 const serverI18nInsertAfter = {

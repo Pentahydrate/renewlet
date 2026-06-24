@@ -14,6 +14,7 @@
     "./schemas/cloud-backup": "./src/schemas/cloud-backup.ts",
     "./schemas/common": "./src/schemas/common.ts",
     "./schemas/custom-config": "./src/schemas/custom-config.ts",
+    "./schemas/errors": "./src/schemas/errors.ts",
     "./schemas/exchange-rates": "./src/schemas/exchange-rates.ts",
     "./schemas/import-export": "./src/schemas/import-export.ts",
     "./schemas/media": "./src/schemas/media.ts",

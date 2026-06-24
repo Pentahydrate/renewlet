@@ -56,7 +56,7 @@ export default defineConfig({
       // 每次清空 e2e 数据目录，让 setup project 拥有唯一的初始化状态；不复用旧 server
       // 可以避免 storage state 与 PocketBase SQLite 数据跨测试轮次串味。
       command: `rm -rf ./pb_data_e2e && go run ./cmd/renewlet serve --http=127.0.0.1:${e2eServerPort} --dir=./pb_data_e2e`,
-      cwd: "./packages/server",
+      cwd: "./apps/docker-server",
       env: {
         ...proxyEnv,
         SETUP_ENABLED: "true",
@@ -67,7 +67,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `pnpm --dir packages/client exec vite --host 127.0.0.1 --port ${e2eClientPort} --strictPort`,
+      command: `pnpm --dir apps/web exec vite --host 127.0.0.1 --port ${e2eClientPort} --strictPort`,
       env: {
         ...proxyEnv,
         VITE_DEV_PROXY_TARGET: e2eServerURL,

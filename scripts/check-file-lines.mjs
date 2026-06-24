@@ -36,8 +36,9 @@ const EXCLUDED_PATHS = [
   /(^|\/)dist\//,
   /(^|\/)coverage\//,
   /(^|\/)pb_data\//,
-  /^packages\/server\/internal\/static\//,
-  /^packages\/client\/src\/i18n\/catalog-keys\.ts$/,
+  /^apps\/docker-server\/internal\/static\//,
+  /^apps\/web\/src\/i18n\/catalog-keys\.ts$/,
+  /^apps\/worker\/src\/worker-configuration\.d\.ts$/,
 ];
 
 function trackedAndNewFiles() {

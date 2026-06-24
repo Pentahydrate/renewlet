@@ -27,9 +27,9 @@ const versionPattern = /^v?(?<version>\d+\.\d+\.\d+(?:-rc\.(?<rc>\d+))?)$/;
 const stablePattern = /^v?\d+\.\d+\.\d+$/;
 const packagePaths = [
   "package.json",
-  "packages/client/package.json",
-  "packages/cloudflare/package.json",
-  "packages/server/package.json",
+  "apps/web/package.json",
+  "apps/worker/package.json",
+  "apps/docker-server/package.json",
   "packages/shared/package.json",
 ];
 const readmeDockerImagePaths = ["README.md", "README.zh-CN.md"];

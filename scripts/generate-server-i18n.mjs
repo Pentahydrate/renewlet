@@ -12,8 +12,8 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const sourceDir = path.join(rootDir, "packages/shared/data/server-i18n");
-const serverOutDir = path.join(rootDir, "packages/server/cmd/renewlet/i18n");
-const workerOutPath = path.join(rootDir, "packages/cloudflare/src/server-i18n-catalog.ts");
+const serverOutDir = path.join(rootDir, "apps/docker-server/cmd/renewlet/i18n");
+const workerOutPath = path.join(rootDir, "apps/worker/src/server-i18n-catalog.ts");
 const defaultLocale = "zh-CN";
 const checkMode = process.argv.includes("--check");
 

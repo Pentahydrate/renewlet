@@ -10,14 +10,14 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const distHeadersPath = join(repoRoot, "packages/client/dist/_headers");
+const distHeadersPath = join(repoRoot, "apps/web/dist/_headers");
 
 const productionUpgradeDirective = "upgrade-insecure-requests";
 const productionImageDirective = "img-src 'self' data: blob: https:";
 const localImageDirective = "img-src 'self' data: blob: http: https:";
 
 if (!existsSync(distHeadersPath)) {
-  throw new Error("Missing packages/client/dist/_headers. Run pnpm build:cloudflare before preparing local headers or deploying.");
+  throw new Error("Missing apps/web/dist/_headers. Run pnpm build:cloudflare before preparing local headers or deploying.");
 }
 
 const headers = readFileSync(distHeadersPath, "utf8");
@@ -29,7 +29,7 @@ if (checkProduction) {
 } else {
   const nextHeaders = prepareLocalHeaders(headers);
   writeFileSync(distHeadersPath, nextHeaders);
-  console.log("Prepared Cloudflare local HTTP headers: removed upgrade-insecure-requests from packages/client/dist/_headers.");
+  console.log("Prepared Cloudflare local HTTP headers: removed upgrade-insecure-requests from apps/web/dist/_headers.");
 }
 
 function prepareLocalHeaders(headersContent) {
@@ -69,7 +69,7 @@ function parseContentSecurityPolicy(headersContent) {
   const cspLinePattern = /^(\s*Content-Security-Policy:\s*)(.+)$/m;
   const match = cspLinePattern.exec(headersContent);
   if (!match) {
-    throw new Error("Missing Content-Security-Policy in packages/client/dist/_headers.");
+    throw new Error("Missing Content-Security-Policy in apps/web/dist/_headers.");
   }
   return {
     linePattern: cspLinePattern,

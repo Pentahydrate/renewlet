@@ -30,8 +30,8 @@
     "build:client": "pnpm --filter @renewlet/client build",
     "build:website": "pnpm --filter @renewlet/website build",
     "build:cloudflare": "VITE_RENEWLET_RUNTIME=cloudflare pnpm --filter @renewlet/client build",
-    "build:server": "pnpm --dir packages/server build",
-    "sync:static": "mkdir -p packages/server/internal/static/public && find packages/server/internal/static/public -mindepth 1 ! -name .gitkeep -delete && cp -R packages/client/dist/. packages/server/internal/static/public/",
+    "build:server": "pnpm --dir apps/docker-server build",
+    "sync:static": "mkdir -p apps/docker-server/internal/static/public && find apps/docker-server/internal/static/public -mindepth 1 ! -name .gitkeep -delete && cp -R apps/web/dist/. apps/docker-server/internal/static/public/",
     "sync:media-resolver-config": "node scripts/sync-media-resolver-config.mjs",
     "check:media-resolver-config": "node scripts/sync-media-resolver-config.mjs --check",
     "sync:ai-recognition-prompt": "node scripts/sync-ai-recognition-prompt.mjs",
@@ -40,12 +40,14 @@
     "check:built-in-config-labels": "node scripts/generate-built-in-config-labels.mjs --check",
     "generate:server-i18n": "node scripts/generate-server-i18n.mjs",
     "check:server-i18n": "node scripts/generate-server-i18n.mjs --check",
-    "start": "pnpm --dir packages/server start",
+    "generate:worker-types": "wrangler types apps/worker/src/worker-configuration.d.ts --env-file /dev/null --include-runtime false",
+    "check:worker-types": "wrangler types apps/worker/src/worker-configuration.d.ts --env-file /dev/null --include-runtime false --check",
+    "start": "pnpm --dir apps/docker-server start",
     "deploy": "node scripts/prepare-cloudflare-local-headers.mjs --check-production && pnpm cloudflare:migrations:apply && wrangler deploy",
     "check:deploy": "node scripts/check-deploy-config.mjs",
     "check:website": "pnpm --filter @renewlet/website lint && pnpm --filter @renewlet/website test && pnpm --filter @renewlet/website build",
     "release": "node scripts/release.mjs",
-    "check:cloudflare": "pnpm check:media-resolver-config && pnpm check:ai-recognition-prompt && pnpm check:built-in-config-labels && pnpm check:server-i18n && pnpm --filter @renewlet/shared typecheck && pnpm --filter @renewlet/cloudflare typecheck && pnpm --filter @renewlet/cloudflare test:run && VITE_RENEWLET_RUNTIME=cloudflare pnpm --filter @renewlet/client typecheck && pnpm --filter @renewlet/client typecheck:all",
+    "check:cloudflare": "pnpm check:media-resolver-config && pnpm check:ai-recognition-prompt && pnpm check:built-in-config-labels && pnpm check:server-i18n && pnpm check:worker-types && pnpm --filter @renewlet/shared typecheck && pnpm --filter @renewlet/cloudflare typecheck && pnpm --filter @renewlet/cloudflare test:run && VITE_RENEWLET_RUNTIME=cloudflare pnpm --filter @renewlet/client typecheck && pnpm --filter @renewlet/client typecheck:all",
     "check:file-lines": "node scripts/check-file-lines.mjs",
     "cloudflare:config:ci": "node scripts/generate-cloudflare-wrangler-config.mjs",
     "dev:cloudflare": "pnpm build:cloudflare && node scripts/prepare-cloudflare-local-headers.mjs && pnpm cloudflare:migrations:apply:local && node scripts/cloudflare-dev-hint.mjs && wrangler dev --test-scheduled",
@@ -54,8 +56,8 @@
     "cloudflare:migrations:apply": "wrangler d1 migrations apply DB --remote",
     "deploy:cloudflare": "pnpm build:cloudflare && pnpm deploy",
     "lint": "pnpm --filter @renewlet/client lint",
-    "test": "pnpm --filter @renewlet/client test && pnpm --dir packages/server test",
-    "test:run": "pnpm --filter @renewlet/client test:run && pnpm --dir packages/server test",
+    "test": "pnpm --filter @renewlet/client test && pnpm --dir apps/docker-server test",
+    "test:run": "pnpm --filter @renewlet/client test:run && pnpm --dir apps/docker-server test",
     "test:e2e": "pnpm typecheck:e2e && playwright test",
     "test:e2e:cloudflare": "node scripts/run-cloudflare-check.mjs",
     "test:e2e:cloudflare:headed": "node scripts/run-cloudflare-check.mjs --headed",
@@ -65,7 +67,7 @@
     "test:e2e:debug": "pnpm typecheck:e2e && playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:cloudflare:report": "playwright show-report playwright-report/cloudflare-check",
-    "test:all": "pnpm check:file-lines && pnpm check:deploy && pnpm --filter @renewlet/client test:run && pnpm typecheck && pnpm --dir packages/server test && pnpm test:e2e",
+    "test:all": "pnpm check:file-lines && pnpm check:deploy && pnpm --filter @renewlet/client test:run && pnpm typecheck && pnpm --dir apps/docker-server test && pnpm test:e2e",
     "typecheck": "pnpm --filter @renewlet/client typecheck && pnpm --filter @renewlet/client typecheck:all && pnpm typecheck:e2e",
     "typecheck:e2e": "tsc --noEmit --project tsconfig.playwright.json",
     "update:built-in-icons-index": "node scripts/update-built-in-icons-index.mjs"
@@ -77,11 +79,11 @@
     ]
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260603.1",
+    "@cloudflare/workers-types": "^4.20260624.1",
     "@lingui/format-po": "6.1.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.8.0",
     "typescript": "^6.0.3",
-    "wrangler": "^4.98.0"
+    "wrangler": "^4.104.0"
   }
 }

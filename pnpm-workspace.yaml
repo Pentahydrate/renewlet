@@ -1,4 +1,4 @@
-# Workspace 明确纳入产品 packages 与独立官网 apps；官网不进入产品 Docker/Worker 构建链路。
+# Workspace 中 apps 是可部署入口，packages 只保留跨运行面共享库。
 packages:
   - "packages/*"
   - "apps/*"

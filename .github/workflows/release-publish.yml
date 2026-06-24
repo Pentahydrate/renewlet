@@ -192,7 +192,7 @@ jobs:
         uses: actions/setup-go@v6.4.0
         with:
           go-version: 1.26.2
-          cache-dependency-path: packages/server/go.sum
+          cache-dependency-path: apps/docker-server/go.sum
 
       - name: Enable Corepack
         run: corepack enable
@@ -214,13 +214,13 @@ jobs:
           mkdir -p tmp/release
           BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           pnpm --filter @renewlet/client build
-          mkdir -p packages/server/internal/static/public
-          find packages/server/internal/static/public -mindepth 1 ! -name .gitkeep -delete
-          cp -R packages/client/dist/. packages/server/internal/static/public/
+          mkdir -p apps/docker-server/internal/static/public
+          find apps/docker-server/internal/static/public -mindepth 1 ! -name .gitkeep -delete
+          cp -R apps/web/dist/. apps/docker-server/internal/static/public/
           for arch in amd64 arm64; do
             out_dir="tmp/release/renewlet_${{ needs.metadata.outputs.version }}_linux_${arch}"
             mkdir -p "$out_dir"
-            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -C packages/server -trimpath \
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -C apps/docker-server -trimpath \
               -ldflags="-s -w -X main.Version=${{ needs.metadata.outputs.version }} -X main.Commit=${GITHUB_SHA} -X main.BuildTime=${BUILD_TIME} -X main.BuildType=release" \
               -o "../../${out_dir}/renewlet" ./cmd/renewlet
             tar -C "$out_dir" -czf "tmp/release/renewlet_${{ needs.metadata.outputs.version }}_linux_${arch}.tar.gz" renewlet

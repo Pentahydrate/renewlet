@@ -27,16 +27,16 @@ const configPath = path.resolve(__dirname, "../packages/shared/data/media-resolv
 const mediaResolverConfig = JSON.parse(await readFile(configPath, "utf8"));
 
 const searchIndexOutputPaths = [
-  path.resolve(__dirname, "../packages/client/public/built-in-icons/search-index.json.gz"),
-  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-search-index.json.gz"),
+  path.resolve(__dirname, "../apps/web/public/built-in-icons/search-index.json.gz"),
+  path.resolve(__dirname, "../apps/docker-server/internal/static/data/built-in-icons-search-index.json.gz"),
 ];
 const detailIndexOutputPaths = [
-  path.resolve(__dirname, "../packages/client/public/built-in-icons/detail-index.json.gz"),
-  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-detail-index.json.gz"),
+  path.resolve(__dirname, "../apps/web/public/built-in-icons/detail-index.json.gz"),
+  path.resolve(__dirname, "../apps/docker-server/internal/static/data/built-in-icons-detail-index.json.gz"),
 ];
 const metadataOutputPaths = [
-  path.resolve(__dirname, "../packages/client/public/built-in-icons/metadata.json"),
-  path.resolve(__dirname, "../packages/server/internal/static/data/built-in-icons-index-metadata.json"),
+  path.resolve(__dirname, "../apps/web/public/built-in-icons/metadata.json"),
+  path.resolve(__dirname, "../apps/docker-server/internal/static/data/built-in-icons-index-metadata.json"),
 ];
 const FETCH_TIMEOUT_MS = 15_000;
 const GITHUB_WEB_BASE = "https://github.com";

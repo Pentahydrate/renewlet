@@ -1,7 +1,7 @@
 # Renewlet
 
 <p align="center">
-  <img src="./packages/client/public/logo.svg" alt="Renewlet" width="320">
+  <img src="./apps/web/public/logo.svg" alt="Renewlet" width="320">
 </p>
 
 <p align="center">

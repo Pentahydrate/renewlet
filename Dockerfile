@@ -7,16 +7,16 @@ WORKDIR /app
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/client/package.json packages/client/package.json
+COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
-COPY packages/server/package.json packages/server/package.json
-# workspace 已纳入独立官网；这里只复制 manifest 让 frozen lockfile 可解析，产品镜像仍只构建 client/server。
+COPY apps/docker-server/package.json apps/docker-server/package.json
+# workspace 已纳入独立官网；这里只复制 manifest 让 frozen lockfile 可解析，产品镜像仍只构建 web/docker-server。
 COPY apps/website/package.json apps/website/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM client-deps AS client-builder
 # 客户端构建会解析 @renewlet/shared workspace export，并在 Vite 产物后跑 CSP 守卫。
-COPY packages/client packages/client
+COPY apps/web apps/web
 COPY packages/shared packages/shared
 COPY scripts/check-client-csp.mjs scripts/check-client-csp.mjs
 RUN pnpm --filter @renewlet/client build
@@ -30,15 +30,15 @@ ARG VERSION=0.0.0-dev
 ARG COMMIT=dev
 ARG BUILD_TIME=dev
 
-WORKDIR /src/packages/server
+WORKDIR /src/apps/docker-server
 
-COPY packages/server/go.mod packages/server/go.sum ./
+COPY apps/docker-server/go.mod apps/docker-server/go.sum ./
 RUN go mod download
 
-COPY packages/server ./
+COPY apps/docker-server ./
 RUN mkdir -p internal/static/public \
   && find internal/static/public -mindepth 1 ! -name .gitkeep -delete
-COPY --from=client-builder /app/packages/client/dist ./internal/static/public
+COPY --from=client-builder /app/apps/web/dist ./internal/static/public
 
 RUN mkdir -p /out /pb_data \
   && CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-$(go env GOARCH)} go build -trimpath -ldflags="-s -w -X main.Version=${VERSION} -X main.Commit=${COMMIT} -X main.BuildTime=${BUILD_TIME} -X main.BuildType=release" -o /out/renewlet ./cmd/renewlet

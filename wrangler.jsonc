@@ -1,9 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "renewlet",
-  "main": "packages/cloudflare/src/index.ts",
-  "compatibility_date": "2026-05-20",
+  "main": "apps/worker/src/index.ts",
+  "compatibility_date": "2026-06-24",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    // Worker 日志/trace 是线上排障入口；业务错误仍由结构化 API error body 返回给当前操作者。
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    }
+  },
   "dev": {
     // 本地移动端/局域网验收需要监听所有网卡；这个设置只影响 wrangler dev，不改变 Cloudflare 生产入口。
     "ip": "0.0.0.0",
@@ -11,7 +23,7 @@
     "local_protocol": "http"
   },
   "assets": {
-    "directory": "./packages/client/dist",
+    "directory": "./apps/web/dist",
     // ASSETS binding 供 Worker 读取内置图标 seed gzip；大静态数据不能重新打进 Worker bundle。
     "binding": "ASSETS",
     // 静态资源使用 SPA fallback；产品 API 和公开 ICS 必须先交给 Worker 做认证/Token 校验。
@@ -25,11 +37,11 @@
   },
   "d1_databases": [
     {
-      // DB 是结构化数据事实源；部署前必须先应用 packages/cloudflare/migrations。
+      // DB 是结构化数据事实源；部署前必须先应用 apps/worker/migrations。
       "binding": "DB",
       "database_name": "renewlet",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "packages/cloudflare/migrations"
+      "migrations_dir": "apps/worker/migrations"
     }
   ],
   "r2_buckets": [
