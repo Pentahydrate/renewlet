@@ -10,7 +10,6 @@ import {
   type WallosDatabaseModel,
   type WallosTableRow,
 } from "./wallos-import-mapping";
-import { buildPreparedLegacyRenewletImport } from "./renewlet-legacy-import";
 
 type WorkerRequest = {
   id: number;
@@ -118,9 +117,6 @@ async function parseZipBytes(
     const assetEntries = collectRenewletAssetEntries(zip);
     const renewletExport = renewletExportV1Schema.safeParse(data);
     if (renewletExport.success) return buildFromRenewletExport(renewletExport.data, context, assetEntries);
-    // Worker 里的 legacy data.json 桥接和主线程入口同寿命；迁移窗口结束后两边一起删，避免后台解析永久背双格式。
-    const legacyRenewletPrepared = buildPreparedLegacyRenewletImport(data, context, assetEntries);
-    if (legacyRenewletPrepared) return legacyRenewletPrepared;
   }
   const dbEntry = zip.file(/(^|\/)wallos\.db$/i)[0];
   if (!dbEntry) throw new Error(IMPORT_MESSAGE_CODES.unrecognizedFile);

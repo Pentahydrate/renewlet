@@ -18,7 +18,6 @@ import {
   type ImportLogoAutoMatch,
   type PreparedImport,
 } from "./import-export-model";
-import { buildPreparedLegacyRenewletImport } from "./renewlet-legacy-import";
 import { assetService } from "@/services/asset-service";
 
 type ImportSubscription = ImportPayload["subscriptions"][number];
@@ -61,7 +60,7 @@ export async function parseImportFile(
 /**
  * parseJsonText 解析纯文本导入内容。
  *
- * Renewlet export v1 是正式互导格式；Wallos 分支只做字段映射，旧 Renewlet legacy 分支是存量迁移桥。
+ * Renewlet export v1 是唯一自导入格式；Wallos 分支只做外部备份字段映射。
  */
 export async function parseJsonText(
   text: string,
@@ -72,11 +71,6 @@ export async function parseJsonText(
   const renewletExport = renewletExportV1Schema.safeParse(parsed);
   if (renewletExport.success) {
     return buildFromRenewletExport(renewletExport.data, context);
-  }
-  // 旧 Renewlet 识别只给存量 Docker 用户做一次性迁移；迁移窗口结束后删掉 legacy 接线，不继续扩格式。
-  const legacyRenewletPrepared = buildPreparedLegacyRenewletImport(parsed, context);
-  if (legacyRenewletPrepared) {
-    return legacyRenewletPrepared;
   }
   if (isWallosApiPayload(parsed)) {
     const users = wallosUsersFromApiPayload(parsed);

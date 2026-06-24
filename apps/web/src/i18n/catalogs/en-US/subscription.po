@@ -349,21 +349,6 @@ msgid "subscription.addToCalendarCalendarName"
 msgstr "Renewlet - {name}"
 
 #. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:352
-msgid "import.field.renewletDueDate"
-msgstr "Renewlet next billing date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:353
-msgid "import.field.renewletStartDate"
-msgstr "Renewlet start date"
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:354
-msgid "import.field.renewletTrialEndDate"
-msgstr "Renewlet trial end date"
-
-#. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:287
 msgid "import.wallosGuideJsonTitle"
 msgstr "UI JSON"
@@ -1702,56 +1687,6 @@ msgstr "The old URL will stop working immediately. Calendar apps that already us
 #: src/i18n/descriptors/subscription.ts:32
 msgid "subscription.addToCalendarRegeneratedDescription"
 msgstr "The old URL is invalid. Use the new subscription link."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:366
-msgid "import.warning.renewletLegacyLogoDropped"
-msgstr "This legacy Renewlet Logo format is no longer supported. It was cleared and can be reassigned in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:367
-msgid "import.warning.renewletLegacyPriceDefaulted"
-msgstr "The legacy Renewlet price is invalid. Imported as 0; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:363
-msgid "import.warning.renewletLegacyBillingCycleDefaulted"
-msgstr "The legacy Renewlet billing cycle is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:368
-msgid "import.warning.renewletLegacyReminderDaysDefaulted"
-msgstr "The legacy Renewlet reminder lead time is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:372
-msgid "import.warning.renewletLegacyTagsTrimmed"
-msgstr "The legacy Renewlet tags included invalid or overlong values. They were cleaned and can be changed in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:371
-msgid "import.warning.renewletLegacyStatusDefaulted"
-msgstr "The legacy Renewlet status is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:365
-msgid "import.warning.renewletLegacyCustomDaysDefaulted"
-msgstr "The legacy Renewlet custom cycle length is invalid. Imported as {fallback} day(s); you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:364
-msgid "import.warning.renewletLegacyCurrencyDefaulted"
-msgstr "The legacy Renewlet currency is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:370
-msgid "import.warning.renewletLegacyRepeatWindowDefaulted"
-msgstr "The legacy Renewlet repeat reminder window is invalid. Imported as {fallback}; you can change it in preview."
-
-#. js-lingui-explicit-id
-#: src/i18n/descriptors/subscription.ts:369
-msgid "import.warning.renewletLegacyRepeatIntervalDefaulted"
-msgstr "The legacy Renewlet repeat reminder interval is invalid. Imported as {fallback}; you can change it in preview."
 
 #. js-lingui-explicit-id
 #: src/i18n/descriptors/subscription.ts:126

@@ -67,7 +67,7 @@ describe("wallos import", () => {
     expect(importApplyRequestSchema.safeParse({ payload: previewPayload, conflictMode: "skip" }).success).toBe(false);
   });
 
-  it("routes Wallos UI arrays to Wallos display import before any Renewlet legacy fallback", async () => {
+  it("routes Wallos UI arrays to Wallos display import", async () => {
     const prepared = await parseJsonText(JSON.stringify([
       {
         Name: "Wallos UI Row",
