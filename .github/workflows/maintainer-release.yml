@@ -161,7 +161,7 @@ jobs:
 
           node scripts/release.mjs sync-version "$VERSION"
           if ! git diff --quiet; then
-            git add package.json packages/*/package.json README.md README.zh-CN.md
+            git add package.json apps/*/package.json packages/*/package.json README.md README.zh-CN.md
             git commit -m "chore: prepare release v${VERSION}"
           fi
 
