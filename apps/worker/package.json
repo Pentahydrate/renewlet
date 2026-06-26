@@ -2,7 +2,7 @@
   "name": "@renewlet/cloudflare",
   "private": true,
   "license": "MIT",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "module",
   "scripts": {
     "test:run": "vitest run",
@@ -32,6 +32,6 @@
     "@cloudflare/workers-types": "^4.20260624.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6",
-    "wrangler": "^4.104.0"
+    "wrangler": "^4.105.0"
   }
 }

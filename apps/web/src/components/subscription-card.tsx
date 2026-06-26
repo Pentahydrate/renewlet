@@ -3,7 +3,7 @@
  *
  * 用途：
  * - 在仪表盘与订阅列表展示订阅概览
- * - 提供编辑/删除入口
+ * - 提供编辑/复制/删除入口
  * - 根据续费/试用到期情况做提示（颜色/动画）
  *
  * 注意： 卡片直接读取自定义配置来显示分类颜色。若未来支持服务端渲染卡片，
@@ -22,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { colorWithAlpha } from '@/lib/color';
-import { Calendar, MoreHorizontal, CalendarClock, Bell, CreditCard, CalendarPlus, Eye, EyeOff, Pencil, Pin, PinOff, RotateCw, Trash2 } from 'lucide-react';
+import { Calendar, MoreHorizontal, CalendarClock, Bell, CreditCard, CalendarPlus, Copy, Eye, EyeOff, Pencil, Pin, PinOff, RotateCw, Trash2 } from 'lucide-react';
 import {
   daysBetweenDateOnly,
   todayDateOnlyInTimeZone,
@@ -68,6 +68,8 @@ interface SubscriptionCardProps {
   onEdit?: (id: string) => void;
   /** 删除动作只上抛 id，真正 mutation 和缓存失效统一留在页面应用层。 */
   onDelete?: (id: string) => void;
+  /** 复制动作只上抛 id，页面控制器负责打开克隆弹窗并创建新记录。 */
+  onClone?: (id: string) => void;
   /** 置顶切换动作由页面持有 mutation，卡片只负责菜单入口。 */
   onTogglePinned?: (id: string) => void;
   /** 公开页隐藏切换由页面持有 mutation，卡片只负责菜单入口。 */
@@ -89,6 +91,8 @@ interface SubscriptionCardProps {
 }
 
 const DEFAULT_BADGE_COLOR = "hsl(var(--primary))";
+const CARD_ACTION_MENU_CONTENT_CLASSNAME = "pointer-events-auto w-max min-w-40";
+const CARD_ACTION_MENU_ITEM_CLASSNAME = "gap-2.5 px-2.5 py-2 text-sm whitespace-nowrap";
 
 type SubscriptionCardMetaTone = "muted" | "warning" | "destructive";
 
@@ -128,6 +132,7 @@ function SubscriptionCardComponent({
   viewMode = 'grid',
   onEdit,
   onDelete,
+  onClone,
   onTogglePinned,
   onTogglePublicHidden,
   onRenew,
@@ -327,25 +332,31 @@ function SubscriptionCardComponent({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="pointer-events-auto w-40">
-                <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => onEdit?.(subscription.id)}>
+              <DropdownMenuContent align="end" className={CARD_ACTION_MENU_CONTENT_CLASSNAME}>
+                <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => onEdit?.(subscription.id)}>
                   <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" />
                   {t("common.edit")}
                 </DropdownMenuItem>
+                {onClone ? (
+                  <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => onClone(subscription.id)}>
+                    <Copy className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {t("subscription.copy")}
+                  </DropdownMenuItem>
+                ) : null}
                 {hasCalendarEvent ? (
-                  <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => setShowAddToCalendarDialog(true)}>
+                  <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => setShowAddToCalendarDialog(true)}>
                     <CalendarPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("subscription.addToCalendar")}
                   </DropdownMenuItem>
                 ) : null}
                 {canManualRenew ? (
-                  <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => onRenew?.(subscription.id)}>
+                  <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => onRenew?.(subscription.id)}>
                     <RotateCw className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {t("subscription.renew")}
                   </DropdownMenuItem>
                 ) : null}
                 {onTogglePinned ? (
-                  <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => onTogglePinned(subscription.id)}>
+                  <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => onTogglePinned(subscription.id)}>
                     {subscription.pinned ? (
                       <PinOff className="h-4 w-4 shrink-0 text-muted-foreground" />
                     ) : (
@@ -355,7 +366,7 @@ function SubscriptionCardComponent({
                   </DropdownMenuItem>
                 ) : null}
                 {onTogglePublicHidden ? (
-                  <DropdownMenuItem className="gap-2.5 px-2.5 py-2 text-sm" onClick={() => onTogglePublicHidden(subscription.id)}>
+                  <DropdownMenuItem className={CARD_ACTION_MENU_ITEM_CLASSNAME} onClick={() => onTogglePublicHidden(subscription.id)}>
                     {subscription.publicHidden ? (
                       <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
                     ) : (
@@ -367,7 +378,7 @@ function SubscriptionCardComponent({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setShowDeleteDialog(true)}
-                  className="gap-2.5 px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  className={cn(CARD_ACTION_MENU_ITEM_CLASSNAME, "text-destructive focus:bg-destructive/10 focus:text-destructive")}
                 >
                   <Trash2 className="h-4 w-4 shrink-0" />
                   {t("common.delete")}
@@ -456,6 +467,7 @@ function areSubscriptionCardPropsEqual(prev: SubscriptionCardProps, next: Subscr
     prev.costSharingCurrencyConvert === next.costSharingCurrencyConvert &&
     prev.onEdit === next.onEdit &&
     prev.onDelete === next.onDelete &&
+    prev.onClone === next.onClone &&
     prev.onTogglePinned === next.onTogglePinned &&
     prev.onTogglePublicHidden === next.onTogglePublicHidden &&
     prev.onRenew === next.onRenew &&

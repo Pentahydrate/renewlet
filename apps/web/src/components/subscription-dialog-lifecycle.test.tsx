@@ -90,6 +90,38 @@ function CreateDialogHarness({
   );
 }
 
+function CreateCloneDialogHarness({
+  onSubmit = vi.fn<(subscription: SubscriptionDraft) => void>(),
+}: {
+  onSubmit?: (subscription: SubscriptionDraft) => void;
+} = {}) {
+  const [dialogKind, setDialogKind] = useState<"create" | "clone" | null>(null);
+  const cloneSource = makeSubscription({
+    name: "Cloned SaaS",
+    price: 42,
+    currency: "CNY",
+    publicHidden: true,
+    notes: "Keep note",
+    tags: ["Infra"],
+  });
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <button type="button" onClick={() => setDialogKind("create")}>打开普通新增弹窗</button>
+      <button type="button" onClick={() => setDialogKind("clone")}>打开复制弹窗</button>
+      <SubscriptionDialog
+        mode="create"
+        open={dialogKind !== null}
+        onOpenChange={(open) => {
+          if (!open) setDialogKind(null);
+        }}
+        onSubmit={onSubmit}
+        initialSubscription={dialogKind === "clone" ? cloneSource : null}
+      />
+    </TooltipProvider>
+  );
+}
+
 function EditDialogHarness() {
   const [open, setOpen] = useState(false);
   const subscription = makeSubscription();
@@ -174,6 +206,30 @@ describe("SubscriptionDialog lifecycle", () => {
     expect(screen.getByLabelText("价格")).toHaveValue("1,000,000,001");
     expect(screen.getByText("金额必须是 0 到 1,000,000,000 之间的有效数字")).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("prefills clone create sessions and keeps regular create sessions blank", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateCloneDialogHarness />);
+
+    await user.click(screen.getByRole("button", { name: "打开复制弹窗" }));
+
+    expect(screen.getByRole("dialog", { name: "复制订阅" })).toBeInTheDocument();
+    expect(screen.getByLabelText("服务名称")).toHaveValue("Cloned SaaS");
+    expect(screen.getByLabelText("价格")).toHaveValue("42");
+    expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("¥ 人民币 (CNY)");
+    expect(screen.getByRole("switch", { name: "从公开页隐藏" })).toBeChecked();
+    expect(screen.getByLabelText("备注")).toHaveValue("Keep note");
+
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    await user.click(screen.getByRole("button", { name: "打开普通新增弹窗" }));
+
+    expect(screen.getByRole("dialog", { name: "添加新订阅" })).toBeInTheDocument();
+    expect(screen.getByLabelText("服务名称")).toHaveValue("");
+    expect(screen.getByLabelText("价格")).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "选择货币" })).toHaveTextContent("$ 美元 (USD)");
+    expect(screen.getByRole("switch", { name: "从公开页隐藏" })).not.toBeChecked();
   });
 
   it("reopens edit mode from the subscription snapshot instead of unsaved edits", async () => {

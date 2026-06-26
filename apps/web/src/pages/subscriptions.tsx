@@ -19,6 +19,7 @@ import { SubscriptionCard, type SubscriptionCardLookup } from '@/components/subs
 import { SubscriptionDetailDialog } from '@/components/subscription-detail-dialog';
 import { AddSubscriptionDialog } from '@/components/add-subscription-dialog';
 import { EditSubscriptionDialog } from '@/components/edit-subscription-dialog';
+import { SubscriptionDialog } from '@/components/subscription-dialog';
 import { ImportDataDialog } from '@/components/import-data-dialog';
 import { AIRecognizeSubscriptionDialog } from '@/components/ai-recognize-subscription-dialog';
 import { SubscriptionsPageSkeleton } from '@/components/loading-skeleton';
@@ -112,6 +113,7 @@ type SubscriptionGridProps = {
   paymentMethodByValue: SubscriptionCardLookup;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onClone: (id: string) => void;
   onTogglePinned: (id: string) => void;
   onTogglePublicHidden: (id: string) => void;
   onRenew: (id: string) => void;
@@ -128,6 +130,7 @@ function SubscriptionGrid({
   paymentMethodByValue,
   onEdit,
   onDelete,
+  onClone,
   onTogglePinned,
   onTogglePublicHidden,
   onRenew,
@@ -167,6 +170,7 @@ function SubscriptionGrid({
               paymentMethodByValue={paymentMethodByValue}
               onEdit={onEdit}
               onDelete={onDelete}
+              onClone={onClone}
               onTogglePinned={onTogglePinned}
               onTogglePublicHidden={onTogglePublicHidden}
               onRenew={onRenew}
@@ -203,14 +207,19 @@ function SubscriptionGrid({
   const {
     editingSubscription,
     editDialogOpen,
+    cloningSubscription,
+    cloneDialogOpen,
     handleAddSubscription,
     handleDeleteSubscription,
+    handleCloneSubscription,
     handleEditSubscription,
     handleTogglePinnedSubscription,
     handleTogglePublicHiddenSubscription,
     handleRenewSubscription,
     handleSaveSubscription,
+    handleSaveClonedSubscription,
     handleEditDialogOpenChange,
+    handleCloneDialogOpenChange,
   } = useSubscriptionCrud(subscriptions);
   const {
     searchQuery,
@@ -595,6 +604,7 @@ function SubscriptionGrid({
               paymentMethodByValue={paymentMethodByValue}
               onEdit={handleEditSubscription}
               onDelete={handleDeleteSubscription}
+              onClone={handleCloneSubscription}
               onTogglePinned={handleTogglePinnedSubscription}
               onTogglePublicHidden={handleTogglePublicHiddenSubscription}
               onRenew={handleRenewSubscription}
@@ -624,6 +634,14 @@ function SubscriptionGrid({
         open={editDialogOpen}
         onOpenChange={handleEditDialogOpenChange}
         onSave={handleSaveSubscription}
+        availableTags={allTags}
+      />
+      <SubscriptionDialog
+        mode="create"
+        open={cloneDialogOpen}
+        onOpenChange={handleCloneDialogOpenChange}
+        onSubmit={handleSaveClonedSubscription}
+        initialSubscription={cloningSubscription}
         availableTags={allTags}
       />
       <SubscriptionDetailDialog

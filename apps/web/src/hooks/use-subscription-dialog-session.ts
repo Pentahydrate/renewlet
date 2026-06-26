@@ -22,6 +22,7 @@ interface UseSubscriptionDialogSessionParams {
   mode: SubscriptionDialogSessionMode;
   open: boolean;
   editSubscription: Subscription | null;
+  initialSubscription?: Subscription | null | undefined;
   defaultCreateCurrency: string;
   enabledCurrencyValues: readonly string[];
 }
@@ -43,6 +44,7 @@ export function useSubscriptionDialogSession({
   mode,
   open,
   editSubscription,
+  initialSubscription,
   defaultCreateCurrency,
   enabledCurrencyValues,
 }: UseSubscriptionDialogSessionParams): SubscriptionDialogSession {
@@ -53,7 +55,7 @@ export function useSubscriptionDialogSession({
   const [createCurrencyManuallySelected, setCreateCurrencyManuallySelected] = useState(false);
   const [formData, setFormData] = useState<SubscriptionFormState>(() =>
     mode === "create"
-      ? createSubscriptionFormState({ currency: defaultCreateCurrency })
+      ? createCreateFormState(defaultCreateCurrency, initialSubscription)
       : createSubscriptionFormState(),
   );
 
@@ -64,10 +66,10 @@ export function useSubscriptionDialogSession({
   }, []);
 
   const resetCreateSession = useCallback(() => {
-    setFormData(createSubscriptionFormState({ currency: defaultCreateCurrency }));
+    setFormData(createCreateFormState(defaultCreateCurrency, initialSubscription));
     setCreateCurrencyManuallySelected(false);
     resetTransientState();
-  }, [defaultCreateCurrency, resetTransientState]);
+  }, [defaultCreateCurrency, initialSubscription, resetTransientState]);
 
   const resetClosedSession = useCallback(() => {
     pendingCreateSessionResetRef.current = false;
@@ -100,6 +102,7 @@ export function useSubscriptionDialogSession({
   useEffect(() => {
     if (mode !== "create") return;
     if (!open) return;
+    if (initialSubscription) return;
 
     const isPristine = isCreateFormPristine(formData);
     const currencyDisabled = !enabledCurrencyValues.includes(formData.currency);
@@ -114,9 +117,21 @@ export function useSubscriptionDialogSession({
     defaultCreateCurrency,
     enabledCurrencyValues,
     formData,
+    initialSubscription,
     mode,
     open,
   ]);
+
+  useEffect(() => {
+    if (mode !== "create") return;
+    if (!open) return;
+    if (!initialSubscription) return;
+
+    // 克隆模式每次打开都从点击时的订阅快照预填；打开后用户编辑不再跟随后台列表刷新。
+    setFormData(subscriptionToFormState(initialSubscription));
+    setCreateCurrencyManuallySelected(false);
+    resetTransientState();
+  }, [initialSubscription, mode, open, resetTransientState]);
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -157,6 +172,12 @@ export function useSubscriptionDialogSession({
     clearFieldError,
     handleFieldChange,
   };
+}
+
+function createCreateFormState(defaultCreateCurrency: string, initialSubscription?: Subscription | null): SubscriptionFormState {
+  return initialSubscription
+    ? subscriptionToFormState(initialSubscription)
+    : createSubscriptionFormState({ currency: defaultCreateCurrency });
 }
 
 function isCreateFormPristine(formData: SubscriptionFormState): boolean {

@@ -57,6 +57,8 @@ type CreateDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** 新增提交回调（不含 id）。 */
   onSubmit: (subscription: SubscriptionDraft) => void;
+  /** 克隆订阅时使用的源订阅快照；普通新增保持空。 */
+  initialSubscription?: Subscription | null | undefined;
   /** 当前用户已有标签建议。 */
   availableTags?: readonly string[] | undefined;
   /** 触发器（可选，通常是“添加订阅”按钮）。 */
@@ -88,6 +90,8 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
   const { data: settings } = useSettings();
   const { t, locale } = useI18n();
   const onDialogOpenChange = props.onOpenChange;
+  const initialCreateSubscription = props.mode === "create" ? props.initialSubscription ?? null : null;
+  const isCloneCreateMode = Boolean(initialCreateSubscription);
   const statisticCurrency = settings?.defaultCurrency ?? "CNY";
   const notificationReminderDays = settings?.notificationReminderDays ?? DEFAULT_NOTIFICATION_REMINDER_DAYS;
   const { convert: convertCurrency } = useExchangeRates(settings?.exchangeRateProvider);
@@ -128,6 +132,7 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
     mode: props.mode,
     open: props.open,
     editSubscription,
+    initialSubscription: initialCreateSubscription,
     defaultCreateCurrency,
     enabledCurrencyValues,
   });
@@ -342,10 +347,16 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
         >
           <DialogHeader data-subscription-dialog-header="" className="shrink-0 p-6 pb-0">
             <DialogTitle className="text-xl font-semibold">
-              {props.mode === "create" ? t("subscription.dialogCreateTitle") : t("subscription.dialogEditTitle")}
+              {props.mode === "create"
+                ? isCloneCreateMode
+                  ? t("subscription.cloneDialogTitle")
+                  : t("subscription.dialogCreateTitle")
+                : t("subscription.dialogEditTitle")}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              {props.mode === "create"
+              {props.mode === "create" && isCloneCreateMode && initialCreateSubscription
+                ? t("subscription.cloneDialogDescription", { name: initialCreateSubscription.name })
+                : props.mode === "create"
                 ? t("subscription.dialogCreateDescription")
                 : t("subscription.dialogEditDescription")}
             </DialogDescription>
@@ -396,7 +407,11 @@ export function SubscriptionDialog(props: SubscriptionDialogProps) {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary-glow sm:w-auto"
               >
                 {logoUploadStatus === "uploading" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {props.mode === "create" ? t("subscription.dialogCreateSubmit") : t("subscription.dialogEditSubmit")}
+                {props.mode === "create"
+                  ? isCloneCreateMode
+                    ? t("subscription.cloneSubmit")
+                    : t("subscription.dialogCreateSubmit")
+                  : t("subscription.dialogEditSubmit")}
               </Button>
             </div>
           </form>

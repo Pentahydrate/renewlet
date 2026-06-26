@@ -8,19 +8,12 @@ import { assertDateOnly } from "@/lib/time/date-only";
 import { DEFAULT_SETTINGS, type Subscription } from "@/types/subscription";
 import Subscriptions from "./subscriptions";
 
-type RecurringBillingCycle = Exclude<Subscription["billingCycle"], "custom" | "one-time">;
 type SubscriptionBaseFixture = Omit<Subscription, "billingCycle" | "customDays" | "customCycleUnit" | "oneTimeTermCount" | "oneTimeTermUnit">;
-type SubscriptionOverrides = Partial<SubscriptionBaseFixture> & (
-  | { billingCycle?: RecurringBillingCycle; customDays?: undefined; customCycleUnit?: undefined; oneTimeTermCount?: undefined; oneTimeTermUnit?: undefined }
-  | { billingCycle: "one-time"; customDays?: undefined; customCycleUnit?: undefined; oneTimeTermCount?: number; oneTimeTermUnit?: Subscription["oneTimeTermUnit"] }
-  | { billingCycle: "custom"; customDays?: number; customCycleUnit?: Subscription["customCycleUnit"]; oneTimeTermCount?: undefined; oneTimeTermUnit?: undefined }
-);
+type SubscriptionOverrides = Partial<Subscription>;
 
 const mocks = vi.hoisted(() => ({
-  useSubscriptions: vi.fn(),
   useInfiniteSubscriptions: vi.fn(),
   useSettings: vi.fn(),
-  handleAddSubscription: vi.fn(),
   handleDeleteSubscription: vi.fn(),
   handleEditSubscription: vi.fn(),
   handleTogglePinnedSubscription: vi.fn(),
@@ -34,7 +27,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/hooks/use-subscriptions", () => ({
-  useSubscriptions: mocks.useSubscriptions,
   useInfiniteSubscriptions: mocks.useInfiniteSubscriptions,
 }));
 
@@ -98,13 +90,18 @@ vi.mock("@/modules/subscriptions/application/use-subscription-crud", () => ({
   useSubscriptionCrud: () => ({
     editingSubscription: undefined,
     editDialogOpen: false,
-    handleAddSubscription: mocks.handleAddSubscription,
+    cloningSubscription: null,
+    cloneDialogOpen: false,
+    handleAddSubscription: vi.fn(),
     handleDeleteSubscription: mocks.handleDeleteSubscription,
+    handleCloneSubscription: vi.fn(),
     handleEditSubscription: mocks.handleEditSubscription,
     handleTogglePinnedSubscription: mocks.handleTogglePinnedSubscription,
     handleTogglePublicHiddenSubscription: mocks.handleTogglePublicHiddenSubscription,
     handleSaveSubscription: mocks.handleSaveSubscription,
+    handleSaveClonedSubscription: vi.fn(),
     handleEditDialogOpenChange: mocks.handleEditDialogOpenChange,
+    handleCloneDialogOpenChange: vi.fn(),
   }),
 }));
 
@@ -195,6 +192,10 @@ vi.mock("@/components/add-subscription-dialog", () => ({
 
 vi.mock("@/components/edit-subscription-dialog", () => ({
   EditSubscriptionDialog: () => null,
+}));
+
+vi.mock("@/components/subscription-dialog", () => ({
+  SubscriptionDialog: () => null,
 }));
 
 function subscription(overrides: SubscriptionOverrides = {}): Subscription {
