@@ -482,7 +482,8 @@ func normalizeNotificationJobRecord(record *core.Record) error {
 		if result.Source != "cron" {
 			return errors.New("NOTIFICATION_RESULT_SOURCE_INVALID")
 		}
-		record.Set("result", result)
+		// 写入边界仍收敛为当前 cron result；历史读路径不再替旧 result 做兼容重塑。
+		record.Set("result", normalizeNotificationJobResult(result))
 	}
 	return nil
 }

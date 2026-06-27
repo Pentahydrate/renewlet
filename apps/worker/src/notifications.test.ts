@@ -274,7 +274,7 @@ describe("Cloudflare notifications", () => {
     expect(result.schedule).not.toHaveProperty("reason");
   });
 
-  it("normalizes legacy notification history schedules with decision fields", async () => {
+  it("drops legacy notification history results with internal decision fields", async () => {
     const legacyJob = notificationJobRow({
       status: "skipped",
       attempts: 1,
@@ -298,22 +298,13 @@ describe("Cloudflare notifications", () => {
       headers: { authorization: "Bearer test" },
     }), env);
     const body = await readSuccessData<{
-      summary: { latestJob: { result: { schedule: Record<string, unknown> } } | null };
-      history: { jobs: Array<{ result: { schedule: Record<string, unknown> } }> };
+      summary: { latestJob: { result: Record<string, unknown> } | null };
+      history: { jobs: Array<{ result: Record<string, unknown> }> };
     }>(response);
-    const latestSchedule = body.summary.latestJob?.result.schedule;
-    const historySchedule = body.history.jobs[0]?.result.schedule;
 
     expect(response.status).toBe(200);
-    expect(latestSchedule).toEqual({
-      scheduledLocalDate: "2026-01-09",
-      scheduledLocalTime: "08:00",
-      timeZone: "UTC",
-      scheduledInstantUtc: "2026-01-09T08:00:00Z",
-    });
-    expect(historySchedule).toEqual(latestSchedule);
-    expect(latestSchedule).not.toHaveProperty("due");
-    expect(latestSchedule).not.toHaveProperty("reason");
+    expect(body.summary.latestJob?.result).toEqual({});
+    expect(body.history.jobs[0]?.result).toEqual({});
   });
 
   it("logs and rejects top-level scheduled failures without leaking secrets", async () => {

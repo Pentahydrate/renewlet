@@ -167,6 +167,18 @@ describe("subscription API schemas", () => {
     }).success).toBe(false);
   });
 
+  it("rejects subscription response dates that are not date-only values", () => {
+    expect(apiSubscriptionSchema.safeParse({
+      ...validSubscriptionResponseBody,
+      nextBillingDate: "2026-06-15T00:00:00Z",
+    }).success).toBe(false);
+
+    expect(apiSubscriptionSchema.safeParse({
+      ...validSubscriptionResponseBody,
+      trialEndDate: "06/15/2026",
+    }).success).toBe(false);
+  });
+
   it("accepts equal and custom cost sharing payloads", () => {
     const equalSharing = {
       enabled: true,

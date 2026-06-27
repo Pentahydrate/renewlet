@@ -9,21 +9,29 @@ import {
   calendarFeedStatusPayloadSchema,
 } from "@renewlet/shared/schemas/calendar-feed";
 import { buildRenewalCalendarIcs } from "@renewlet/shared/ics";
-import { buildRenewalCalendarEvent, type RenewalCalendarEvent } from "@renewlet/shared/calendar-events";
-import { effectiveReminderDays, isDisabledReminderDays, isValidDateOnly } from "@renewlet/shared/runtime";
+import { buildRenewalCalendarEvent, type RenewalCalendarEvent, type RenewalCalendarSubscription } from "@renewlet/shared/calendar-events";
+import { effectiveReminderDays, isDisabledReminderDays, isValidDateOnly, type BillingCycle } from "@renewlet/shared/runtime";
 import { customConfigSchema, type ApiCustomConfig } from "@renewlet/shared/schemas/custom-config";
 import type { ApiAppSettings } from "@renewlet/shared/schemas/settings";
-import type { ApiSubscription } from "@renewlet/shared/schemas/subscriptions";
-import { getCustomConfig, getSettings, getSubscription, listSubscriptions, newId, nowIso, toApiSubscription } from "./db";
+import { getCustomConfig, getSettings, getSubscription, listSubscriptions, newId, nowIso } from "./db";
 import { randomToken } from "./crypto";
 import { requireAuth } from "./auth";
 import { HttpError, ok, readJson, requestLocale, successJson } from "./http";
 import { serverFormat, serverText } from "./server-i18n";
 import { calendarFeedBuiltInCategoryLabelKey, calendarFeedBuiltInPaymentMethodLabelKey } from "./calendar-feed-built-in-labels";
 import { requestOrigin } from "./request-origin";
-import type { CalendarFeedRow, Env } from "./types";
+import type { CalendarFeedRow, Env, SubscriptionRow } from "./types";
 
 type CalendarFeedScope = CalendarFeedRow["scope"];
+type CalendarCustomCycleUnit = "day" | "week" | "month" | "year";
+type CalendarFixedBillingCycle = Exclude<BillingCycle, "custom">;
+
+interface CalendarSubscription extends RenewalCalendarSubscription {
+  status: string;
+  customDays?: number | undefined;
+  customCycleUnit?: string | undefined;
+  reminderDays: number;
+}
 
 interface CalendarFeedLabelResolver {
   categoryLabel(value: string): string;
@@ -75,7 +83,7 @@ export async function readSubscriptionCalendarFeed(request: Request, env: Env, s
   await ensureCalendarFeedSchema(env, locale);
   const subscription = await getSubscription(env, auth.user.id, subscriptionId);
   if (!subscription) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
-  if (isOneTimeBuyout(toApiSubscription(subscription))) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
+  if (isOneTimeBuyout(toCalendarSubscription(subscription))) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
   const row = await getCalendarFeed(env, auth.user.id, "subscription", subscriptionId);
   return successJson(calendarFeedStatusPayloadSchema.parse({ calendarFeed: calendarFeedStatus(row, request) }));
 }
@@ -88,7 +96,7 @@ export async function createSubscriptionCalendarFeed(request: Request, env: Env,
   await ensureCalendarFeedSchema(env, locale);
   const subscription = await getSubscription(env, auth.user.id, subscriptionId);
   if (!subscription) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
-  if (isOneTimeBuyout(toApiSubscription(subscription))) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
+  if (isOneTimeBuyout(toCalendarSubscription(subscription))) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
   const existing = await getCalendarFeed(env, auth.user.id, "subscription", subscriptionId);
   const row = existing ?? await insertCalendarFeed(env, {
     scope: "subscription",
@@ -120,20 +128,20 @@ export async function downloadSubscriptionCalendarIcs(request: Request, env: Env
   const auth = await requireAuth(request, env);
   const subscription = await getSubscription(env, auth.user.id, subscriptionId);
   if (!subscription) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
-  const apiSubscription = toApiSubscription(subscription);
-  if (isOneTimeBuyout(apiSubscription)) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
+  const calendarSubscription = toCalendarSubscription(subscription);
+  if (isOneTimeBuyout(calendarSubscription)) throw new HttpError(404, serverText(locale, "subscription.notFound"), "NOT_FOUND");
   const settings = await getSettings(env, auth.user.id);
   const labels = await newCalendarFeedLabelResolver(env, auth.user.id, settings.locale);
   // 登录态下载是一次性 .ics 文件，不写 SOURCE/TTL，避免外部日历把它误当成可刷新的订阅 feed。
   const ics = buildRenewalCalendarIcs({
-    name: serverFormat(settings.locale, "calendarFeed.subscriptionCalendarName", { name: apiSubscription.name }),
+    name: serverFormat(settings.locale, "calendarFeed.subscriptionCalendarName", { name: calendarSubscription.name }),
     generatedAt: new Date(),
-    events: subscriptionCalendarEvents(apiSubscription, settings, labels),
+    events: subscriptionCalendarEvents(calendarSubscription, settings, labels),
   });
   return new Response(ics, {
     headers: {
       "content-type": "text/calendar; charset=utf-8",
-      "content-disposition": `attachment; filename="renewlet-${safeCalendarFeedFilename(apiSubscription.id)}.ics"`,
+      "content-disposition": `attachment; filename="renewlet-${safeCalendarFeedFilename(calendarSubscription.id)}.ics"`,
       "cache-control": "no-store",
       "x-content-type-options": "nosniff",
     },
@@ -190,19 +198,19 @@ async function renderCalendarFeed(
     const subscriptionId = row.subscription_id ?? "";
     const subscription = subscriptionId ? await getSubscription(env, row.user_id, subscriptionId) : null;
     if (!subscription) throw new HttpError(404, serverText(requestLocale(request), "calendarFeed.notFound"), "NOT_FOUND");
-    const apiSubscription = toApiSubscription(subscription);
+    const calendarSubscription = toCalendarSubscription(subscription);
     return {
       filename: "renewlet-subscription.ics",
       ics: buildRenewalCalendarIcs({
-        name: serverFormat(settings.locale, "calendarFeed.subscriptionCalendarName", { name: apiSubscription.name }),
+        name: serverFormat(settings.locale, "calendarFeed.subscriptionCalendarName", { name: calendarSubscription.name }),
         sourceUrl: feedUrl,
         generatedAt: new Date(),
-        events: subscriptionCalendarEvents(apiSubscription, settings, labels),
+        events: subscriptionCalendarEvents(calendarSubscription, settings, labels),
       }),
     };
   }
 
-  const subscriptions = (await listSubscriptions(env, row.user_id)).map(toApiSubscription);
+  const subscriptions = (await listSubscriptions(env, row.user_id)).map(toCalendarSubscription);
   return {
     filename: "renewlet-renewals.ics",
     ics: buildRenewalCalendarIcs({
@@ -385,7 +393,7 @@ function calendarFeedUrl(request: Request, token: string): string {
 }
 
 function calendarEvents(
-  subscriptions: ApiSubscription[],
+  subscriptions: CalendarSubscription[],
   settings: ApiAppSettings,
   labels: CalendarFeedLabelResolver,
 ): RenewalCalendarEvent[] {
@@ -401,7 +409,7 @@ function calendarEvents(
 }
 
 function subscriptionCalendarEvents(
-  subscription: ApiSubscription,
+  subscription: CalendarSubscription,
   settings: ApiAppSettings,
   labels: CalendarFeedLabelResolver,
 ): RenewalCalendarEvent[] {
@@ -409,12 +417,12 @@ function subscriptionCalendarEvents(
   return isValidDateOnly(subscription.nextBillingDate) ? [calendarEvent(subscription, settings, labels)] : [];
 }
 
-function isOneTimeBuyout(subscription: ApiSubscription): boolean {
+function isOneTimeBuyout(subscription: CalendarSubscription): boolean {
   return subscription.billingCycle === "one-time" && !subscription.oneTimeTermCount;
 }
 
 function calendarEvent(
-  subscription: ApiSubscription,
+  subscription: CalendarSubscription,
   settings: ApiAppSettings,
   labels: CalendarFeedLabelResolver,
 ): RenewalCalendarEvent {
@@ -442,7 +450,7 @@ function calendarEvent(
   });
 }
 
-function billingCycleLabel(subscription: ApiSubscription, locale: ApiAppSettings["locale"]): string {
+function billingCycleLabel(subscription: CalendarSubscription, locale: ApiAppSettings["locale"]): string {
   if (subscription.billingCycle === "custom") {
     const unit = isCustomCycleUnit(subscription.customCycleUnit) ? subscription.customCycleUnit : "day";
     const unitKey = `calendarFeed.customCycleUnit.${unit}` as const;
@@ -453,13 +461,44 @@ function billingCycleLabel(subscription: ApiSubscription, locale: ApiAppSettings
     });
   }
   const cycle = subscription.billingCycle;
+  if (!isFixedBillingCycle(cycle)) return cycle;
   const key = `calendarFeed.billingCycle.${cycle}` as const;
   const label = serverText(locale, key);
   return label === key ? cycle : label;
 }
 
-function isCustomCycleUnit(value: unknown): value is NonNullable<ApiSubscription["customCycleUnit"]> {
+function isFixedBillingCycle(value: string): value is CalendarFixedBillingCycle {
+  return value === "weekly" ||
+    value === "monthly" ||
+    value === "quarterly" ||
+    value === "semi-annual" ||
+    value === "annual" ||
+    value === "one-time";
+}
+
+function isCustomCycleUnit(value: unknown): value is CalendarCustomCycleUnit {
   return value === "day" || value === "week" || value === "month" || value === "year";
+}
+
+function toCalendarSubscription(row: SubscriptionRow): CalendarSubscription {
+  // ICS 不是订阅 JSON API 出站边界；这里保留坏 date-only 供事件过滤，避免一条历史脏数据打断整个日历。
+  return {
+    id: row.id,
+    name: row.name,
+    price: row.price,
+    currency: row.currency,
+    billingCycle: row.billing_cycle,
+    oneTimeTermCount: row.one_time_term_count ?? undefined,
+    category: row.category,
+    paymentMethod: row.payment_method ?? undefined,
+    nextBillingDate: row.next_billing_date,
+    website: row.website ?? undefined,
+    notes: row.notes ?? undefined,
+    status: row.status,
+    customDays: row.custom_days ?? undefined,
+    customCycleUnit: row.custom_cycle_unit ?? undefined,
+    reminderDays: row.reminder_days,
+  };
 }
 
 function dateOnlyInZone(date: Date, timezone: string): string {

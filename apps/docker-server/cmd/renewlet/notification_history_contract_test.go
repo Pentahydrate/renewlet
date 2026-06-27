@@ -1,6 +1,6 @@
 package main
 
-// 通知历史契约测试保护前端审计事实源；legacy null 必须归一为空数组，effectiveReminderDays 不能丢。
+// 通知历史契约测试保护前端审计事实源；新写入收敛为空数组，库内坏历史出站为 `{}`。
 
 import (
 	"encoding/json"
@@ -80,13 +80,13 @@ func TestNotificationHistoryRouteNormalizesNoEnabledChannelsJobArrays(t *testing
 	assertNormalizedCronResult(t, *body.Summary.LatestJob)
 }
 
-func TestNotificationHistoryRouteNormalizesLegacyNullChannelArrays(t *testing.T) {
+func TestNotificationHistoryRouteDropsRawLegacyMalformedResult(t *testing.T) {
 	app := newSchemaTestApp(t)
 	if err := ensureSchema(app); err != nil {
 		t.Fatal(err)
 	}
 	user, token := createRouteTestUser(t, app, "authenticated")
-	createNotificationHistoryJobRecord(t, app, user.Id, types.JSONRaw(`{
+	createRawNotificationHistoryJobRecord(t, app, user.Id, types.JSONRaw(`{
 		"source":"cron",
 		"reason":"no_enabled_channels",
 		"force":false,
@@ -96,7 +96,9 @@ func TestNotificationHistoryRouteNormalizesLegacyNullChannelArrays(t *testing.T)
 			"scheduledLocalDate":"2026-05-17",
 			"scheduledLocalTime":"08:00",
 			"timeZone":"UTC",
-			"scheduledInstantUtc":"2026-05-17T08:00:00Z"
+			"scheduledInstantUtc":"2026-05-17T08:00:00Z",
+			"due":false,
+			"reason":"not_in_time_window(delta=0m)"
 		},
 		"settings":{
 			"timezone":"UTC",
@@ -123,11 +125,11 @@ func TestNotificationHistoryRouteNormalizesLegacyNullChannelArrays(t *testing.T)
 	if len(body.History.Jobs) != 1 {
 		t.Fatalf("expected one history job, got %#v", body.History.Jobs)
 	}
-	assertNormalizedCronResult(t, body.History.Jobs[0])
+	assertEmptyJobResult(t, body.History.Jobs[0])
 	if body.Summary.LatestJob == nil {
 		t.Fatal("expected latest job in history summary")
 	}
-	assertNormalizedCronResult(t, *body.Summary.LatestJob)
+	assertEmptyJobResult(t, *body.Summary.LatestJob)
 }
 
 func TestNotificationHistoryRouteNormalizesNoDueItemsMessageArrays(t *testing.T) {
@@ -219,7 +221,7 @@ func requestNotificationHistory(t *testing.T, app core.App, token string) notifi
 	return decodeAPISuccessDataForTest[notificationHistoryResponse](t, res.Body.Bytes())
 }
 
-func createNotificationHistoryJobRecord(t *testing.T, app core.App, userID string, result interface{}) *core.Record {
+func createRawNotificationHistoryJobRecord(t *testing.T, app core.App, userID string, result interface{}) *core.Record {
 	t.Helper()
 	collection, err := app.FindCollectionByNameOrId("notification_jobs")
 	if err != nil {
@@ -235,7 +237,7 @@ func createNotificationHistoryJobRecord(t *testing.T, app core.App, userID strin
 	record.Set("attempts", 1)
 	record.Set("lastError", "")
 	record.Set("result", result)
-	if err := app.Save(record); err != nil {
+	if err := app.SaveNoValidate(record); err != nil {
 		t.Fatal(err)
 	}
 	return record
@@ -266,4 +268,15 @@ func assertNormalizedCronResult(t *testing.T, job notificationHistoryJob) notifi
 		t.Fatalf("expected channels.failed to be [], got nil in %s", job.Result)
 	}
 	return result
+}
+
+func assertEmptyJobResult(t *testing.T, job notificationHistoryJob) {
+	t.Helper()
+	var result map[string]interface{}
+	if err := json.Unmarshal(job.Result, &result); err != nil {
+		t.Fatalf("expected empty result JSON to decode: %v; raw=%s", err, job.Result)
+	}
+	if len(result) != 0 {
+		t.Fatalf("expected empty history result for raw legacy payload, got %s", job.Result)
+	}
 }

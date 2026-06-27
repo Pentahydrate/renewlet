@@ -55,6 +55,18 @@ describe("subscription start date contract", () => {
     expect(apiSubscriptionSchema.parse(recurringResponse).startDate).toBeNull();
   });
 
+  it("rejects non date-only response renewal and trial dates", () => {
+    expect(apiSubscriptionSchema.safeParse({
+      ...recurringResponse,
+      nextBillingDate: "2026-07-01T00:00:00Z",
+    }).success).toBe(false);
+
+    expect(apiSubscriptionSchema.safeParse({
+      ...recurringResponse,
+      trialEndDate: "2026/07/01",
+    }).success).toBe(false);
+  });
+
   it("requires start date when automatic billing date calculation is enabled", () => {
     expect(subscriptionCreateBodySchema.safeParse({
       ...recurringBody,

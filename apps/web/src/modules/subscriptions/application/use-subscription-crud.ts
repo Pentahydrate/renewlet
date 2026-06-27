@@ -9,6 +9,7 @@ import { useState } from "react";
 import {
   useCreateSubscription,
   useDeleteSubscription,
+  usePatchSubscription,
   useRenewSubscription,
   useUpdateSubscription,
 } from "@/hooks/use-subscriptions";
@@ -20,6 +21,7 @@ import type { Subscription, SubscriptionDraft } from "@/types/subscription";
 export function useSubscriptionCrud(subscriptions: readonly Subscription[]) {
   const createSubscription = useCreateSubscription();
   const updateSubscription = useUpdateSubscription();
+  const patchSubscription = usePatchSubscription();
   const renewSubscription = useRenewSubscription();
   const deleteSubscription = useDeleteSubscription();
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
@@ -46,13 +48,14 @@ export function useSubscriptionCrud(subscriptions: readonly Subscription[]) {
   const handleTogglePinnedSubscription = (id: string) => {
     const subscription = subscriptions.find((item) => item.id === id);
     if (!subscription) return;
-    updateSubscription.mutate({ ...subscription, pinned: !subscription.pinned });
+    // 快捷菜单只表达单字段意图，不能把列表旧快照当完整 PATCH 覆盖并发编辑。
+    patchSubscription.mutate({ id, patch: { pinned: !subscription.pinned } });
   };
 
   const handleTogglePublicHiddenSubscription = (id: string) => {
     const subscription = subscriptions.find((item) => item.id === id);
     if (!subscription) return;
-    updateSubscription.mutate({ ...subscription, publicHidden: !subscription.publicHidden });
+    patchSubscription.mutate({ id, patch: { publicHidden: !subscription.publicHidden } });
   };
 
   const handleRenewSubscription = (id: string) => {
@@ -109,7 +112,6 @@ export function useSubscriptionCrud(subscriptions: readonly Subscription[]) {
     editDialogOpen,
     cloningSubscription,
     cloneDialogOpen,
-    setEditDialogOpen,
     handleAddSubscription,
     handleDeleteSubscription,
     handleTogglePinnedSubscription,

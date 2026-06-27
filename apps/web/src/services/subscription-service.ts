@@ -51,6 +51,8 @@ export interface SubscriptionPage {
   total?: number | undefined;
 }
 
+export type SubscriptionFieldPatch = Partial<Pick<Subscription, "pinned" | "publicHidden">>;
+
 function normalizeSubscriptionPageLimit(value: number): number {
   if (!Number.isFinite(value)) return SUBSCRIPTION_PAGE_SIZE;
   return Math.max(1, Math.min(Math.trunc(value), 100));
@@ -164,6 +166,16 @@ export function toSubscriptionWritePayload(sub: SubscriptionDraft | Subscription
   };
 }
 
+function toSubscriptionFieldPatchPayload(patch: SubscriptionFieldPatch) {
+  const payload: Record<string, boolean> = {};
+  if (patch.pinned !== undefined) payload["pinned"] = patch.pinned;
+  if (patch.publicHidden !== undefined) payload["publicHidden"] = patch.publicHidden;
+  if (Object.keys(payload).length === 0) {
+    throw new Error("SUBSCRIPTION_PATCH_EMPTY");
+  }
+  return payload;
+}
+
 export const subscriptionService = {
   pageSize: SUBSCRIPTION_PAGE_SIZE,
 
@@ -214,6 +226,15 @@ export const subscriptionService = {
   async update(sub: Subscription): Promise<Subscription> {
     const payload = toSubscriptionWritePayload(sub);
     const data = await apiFetch(`/api/app/subscriptions/${sub.id}`, subscriptionResponseSchema, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return fromApiSubscription(data.subscription);
+  },
+
+  async patch(id: string, patch: SubscriptionFieldPatch): Promise<Subscription> {
+    const payload = toSubscriptionFieldPatchPayload(patch);
+    const data = await apiFetch(`/api/app/subscriptions/${id}`, subscriptionResponseSchema, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });

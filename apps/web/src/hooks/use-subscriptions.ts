@@ -14,7 +14,7 @@
 
 import { useMemo } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { subscriptionService } from "@/services/subscription-service";
+import { subscriptionService, type SubscriptionFieldPatch } from "@/services/subscription-service";
 import type { Subscription, SubscriptionDraft } from "@/types/subscription";
 
 const SUBSCRIPTIONS_QUERY_KEY = ["subscriptions"] as const;
@@ -86,6 +86,19 @@ export function useUpdateSubscription() {
   return useMutation({
     mutationFn: async (sub: Subscription) => {
       return await subscriptionService.update(sub);
+    },
+    onSuccess: () => {
+      invalidateSubscriptionsQueries(queryClient);
+    },
+  });
+}
+
+/** usePatchSubscription 表达卡片快捷操作的字段级意图，避免旧列表快照覆盖并发编辑。 */
+export function usePatchSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: SubscriptionFieldPatch }) => {
+      return await subscriptionService.patch(id, patch);
     },
     onSuccess: () => {
       invalidateSubscriptionsQueries(queryClient);

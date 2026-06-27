@@ -11,7 +11,14 @@ import type {
   RepeatReminderWindow,
   Subscription,
 } from "@/types/subscription";
-import { useCreateSubscription, useInfiniteSubscriptions, useSubscriptions, useSubscriptionsPage, useUpdateSubscription } from "./use-subscriptions";
+import {
+  useCreateSubscription,
+  useInfiniteSubscriptions,
+  usePatchSubscription,
+  useSubscriptions,
+  useSubscriptionsPage,
+  useUpdateSubscription,
+} from "./use-subscriptions";
 
 type RecurringSubscriptionDraft = Omit<RecurringCycleSubscription, "id">;
 
@@ -249,6 +256,25 @@ describe("use-subscriptions mutations", () => {
       repeatReminderInterval: "1h",
       repeatReminderWindow: "72h",
     });
+  });
+
+  it("sends only quick-action fields through the patch mutation", async () => {
+    mocks.apiFetch.mockResolvedValueOnce({
+      subscription: apiSubscriptionFromDraft("sub-1", subscriptionDraft({ pinned: true })),
+    });
+    const { result } = renderHook(() => usePatchSubscription(), { wrapper: createWrapper() });
+
+    await act(async () => {
+      await result.current.mutateAsync({ id: "sub-1", patch: { pinned: true } });
+    });
+
+    const init = mocks.apiFetch.mock.calls[0]?.[2] as RequestInit | undefined;
+    const payload = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    expect(mocks.apiFetch.mock.calls[0]?.[0]).toBe("/api/app/subscriptions/sub-1");
+    expect(init).toMatchObject({ method: "PATCH" });
+    expect(payload).toEqual({ pinned: true });
+    expect(payload).not.toHaveProperty("name");
+    expect(payload).not.toHaveProperty("nextBillingDate");
   });
 });
 

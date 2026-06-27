@@ -334,15 +334,84 @@ func notificationJobResultRaw(record *core.Record) (json.RawMessage, error) {
 	if bytes.Equal(trimmed, []byte("null")) {
 		return json.RawMessage([]byte("{}")), nil
 	}
+	if bytes.Equal(trimmed, []byte("{}")) {
+		return json.RawMessage([]byte("{}")), nil
+	}
 	var result notificationJobResult
-	if err := json.Unmarshal(trimmed, &result); err != nil || result.Source != "cron" {
+	if err := decodeStrictJSONBytesInto(trimmed, &result, localeZhCN, false); err != nil {
 		return json.RawMessage([]byte("{}")), err
 	}
-	normalized, err := json.Marshal(normalizeNotificationJobResult(result))
-	if err != nil {
-		return json.RawMessage([]byte("{}")), err
+	// history 读路径只验收当前 cron result wire shape；旧/坏历史不再运行时重塑。
+	if !notificationJobResultIsCurrentContract(result) {
+		return json.RawMessage([]byte("{}")), nil
 	}
-	return json.RawMessage(normalized), nil
+	return json.RawMessage(trimmed), nil
+}
+
+func notificationJobResultIsCurrentContract(result notificationJobResult) bool {
+	if result.Source != "cron" || result.WindowMinutes < 0 {
+		return false
+	}
+	if !isValidDateOnly(result.Schedule.ScheduledLocalDate) ||
+		!isValidLocalTime(result.Schedule.ScheduledLocalTime) ||
+		strings.TrimSpace(result.Schedule.TimeZone) == "" ||
+		strings.TrimSpace(result.Schedule.ScheduledInstantUTC) == "" {
+		return false
+	}
+	if !isValidLocalTime(result.Settings.NotificationTimeLocal) ||
+		result.Settings.EnabledChannels == nil ||
+		result.Message.Items == nil ||
+		result.Channels.Attempted == nil ||
+		result.Channels.Succeeded == nil ||
+		result.Channels.Failed == nil {
+		return false
+	}
+	if !allKnownChannels(result.Settings.EnabledChannels) || !jobChannelsUseCurrentContract(result.Channels) {
+		return false
+	}
+	for _, item := range result.Message.Items {
+		if !notificationContentItemUsesCurrentContract(item) {
+			return false
+		}
+	}
+	return true
+}
+
+func jobChannelsUseCurrentContract(channels jobChannels) bool {
+	if !allKnownChannels(channels.Attempted) || !allKnownChannels(channels.Succeeded) {
+		return false
+	}
+	for _, failure := range channels.Failed {
+		if _, ok := knownChannels[failure.Channel]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func notificationContentItemUsesCurrentContract(item notificationContentItem) bool {
+	switch item.Type {
+	case "renewal", "trial", "expired", "expiry":
+	default:
+		return false
+	}
+	if !isValidSubscriptionStatus(item.Status) || !isValidDateOnly(item.TargetDate) || item.ReminderDays < 0 {
+		return false
+	}
+	if item.RepeatReminder != nil &&
+		(!isValidRepeatReminderInterval(item.RepeatReminder.Interval) || !isValidRepeatReminderWindow(item.RepeatReminder.Window)) {
+		return false
+	}
+	return true
+}
+
+func allKnownChannels(channels []string) bool {
+	for _, channel := range channels {
+		if _, ok := knownChannels[channel]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func nullableString(value string) *string {

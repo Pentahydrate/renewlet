@@ -219,10 +219,11 @@ export const apiSubscriptionSchema = z.object({
   publicHidden: z.boolean(),
   paymentMethod: z.string().min(1).optional(),
   startDate: nullableDateInputSchema,
-  nextBillingDate: z.string(),
+  // 订阅响应的 date-only 字段由 shared 统一守门；Go、Worker 和前端都不能在本地补解析 ISO datetime。
+  nextBillingDate: dateInputSchema,
   autoRenew: z.boolean(),
   autoCalculateNextBillingDate: z.boolean(),
-  trialEndDate: z.string().optional(),
+  trialEndDate: dateInputSchema.optional(),
   website: z.string().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),

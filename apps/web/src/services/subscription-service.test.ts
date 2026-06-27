@@ -223,6 +223,20 @@ describe("subscription service API calls", () => {
     expect(mocks.apiFetch.mock.calls[1]?.[2]).toMatchObject({ method: "PATCH" });
   });
 
+  it("patches quick-action fields without sending a full subscription snapshot", async () => {
+    mocks.apiFetch.mockResolvedValue({ subscription: { ...apiSubscription, pinned: true } });
+
+    await subscriptionService.patch("sub_api", { pinned: true });
+
+    const init = mocks.apiFetch.mock.calls[0]?.[2] as RequestInit | undefined;
+    const payload = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    expect(mocks.apiFetch.mock.calls[0]?.[0]).toBe("/api/app/subscriptions/sub_api");
+    expect(init).toMatchObject({ method: "PATCH" });
+    expect(payload).toEqual({ pinned: true });
+    expect(payload).not.toHaveProperty("name");
+    expect(payload).not.toHaveProperty("nextBillingDate");
+  });
+
   it("renews with an explicit empty JSON object and deletes through the product API", async () => {
     mocks.apiFetch.mockResolvedValueOnce({ subscription: apiSubscription }).mockResolvedValueOnce({});
 

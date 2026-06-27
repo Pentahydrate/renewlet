@@ -91,5 +91,21 @@ describe("notification schemas", () => {
         failed: [{ channel: "pushplus", error: "business code 900", rawResponseText: "leak" }],
       },
     }).success).toBe(false);
+    expect(notificationJobResultResponseSchema.safeParse({
+      ...cronResult,
+      settings: {
+        ...cronResult.settings,
+        enabledChannels: null,
+      },
+      message: {
+        ...cronResult.message,
+        items: null,
+      },
+      channels: {
+        attempted: null,
+        succeeded: null,
+        failed: null,
+      },
+    }).success).toBe(false);
   });
 });

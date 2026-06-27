@@ -173,6 +173,19 @@ describe("Cloudflare subscription mapper", () => {
     });
   });
 
+  it("rejects D1 rows that expose non date-only subscription response dates", () => {
+    const row = toSubscriptionRow("sub_bad_date", "usr_custom", subscriptionBody(), "2026-06-05T00:00:00.000Z", "2026-06-05T00:00:00.000Z");
+
+    expect(() => toApiSubscription({
+      ...row,
+      next_billing_date: "2029-05-14T00:00:00Z",
+    })).toThrow();
+    expect(() => toApiSubscription({
+      ...row,
+      trial_end_date: "05/14/2029",
+    })).toThrow();
+  });
+
   it("rejects missing start dates when automatic date calculation needs a start anchor", () => {
     expect(() => normalizeSubscriptionBodyForStorage(subscriptionBody({
       startDate: null,
