@@ -11,6 +11,8 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+const expectedDemoSubscriptionCount = 100
+
 func newDemoModeTestApp(t *testing.T) (core.App, *core.Record, string) {
 	t.Helper()
 	// demo 模式测试必须走完整 schema/hooks，让路由和直接 record 写入共享同一套保护。
@@ -52,49 +54,79 @@ func TestDemoSubscriptionSeedsUseDeveloperDataAndRollingDates(t *testing.T) {
 	seeds := demoSubscriptionSeeds(now)
 	laterSeeds := demoSubscriptionSeeds(later)
 	providerBase := strings.TrimRight(mediaResolverBuiltInProviderBase(demoModeLogoProvider), "/")
-	expectedNames := map[string]struct{}{
-		"ChatGPT Plus":            {},
-		"GitHub Copilot Pro":      {},
-		"Cursor Pro":              {},
-		"Vercel Pro":              {},
-		"Supabase Pro":            {},
-		"Cloudflare Workers Paid": {},
-		"Docker Pro":              {},
-		"Figma Professional":      {},
-		"Linear Basic":            {},
-		"Sentry Team":             {},
-		"Clerk Pro":               {},
-		"SonarQube Cloud Team":    {},
-	}
 	expectedCategories := map[string]struct{}{
-		"ai-tools":             {},
-		"dev-tools":            {},
-		"hosting-edge":         {},
-		"data-backend":         {},
-		"design-collaboration": {},
-		"observability":        {},
-		"security-auth":        {},
+		"ai_tools":        {},
+		"developer_tools": {},
+		"productivity":    {},
+		"hosting_domains": {},
+		"design":          {},
+		"security_vpn":    {},
+		"business":        {},
+	}
+	expectedStatuses := map[string]struct{}{
+		"active":    {},
+		"trial":     {},
+		"paused":    {},
+		"cancelled": {},
+	}
+	expectedPaymentMethods := map[string]struct{}{
+		"credit_card":   {},
+		"paypal":        {},
+		"apple_pay":     {},
+		"google_pay":    {},
+		"bank_transfer": {},
+		"debit_card":    {},
+	}
+	representativeSlugs := map[string]struct{}{
+		"chatgpt-plus":                {},
+		"claude-pro":                  {},
+		"github-copilot-pro":          {},
+		"cursor-pro":                  {},
+		"vercel-pro":                  {},
+		"supabase-pro":                {},
+		"cloudflare-workers-paid":     {},
+		"tabnine-dev":                 {},
+		"testrail-professional-cloud": {},
+		"linear-business":             {},
 	}
 
-	if len(seeds) != len(expectedNames) {
-		t.Fatalf("expected %d developer demo subscriptions, got %d", len(expectedNames), len(seeds))
+	if len(seeds) != expectedDemoSubscriptionCount {
+		t.Fatalf("expected %d developer demo subscriptions, got %d", expectedDemoSubscriptionCount, len(seeds))
 	}
 	if len(laterSeeds) != len(seeds) {
 		t.Fatalf("expected rolling seed count to stay %d, got %d", len(seeds), len(laterSeeds))
 	}
 	seenSlugs := map[string]struct{}{}
-	seenNames := map[string]struct{}{}
+	seenCategories := map[string]struct{}{}
+	seenStatuses := map[string]struct{}{}
+	seenPaymentMethods := map[string]struct{}{}
+	seedBySlug := map[string]demoSubscriptionSeed{}
 	for index, seed := range seeds {
 		logo := seed.logoURL()
-		seenNames[seed.Name] = struct{}{}
-		if _, ok := expectedNames[seed.Name]; !ok {
-			t.Fatalf("unexpected demo subscription name %q", seed.Name)
-		}
+		seedBySlug[seed.Slug] = seed
+		seenCategories[seed.Category] = struct{}{}
+		seenStatuses[seed.Status] = struct{}{}
+		seenPaymentMethods[seed.PaymentMethod] = struct{}{}
 		if _, ok := expectedCategories[seed.Category]; !ok {
-			t.Fatalf("%s uses unknown developer demo category %q", seed.Name, seed.Category)
+			t.Fatalf("%s uses non-catalog developer demo category %q", seed.Name, seed.Category)
+		}
+		if _, ok := expectedStatuses[seed.Status]; !ok {
+			t.Fatalf("%s uses unsupported developer demo status %q", seed.Name, seed.Status)
+		}
+		if _, ok := expectedPaymentMethods[seed.PaymentMethod]; !ok {
+			t.Fatalf("%s uses non-catalog developer demo payment method %q", seed.Name, seed.PaymentMethod)
+		}
+		if seed.Category == "ai-tools" || seed.Category == "dev-tools" || seed.Category == "hosting-edge" || seed.Category == "data-backend" || seed.Category == "design-collaboration" || seed.Category == "observability" || seed.Category == "security-auth" {
+			t.Fatalf("%s leaked old demo-only category %q", seed.Name, seed.Category)
+		}
+		if seed.PaymentMethod == "visa" || seed.PaymentMethod == "bank" {
+			t.Fatalf("%s leaked old demo-only payment method %q", seed.Name, seed.PaymentMethod)
 		}
 		if strings.Contains(strings.ToLower(seed.Name), "renewlet") || strings.Contains(seed.Website, "renewlet.app") {
 			t.Fatalf("demo seed must not include Renewlet fake domain data: %#v", seed)
+		}
+		if seed.Order != index+1 {
+			t.Fatalf("%s order should follow catalog position, got %d want %d", seed.Name, seed.Order, index+1)
 		}
 		if strings.TrimSpace(seed.Slug) == "" {
 			t.Fatalf("%s must expose a stable slug", seed.Name)
@@ -103,17 +135,32 @@ func TestDemoSubscriptionSeedsUseDeveloperDataAndRollingDates(t *testing.T) {
 			t.Fatalf("duplicate demo slug %q", seed.Slug)
 		}
 		seenSlugs[seed.Slug] = struct{}{}
-		if strings.TrimSpace(seed.LogoSlug) == "" {
-			t.Fatalf("%s must expose a TheSVG logo slug", seed.Name)
+		if strings.TrimSpace(seed.LogoSlug) == "" && strings.TrimSpace(seed.LogoURL) == "" {
+			t.Fatalf("%s must expose either a TheSVG slug or explicit logo URL", seed.Name)
 		}
-		if logo != demoTheSVGLogo(seed.LogoSlug) {
-			t.Fatalf("%s logo must be generated by the TheSVG helper, got %q", seed.Name, logo)
+		if seed.LogoURL != "" {
+			if logo != seed.LogoURL {
+				t.Fatalf("%s explicit logo URL should win, got %q want %q", seed.Name, logo, seed.LogoURL)
+			}
+		} else {
+			if logo != demoTheSVGLogo(seed.LogoSlug) {
+				t.Fatalf("%s logo must be generated by the TheSVG helper, got %q", seed.Name, logo)
+			}
+			if !strings.HasPrefix(logo, providerBase+"/public/icons/") || strings.Contains(logo, "selfhst/icons/svg") {
+				t.Fatalf("%s must use TheSVG provider logo, got %q", seed.Name, logo)
+			}
 		}
-		if !strings.HasPrefix(logo, providerBase+"/public/icons/") || strings.Contains(logo, "selfhst/icons/svg") {
-			t.Fatalf("%s must use TheSVG provider logo, got %q", seed.Name, logo)
+		if strings.TrimSpace(logo) == "" {
+			t.Fatalf("%s must resolve a logo reference", seed.Name)
 		}
 		if err := validateOptionalLogoReference(logo); err != nil {
 			t.Fatalf("%s logo should pass subscription logo validation: %v", seed.Name, err)
+		}
+		if seed.AutoRenew {
+			t.Fatalf("%s demo seed must not fake user auto-renew authorization", seed.Name)
+		}
+		if seed.AutoCalculateNextBillingDate {
+			t.Fatalf("%s demo seed must keep catalog date distribution instead of recalculating billing date", seed.Name)
 		}
 		if !strings.HasPrefix(seed.Website, "https://") || !strings.HasPrefix(seed.PricingSource, "https://") {
 			t.Fatalf("%s must keep real HTTPS website and pricing source, website=%q pricing=%q", seed.Name, seed.Website, seed.PricingSource)
@@ -131,9 +178,35 @@ func TestDemoSubscriptionSeedsUseDeveloperDataAndRollingDates(t *testing.T) {
 			t.Fatalf("%s trialEndDate did not roll with reset: %s -> %s", seed.Name, seed.TrialEndDate, laterSeeds[index].TrialEndDate)
 		}
 	}
-	for name := range expectedNames {
-		if _, ok := seenNames[name]; !ok {
-			t.Fatalf("missing expected developer demo subscription %q", name)
+	assertStringSetContainsAll(t, seenCategories, expectedCategories, "category")
+	assertStringSetContainsAll(t, seenStatuses, expectedStatuses, "status")
+	assertStringSetContainsAll(t, seenPaymentMethods, expectedPaymentMethods, "payment method")
+	assertStringSetContainsAll(t, seedBySlugKeys(seedBySlug), representativeSlugs, "representative slug")
+
+	if got := seedBySlug["chatgpt-plus"].logoURL(); got != demoTheSVGLogo("openai") {
+		t.Fatalf("ChatGPT Plus should use TheSVG logo helper, got %q", got)
+	}
+	if got := seedBySlug["claude-pro"].logoURL(); !strings.Contains(got, "/icons/claude/default.svg") {
+		t.Fatalf("Claude Pro should use explicit logo URL override, got %q", got)
+	}
+	if got := seedBySlug["tabnine-dev"].logoURL(); got != "https://tabnine.com/favicon.ico" {
+		t.Fatalf("Tabnine should use explicit favicon override, got %q", got)
+	}
+}
+
+func seedBySlugKeys(seeds map[string]demoSubscriptionSeed) map[string]struct{} {
+	keys := map[string]struct{}{}
+	for slug := range seeds {
+		keys[slug] = struct{}{}
+	}
+	return keys
+}
+
+func assertStringSetContainsAll(t *testing.T, seen map[string]struct{}, expected map[string]struct{}, label string) {
+	t.Helper()
+	for value := range expected {
+		if _, ok := seen[value]; !ok {
+			t.Fatalf("missing expected demo %s %q", label, value)
 		}
 	}
 }
@@ -148,6 +221,9 @@ func addDateOnlyDaysForTest(t *testing.T, value string, days int) string {
 }
 
 func TestDemoModeCreatesRepairsSeedsAndDisablesSetup(t *testing.T) {
+	if demoModePolicy.MaxSubscriptions != 120 {
+		t.Fatalf("expected demo subscription quota to keep 100 baseline rows plus 20 visitor rows, got %d", demoModePolicy.MaxSubscriptions)
+	}
 	app, demo, token := newDemoModeTestApp(t)
 
 	// demo 身份会被启动修复，避免公开演示环境被改成管理员、封禁或弱密码状态。
@@ -169,10 +245,9 @@ func TestDemoModeCreatesRepairsSeedsAndDisablesSetup(t *testing.T) {
 	if got := countUserRecords(t, app, "settings", demo.Id); got != 1 {
 		t.Fatalf("expected one demo settings row, got %d", got)
 	}
-	if got := countUserRecords(t, app, "custom_configs", demo.Id); got != 1 {
-		t.Fatalf("expected one demo custom config row, got %d", got)
+	if got := countUserRecords(t, app, "custom_configs", demo.Id); got != 0 {
+		t.Fatalf("expected demo reset not to seed custom config rows, got %d", got)
 	}
-	assertPersistedDemoDeveloperCustomConfig(t, app, demo.Id)
 	if got := countUserRecords(t, app, "calendar_feeds", demo.Id); got != 0 {
 		t.Fatalf("expected demo reset not to pre-generate calendar feeds, got %d", got)
 	}
@@ -243,7 +318,9 @@ func TestDemoModeResetOnlyTouchesDemoUserData(t *testing.T) {
 		t.Fatalf("expected demo subscriptions to reset to %d, got %d", wantDemoSubscriptions, got)
 	}
 	assertPersistedDemoDeveloperSubscriptions(t, app, demo.Id)
-	assertPersistedDemoDeveloperCustomConfig(t, app, demo.Id)
+	if got := countUserRecords(t, app, "custom_configs", demo.Id); got != 0 {
+		t.Fatalf("expected demo reset to remove old custom config rows, got %d", got)
+	}
 	if got := countUserRecords(t, app, "subscriptions", other.Id); got != 1 {
 		t.Fatalf("expected other user subscription to remain, got %d", got)
 	}
@@ -261,28 +338,50 @@ func assertPersistedDemoDeveloperSubscriptions(t *testing.T, app core.App, userI
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedByName := map[string]demoSubscriptionSeed{}
+	expectedBySlug := map[string]demoSubscriptionSeed{}
 	for _, seed := range demoSubscriptionSeeds(time.Now()) {
-		expectedByName[seed.Name] = seed
+		expectedBySlug[seed.Slug] = seed
 	}
-	if len(rows) != len(expectedByName) {
-		t.Fatalf("expected %d persisted demo subscriptions, got %d", len(expectedByName), len(rows))
+	if len(rows) != len(expectedBySlug) {
+		t.Fatalf("expected %d persisted demo subscriptions, got %d", len(expectedBySlug), len(rows))
 	}
 	for _, row := range rows {
 		name := row.GetString("name")
-		expected, ok := expectedByName[name]
+		extra := demoExtraMapForTest(t, row.Get("extra"))
+		slug, _ := extra["slug"].(string)
+		expected, ok := expectedBySlug[slug]
 		if !ok {
-			t.Fatalf("unexpected persisted demo subscription %q", name)
+			t.Fatalf("unexpected persisted demo subscription %q with slug %q", name, slug)
+		}
+		if name != expected.Name {
+			t.Fatalf("persisted subscription name mismatch for %q: got %q want %q", slug, name, expected.Name)
 		}
 		logo := row.GetString("logo")
 		if logo != expected.logoURL() {
-			t.Fatalf("%s persisted logo must use the seed TheSVG helper URL, got %q", name, logo)
+			t.Fatalf("%s persisted logo must match generated seed logo, got %q", name, logo)
 		}
-		extra := demoExtraMapForTest(t, row.Get("extra"))
-		slug, _ := extra["slug"].(string)
+		if row.GetBool("autoRenew") || row.GetBool("autoCalculateNextBillingDate") {
+			t.Fatalf("%s must persist demo dates without auto-renew or auto-calculate flags", name)
+		}
+		if row.GetString("category") == "ai-tools" || row.GetString("category") == "dev-tools" || row.GetString("paymentMethod") == "visa" || row.GetString("paymentMethod") == "bank" {
+			t.Fatalf("%s persisted old demo-only enum values: category=%q paymentMethod=%q", name, row.GetString("category"), row.GetString("paymentMethod"))
+		}
+		order, orderOK := extra["order"].(float64)
+		source, _ := extra["source"].(string)
+		sourceURL, _ := extra["sourceUrl"].(string)
 		pricingSource, _ := extra["pricingSource"].(string)
-		if extra["demo"] != true || slug != expected.Slug || pricingSource != expected.PricingSource || extra["priceCheckedAt"] != demoModePriceCheckedAt {
+		planLabel, _ := extra["planLabel"].(string)
+		priceBasis, _ := extra["priceBasis"].(string)
+		if extra["demo"] != true || !orderOK || int(order) != expected.Order || source != "public-pricing-demo" || sourceURL != expected.Website || pricingSource != expected.PricingSource || extra["priceCheckedAt"] != demoModePriceCheckedAt || planLabel != expected.PlanLabel || priceBasis != expected.PriceBasis {
 			t.Fatalf("%s persisted demo extra missing stable metadata: %#v", name, extra)
+		}
+		snapshot, ok := extra["priceSnapshot"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("%s persisted demo extra missing price snapshot: %#v", name, extra)
+		}
+		amount, amountOK := snapshot["amount"].(float64)
+		if !amountOK || amount != expected.Price || snapshot["currency"] != expected.Currency || snapshot["billingCycle"] != expected.BillingCycle || snapshot["planLabel"] != expected.PlanLabel || snapshot["basis"] != expected.PriceBasis {
+			t.Fatalf("%s persisted price snapshot mismatch: %#v", name, snapshot)
 		}
 	}
 }
@@ -298,39 +397,6 @@ func demoExtraMapForTest(t *testing.T, value interface{}) map[string]interface{}
 		t.Fatalf("demo extra should be a JSON object: %v", err)
 	}
 	return out
-}
-
-func assertPersistedDemoDeveloperCustomConfig(t *testing.T, app core.App, userID string) {
-	t.Helper()
-	record, err := app.FindFirstRecordByFilter("custom_configs", "user = {:user}", dbx.Params{"user": userID})
-	if err != nil {
-		t.Fatal(err)
-	}
-	config, err := customConfigFromValue(record.Get("config"))
-	if err != nil {
-		t.Fatalf("demo custom config should decode: %v", err)
-	}
-	expectedCategories := map[string]struct{}{
-		"ai-tools":             {},
-		"dev-tools":            {},
-		"hosting-edge":         {},
-		"data-backend":         {},
-		"design-collaboration": {},
-		"observability":        {},
-		"security-auth":        {},
-	}
-	if len(config.Categories) != len(expectedCategories) {
-		t.Fatalf("expected %d developer demo categories, got %d", len(expectedCategories), len(config.Categories))
-	}
-	for _, category := range config.Categories {
-		if _, ok := expectedCategories[category.Value]; !ok {
-			t.Fatalf("unexpected demo category %q", category.Value)
-		}
-		delete(expectedCategories, category.Value)
-	}
-	if len(expectedCategories) > 0 {
-		t.Fatalf("missing demo categories: %#v", expectedCategories)
-	}
 }
 
 func TestDemoModeAllowsNormalSettingsButProtectsExternalIntegrationSettings(t *testing.T) {

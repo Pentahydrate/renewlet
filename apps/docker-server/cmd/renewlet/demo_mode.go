@@ -62,11 +62,12 @@ type demoProtectedSettingsSnapshot struct {
 }
 
 var demoModePolicy = renewletDemoPolicy{
-	Email:            "demo@renewlet.local",
-	Password:         "renewlet-demo",
-	Name:             "Demo",
-	ResetCron:        "0 */2 * * *",
-	MaxSubscriptions: 80,
+	Email:     "demo@renewlet.local",
+	Password:  "renewlet-demo",
+	Name:      "Demo",
+	ResetCron: "0 */2 * * *",
+	// 100 条基线来自开发者订阅 catalog；额外 20 条只给访客试新增/导入，避免公共 demo 变成无界写入口。
+	MaxSubscriptions: 120,
 	MaxAssets:        20,
 }
 
@@ -174,9 +175,6 @@ func (p renewletDemoPolicy) ResetUserData(app core.App, user *core.Record, now t
 			}
 		}
 		if err := seedDemoSettings(txApp, user.Id); err != nil {
-			return err
-		}
-		if err := seedDemoCustomConfig(txApp, user.Id); err != nil {
 			return err
 		}
 		if err := seedDemoSubscriptions(txApp, user.Id, now); err != nil {

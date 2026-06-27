@@ -28,50 +28,6 @@ func seedDemoSettings(app core.App, userID string) error {
 	return app.Save(record)
 }
 
-func seedDemoCustomConfig(app core.App, userID string) error {
-	collection, err := app.FindCollectionByNameOrId("custom_configs")
-	if err != nil {
-		return err
-	}
-	config := customConfigPayload{
-		Categories: []customConfigItem{
-			demoConfigItem("cat_ai", "ai-tools", "AI 工具", "AI tools", "#7C3AED", "sparkles"),
-			demoConfigItem("cat_dev", "dev-tools", "开发工具", "Developer tools", "#059669", "terminal"),
-			demoConfigItem("cat_hosting", "hosting-edge", "托管与边缘", "Hosting and edge", "#2563EB", "cloud"),
-			demoConfigItem("cat_data", "data-backend", "数据与后端", "Data and backend", "#0F766E", "database"),
-			demoConfigItem("cat_design", "design-collaboration", "设计协作", "Design collaboration", "#DB2777", "pen-tool"),
-			demoConfigItem("cat_observability", "observability", "可观测性", "Observability", "#D97706", "activity"),
-			demoConfigItem("cat_security", "security-auth", "安全与认证", "Security and auth", "#DC2626", "shield-check"),
-		},
-		Statuses: []customConfigItem{},
-		PaymentMethods: []customConfigItem{
-			demoConfigItem("pay_visa", "visa", "Visa 信用卡", "Visa credit card", "#1D4ED8", "credit-card"),
-			demoConfigItem("pay_alipay", "alipay", "支付宝", "Alipay", "#0EA5E9", "wallet"),
-			demoConfigItem("pay_paypal", "paypal", "PayPal", "PayPal", "#0369A1", "badge-dollar-sign"),
-			demoConfigItem("pay_bank", "bank", "银行转账", "Bank transfer", "#475569", "landmark"),
-		},
-		Currencies: []customConfigItem{
-			demoConfigItem("cur_cny", "CNY", "人民币", "Chinese Yuan", "#DC2626", ""),
-			demoConfigItem("cur_usd", "USD", "美元", "US Dollar", "#16A34A", ""),
-			demoConfigItem("cur_eur", "EUR", "欧元", "Euro", "#2563EB", ""),
-		},
-	}
-	record := core.NewRecord(collection)
-	record.Set("user", userID)
-	record.Set("config", config)
-	return app.Save(record)
-}
-
-func demoConfigItem(id string, value string, zhCN string, enUS string, color string, icon string) customConfigItem {
-	return customConfigItem{
-		ID:     id,
-		Value:  value,
-		Labels: customConfigLabels{ZhCN: zhCN, EnUS: enUS},
-		Color:  color,
-		Icon:   icon,
-	}
-}
-
 func seedDemoSubscriptions(app core.App, userID string, now time.Time) error {
 	collection, err := app.FindCollectionByNameOrId("subscriptions")
 	if err != nil {
@@ -102,12 +58,24 @@ func seedDemoSubscriptions(app core.App, userID string, now time.Time) error {
 		record.Set("website", seed.Website)
 		record.Set("notes", seed.Notes)
 		record.Set("tags", seed.Tags)
-		// extra 是演示数据的可审计来源标记，测试用它区分可重建 seed 与访客临时新增记录。
+		// extra 是演示数据的可审计来源边界；reset 只重建 catalog 记录，访客临时新增订阅不能伪装成价格快照。
 		record.Set("extra", map[string]interface{}{
 			"demo":           true,
 			"slug":           seed.Slug,
+			"order":          seed.Order,
+			"source":         "public-pricing-demo",
+			"sourceUrl":      seed.Website,
 			"pricingSource":  seed.PricingSource,
 			"priceCheckedAt": demoModePriceCheckedAt,
+			"planLabel":      seed.PlanLabel,
+			"priceBasis":     seed.PriceBasis,
+			"priceSnapshot": map[string]interface{}{
+				"amount":       seed.Price,
+				"currency":     seed.Currency,
+				"billingCycle": seed.BillingCycle,
+				"planLabel":    seed.PlanLabel,
+				"basis":        seed.PriceBasis,
+			},
 		})
 		record.Set("reminderDays", seed.ReminderDays)
 		record.Set("repeatReminderEnabled", seed.RepeatReminderEnabled)
