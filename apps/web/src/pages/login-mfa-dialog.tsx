@@ -85,26 +85,28 @@ export function LoginMfaDialog({
             </div>
 
             {hasCodeMfaMethod ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 <Button
                   type="button"
                   variant={method === "totp" ? "default" : "outline"}
-                  className="w-full"
+                  className="min-h-12 min-w-0 w-full px-3"
+                  aria-pressed={method === "totp"}
                   disabled={!hasTotp || isBusy}
                   onClick={() => onMethodChange("totp")}
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  {t("auth.mfaTotp")}
+                  <span className="min-w-0 truncate">{t("auth.mfaTotp")}</span>
                 </Button>
                 <Button
                   type="button"
                   variant={method === "recovery_code" ? "default" : "outline"}
-                  className="w-full"
+                  className="min-h-12 min-w-0 w-full px-3"
+                  aria-pressed={method === "recovery_code"}
                   disabled={!hasRecoveryCode || isBusy}
                   onClick={() => onMethodChange("recovery_code")}
                 >
                   <KeyRound className="h-4 w-4" />
-                  {t("auth.mfaRecoveryCode")}
+                  <span className="min-w-0 truncate">{t("auth.mfaRecoveryCode")}</span>
                 </Button>
               </div>
             ) : null}

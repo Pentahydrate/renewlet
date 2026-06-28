@@ -389,6 +389,20 @@ describe("Login page", () => {
     await waitFor(() => {
       expect(within(dialog).getByLabelText("Code")).toHaveFocus();
     });
+
+    const totpMethodButton = within(dialog).getByRole("button", { name: "Authenticator code" });
+    const recoveryMethodButton = within(dialog).getByRole("button", { name: "Recovery code" });
+    const methodSelector = totpMethodButton.parentElement;
+    if (!methodSelector) throw new Error("Missing MFA method selector");
+    expect(methodSelector).toHaveClass("grid", "grid-cols-1", "gap-3", "min-[420px]:grid-cols-2");
+    expect(totpMethodButton).toHaveClass("min-h-12", "min-w-0", "px-3");
+    expect(recoveryMethodButton).toHaveClass("min-h-12", "min-w-0", "px-3");
+    expect(totpMethodButton).toHaveAttribute("aria-pressed", "true");
+    expect(recoveryMethodButton).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(recoveryMethodButton);
+    expect(totpMethodButton).toHaveAttribute("aria-pressed", "false");
+    expect(recoveryMethodButton).toHaveAttribute("aria-pressed", "true");
   });
 
   it("closes the MFA dialog and returns focus to the password field", async () => {
