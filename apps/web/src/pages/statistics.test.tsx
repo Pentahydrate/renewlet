@@ -499,6 +499,25 @@ describe("Statistics page", () => {
       expect(tooltip).toHaveTextContent("1月20日");
       expect(tooltip).toHaveTextContent("Monthly");
       expect(tooltip).toHaveTextContent("1月15日");
+      const tooltipDateBadge = within(tooltip).getAllByText("1月20日")[0];
+      if (!tooltipDateBadge) {
+        throw new Error("Expected trend tooltip to render a compact date badge.");
+      }
+      const tooltipBadgeCell = tooltipDateBadge.parentElement;
+      const tooltipRow = tooltipBadgeCell?.parentElement;
+      if (!tooltipBadgeCell || !tooltipRow) {
+        throw new Error("Expected trend tooltip date badge to live inside a shared alignment grid.");
+      }
+      const tooltipList = tooltipRow.parentElement;
+      if (!tooltipList) {
+        throw new Error("Expected trend tooltip rows to share a grid container.");
+      }
+      expect(tooltipList).toHaveClass("grid-cols-[max-content_minmax(0,1fr)_auto]", "gap-x-2");
+      expect(tooltipRow).toHaveClass("col-span-3", "grid-cols-subgrid");
+      expect(tooltipBadgeCell).toHaveClass("min-w-0", "justify-self-start");
+      expect(tooltipDateBadge).toHaveClass("inline-flex", "w-[6em]", "max-w-full", "h-5", "truncate", "rounded-full");
+      expect(tooltipDateBadge).not.toHaveClass("w-max");
+      expect(tooltipDateBadge).not.toHaveClass("w-full");
       expect(screen.getByRole("list", { name: "未来 12 个月费用走势明细" })).toHaveTextContent(
         "构成 Annual ¥120，1月20日；Monthly ¥10，1月15日",
       );
@@ -567,7 +586,9 @@ describe("Statistics page", () => {
     try {
       renderStatistics();
 
-      expect(getLastTrendTooltip()).toHaveTextContent("还有 2 个订阅");
+      const overflowTooltip = getLastTrendTooltip();
+      expect(overflowTooltip).toHaveTextContent("还有 2 个订阅");
+      expect(within(overflowTooltip).getByText("还有 2 个订阅")).toHaveClass("col-span-3");
       const januaryDetails = screen.getByRole("list", { name: "2026年1月 明细" });
       const januaryLedger = januaryDetails.parentElement;
       if (!januaryLedger) {
@@ -580,6 +601,7 @@ describe("Statistics page", () => {
       }
       expect(januaryLedgerHeader).toHaveClass("grid", "border-b", "border-border/60", "bg-secondary/15");
       expect(within(januaryLedger).getByText("¥91")).toHaveClass("text-xl", "sm:text-2xl", "tabular-nums");
+      expect(januaryDetails).toHaveClass("grid-cols-[max-content_minmax(0,1fr)_auto]", "gap-x-3");
       expect(within(januaryDetails).getAllByRole("listitem")).toHaveLength(7);
       expect(januaryDetails).toHaveTextContent("Service 1");
       expect(januaryDetails).toHaveTextContent(longName);
@@ -591,14 +613,24 @@ describe("Statistics page", () => {
       if (!longNameRow) {
         throw new Error("Expected long trend detail name to be rendered inside a list item.");
       }
+      expect(longNameRow).toHaveClass("col-span-3", "grid-cols-subgrid");
       const longNameAction = within(longNameRow as HTMLElement).getByRole("button", { name: `查看 ${longName} 的详情` });
       expect(longNameAction).toHaveClass(
-        "grid-cols-[6.75rem_minmax(0,1fr)_auto]",
+        "col-span-3",
+        "grid-cols-subgrid",
         "hover:bg-secondary/25",
         "focus-visible:ring-2",
         "cursor-pointer",
       );
-      expect(within(longNameAction).getByText("1月10日")).toHaveClass("w-full", "rounded-full", "truncate", "text-center");
+      const detailDateBadge = within(longNameAction).getByText("1月10日");
+      const detailBadgeCell = detailDateBadge.parentElement;
+      if (!detailBadgeCell) {
+        throw new Error("Expected trend detail date badge to live inside a shared alignment grid.");
+      }
+      expect(detailBadgeCell).toHaveClass("min-w-0", "justify-self-start");
+      expect(detailDateBadge).toHaveClass("inline-flex", "w-[6em]", "max-w-full", "h-6", "truncate", "rounded-full");
+      expect(detailDateBadge).not.toHaveClass("w-max");
+      expect(detailDateBadge).not.toHaveClass("w-full");
       expect(within(longNameAction).getByText("¥16")).toHaveClass("shrink-0", "whitespace-nowrap", "tabular-nums");
       expect(within(longNameAction).getByText("18%")).toHaveClass("tabular-nums");
       expect(longNameAction).toHaveTextContent("占比 18%");

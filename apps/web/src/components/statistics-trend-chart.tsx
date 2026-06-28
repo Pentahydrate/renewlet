@@ -22,6 +22,17 @@ import type { StatisticsTrendDatum, StatisticsTrendItem } from "@/modules/subscr
 const STATISTICS_TREND_CHART_HEIGHT = 280;
 
 type TrendMode = "cashflow" | "amortized";
+type TrendItemBadgeCellSize = "tooltip" | "detail";
+
+const TREND_ITEM_BADGE_CLASS_NAME = [
+  "inline-flex w-[6em] max-w-full shrink-0 items-center justify-center truncate rounded-full",
+  "border border-border/60 bg-secondary/45 px-2 font-medium leading-none",
+  "tabular-nums text-muted-foreground",
+].join(" ");
+const trendItemBadgeSizeClassNames = {
+  tooltip: "h-5 text-[11px]",
+  detail: "h-6 text-xs",
+} satisfies Record<TrendItemBadgeCellSize, string>;
 
 type TrendTooltipPayload = {
   value?: unknown;
@@ -118,6 +129,16 @@ function fallbackTrendDetailMonthKey(
   return firstWithItems?.monthKey ?? data[0]?.monthKey ?? "";
 }
 
+function TrendItemBadgeCell({ label, size }: { label: string; size: TrendItemBadgeCellSize }) {
+  return (
+    <span className="min-w-0 justify-self-start">
+      <span className={`${TREND_ITEM_BADGE_CLASS_NAME} ${trendItemBadgeSizeClassNames[size]}`}>
+        {label}
+      </span>
+    </span>
+  );
+}
+
 export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscriptionDetails }: StatisticsTrendChartProps) {
   const { t, formatCurrency, formatDateOnly, formatNumber } = useI18n();
   const [mode, setMode] = useState<TrendMode>("cashflow");
@@ -202,15 +223,13 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
         </div>
 
         {visibleItems.length > 0 ? (
-          <div className="mt-2 overflow-hidden rounded-md border border-border/60 bg-background/40">
+          <div className="mt-2 grid min-w-0 grid-cols-[max-content_minmax(0,1fr)_auto] gap-x-2 overflow-hidden rounded-md border border-border/60 bg-background/40">
             {visibleItems.map((item) => (
               <div
                 key={item.subscriptionId}
-                className="grid min-w-0 grid-cols-[5rem_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 px-2.5 py-2 text-xs last:border-b-0"
+                className="col-span-3 grid min-w-0 grid-cols-subgrid items-center border-b border-border/60 px-2.5 py-2 text-xs last:border-b-0"
               >
-                <span className="w-full truncate rounded-full bg-secondary/50 px-2 py-0.5 text-center text-[11px] font-medium text-muted-foreground">
-                  {formatTrendItemBadge(item, tooltipMode)}
-                </span>
+                <TrendItemBadgeCell label={formatTrendItemBadge(item, tooltipMode)} size="tooltip" />
                 <div className="min-w-0 leading-tight">
                   <p className="truncate font-medium text-foreground">{item.name}</p>
                   <p className="truncate text-[11px] text-muted-foreground">{formatTrendItemMeta(item)}</p>
@@ -221,7 +240,7 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
               </div>
             ))}
             {hiddenCount > 0 ? (
-              <p className="border-t border-border/60 px-2.5 py-2 text-xs text-muted-foreground">
+              <p className="col-span-3 border-t border-border/60 px-2.5 py-2 text-xs text-muted-foreground">
                 {t("statistics.trendMoreItems", { count: hiddenCount })}
               </p>
             ) : null}
@@ -354,7 +373,7 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
 
                 {detailItems.length > 0 ? (
                   <div
-                    className="max-h-72 min-w-0 overflow-y-auto"
+                    className="grid max-h-72 min-w-0 grid-cols-[max-content_minmax(0,1fr)_auto] gap-x-3 overflow-y-auto"
                     role="list"
                     aria-labelledby={detailHeadingId}
                   >
@@ -366,18 +385,16 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
                       return (
                         <div
                           key={item.subscriptionId}
-                          className="border-b border-border/60 last:border-b-0"
+                          className="col-span-3 grid grid-cols-subgrid border-b border-border/60 last:border-b-0"
                           role="listitem"
                         >
                           <button
                             type="button"
-                            className="grid w-full min-w-0 cursor-pointer grid-cols-[6.75rem_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-secondary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                            className="col-span-3 grid w-full min-w-0 cursor-pointer grid-cols-subgrid items-center px-3 py-2.5 text-left transition-colors hover:bg-secondary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                             aria-label={t("subscription.viewDetailsLabel", { name: item.name })}
                             onClick={() => onViewSubscriptionDetails(item.subscriptionId)}
                           >
-                            <span className="w-full truncate rounded-full bg-secondary/50 px-2.5 py-1 text-center text-xs font-medium text-muted-foreground">
-                              {formatTrendItemBadge(item, contentMode)}
-                            </span>
+                            <TrendItemBadgeCell label={formatTrendItemBadge(item, contentMode)} size="detail" />
                             <span className="min-w-0 self-stretch">
                               <TruncatedTooltipText
                                 as="span"
