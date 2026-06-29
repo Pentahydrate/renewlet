@@ -110,18 +110,34 @@ const metaToneClassNames = {
   destructive: "text-destructive",
 } satisfies Record<SubscriptionCardMetaTone, string>;
 
+function SubscriptionCardMetaToken({ item }: { item: SubscriptionCardMetaItem }) {
+  return (
+    <div
+      data-testid={`subscription-card-meta-${item.key}`}
+      className={cn("inline-flex min-w-0 max-w-full items-center gap-1.5 whitespace-nowrap text-xs", metaToneClassNames[item.tone])}
+    >
+      {item.icon}
+      <span className={cn(item.truncate ? "block max-w-24 truncate sm:max-w-32" : "whitespace-nowrap")}>{item.text}</span>
+    </div>
+  );
+}
+
 function SubscriptionCardMetaFlow({ items }: { items: readonly SubscriptionCardMetaItem[] }) {
+  const dateItems = items.filter((item) => item.key === "start-date" || item.key === "billing-date");
+  const secondaryItems = items.filter((item) => item.key !== "start-date" && item.key !== "billing-date");
+
   return (
     <div data-testid="subscription-card-meta-flow" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4">
-      {items.map((item) => (
+      {dateItems.length > 0 ? (
+        // 日期组是移动卡片的扫描单位，避免付款方式等次要字段抢占到期日期位置。
         <div
-          key={item.key}
-          className={cn("inline-flex max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap text-xs", metaToneClassNames[item.tone])}
+          data-testid="subscription-card-meta-date-group"
+          className="inline-flex min-w-0 max-w-full flex-[0_1_auto] flex-wrap items-center gap-x-2 gap-y-1 sm:gap-x-4"
         >
-          {item.icon}
-          <span className={cn(item.truncate ? "block max-w-24 truncate sm:max-w-32" : "whitespace-nowrap")}>{item.text}</span>
+          {dateItems.map((item) => <SubscriptionCardMetaToken key={item.key} item={item} />)}
         </div>
-      ))}
+      ) : null}
+      {secondaryItems.map((item) => <SubscriptionCardMetaToken key={item.key} item={item} />)}
     </div>
   );
 }
@@ -386,16 +402,23 @@ function SubscriptionCardComponent({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="col-span-full flex flex-wrap items-center gap-2">
+            <div data-testid="subscription-card-badge-flow" className="col-span-full flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-2">
               <Badge
+                data-testid="subscription-card-badge-category"
                 variant="outline"
-                className="max-w-full shrink-0 overflow-hidden whitespace-nowrap text-xs"
+                className="max-w-full shrink-0 overflow-hidden whitespace-nowrap px-2 text-xs sm:px-2.5"
                 style={categoryBadgeStyle}
               >
                 <TruncatedTooltipText text={categoryLabel} className="block max-w-full" />
               </Badge>
-              <SubscriptionStatusBadge status={effectiveStatus} />
-              <Badge variant={isOneTime ? "secondary" : subscription.autoRenew ? "outline" : "secondary"} className="shrink-0 whitespace-nowrap text-xs">
+              <span data-testid="subscription-card-badge-status" className="inline-flex shrink-0">
+                <SubscriptionStatusBadge status={effectiveStatus} className="px-2 sm:px-2.5" />
+              </span>
+              <Badge
+                data-testid="subscription-card-badge-renewal"
+                variant={isOneTime ? "secondary" : subscription.autoRenew ? "outline" : "secondary"}
+                className="shrink-0 whitespace-nowrap px-2 text-xs sm:px-2.5"
+              >
                 {renewalBadgeLabel}
               </Badge>
             </div>

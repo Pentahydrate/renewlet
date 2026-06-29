@@ -1,17 +1,20 @@
 import * as React from "react";
+import { X } from "lucide-react";
+import { Drawer } from "vaul";
 
+import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 export const MOBILE_OVERLAY_QUERY = "(max-width: 767px)";
-export const MOBILE_SHEET_LARGE_ITEM_THRESHOLD = 10;
+const MOBILE_SHEET_LARGE_ITEM_THRESHOLD = 10;
+const MOBILE_OVERLAY_EXIT_ANIMATION_MS = 500;
 
 export type MobileSheetDetent = "auto" | "compact" | "large";
 export type ResolvedMobileSheetDetent = Exclude<MobileSheetDetent, "auto">;
 export type MobileSheetKind = "list" | "calendar" | "panel";
 
-// 移动端遮罩可能来自多个 Radix Portal；模块级计数让 body 锁定和触发器防穿透共用同一事实源。
-let activeMobileBackdropCount = 0;
+let activeMobileOverlayCount = 0;
 type MobileOverlayInteractionPoint = {
   x: number;
   y: number;
@@ -24,25 +27,13 @@ type MobileOverlayTriggerSuppression = {
 
 let mobileOverlayTriggerSuppression: MobileOverlayTriggerSuppression | undefined;
 let clearMobileOverlayTriggerSuppressionTimer: ReturnType<typeof setTimeout> | undefined;
-const mobileOverlayStateListeners = new Set<() => void>();
 const MOBILE_OVERLAY_TRIGGER_SUPPRESSION_MS = 450;
 const MOBILE_OVERLAY_TRIGGER_SUPPRESSION_RADIUS_PX = 24;
-
-function subscribeMobileOverlayState(listener: () => void) {
-  mobileOverlayStateListeners.add(listener);
-  return () => {
-    mobileOverlayStateListeners.delete(listener);
-  };
-}
-
-function getMobileOverlayStateSnapshot() {
-  return activeMobileBackdropCount > 0;
-}
 
 function updateMobileOverlayOpenState() {
   if (typeof document === "undefined") return;
 
-  if (activeMobileBackdropCount > 0) {
+  if (activeMobileOverlayCount > 0) {
     document.body.setAttribute("data-mobile-overlay-open", "");
     return;
   }
@@ -50,65 +41,192 @@ function updateMobileOverlayOpenState() {
   document.body.removeAttribute("data-mobile-overlay-open");
 }
 
-function emitMobileOverlayStateChange() {
-  mobileOverlayStateListeners.forEach((listener) => listener());
-}
-
-function registerMobileOverlayBackdrop() {
-  activeMobileBackdropCount += 1;
+function registerMobileOverlay() {
+  activeMobileOverlayCount += 1;
   updateMobileOverlayOpenState();
-  emitMobileOverlayStateChange();
 
   return () => {
-    activeMobileBackdropCount = Math.max(0, activeMobileBackdropCount - 1);
+    activeMobileOverlayCount = Math.max(0, activeMobileOverlayCount - 1);
     updateMobileOverlayOpenState();
-    emitMobileOverlayStateChange();
   };
 }
 
-/** useIsMobileOverlay 判断当前交互是否应切换为 H5 sheet/overlay 形态。 */
 export function useIsMobileOverlay() {
   return useMediaQuery(MOBILE_OVERLAY_QUERY);
 }
 
-/** useHasActiveMobileOverlayBackdrop 暴露全局遮罩存在性，供触发器避免同一次 tap 重新打开弹层。 */
-export function useHasActiveMobileOverlayBackdrop() {
-  return React.useSyncExternalStore(
-    subscribeMobileOverlayState,
-    getMobileOverlayStateSnapshot,
-    () => false,
-  );
-}
-
-/** useControllableOpen 统一 Radix 风格的 controlled/uncontrolled open 状态。 */
-export function useControllableOpen({
+export function useMobileOverlayOpenLifecycle({
+  animateClose,
   defaultOpen = false,
   onOpenChange,
   open,
 }: {
+  animateClose: boolean;
   defaultOpen?: boolean | undefined;
   onOpenChange?: ((open: boolean) => void) | undefined;
   open?: boolean | undefined;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
   const isControlled = open !== undefined;
-  const currentOpen = isControlled ? open : uncontrolledOpen;
+  const committedOpen = isControlled ? open : uncontrolledOpen;
+  const [rootOpenState, setRootOpenState] = React.useState(committedOpen);
+  const [sheetOpenState, setSheetOpenState] = React.useState(committedOpen);
+  const [presentState, setPresentState] = React.useState(committedOpen);
+  const rootOpenRef = React.useRef(rootOpenState);
+  const sheetOpenRef = React.useRef(sheetOpenState);
+  const presentRef = React.useRef(presentState);
+  const pendingCloseNotifyRef = React.useRef(false);
+  const closeTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const previousCommittedOpenRef = React.useRef(committedOpen);
+
+  const setRootOpen = React.useCallback((nextOpen: boolean) => {
+    rootOpenRef.current = nextOpen;
+    setRootOpenState(nextOpen);
+  }, []);
+
+  const setSheetOpen = React.useCallback((nextOpen: boolean) => {
+    sheetOpenRef.current = nextOpen;
+    setSheetOpenState(nextOpen);
+  }, []);
+
+  const setPresent = React.useCallback((nextPresent: boolean) => {
+    presentRef.current = nextPresent;
+    setPresentState(nextPresent);
+  }, []);
+
+  const clearCloseTimer = React.useCallback(() => {
+    if (!closeTimerRef.current) return;
+    clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = undefined;
+  }, []);
+
+  const commitClosed = React.useCallback(
+    (shouldNotify: boolean) => {
+      clearCloseTimer();
+      pendingCloseNotifyRef.current = false;
+      setRootOpen(false);
+      setSheetOpen(false);
+      setPresent(false);
+      if (!isControlled) {
+        setUncontrolledOpen(false);
+      }
+      if (shouldNotify) {
+        onOpenChange?.(false);
+      }
+    },
+    [clearCloseTimer, isControlled, onOpenChange, setPresent, setRootOpen, setSheetOpen],
+  );
+
+  const finishAnimatedClose = React.useCallback(() => {
+    if (sheetOpenRef.current) return;
+    commitClosed(pendingCloseNotifyRef.current);
+  }, [commitClosed]);
+
+  const scheduleAnimatedClose = React.useCallback(() => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = undefined;
+      finishAnimatedClose();
+    }, MOBILE_OVERLAY_EXIT_ANIMATION_MS);
+  }, [clearCloseTimer, finishAnimatedClose]);
+
+  const openNow = React.useCallback(
+    (shouldNotify: boolean) => {
+      clearCloseTimer();
+      pendingCloseNotifyRef.current = false;
+      setPresent(true);
+      setRootOpen(true);
+      setSheetOpen(true);
+      if (!isControlled) {
+        setUncontrolledOpen(true);
+      }
+      if (shouldNotify) {
+        onOpenChange?.(true);
+      }
+    },
+    [clearCloseTimer, isControlled, onOpenChange, setPresent, setRootOpen, setSheetOpen],
+  );
+
+  const closeWithLifecycle = React.useCallback(
+    (shouldNotify: boolean) => {
+      if (isControlled && !onOpenChange && shouldNotify) return;
+      if (!rootOpenRef.current && !sheetOpenRef.current && !presentRef.current) {
+        if (!isControlled) {
+          setUncontrolledOpen(false);
+        }
+        if (shouldNotify) {
+          onOpenChange?.(false);
+        }
+        return;
+      }
+
+      if (!animateClose) {
+        commitClosed(shouldNotify);
+        return;
+      }
+
+      // Radix Content 需要在 Vaul closed 动画期间继续挂载；真正提交关闭等 sheet 退出期结束。
+      pendingCloseNotifyRef.current ||= shouldNotify;
+      setPresent(true);
+      setRootOpen(true);
+      setSheetOpen(false);
+      scheduleAnimatedClose();
+    },
+    [
+      animateClose,
+      commitClosed,
+      isControlled,
+      onOpenChange,
+      scheduleAnimatedClose,
+      setPresent,
+      setRootOpen,
+      setSheetOpen,
+    ],
+  );
 
   const setOpen = React.useCallback(
     (nextOpen: boolean) => {
-      if (!isControlled) {
-        setUncontrolledOpen(nextOpen);
+      if (nextOpen) {
+        openNow(true);
+        return;
       }
-      onOpenChange?.(nextOpen);
+      closeWithLifecycle(true);
     },
-    [isControlled, onOpenChange],
+    [closeWithLifecycle, openNow],
   );
 
-  return [currentOpen, setOpen] as const;
+  React.useEffect(() => {
+    if (previousCommittedOpenRef.current === committedOpen) return;
+    previousCommittedOpenRef.current = committedOpen;
+
+    if (committedOpen) {
+      openNow(false);
+      return;
+    }
+
+    closeWithLifecycle(false);
+  }, [closeWithLifecycle, committedOpen, openNow]);
+
+  React.useEffect(() => clearCloseTimer, [clearCloseTimer]);
+
+  const handleSheetAnimationEnd = React.useCallback(
+    (animationOpen: boolean) => {
+      if (animationOpen) return;
+      finishAnimatedClose();
+    },
+    [finishAnimatedClose],
+  );
+
+  return {
+    onSheetAnimationEnd: handleSheetAnimationEnd,
+    open: rootOpenState,
+    present: presentState,
+    setOpen,
+    sheetOpen: sheetOpenState,
+  } as const;
 }
 
-export function MobileOverlayPortalHost({ children }: { children: React.ReactNode }) {
-  // Dialog 内的 portal host 会成为 flex/grid 子项；display:contents 保留 DOM 边界，避免父级 gap 撑高 footer。
+function MobileOverlayPortalHost({ children }: { children: React.ReactNode }) {
   return (
     <div data-mobile-overlay-portal="" className="contents">
       {children}
@@ -116,7 +234,6 @@ export function MobileOverlayPortalHost({ children }: { children: React.ReactNod
   );
 }
 
-/** resolveMobileSheetDetent 将调用方意图映射成实际 sheet 高度档位。 */
 export function resolveMobileSheetDetent({
   itemCount,
   kind = "panel",
@@ -135,17 +252,6 @@ export function resolveMobileSheetDetent({
   }
 
   return "compact";
-}
-
-/** isMobileOverlayBackdropTarget 判断 Radix outside event 是否命中了移动端自定义遮罩。 */
-export function isMobileOverlayBackdropTarget(target: EventTarget | null) {
-  return target instanceof Element && target.closest("[data-mobile-overlay-backdrop]") !== null;
-}
-
-/** stopMobileOverlayBackdropEvent 阻止遮罩事件穿透到下层 Dialog 或触发按钮。 */
-export function stopMobileOverlayBackdropEvent(event: Pick<Event, "preventDefault" | "stopPropagation">) {
-  event.preventDefault();
-  event.stopPropagation();
 }
 
 type MobileOverlayInteractionEvent = (Event | React.SyntheticEvent) & {
@@ -200,8 +306,8 @@ function clearExpiredMobileOverlayTriggerSuppression() {
   }
 }
 
-function markMobileOverlayBackdropInteraction(event?: MobileOverlayInteractionEvent) {
-  // 移动浏览器会在 portal 卸载后补发兼容 click；短时坐标闸门只拦同一次遮罩点击，不挡用户点别处。
+function markMobileOverlayScrimInteraction(event?: MobileOverlayInteractionEvent) {
+  // 移动浏览器会在 portal 卸载后补发兼容 click；坐标闸门只拦同一次遮罩点击，不挡用户点别处。
   mobileOverlayTriggerSuppression = {
     expiresAt: Date.now() + MOBILE_OVERLAY_TRIGGER_SUPPRESSION_MS,
     point: getMobileOverlayInteractionPoint(event),
@@ -214,6 +320,11 @@ function markMobileOverlayBackdropInteraction(event?: MobileOverlayInteractionEv
     mobileOverlayTriggerSuppression = undefined;
     clearMobileOverlayTriggerSuppressionTimer = undefined;
   }, MOBILE_OVERLAY_TRIGGER_SUPPRESSION_MS);
+}
+
+function stopMobileOverlayScrimEvent(event: Pick<React.SyntheticEvent, "preventDefault" | "stopPropagation">) {
+  event.preventDefault();
+  event.stopPropagation();
 }
 
 export function shouldSuppressMobileOverlayTriggerEvent(
@@ -232,26 +343,7 @@ export function shouldSuppressMobileOverlayTriggerEvent(
   return true;
 }
 
-/** handleMobileOverlayOutsideEvent 让 Radix outside 事件与自定义遮罩关闭语义保持一致。 */
-export function handleMobileOverlayOutsideEvent(
-  event: {
-    detail?: { originalEvent?: Event };
-    target: EventTarget | null;
-    preventDefault: () => void;
-  },
-  _onDismiss?: (() => void) | undefined,
-) {
-  const originalTarget = event.detail?.originalEvent?.target ?? event.target;
-  if (!isMobileOverlayBackdropTarget(originalTarget)) return false;
-
-  // Radix 比 React 更早收到 outside pointer；这里阻止立即卸载，避免同一次 tap 穿透到底层 Dialog/触发器。
-  event.preventDefault();
-  markMobileOverlayBackdropInteraction(event.detail?.originalEvent);
-  return true;
-}
-
-/** getMobileSheetClassName 集中维护 sheet 形态类名，避免各弹层复制移动端高度策略。 */
-export function getMobileSheetClassName({
+function getMobileSheetClassName({
   detent,
   kind,
 }: {
@@ -268,73 +360,138 @@ export function getMobileSheetClassName({
   );
 }
 
-/**
- * MobileOverlayBackdrop 是 H5 sheet 的事件隔离层。
- *
- * 它不只负责视觉遮罩，还负责记录最近一次遮罩交互坐标，解决移动浏览器在 Portal 卸载后
- * 把同一次 tap 派发给底层触发器的问题。
- */
-export function MobileOverlayBackdrop({
-  className,
-  onDismiss,
-  onClick,
-  onClickCapture,
-  onPointerDown,
-  onPointerDownCapture,
-  onPointerUp,
-  onPointerUpCapture,
-  style,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  onDismiss?: (() => void) | undefined;
-}) {
-  const isMobileOverlay = useIsMobileOverlay();
+type MobileOverlaySheetChildProps = {
+  className?: string | undefined;
+  children?: React.ReactNode;
+  "data-mobile-detent"?: string | undefined;
+  "data-mobile-kind"?: string | undefined;
+  role?: React.AriaRole | undefined;
+};
 
+type MobileOverlaySheetProps = {
+  children: React.ReactElement<MobileOverlaySheetChildProps>;
+  closeLabel: string;
+  container?: HTMLElement | null | undefined;
+  contentRole?: React.AriaRole;
+  description?: React.ReactNode;
+  detent: ResolvedMobileSheetDetent;
+  kind: MobileSheetKind;
+  onAnimationEnd: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  present: boolean;
+  title: React.ReactNode;
+  titleLayout?: "flush" | "padded";
+  titleMode?: "sr-only" | "visible";
+};
+
+function MobileOverlaySheet({
+  children,
+  closeLabel,
+  container,
+  contentRole,
+  description,
+  detent,
+  kind,
+  onAnimationEnd,
+  onOpenChange,
+  open,
+  present,
+  title,
+  titleLayout = "padded",
+  titleMode = "sr-only",
+}: MobileOverlaySheetProps) {
   React.useEffect(() => {
-    if (!isMobileOverlay) return undefined;
+    if (!present) return undefined;
+    return registerMobileOverlay();
+  }, [present]);
 
-    // 嵌套 Radix portal 会拆开 DialogOverlay 与 sheet 层级；全局计数给测试和触发器防穿透同一事实源。
-    return registerMobileOverlayBackdrop();
-  }, [isMobileOverlay]);
+  const child = React.Children.only(children);
+  const handleScrimPointerEvent = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    // pointer 只建立防穿透闸门，click 再关闭；否则父 Dialog 会先收到 outside pointer。
+    markMobileOverlayScrimInteraction(event);
+    stopMobileOverlayScrimEvent(event);
+  }, []);
+  const handleScrimClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    markMobileOverlayScrimInteraction(event);
+    stopMobileOverlayScrimEvent(event);
+    onOpenChange(false);
+  }, [onOpenChange]);
+  const content = React.cloneElement(child, {
+    "data-mobile-detent": detent,
+    "data-mobile-kind": kind,
+    className: cn(getMobileSheetClassName({ detent, kind }), child.props.className),
+    ...(contentRole === undefined ? {} : { role: contentRole }),
+    children: (
+      <>
+        <Drawer.Handle className="h5-mobile-sheet-handle" />
+        {titleMode === "visible" ? (
+          <div
+            className={cn(
+              "h5-mobile-sheet-header flex items-start justify-between gap-3 border-b border-border px-4 py-3",
+              titleLayout === "padded" && "-mx-4 -mt-4 mb-4",
+            )}
+          >
+            <div className="min-w-0">
+              <Drawer.Title className="truncate text-sm font-semibold text-foreground">
+                {title}
+              </Drawer.Title>
+              {description ? (
+                <Drawer.Description className="mt-1 text-xs text-muted-foreground">
+                  {description}
+                </Drawer.Description>
+              ) : null}
+            </div>
+            <Drawer.Close asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="-mr-2 -mt-1 h-9 w-9 shrink-0 text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">{closeLabel}</span>
+              </Button>
+            </Drawer.Close>
+          </div>
+        ) : (
+          <>
+            <Drawer.Title className="sr-only">{title}</Drawer.Title>
+            {description ? (
+              <Drawer.Description className="sr-only">{description}</Drawer.Description>
+            ) : null}
+          </>
+        )}
+        {child.props.children}
+      </>
+    ),
+  });
+
+  if (!present) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      data-mobile-overlay-backdrop=""
-      className={cn("h5-mobile-overlay-backdrop", className)}
-      style={{ ...style, pointerEvents: "auto" }}
-      {...props}
-      onClickCapture={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onDismiss?.();
-        onClickCapture?.(event);
-      }}
-      onClick={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onClick?.(event);
-      }}
-      onPointerDownCapture={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onPointerDownCapture?.(event);
-      }}
-      onPointerDown={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onPointerDown?.(event);
-      }}
-      onPointerUpCapture={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onPointerUpCapture?.(event);
-      }}
-      onPointerUp={(event) => {
-        markMobileOverlayBackdropInteraction(event);
-        stopMobileOverlayBackdropEvent(event);
-        onPointerUp?.(event);
-      }}
-    />
+    <Drawer.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      onAnimationEnd={onAnimationEnd}
+      shouldScaleBackground={false}
+      {...(container === undefined ? {} : { container })}
+    >
+      <Drawer.Portal forceMount>
+        <MobileOverlayPortalHost>
+          <Drawer.Overlay
+            forceMount
+            data-mobile-overlay-backdrop=""
+            className="h5-mobile-overlay-backdrop fixed inset-0 bg-black/60"
+            onClickCapture={handleScrimClick}
+            onPointerDownCapture={handleScrimPointerEvent}
+            onPointerUpCapture={handleScrimPointerEvent}
+          />
+          <Drawer.Content forceMount asChild>{content}</Drawer.Content>
+        </MobileOverlayPortalHost>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }
+
+export { MobileOverlaySheet };

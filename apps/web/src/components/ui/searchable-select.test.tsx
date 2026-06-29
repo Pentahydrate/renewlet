@@ -2,7 +2,8 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { mockMobileOverlayMatch, resetMobileOverlayTestEnvironment } from "@/components/ui/mobile-overlay.test-utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SearchableSelect, type SearchableSelectOption } from "./searchable-select";
 
@@ -27,6 +28,10 @@ function setElementOverflow(element: Element) {
 }
 
 describe("SearchableSelect", () => {
+  afterEach(() => {
+    resetMobileOverlayTestEnvironment();
+  });
+
   it("filters options and selects a matching item", async () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -48,6 +53,7 @@ describe("SearchableSelect", () => {
   });
 
   it("renders the shared mobile sheet chrome for searchable overlays", async () => {
+    mockMobileOverlayMatch();
     const user = userEvent.setup();
 
     renderWithTooltipProvider(
@@ -63,9 +69,11 @@ describe("SearchableSelect", () => {
     await user.click(screen.getByRole("combobox", { name: "选择货币" }));
 
     const sheet = screen.getByTestId("searchable-select-sheet");
+    expect(sheet).toHaveAttribute("data-vaul-drawer");
     expect(sheet).toHaveClass("h5-mobile-sheet-content");
     expect(sheet).toHaveAttribute("data-mobile-detent", "large");
     expect(sheet).toHaveAttribute("aria-label", "选择货币");
+    expect(sheet.querySelector("[data-vaul-handle]")).not.toBeNull();
     expect(screen.getByText("选择货币")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "关闭" })).toBeInTheDocument();
   });

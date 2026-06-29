@@ -47,12 +47,12 @@ test("desktop subscription create, tag filter, edit, and reload persistence", as
   await createSubscription(page, {
     name: plainName,
     price: "15",
-    currencyLabel: "美元 ($)",
+    currencyLabel: "USD",
   });
   await createSubscription(page, {
     name: taggedName,
     price: "20",
-    currencyLabel: "美元 ($)",
+    currencyLabel: "USD",
     tags: `${tagName}、云服务`,
   });
 
@@ -93,7 +93,7 @@ test("desktop subscription create, tag filter, edit, and reload persistence", as
   await expect(emptyTagDialog).toBeHidden();
 
   await page.goto("/calendar");
-  await expect(page.getByRole("heading", { name: "续费日历", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "续费/到期日历", level: 1 })).toBeVisible();
   for (let attempts = 0; attempts < 3; attempts += 1) {
     const calendarEntry = page.getByRole("button", { name: editedName, exact: true }).first();
     if (await calendarEntry.isVisible().catch(() => false)) {

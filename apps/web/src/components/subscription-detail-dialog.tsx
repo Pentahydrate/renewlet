@@ -5,8 +5,7 @@
  * 注意：金额、周期、状态和提醒标签必须继续复用订阅 domain 常量，避免不同入口展示口径分叉。
  */
 import { useState, type ReactNode } from "react";
-import { Drawer } from "vaul";
-import { CalendarPlus, Edit2, ExternalLink, RotateCw, X } from "lucide-react";
+import { CalendarPlus, Edit2, ExternalLink, RotateCw } from "lucide-react";
 import type { Subscription } from "@/types/subscription";
 import {
   DEFAULT_NOTIFICATION_REMINDER_DAYS,
@@ -19,6 +18,7 @@ import { SubscriptionStatusBadge } from "@/components/subscription-status-badge"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MobileBottomDrawerContent, MobileDrawerRoot } from "@/components/ui/mobile-drawer";
 import { useCustomConfig } from "@/contexts/CustomConfigContext";
 import { useExchangeRates } from "@/hooks/use-exchange-rates";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -301,42 +301,28 @@ export function SubscriptionDetailDialog({
   return (
     <>
       {isMobile ? (
-        <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <MobileDrawerRoot open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
           {open ? (
-            <Drawer.Portal>
-              <Drawer.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-              <Drawer.Content className="h5-drawer-panel fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[calc(var(--app-viewport-height)-1rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4">
-                <div className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
-                <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
-                  <div className="min-w-0">
-                    <Drawer.Title className="truncate text-base font-semibold text-foreground">
-                      {subscription?.name ?? t("subscription.detailFallbackTitle")}
-                    </Drawer.Title>
-                    <Drawer.Description className="sr-only">{description}</Drawer.Description>
-                  </div>
-                  <Drawer.Close asChild>
-                    <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-9 w-9 text-muted-foreground">
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">{t("common.close")}</span>
-                    </Button>
-                  </Drawer.Close>
-                </div>
-                {subscription ? (
-                  <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                    <SubscriptionDetailContent
-                      subscription={subscription}
-                      today={today}
-                      onClose={closeDetail}
-                      onAddToCalendar={openAddToCalendar}
-                      {...(onEditSubscription ? { onEditSubscription } : {})}
-                      {...(onRenewSubscription ? { onRenewSubscription } : {})}
-                    />
-                  </div>
-                ) : null}
-              </Drawer.Content>
-            </Drawer.Portal>
+            <MobileBottomDrawerContent
+              title={subscription?.name ?? t("subscription.detailFallbackTitle")}
+              description={description}
+              descriptionMode="sr-only"
+              closeLabel={t("common.close")}
+              className="max-h-[calc(var(--app-viewport-height)-1rem)]"
+            >
+              {subscription ? (
+                <SubscriptionDetailContent
+                  subscription={subscription}
+                  today={today}
+                  onClose={closeDetail}
+                  onAddToCalendar={openAddToCalendar}
+                  {...(onEditSubscription ? { onEditSubscription } : {})}
+                  {...(onRenewSubscription ? { onRenewSubscription } : {})}
+                />
+              ) : null}
+            </MobileBottomDrawerContent>
           ) : null}
-        </Drawer.Root>
+        </MobileDrawerRoot>
       ) : (
         <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className="max-h-[calc(var(--app-viewport-height)-3rem)] overflow-hidden border-border bg-card p-0 sm:max-w-lg">

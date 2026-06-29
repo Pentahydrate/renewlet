@@ -101,8 +101,8 @@ describe("SettingsScreen built-in icon index controls", () => {
 
     expect(check).not.toHaveBeenCalled();
     expect(await screen.findByText("图标数量")).toBeInTheDocument();
-    const portalHost = screen.getByText("图标数量").closest("[data-mobile-overlay-portal]");
-    expect(portalHost).toHaveClass("contents");
+    expect(screen.getByText("图标数量").closest("[data-mobile-overlay-portal]")).toBeNull();
+    expect(screen.getByText("图标数量").closest("[data-vaul-drawer]")).toBeNull();
     expect(screen.getByText("120 个图标")).toBeInTheDocument();
     expect(screen.getByText("当前版本")).toBeInTheDocument();
     expect(screen.getByText("最新版本")).toBeInTheDocument();

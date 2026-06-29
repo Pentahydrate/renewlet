@@ -129,9 +129,17 @@ function fallbackTrendDetailMonthKey(
   return firstWithItems?.monthKey ?? data[0]?.monthKey ?? "";
 }
 
-function TrendItemBadgeCell({ label, size }: { label: string; size: TrendItemBadgeCellSize }) {
+function TrendItemBadgeCell({
+  className = "",
+  label,
+  size,
+}: {
+  className?: string;
+  label: string;
+  size: TrendItemBadgeCellSize;
+}) {
   return (
-    <span className="min-w-0 justify-self-start">
+    <span className={`min-w-0 justify-self-start ${className}`}>
       <span className={`${TREND_ITEM_BADGE_CLASS_NAME} ${trendItemBadgeSizeClassNames[size]}`}>
         {label}
       </span>
@@ -373,7 +381,7 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
 
                 {detailItems.length > 0 ? (
                   <div
-                    className="grid max-h-72 min-w-0 grid-cols-[max-content_minmax(0,1fr)_auto] gap-x-3 overflow-y-auto"
+                    className="grid max-h-72 min-w-0 overflow-y-auto"
                     role="list"
                     aria-labelledby={detailHeadingId}
                   >
@@ -385,16 +393,20 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
                       return (
                         <div
                           key={item.subscriptionId}
-                          className="col-span-3 grid grid-cols-subgrid border-b border-border/60 last:border-b-0"
+                          className="border-b border-border/60 last:border-b-0"
                           role="listitem"
                         >
                           <button
                             type="button"
-                            className="col-span-3 grid w-full min-w-0 cursor-pointer grid-cols-subgrid items-center px-3 py-2.5 text-left transition-colors hover:bg-secondary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                            className="grid w-full min-w-0 cursor-pointer grid-cols-[max-content_minmax(0,1fr)_auto] items-center gap-x-3 px-3 py-2.5 text-left transition-colors @max-sm/statistics-trend:grid-cols-[minmax(0,1fr)_auto] @max-sm/statistics-trend:gap-y-1 hover:bg-secondary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                             aria-label={t("subscription.viewDetailsLabel", { name: item.name })}
                             onClick={() => onViewSubscriptionDetails(item.subscriptionId)}
                           >
-                            <TrendItemBadgeCell label={formatTrendItemBadge(item, contentMode)} size="detail" />
+                            <TrendItemBadgeCell
+                              label={formatTrendItemBadge(item, contentMode)}
+                              size="detail"
+                              className="@max-sm/statistics-trend:col-span-2"
+                            />
                             <span className="min-w-0 self-stretch">
                               <TruncatedTooltipText
                                 as="span"
@@ -446,7 +458,7 @@ export function StatisticsTrendChart({ data, defaultCurrency, onViewSubscription
 
   return (
     <section className="mb-8">
-      <Tabs value={mode} onValueChange={(value) => setMode(trendModeValue(value))} className="min-w-0 rounded-xl border border-border bg-card p-6 shadow-card">
+      <Tabs value={mode} onValueChange={(value) => setMode(trendModeValue(value))} className="@container/statistics-trend min-w-0 rounded-xl border border-border bg-card p-6 shadow-card">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-foreground">{t("statistics.trendTitle")}</h2>

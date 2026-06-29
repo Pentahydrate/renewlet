@@ -1,46 +1,20 @@
 // 订阅卡片测试保护有效状态、公开隐藏、菜单操作和日历入口，避免列表展示与 domain 状态计算分叉。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { assertDateOnly } from "@/lib/time/date-only";
-import type { Subscription } from "@/types/subscription";
-import { SubscriptionCard } from "./subscription-card";
-
-const originalWindowOpen = window.open;
-const mediaUtilitiesCss = readFileSync(join(process.cwd(), "src/styles/media-utilities.css"), "utf8");
-
-type RecurringBillingCycle = Exclude<Subscription["billingCycle"], "custom" | "one-time">;
-type SubscriptionOverrides = Partial<Omit<Subscription, "billingCycle" | "customDays" | "customCycleUnit" | "oneTimeTermCount" | "oneTimeTermUnit">> & (
-  | {
-      billingCycle?: RecurringBillingCycle;
-      customDays?: undefined;
-      customCycleUnit?: undefined;
-      oneTimeTermCount?: undefined;
-      oneTimeTermUnit?: undefined;
-    }
-  | {
-      billingCycle: "one-time";
-      customDays?: undefined;
-      customCycleUnit?: undefined;
-      oneTimeTermCount?: number | undefined;
-      oneTimeTermUnit?: Subscription["oneTimeTermUnit"];
-    }
-  | { billingCycle: "custom"; customDays?: number; customCycleUnit?: Subscription["customCycleUnit"] }
-);
-type SubscriptionCardHandlers = {
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  onClone?: (id: string) => void;
-  onTogglePinned?: (id: string) => void;
-  onTogglePublicHidden?: (id: string) => void;
-  onViewDetails?: (id: string) => void;
-};
-type SubscriptionCardRenderOptions = {
-  viewMode?: "grid" | "list";
-};
+import {
+  baseSubscription,
+  expectMetaFlowItemsInOrder,
+  mediaUtilitiesCss,
+  mockUserAgent,
+  openMoreActionsMenu,
+  originalWindowOpen,
+  renderSubscriptionCard,
+  setSubscriptionCardTestMocks,
+} from "./subscription-card.test-utils";
 
 const mocks = vi.hoisted(() => {
   const longCategoryLabel = "生产力平台和开发者基础设施";
@@ -87,6 +61,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
+setSubscriptionCardTestMocks(mocks);
+
 vi.mock("@/contexts/CustomConfigContext", () => ({
   useCustomConfig: () => ({
     config: {
@@ -115,130 +91,6 @@ vi.mock("@/hooks/use-calendar-feed", () => ({
   }),
   useSubscriptionCalendarFeedStatus: () => mocks.subscriptionCalendarFeedStatus,
 }));
-
-const baseSubscription: Subscription = {
-  id: "sub-1",
-  name: "dmit",
-  logo: undefined,
-  price: 159,
-  currency: "USD",
-  billingCycle: "monthly",
-  customDays: undefined,
-  customCycleUnit: undefined,
-  oneTimeTermCount: undefined,
-  oneTimeTermUnit: undefined,
-  category: "developer-tools",
-  status: "active",
-  paymentMethod: undefined,
-  startDate: assertDateOnly("2026-05-15"),
-  nextBillingDate: assertDateOnly("2026-06-15"),
-  autoRenew: false,
-  autoCalculateNextBillingDate: true,
-  trialEndDate: undefined,
-  website: undefined,
-  notes: undefined,
-  tags: [],
-  reminderDays: 7,
-  repeatReminderEnabled: false,
-  repeatReminderInterval: "1h",
-  repeatReminderWindow: "72h",
-  pinned: false,
-  publicHidden: false,
-};
-
-function createSubscription(overrides: SubscriptionOverrides = {}): Subscription {
-  if (overrides.billingCycle === "custom") {
-    return {
-      ...baseSubscription,
-      ...overrides,
-      billingCycle: "custom",
-      customDays: overrides.customDays ?? 30,
-      customCycleUnit: overrides.customCycleUnit ?? "day",
-      oneTimeTermCount: undefined,
-      oneTimeTermUnit: undefined,
-    };
-  }
-
-  if (overrides.billingCycle === "one-time") {
-    return {
-      ...baseSubscription,
-      ...overrides,
-      billingCycle: "one-time",
-      customDays: undefined,
-      customCycleUnit: undefined,
-      oneTimeTermCount: overrides.oneTimeTermCount,
-      oneTimeTermUnit: overrides.oneTimeTermUnit,
-    };
-  }
-
-  return {
-    ...baseSubscription,
-    ...overrides,
-    billingCycle: overrides.billingCycle ?? "monthly",
-    customDays: undefined,
-    customCycleUnit: undefined,
-    oneTimeTermCount: undefined,
-    oneTimeTermUnit: undefined,
-  };
-}
-
-function renderSubscriptionCard(
-  overrides: SubscriptionOverrides = {},
-  handlers: SubscriptionCardHandlers = {},
-  options: SubscriptionCardRenderOptions = {},
-) {
-  return render(
-    <TooltipProvider delayDuration={0}>
-      <SubscriptionCard
-        subscription={createSubscription(overrides)}
-        {...(options.viewMode ? { viewMode: options.viewMode } : {})}
-        timeZone="Asia/Shanghai"
-        inheritedReminderDays={5}
-        categoryByValue={new Map(mocks.categories.map((category) => [category.value, category]))}
-        paymentMethodByValue={new Map(mocks.paymentMethods.map((method) => [method.value, method]))}
-        onEdit={handlers.onEdit ?? vi.fn()}
-        onDelete={handlers.onDelete ?? vi.fn()}
-        onClone={handlers.onClone ?? vi.fn()}
-        {...(handlers.onTogglePinned ? { onTogglePinned: handlers.onTogglePinned } : {})}
-        {...(handlers.onTogglePublicHidden ? { onTogglePublicHidden: handlers.onTogglePublicHidden } : {})}
-        {...(handlers.onViewDetails ? { onViewDetails: handlers.onViewDetails } : {})}
-      />
-    </TooltipProvider>,
-  );
-}
-
-function openMoreActionsMenu() {
-  const menuButton = screen.getByRole("button", { name: "更多操作" });
-  fireEvent.pointerDown(menuButton, { button: 0, ctrlKey: false });
-  fireEvent.click(menuButton);
-}
-
-function expectMetaFlowItemsInOrder(...texts: string[]) {
-  const metaFlow = screen.getByTestId("subscription-card-meta-flow");
-  const metaText = metaFlow.textContent ?? "";
-
-  for (const text of texts) {
-    expect(within(metaFlow).getByText(text)).toBeInTheDocument();
-  }
-
-  for (let index = 0; index < texts.length - 1; index += 1) {
-    expect(metaText.indexOf(texts[index]!)).toBeLessThan(metaText.indexOf(texts[index + 1]!));
-  }
-
-  return metaFlow;
-}
-
-function mockUserAgent(userAgent: string) {
-  const descriptor = Object.getOwnPropertyDescriptor(window.navigator, "userAgent");
-  Object.defineProperty(window.navigator, "userAgent", { configurable: true, value: userAgent });
-  return () => {
-    if (descriptor) {
-      Object.defineProperty(window.navigator, "userAgent", descriptor);
-    } else {
-      Reflect.deleteProperty(window.navigator, "userAgent");
-    }
-  };
-}
 
 describe("SubscriptionCard", () => {
   beforeEach(() => {
@@ -269,6 +121,34 @@ describe("SubscriptionCard", () => {
 
     expect(source).not.toContain("useSettings");
     expect(source).not.toContain("useCustomConfig");
+  });
+
+  it("keeps the mobile card header from forcing price or meta rows into a single-column layout", () => {
+    const source = readFileSync(join(process.cwd(), "src/components/subscription-card.tsx"), "utf8");
+
+    renderSubscriptionCard({ name: "Figma Professional", paymentMethod: "credit_card" });
+
+    const card = screen.getByTestId("subscription-card");
+    const metaFlow = screen.getByTestId("subscription-card-meta-flow");
+    const dateGroup = screen.getByTestId("subscription-card-meta-date-group");
+    const startDateMeta = screen.getByTestId("subscription-card-meta-start-date");
+    const billingDateMeta = screen.getByTestId("subscription-card-meta-billing-date");
+    const paymentMethodMeta = screen.getByTestId("subscription-card-meta-payment-method");
+    const badgeFlow = screen.getByTestId("subscription-card-badge-flow");
+
+    expect(source).not.toContain("@container/subscription-card");
+    expect(source).not.toContain("@max-xs/subscription-card");
+    expect(card.getAttribute("class")).not.toContain("@container/subscription-card");
+    expect(metaFlow).toHaveClass("flex", "flex-wrap");
+    expect(metaFlow.getAttribute("class")).not.toContain("@max-xs/subscription-card");
+    expect(dateGroup).toHaveClass("inline-flex", "min-w-0", "max-w-full", "flex-[0_1_auto]", "flex-wrap");
+    expect(dateGroup).toContainElement(startDateMeta);
+    expect(dateGroup).toContainElement(billingDateMeta);
+    expect(metaFlow).toContainElement(paymentMethodMeta);
+    expect(dateGroup).not.toContainElement(paymentMethodMeta);
+    expect(paymentMethodMeta).toHaveClass("min-w-0", "max-w-full");
+    expect(paymentMethodMeta).not.toHaveClass("shrink-0");
+    expect(badgeFlow).toHaveClass("col-span-full", "flex", "flex-wrap", "gap-x-1.5", "gap-y-2", "sm:gap-2");
   });
 
   it("renders subscription logos through the unified theme-aware logo surface", () => {
@@ -428,7 +308,7 @@ describe("SubscriptionCard", () => {
     const statusBadge = screen.getByText("活跃").closest("div");
     const subscriptionName = screen.getByText(baseSubscription.name);
 
-    expect(badgeGroup).toHaveClass("col-span-full", "flex", "flex-wrap", "items-center", "gap-2");
+    expect(badgeGroup).toHaveClass("col-span-full", "flex", "flex-wrap", "items-center", "gap-x-1.5", "gap-y-2", "sm:gap-2");
     expect(badgeGroup).not.toHaveClass("overflow-hidden");
     expect(subscriptionName).toHaveAttribute("data-slot", "truncated-tooltip-text");
     expect(subscriptionName).not.toHaveAttribute("title");
@@ -438,6 +318,8 @@ describe("SubscriptionCard", () => {
       "shrink-0",
       "overflow-hidden",
       "whitespace-nowrap",
+      "px-2",
+      "sm:px-2.5",
     );
     expect(categoryBadge).not.toHaveClass("min-w-[3.5rem]", "max-w-[7.5rem]");
     expect(categoryText).toHaveClass("block", "max-w-full", "truncate");
@@ -719,7 +601,14 @@ describe("SubscriptionCard", () => {
       nextBillingDate: assertDateOnly("2026-06-02"),
     });
 
-    expectMetaFlowItemsInOrder("到期: 2026/6/2", mocks.longPaymentMethodLabel, "15 天后续费");
+    const metaFlow = expectMetaFlowItemsInOrder("到期: 2026/6/2", mocks.longPaymentMethodLabel, "15 天后续费");
+    const paymentMethodMeta = screen.getByTestId("subscription-card-meta-payment-method");
+    const paymentMethodText = within(paymentMethodMeta).getByText(mocks.longPaymentMethodLabel);
+
+    expect(metaFlow).toContainElement(paymentMethodMeta);
+    expect(paymentMethodMeta).toHaveClass("min-w-0", "max-w-full");
+    expect(paymentMethodMeta).not.toHaveClass("shrink-0");
+    expect(paymentMethodText).toHaveClass("block", "max-w-24", "truncate", "sm:max-w-32");
   });
 
   it("keeps relative billing after the billing date when there is no payment method", () => {

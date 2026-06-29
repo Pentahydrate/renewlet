@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Drawer } from "vaul";
-import { AlertTriangle, Archive, Download, RefreshCw, Trash2, X } from "lucide-react";
+import { AlertTriangle, Archive, Download, RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MobileBottomDrawerContent, MobileDrawerRoot } from "@/components/ui/mobile-drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
@@ -253,32 +253,23 @@ function CloudBackupSnapshotListOverlay({
 
   if (isMobile) {
     return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <MobileDrawerRoot open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
         {open ? (
-          <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 z-[70] bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-            <Drawer.Content className="h5-drawer-panel fixed inset-x-0 bottom-0 z-[70] mx-auto flex max-h-[calc(var(--app-viewport-height)-1rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4">
-              <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted" />
-              <div className="flex items-start justify-between gap-4 border-b border-border px-5 pb-3 pt-4">
-                <div className="min-w-0">
-                  <Drawer.Title className="text-left text-base font-semibold text-foreground">{title}</Drawer.Title>
-                  <Drawer.Description className="mt-1 text-left text-xs leading-5 text-muted-foreground">{description}</Drawer.Description>
-                </div>
-                <div className="-mr-2 -mt-2 flex shrink-0 items-center gap-2">
-                  {refreshButton}
-                  <Drawer.Close asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">{closeLabel}</span>
-                    </Button>
-                  </Drawer.Close>
-                </div>
-              </div>
-              {content}
-            </Drawer.Content>
-          </Drawer.Portal>
+          <MobileBottomDrawerContent
+            title={title}
+            description={description}
+            descriptionClassName="text-xs"
+            closeLabel={closeLabel}
+            actions={refreshButton}
+            className="max-h-[calc(var(--app-viewport-height)-1rem)]"
+            headerClassName="border-b border-border"
+            bodyClassName={null}
+            zIndexClassName="z-[70]"
+          >
+            {content}
+          </MobileBottomDrawerContent>
         ) : null}
-      </Drawer.Root>
+      </MobileDrawerRoot>
     );
   }
 

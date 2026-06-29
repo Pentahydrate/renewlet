@@ -11,42 +11,90 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { useDialogPortalContainer } from "@/components/ui/dialog";
 import {
-  getMobileSheetClassName,
-  handleMobileOverlayOutsideEvent,
-  MobileOverlayBackdrop,
-  MobileOverlayPortalHost,
+  MobileOverlaySheet,
   resolveMobileSheetDetent,
   shouldSuppressMobileOverlayTriggerEvent,
-  useControllableOpen,
+  useIsMobileOverlay,
+  useMobileOverlayOpenLifecycle,
   type MobileSheetDetent,
   type MobileSheetKind,
 } from "@/components/ui/mobile-overlay";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { getApiLocale } from "@/i18n/api-locale";
+import { translate } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 
 const SelectOpenContext = React.createContext<{
+  onSheetAnimationEnd: (open: boolean) => void;
   open: boolean;
+  present: boolean;
   setOpen: (open: boolean) => void;
+  sheetOpen: boolean;
+  value: string;
+  valueLabels: ReadonlyMap<string, React.ReactNode>;
 }>({
+  onSheetAnimationEnd: () => {},
   open: false,
+  present: false,
   setOpen: () => {},
+  sheetOpen: false,
+  value: "",
+  valueLabels: new Map(),
 });
 
 function Select({
   defaultOpen,
+  defaultValue,
+  children,
   onOpenChange,
+  onValueChange,
   open: openProp,
+  value: valueProp,
   ...props
 }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>) {
-  const [open, setOpen] = useControllableOpen({
+  const isMobileOverlay = useIsMobileOverlay();
+  const overlayOpen = useMobileOverlayOpenLifecycle({
+    animateClose: isMobileOverlay,
     defaultOpen,
     onOpenChange,
     open: openProp,
   });
+  const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue ?? "");
+  const isValueControlled = valueProp !== undefined;
+  const value = valueProp ?? uncontrolledValue;
+  const valueLabels = React.useMemo(() => collectSelectItemLabels(children), [children]);
+
+  const setValue = React.useCallback(
+    (nextValue: string) => {
+      if (!isValueControlled) {
+        setUncontrolledValue(nextValue);
+      }
+      onValueChange?.(nextValue);
+    },
+    [isValueControlled, onValueChange],
+  );
 
   return (
-    <SelectOpenContext.Provider value={{ open, setOpen }}>
-      <SelectPrimitive.Root open={open} onOpenChange={setOpen} {...props} />
+    <SelectOpenContext.Provider
+      value={{
+        onSheetAnimationEnd: overlayOpen.onSheetAnimationEnd,
+        open: overlayOpen.open,
+        present: overlayOpen.present,
+        setOpen: overlayOpen.setOpen,
+        sheetOpen: overlayOpen.sheetOpen,
+        value,
+        valueLabels,
+      }}
+    >
+      <SelectPrimitive.Root
+        open={overlayOpen.open}
+        onOpenChange={overlayOpen.setOpen}
+        value={value}
+        onValueChange={setValue}
+        {...props}
+      >
+        {children}
+      </SelectPrimitive.Root>
     </SelectOpenContext.Provider>
   );
 }
@@ -55,7 +103,21 @@ Select.displayName = SelectPrimitive.Root.displayName;
 
 const SelectGroup = SelectPrimitive.Group;
 
-const SelectValue = SelectPrimitive.Value;
+const SelectValue = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Value>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>
+>(({ children, ...props }, ref) => {
+  const { value, valueLabels } = React.useContext(SelectOpenContext);
+  // Vaul 移动 sheet 关闭态会卸载 Content；trigger 文案不能依赖 Radix ItemText 的 DOM portal。
+  const registeredLabel = value ? valueLabels.get(value) : undefined;
+
+  return (
+    <SelectPrimitive.Value ref={ref} {...props}>
+      {children === undefined ? registeredLabel : children}
+    </SelectPrimitive.Value>
+  );
+});
+SelectValue.displayName = SelectPrimitive.Value.displayName;
 
 type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
   tooltipContent?: string | undefined;
@@ -191,63 +253,99 @@ const SelectContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & {
     mobileDetent?: MobileSheetDetent;
     mobileKind?: MobileSheetKind;
+    mobileTitle?: React.ReactNode;
+    mobileDescription?: React.ReactNode;
+    mobileCloseLabel?: string;
   }
 >(({
   className,
   children,
+  mobileCloseLabel,
+  mobileDescription,
   mobileDetent = "auto",
   mobileKind = "list",
+  mobileTitle,
   onPointerDownOutside,
   position = "popper",
   ...props
 }, ref) => {
   const dialogPortalContainer = useDialogPortalContainer();
-  const { open, setOpen } = React.useContext(SelectOpenContext);
+  const isMobileOverlay = useIsMobileOverlay();
+  const {
+    onSheetAnimationEnd,
+    present,
+    setOpen,
+    sheetOpen,
+  } = React.useContext(SelectOpenContext);
+  const locale = getApiLocale();
   const optionCount = countSelectOptions(children);
   const resolvedMobileDetent = resolveMobileSheetDetent({
     itemCount: optionCount,
     kind: mobileKind,
     requestedDetent: mobileDetent,
   });
-  const closeCurrentSelect = React.useCallback(() => setOpen(false), [setOpen]);
+  const resolvedMobileTitle = mobileTitle ?? translate(locale, "common.selectPlaceholder");
+  const resolvedMobileCloseLabel = mobileCloseLabel ?? translate(locale, "common.close");
+
+  if (dialogPortalContainer === null) {
+    return null;
+  }
+
+  const portalContainerProps = dialogPortalContainer === undefined ? {} : { container: dialogPortalContainer };
+
+  const content = (
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(
+        "h5-floating-content relative z-50 min-w-[8rem] overflow-hidden border bg-popover text-popover-foreground shadow-md",
+        !isMobileOverlay &&
+          "max-h-96 rounded-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        !isMobileOverlay &&
+          position === "popper" &&
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        className,
+      )}
+      position={position}
+      {...(onPointerDownOutside ? { onPointerDownOutside } : {})}
+      {...props}
+    >
+      <SelectScrollUpButton />
+      <SelectPrimitive.Viewport
+        className={cn(
+          "h5-mobile-select-viewport p-1",
+          !isMobileOverlay && position === "popper" &&
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+        )}
+      >
+        {children}
+      </SelectPrimitive.Viewport>
+      <SelectScrollDownButton />
+    </SelectPrimitive.Content>
+  );
+
+  if (isMobileOverlay) {
+    return (
+      <MobileOverlaySheet
+        open={sheetOpen}
+        present={present}
+        onOpenChange={setOpen}
+        onAnimationEnd={onSheetAnimationEnd}
+        container={dialogPortalContainer}
+        contentRole="listbox"
+        detent={resolvedMobileDetent}
+        kind={mobileKind}
+        title={resolvedMobileTitle}
+        description={mobileDescription}
+        closeLabel={resolvedMobileCloseLabel}
+      >
+        {content}
+      </MobileOverlaySheet>
+    );
+  }
 
   return (
-    <SelectPrimitive.Portal container={dialogPortalContainer ?? undefined}>
-      <MobileOverlayPortalHost>
-        {open ? <MobileOverlayBackdrop onDismiss={closeCurrentSelect} /> : null}
-        <SelectPrimitive.Content
-          ref={ref}
-          data-mobile-detent={resolvedMobileDetent}
-          data-mobile-kind={mobileKind}
-          onPointerDownOutside={(event) => {
-            onPointerDownOutside?.(event);
-            if (!event.defaultPrevented) {
-              handleMobileOverlayOutsideEvent(event, closeCurrentSelect);
-            }
-          }}
-          className={cn(
-            "h5-floating-content h5-mobile-sheet-content relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-            getMobileSheetClassName({ detent: resolvedMobileDetent, kind: mobileKind }),
-            position === "popper" &&
-              "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-            className,
-          )}
-          position={position}
-          {...props}
-        >
-          <SelectScrollUpButton />
-          <SelectPrimitive.Viewport
-            className={cn(
-              "h5-mobile-select-viewport p-1",
-              position === "popper" &&
-                "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
-            )}
-          >
-            {children}
-          </SelectPrimitive.Viewport>
-          <SelectScrollDownButton />
-        </SelectPrimitive.Content>
-      </MobileOverlayPortalHost>
+    <SelectPrimitive.Portal {...portalContainerProps}>
+      {content}
     </SelectPrimitive.Portal>
   );
 });
@@ -270,6 +368,68 @@ function countSelectOptions(children: React.ReactNode): number {
   });
 
   return count;
+}
+
+type SelectItemScanProps = {
+  children?: React.ReactNode;
+  textValue?: string;
+  value?: string;
+};
+
+function collectSelectItemLabels(children: React.ReactNode) {
+  const labels = new Map<string, React.ReactNode>();
+
+  function visit(node: React.ReactNode) {
+    React.Children.forEach(node, (child) => {
+      if (!React.isValidElement<SelectItemScanProps>(child)) return;
+
+      if (typeof child.props.value === "string") {
+        labels.set(child.props.value, getSelectItemLabel(child.props));
+        return;
+      }
+
+      if (child.props.children) {
+        visit(child.props.children);
+      }
+    });
+  }
+
+  visit(children);
+  return labels;
+}
+
+function getSelectItemLabel({ children, textValue }: SelectItemScanProps) {
+  if (typeof textValue === "string" && textValue.length > 0) return textValue;
+  return getPlainTextFromReactNode(children) ?? children;
+}
+
+function getPlainTextFromReactNode(node: React.ReactNode): string | undefined {
+  const parts: string[] = [];
+  let isPlainText = true;
+
+  React.Children.forEach(node, (child) => {
+    if (!isPlainText || child === null || child === undefined || typeof child === "boolean") return;
+
+    if (typeof child === "string" || typeof child === "number") {
+      parts.push(String(child));
+      return;
+    }
+
+    if (React.isValidElement<{ children?: React.ReactNode }>(child) && child.props.children !== undefined) {
+      const nestedText = getPlainTextFromReactNode(child.props.children);
+      if (nestedText !== undefined) {
+        parts.push(nestedText);
+        return;
+      }
+    }
+
+    isPlainText = false;
+  });
+
+  if (!isPlainText) return undefined;
+
+  const text = parts.join("").trim();
+  return text.length > 0 ? text : undefined;
 }
 
 const SelectLabel = React.forwardRef<

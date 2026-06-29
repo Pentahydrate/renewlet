@@ -1,11 +1,27 @@
 // Popover/Dialog 组合测试保护移动端浮层栈与 backdrop 行为，避免 Radix portal 交互互相吞事件。
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { mockMobileOverlayMatch, resetMobileOverlayTestEnvironment } from "@/components/ui/mobile-overlay.test-utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+async function finishMobileSheetExit() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(500);
+  });
+}
+
 describe("Popover inside Dialog", () => {
+  beforeEach(() => {
+    mockMobileOverlayMatch();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    resetMobileOverlayTestEnvironment();
+  });
+
   it("portals popover content into the dialog content", async () => {
     render(
       <Dialog open>
@@ -31,7 +47,9 @@ describe("Popover inside Dialog", () => {
     const portalHost = popoverContent.closest("[data-mobile-overlay-portal]");
     expect(portalHost).toHaveClass("contents");
     expect(dialogContent.querySelector("[data-mobile-overlay-backdrop]")).not.toBeNull();
+    expect(popoverContent).toHaveAttribute("data-vaul-drawer");
     expect(popoverContent).toHaveClass("h5-mobile-sheet-content");
+    expect(portalHost?.querySelector("[data-vaul-handle]")).not.toBeNull();
   });
 
   it("closes the mobile sheet without dismissing the parent dialog or clicking behind it", async () => {
@@ -66,13 +84,14 @@ describe("Popover inside Dialog", () => {
     const backdrop = popoverContent.closest("[data-mobile-overlay-portal]")?.querySelector("[data-mobile-overlay-backdrop]");
     expect(backdrop).not.toBeNull();
 
+    vi.useFakeTimers();
     fireEvent.pointerDown(backdrop as Element);
     expect(screen.getByTestId("reminder-popover")).toBeInTheDocument();
     fireEvent.click(backdrop as Element);
 
-    await waitFor(() => {
-      expect(screen.queryByTestId("reminder-popover")).not.toBeInTheDocument();
-    });
+    expect(screen.getByTestId("reminder-popover")).toHaveAttribute("data-state", "closed");
+    await finishMobileSheetExit();
+    expect(screen.queryByTestId("reminder-popover")).not.toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "添加新订阅" })).toBeVisible();
     expect(behindClick).not.toHaveBeenCalled();
   });

@@ -7,9 +7,9 @@
  */
 import * as React from "react";
 import { Command } from "cmdk";
-import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import { cn } from "@/lib/utils";
 import { rankSearchText, type SearchableSelectOption } from "@/lib/searchable-options";
@@ -126,23 +126,15 @@ export function SearchableSelect({
         aria-label={ariaLabel ?? resolvedPlaceholder}
         data-testid="searchable-select-sheet"
         mobileDetent="large"
+        mobileHeaderLayout="flush"
         mobileKind="list"
+        mobileTitle={ariaLabel ?? resolvedPlaceholder}
+        mobileCloseLabel={translate(locale, "common.close")}
         className={cn(
           "w-[var(--radix-popover-trigger-width)] min-w-[14rem] overflow-hidden border-border bg-popover p-0 text-popover-foreground",
           contentClassName,
         )}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3 md:hidden">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {ariaLabel ?? resolvedPlaceholder}
-            </p>
-          </div>
-          <PopoverClose className="-mr-2 -mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
-            <X className="h-4 w-4" />
-            <span className="sr-only">{translate(locale, "common.close")}</span>
-          </PopoverClose>
-        </div>
         <Command
           loop
           filter={filter}

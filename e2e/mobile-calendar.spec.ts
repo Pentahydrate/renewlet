@@ -1,6 +1,7 @@
 // 移动端日历 E2E 关注真实 viewport 下的日历格子、详情弹层和横向溢出；这些回归通常不会被单元测试捕捉。
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalOverflow } from "./support/layout";
+import { createProductSubscriptionSeed } from "./support/product-api";
 import { uniqueE2EName } from "./support/subscriptions";
 
 type CalendarSubscriptionSeed = {
@@ -29,57 +30,8 @@ async function getCurrentMonthCalendarDates(page: Page) {
 }
 
 async function createCalendarSubscriptionRecord(page: Page, seed: CalendarSubscriptionSeed) {
-  // 直接种 PocketBase 记录可以把测试焦点留在日历布局上；认证仍读取真实登录态，避免绕过用户隔离边界。
-  const result = await page.evaluate(async (payload) => {
-    const authRaw = window.localStorage.getItem("pocketbase_auth");
-    if (!authRaw) {
-      throw new Error("Missing PocketBase auth state");
-    }
-
-    const auth = JSON.parse(authRaw) as { token?: string; record?: { id?: string } };
-    if (!auth.token || !auth.record?.id) {
-      throw new Error("PocketBase auth state is missing token or user id");
-    }
-
-    const response = await window.fetch("/api/collections/subscriptions/records", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${auth.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        user: auth.record.id,
-        name: payload.name,
-        logo: null,
-        price: payload.price,
-        currency: payload.currency ?? "CNY",
-        billingCycle: "monthly",
-        customDays: null,
-        category: "productivity",
-        status: "active",
-        paymentMethod: null,
-        startDate: payload.startDate,
-        nextBillingDate: payload.nextBillingDate,
-        autoCalculateNextBillingDate: false,
-        trialEndDate: null,
-        website: null,
-        notes: null,
-        tags: [],
-        reminderDays: 3,
-        repeatReminderEnabled: false,
-        repeatReminderInterval: "1h",
-        repeatReminderWindow: "72h",
-      }),
-    });
-
-    return {
-      ok: response.ok,
-      status: response.status,
-      body: await response.text(),
-    };
-  }, seed);
-
-  expect(result.ok, `create calendar subscription ${seed.name}: ${result.status} ${result.body}`).toBe(true);
+  // 直接走产品 API 种订阅，让测试聚焦日历布局，同时继续使用真实产品 session 守住用户隔离。
+  await createProductSubscriptionSeed(page, seed);
 }
 
 test("calendar H5 agenda items stay inside the card container", async ({ page }, testInfo) => {
@@ -160,7 +112,7 @@ test("calendar H5 day drawer items stay inside the drawer container", async ({ p
   });
 
   await page.goto("/calendar");
-  await page.getByRole("button", { name: new RegExp(`${billingDay}日 \\d+ 个续费`) }).click();
+  await page.getByRole("button", { name: new RegExp(`${billingDay}日 \\d+ 个事件`) }).click();
 
   const list = page.getByTestId("calendar-day-subscription-list");
   await expect(list).toBeVisible();

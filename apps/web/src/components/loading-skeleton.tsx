@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { dashboardStatLayout } from "@/components/dashboard-stat-layout";
 import { getHeaderDesktopNavSkeletonItemClass, headerLayout } from "@/components/header-layout";
+import { subscriptionFilterLayout } from "@/components/subscription-filter-layout";
 import { cn } from "@/lib/utils";
 import { SETTINGS_SECTION_FRAME_CLASS, settingsLayout } from "@/modules/settings/presentation/settings-layout";
 
@@ -94,16 +96,27 @@ function PageTitleSkeleton({ withActions = false, subtitleWidth = "w-48" }: { wi
   );
 }
 
-function StatCardSkeleton() {
+function StatCardSkeleton({
+  compact = false,
+  className,
+  testId,
+}: {
+  compact?: boolean;
+  className?: string;
+  testId?: string;
+}) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
-      <div className="flex items-center justify-between">
-        <div className="grid gap-2">
-          <SkeletonBox className="h-4 w-20" />
-          <SkeletonBox className="h-8 w-24" />
-          <SkeletonBox className="h-3 w-28" />
+    <div
+      data-testid={testId}
+      className={cn("rounded-xl border border-border bg-card", compact ? "p-4 lg:p-6" : "p-6", className)}
+    >
+      <div className={cn("flex items-start justify-between", compact && "gap-3 lg:gap-4")}>
+        <div className={cn("grid min-w-0", compact ? "gap-1.5 lg:gap-2" : "gap-2")}>
+          <SkeletonBox className={cn("w-20", compact ? "h-3.5 lg:h-4" : "h-4")} />
+          <SkeletonBox className={cn("w-24", compact ? "h-7 lg:h-8" : "h-8")} />
+          <SkeletonBox className={cn("h-3", compact ? "w-24 lg:w-28" : "w-28")} />
         </div>
-        <SkeletonBox className="h-12 w-12 rounded-lg" />
+        <SkeletonBox className={cn("shrink-0 rounded-lg", compact ? "h-10 w-10 lg:h-12 lg:w-12" : "h-12 w-12")} />
       </div>
     </div>
   );
@@ -128,8 +141,19 @@ function SubscriptionCardSkeleton({ list = false }: { list?: boolean }) {
 function DashboardContentSkeleton() {
   return (
     <div className="grid gap-8">
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {range(4).map((index) => <StatCardSkeleton key={index} />)}
+      <div className={dashboardStatLayout.grid} data-testid="dashboard-skeleton-stat-grid">
+        <StatCardSkeleton
+          compact
+          className={dashboardStatLayout.primaryCard}
+          testId="dashboard-skeleton-stat-monthly-spend"
+        />
+        <StatCardSkeleton compact testId="dashboard-skeleton-stat-active-subscriptions" />
+        <StatCardSkeleton compact testId="dashboard-skeleton-stat-upcoming-renewals" />
+        <StatCardSkeleton
+          compact
+          className={dashboardStatLayout.trialCard}
+          testId="dashboard-skeleton-stat-trials"
+        />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -186,11 +210,12 @@ function SubscriptionsContentSkeleton() {
             <SkeletonBox className="h-11 w-11 rounded-md" />
           </div>
         </div>
-        <div className="hidden flex-wrap items-center gap-4 md:flex">
-          <SkeletonBox className="h-10 min-w-[200px] flex-1 rounded-md" />
-          <SkeletonBox className="h-10 w-[140px] rounded-md" />
-          <SkeletonBox className="h-10 w-[140px] rounded-md" />
-          <SkeletonBox className="h-10 w-[190px] rounded-md" />
+        <div className={cn("hidden md:flex", subscriptionFilterLayout.desktopRow)}>
+          <SkeletonBox className={subscriptionFilterLayout.skeletonSearch} />
+          <SkeletonBox className={subscriptionFilterLayout.skeletonCategory} />
+          <SkeletonBox className={subscriptionFilterLayout.skeletonStatus} />
+          <SkeletonBox className={subscriptionFilterLayout.skeletonRenewal} />
+          <SkeletonBox className={subscriptionFilterLayout.skeletonSort} />
           <SkeletonBox className="h-10 w-24 rounded-md" />
         </div>
       </div>
@@ -312,7 +337,7 @@ function SettingsContentSkeleton() {
               <SkeletonBox className="h-6 w-28" />
               <SkeletonBox className="h-4 w-40" />
             </div>
-            <SkeletonBox className="h-9 w-9 shrink-0 rounded-lg" />
+            <SkeletonBox className="h-10 w-10 shrink-0 rounded-lg" />
           </div>
         </div>
 

@@ -39,7 +39,6 @@ const coreApiPaths = [
   "/api/app/settings",
   "/api/app/custom-config",
   "/api/app/subscriptions",
-  "/api/app/notifications/history",
 ] as const;
 
 function pathnameFromURL(url: string): string {

@@ -18,7 +18,7 @@ export async function loginThroughCloudflareUI(page: Page, nextPath = "/") {
   const loginResponsePromise = page.waitForResponse((response) =>
     isApiResponse(response, "/api/app/auth/login", "POST"),
   );
-  await page.getByRole("button", { name: "登录" }).click();
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   const loginResponse = await loginResponsePromise;
   expect(loginResponse.ok(), await loginResponse.text()).toBe(true);
   // Cloudflare check 后续请求从 v2 session record 取 Bearer token；只等 URL 跳转会让慢 localStorage 写入触发偶发 401。

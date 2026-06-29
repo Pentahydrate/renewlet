@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from '@/components/router-link';
 import type { Subscription } from "@/types/subscription";
 import { Header } from "@/components/header";
+import { dashboardStatLayout } from "@/components/dashboard-stat-layout";
 import { StatCard } from "@/components/ui/stat-card";
 import { SubscriptionCard } from "@/components/subscription-card";
 import { SubscriptionDetailDialog } from "@/components/subscription-detail-dialog";
@@ -36,6 +37,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { DEFAULT_NOTIFICATION_REMINDER_DAYS } from "@/types/subscription";
 import { useDeferredDialogCleanup } from "@/hooks/use-deferred-dialog-cleanup";
 import { todayDateOnlyInTimeZone } from "@/lib/time/date-only";
+import { cn } from "@/lib/utils";
 
 const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
 
@@ -123,37 +125,45 @@ export default function Index() {
 
       <main className="app-main mx-auto max-w-7xl">
         {/* 统计网格 */}
-        <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={cn("mb-8", dashboardStatLayout.grid)} data-testid="dashboard-stat-grid">
           <StatCard
+            data-testid="dashboard-stat-monthly-spend"
             title={t("dashboard.monthlySpend")}
             value={formatCurrency(totalMonthly, defaultCurrency)}
             subtitle={ratesLoading ? t("dashboard.ratesLoading") : t("dashboard.realTimeRates", { currency: defaultCurrency })}
             icon={<CreditCard className="h-6 w-6" />}
             variant="primary"
-            className="animate-fade-in"
+            density="compact"
+            className={cn("animate-fade-in", dashboardStatLayout.primaryCard)}
           />
           <StatCard
+            data-testid="dashboard-stat-active-subscriptions"
             title={t("dashboard.activeSubscriptions")}
             value={activeSubscriptions.length}
             subtitle={t("dashboard.totalSubscriptions", { count: subscriptions.length })}
             icon={<TrendingUp className="h-6 w-6" />}
+            density="compact"
             className="animate-fade-in [animation-delay:100ms]"
           />
           <StatCard
+            data-testid="dashboard-stat-upcoming-renewals"
             title={t("dashboard.upcomingRenewals")}
             value={upcomingCount}
             subtitle={t("dashboard.next7Days")}
             icon={<Clock className="h-6 w-6" />}
             variant={upcomingCount > 0 ? "warning" : "default"}
+            density="compact"
             className="animate-fade-in [animation-delay:200ms]"
           />
           <StatCard
+            data-testid="dashboard-stat-trials"
             title={t("dashboard.trials")}
             value={trialCount}
             subtitle={t("dashboard.trialsNeedAttention")}
             icon={<Sparkles className="h-6 w-6" />}
             variant={trialCount > 0 ? "warning" : "default"}
-            className="animate-fade-in [animation-delay:300ms]"
+            density="compact"
+            className={cn("animate-fade-in [animation-delay:300ms]", dashboardStatLayout.trialCard)}
           />
         </div>
 

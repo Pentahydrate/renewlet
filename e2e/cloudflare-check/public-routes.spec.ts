@@ -99,7 +99,7 @@ test("auth guard returns to requested protected page and logout clears private A
     await expect(page.getByRole("heading", { name: "系统配置" })).toBeVisible();
 
     await page.goto("/");
-    await expect(page.getByText("月度支出")).toBeVisible();
+    await expect(page.getByText("月均支出")).toBeVisible();
     await logoutThroughCloudflareUI(page);
     const privateApiStatus = await page.evaluate(async () => {
       const response = await fetch("/api/app/subscriptions");

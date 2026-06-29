@@ -63,7 +63,7 @@ test("settings save, language switch, and floating layer layout stability", asyn
   await expectLabelControlGap(passwordDialog.getByLabel("新密码", { exact: true }), "settings new password");
   await expectLabelControlGap(passwordDialog.getByLabel("确认密码", { exact: true }), "settings confirm password");
 
-  await page.keyboard.press("Escape");
+  await passwordDialog.getByRole("button", { name: "Close" }).click();
   await expect(passwordDialog).toBeHidden();
   await saveChangesButton.click();
   await expect(saveChangesButton).toBeHidden();

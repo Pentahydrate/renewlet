@@ -41,16 +41,36 @@ async function expectLocatorInsideViewport(page: Page, locator: Locator, locator
   expect(box.y + box.height, `${locatorLabel}: bottom edge`).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-async function expectSheetAnimationFromBottom(sheet: Locator, label: string) {
-  const animationName = await sheet.evaluate((element) => window.getComputedStyle(element).animationName);
-  expect(animationName, `${label}: animation`).toContain("h5-mobile-sheet-in");
-}
-
 async function waitForSheetAnimation(sheet: Locator) {
-  // H5 sheet 的布局断言必须等 CSS 动画结束；只等 visible 会在 transform 过程中读到过渡态尺寸。
+  // Vaul 用 transform 驱动拖拽与进出场；布局断言必须避开动画中的过渡态尺寸。
   await sheet.evaluate(async (element) => {
     await Promise.all(element.getAnimations().map((animation) => animation.finished.catch(() => undefined)));
   });
+}
+
+async function expectMobileSheetVaulChrome(sheet: Locator, label: string) {
+  await expect(sheet, `${label}: vaul drawer`).toHaveAttribute("data-vaul-drawer");
+  await expect(sheet.locator("[data-vaul-handle]").first(), `${label}: vaul handle`).toBeVisible();
+}
+
+async function dragMobileSheetHandleToClose(page: Page, sheet: Locator, label: string) {
+  await expectMobileSheetVaulChrome(sheet, label);
+  const handle = sheet.locator("[data-vaul-handle]").first();
+  const handleBox = await getRequiredLocatorBoundingBox(handle, `${label} handle`);
+  const sheetBox = await getRequiredLocatorBoundingBox(sheet, label);
+  const viewport = page.viewportSize();
+  if (!viewport) {
+    throw new Error("Missing viewport size");
+  }
+
+  const startX = handleBox.x + handleBox.width / 2;
+  const startY = handleBox.y + handleBox.height / 2;
+  const targetY = Math.min(viewport.height - 4, startY + Math.max(180, sheetBox.height * 0.65));
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX, targetY, { steps: 10 });
+  await page.mouse.up();
+  await expect(sheet, `${label}: dragged closed`).toBeHidden();
 }
 
 async function captureSearchableSheetListMetrics(sheet: Locator, optionLabel: string) {
@@ -156,25 +176,25 @@ async function captureLogoSheetViewportMetrics(sheet: Locator, viewportTestId: s
 async function installUploadedLogoAssetsRoute(page: Page) {
   let records: UploadedLogoRouteRecord[] = [];
 
-  await page.route("**/api/collections/assets/records**", async (route) => {
+  await page.route("**/api/app/assets?**", async (route) => {
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        page: 1,
-        perPage: 48,
-        totalItems: records.length,
-        totalPages: records.length > 0 ? 1 : 0,
-        items: records.map((record) => ({
-          id: record.id,
-          collectionId: "assets",
-          collectionName: "assets",
-          kind: record.kind,
-          originalName: record.originalName,
-          mimeType: "image/svg+xml",
-          sizeBytes: 128,
-          created: "2026-05-18 00:00:00.000Z",
-          updated: "2026-05-18 00:00:00.000Z",
-        })),
+        ok: true,
+        data: {
+          page: 1,
+          totalPages: records.length > 0 ? 1 : 0,
+          items: records.map((record) => ({
+            id: record.id,
+            url: `/api/app/assets/${record.id}`,
+            kind: record.kind,
+            originalName: record.originalName,
+            mimeType: "image/svg+xml",
+            sizeBytes: 128,
+            created: "2026-05-18 00:00:00.000Z",
+            updated: "2026-05-18 00:00:00.000Z",
+          })),
+        },
       }),
     });
   });
@@ -218,19 +238,26 @@ test.describe("public H5 chrome", () => {
     expect(viewportMeta).toContain("viewport-fit=cover");
     expect(viewportMeta).toContain("interactive-widget=resizes-content");
     await expectNoHorizontalOverflow(page, "mobile login");
-    await expect(page.getByLabel("邮箱")).toHaveAttribute("inputmode", "email");
-    await expect(page.getByLabel("邮箱")).toHaveAttribute("enterkeyhint", "next");
+    const emailInput = page.getByRole("textbox", { name: "邮箱", exact: true });
+    await expect(emailInput).toHaveAttribute("inputmode", "email");
+    await expect(emailInput).toHaveAttribute("enterkeyhint", "next");
     await expect(page.getByLabel("密码", { exact: true })).toHaveAttribute("enterkeyhint", "done");
-    await expectTouchTarget(page.getByRole("button", { name: "登录" }), "login submit");
+    await expectTouchTarget(page.getByRole("button", { name: "登录", exact: true }), "login submit");
 
     await page.goto("/setup");
     await expectNoHorizontalOverflow(page, "mobile setup completed state");
   });
 });
 
-test("core authenticated H5 pages do not create horizontal overflow", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 720 });
+const H5_CORE_VIEWPORT_MATRIX = [
+  { width: 360, height: 740, label: "narrow" },
+  { width: 390, height: 720, label: "baseline" },
+  { width: 430, height: 760, label: "large phone" },
+  { width: 640, height: 360, label: "landscape" },
+  { width: 900, height: 700, label: "tablet" },
+] as const;
 
+test("core authenticated H5 pages do not create horizontal overflow", async ({ page }) => {
   const routes = [
     { path: "/", label: "dashboard" },
     { path: "/subscriptions", label: "subscriptions" },
@@ -239,10 +266,14 @@ test("core authenticated H5 pages do not create horizontal overflow", async ({ p
     { path: "/settings", label: "settings" },
   ] as const;
 
-  for (const route of routes) {
-    await page.goto(route.path);
-    await expect(page.getByTestId("app-header")).toBeVisible();
-    await expectNoHorizontalOverflow(page, `mobile ${route.label}`);
+  for (const viewport of H5_CORE_VIEWPORT_MATRIX) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+    for (const route of routes) {
+      await page.goto(route.path);
+      await expect(page.getByTestId("app-header")).toBeVisible();
+      await expectNoHorizontalOverflow(page, `${viewport.label} ${route.label}`);
+    }
   }
 });
 
@@ -382,7 +413,7 @@ test("mobile sheets keep Logo and currency search stable while typing", async ({
   await createSubscription(page, {
     name: subscriptionName,
     price: "16",
-    currencyLabel: "美元 ($)",
+    currencyLabel: "USD",
   });
 
   const editDialog = await openSubscriptionEditDialog(page, subscriptionName);
@@ -391,6 +422,7 @@ test("mobile sheets keep Logo and currency search stable while typing", async ({
   const logoSheet = page.getByTestId("logo-search-sheet");
   await expect(logoSheet).toBeVisible();
   await expect(logoSheet).toHaveClass(/h5-mobile-sheet-content/);
+  await expectMobileSheetVaulChrome(logoSheet, "mobile logo search sheet");
   await waitForSheetAnimation(logoSheet);
   await expectLocatorInsideViewport(page, logoSheet, "mobile logo search sheet");
   await expectNoHorizontalOverflow(page, "mobile logo search sheet");
@@ -418,15 +450,16 @@ test("mobile sheets keep Logo and currency search stable while typing", async ({
   const currencySheet = page.getByTestId("searchable-select-sheet");
   await expect(currencySheet).toBeVisible();
   await expect(currencySheet).toHaveClass(/h5-mobile-sheet-content/);
+  await expectMobileSheetVaulChrome(currencySheet, "mobile currency sheet");
   await waitForSheetAnimation(currencySheet);
   await expectLocatorInsideViewport(page, currencySheet, "mobile currency sheet");
-  const currencySheetBeforeFilter = await captureSearchableSheetListMetrics(currencySheet, "美元 ($)");
+  const currencySheetBeforeFilter = await captureSearchableSheetListMetrics(currencySheet, "USD");
 
   const bodyScrollLocked = await page.evaluate(() => document.body.hasAttribute("data-scroll-locked"));
   expect(bodyScrollLocked).toBe(true);
   await currencySheet.getByPlaceholder("搜索货币、代码或符号...").fill("USD");
-  await expect(currencySheet.getByText("美元 ($)", { exact: true })).toBeVisible();
-  const currencySheetAfterFilter = await captureSearchableSheetListMetrics(currencySheet, "美元 ($)");
+  await expect(currencySheet.getByText("USD", { exact: false }).first()).toBeVisible();
+  const currencySheetAfterFilter = await captureSearchableSheetListMetrics(currencySheet, "USD");
   expect(
     Math.abs(currencySheetAfterFilter.sheetHeight - currencySheetBeforeFilter.sheetHeight),
     "searchable sheet height should stay stable while filtering",
@@ -445,7 +478,7 @@ test("mobile sheets keep Logo and currency search stable while typing", async ({
   const rootScrollAfter = await page.evaluate(() => document.getElementById("root")?.scrollTop ?? 0);
   expect(rootScrollAfter, "root scroll should stay locked behind mobile currency sheet").toBe(rootScrollBefore);
 
-  await currencySheet.getByText("美元 ($)", { exact: true }).click();
+  await currencySheet.getByText("USD", { exact: false }).first().click();
   await expect(currencySheet).toBeHidden();
   await editDialog.getByRole("button", { name: "取消" }).click();
   await expect(editDialog).toBeHidden();
@@ -481,6 +514,7 @@ test("mobile import Logo editor keeps search candidates scrollable", async ({ pa
   await expect(importLogoSheet).toBeVisible();
   await expect(importLogoSheet).toHaveClass(/h5-logo-sheet/);
   await expect(importLogoSheet).toHaveClass(/h5-mobile-sheet-large/);
+  await expectMobileSheetVaulChrome(importLogoSheet, "import Logo sheet");
   await waitForSheetAnimation(importLogoSheet);
   await expect(importLogoSheet.getByRole("button", { name: /Linear 1/ }).first()).toBeVisible({ timeout: 10_000 });
 
@@ -502,24 +536,43 @@ test("mobile option sheets use consistent detents and do not leak backdrop event
   const languageSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "English" }).last();
   await expect(languageSheet).toBeVisible();
   await expect(languageSheet).toHaveAttribute("data-mobile-detent", "compact");
-  await expectSheetAnimationFromBottom(languageSheet, "language compact sheet");
+  await expectMobileSheetVaulChrome(languageSheet, "language compact sheet");
+  await waitForSheetAnimation(languageSheet);
   const languageSheetBox = await getRequiredLocatorBoundingBox(languageSheet, "language compact sheet");
   expect(languageSheetBox.height, "language compact sheet should not collapse to a tiny strip").toBeGreaterThan(180);
   await page.keyboard.press("Escape");
   await expect(languageSheet).toBeHidden();
 
   await page.goto("/subscriptions");
-  await page.getByRole("combobox").filter({ hasText: "所有分类" }).click();
-  const categorySheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "AI 工具" }).last();
-  await expect(categorySheet).toBeVisible();
-  await expect(categorySheet).toHaveAttribute("data-mobile-detent", "large");
-  await waitForSheetAnimation(categorySheet);
-  await expectOverlayLeavesTopScrim(page, categorySheet, "category large sheet");
-  await expectLocatorInsideViewport(page, categorySheet, "category large sheet");
-  await expectNoHorizontalOverflow(page, "category large sheet");
-  await expectMobileSelectSheetStableWhileScrolling(categorySheet, "category large sheet");
+  await page.getByTestId("mobile-category-filter").getByRole("button", { name: "分类" }).click();
+  const categoryDrawer = page.getByRole("dialog", { name: "筛选分类" });
+  await expect(categoryDrawer).toBeVisible();
+  await expect(categoryDrawer).toHaveAttribute("data-vaul-drawer", "");
+  await expectMobileSheetVaulChrome(categoryDrawer, "category drawer");
+  await waitForSheetAnimation(categoryDrawer);
+  await expectOverlayLeavesTopScrim(page, categoryDrawer, "category drawer");
+  await expectLocatorInsideViewport(page, categoryDrawer, "category drawer");
+  await expectNoHorizontalOverflow(page, "category drawer");
   await page.keyboard.press("Escape");
-  await expect(categorySheet).toBeHidden();
+  await expect(categoryDrawer).toBeHidden();
+
+  await page.getByRole("combobox").filter({ hasText: "所有状态" }).click();
+  const subscriptionsStatusSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "已过期" }).last();
+  await expect(subscriptionsStatusSheet).toBeVisible();
+  await expect(subscriptionsStatusSheet).toHaveAttribute("data-mobile-detent", "compact");
+  await dragMobileSheetHandleToClose(page, subscriptionsStatusSheet, "subscriptions status filter sheet");
+
+  await page.getByRole("combobox").filter({ hasText: "所有续订" }).click();
+  const subscriptionsRenewalSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "手动续订" }).last();
+  await expect(subscriptionsRenewalSheet).toBeVisible();
+  await expect(subscriptionsRenewalSheet).toHaveAttribute("data-mobile-detent", "compact");
+  await dragMobileSheetHandleToClose(page, subscriptionsRenewalSheet, "subscriptions renewal filter sheet");
+
+  await page.getByTestId("mobile-sort-tag-row").getByRole("combobox", { name: "排序" }).click();
+  const subscriptionsSortSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "到期最近" }).last();
+  await expect(subscriptionsSortSheet).toBeVisible();
+  await expect(subscriptionsSortSheet).toHaveAttribute("data-mobile-detent", "compact");
+  await dragMobileSheetHandleToClose(page, subscriptionsSortSheet, "subscriptions sort filter sheet");
 
   await page.setViewportSize({ width: 390, height: 740 });
   const dialog = await openAddSubscriptionDialog(page);
@@ -535,6 +588,7 @@ test("mobile option sheets use consistent detents and do not leak backdrop event
   await statusTrigger.click();
   const statusSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "活跃" }).last();
   await expect(statusSheet).toBeVisible();
+  await expectMobileSheetVaulChrome(statusSheet, "dialog status sheet");
   const statusSheetBox = await getRequiredLocatorBoundingBox(statusSheet, "status sheet");
   expect(
     currencyTapPoint.y,
@@ -551,6 +605,7 @@ test("mobile option sheets use consistent detents and do not leak backdrop event
   await paymentTrigger.click();
   const paymentSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "支付宝" }).last();
   await expect(paymentSheet).toBeVisible();
+  await expectMobileSheetVaulChrome(paymentSheet, "dialog payment sheet");
   await tapMobileSheetBackdrop(page);
   await expect(paymentSheet).toBeHidden();
   await expect(dialog).toBeVisible();
@@ -561,6 +616,7 @@ test("mobile option sheets use consistent detents and do not leak backdrop event
   await reminderTrigger.click();
   const reminderSheet = page.locator(".h5-mobile-sheet-content").filter({ hasText: "自定义天数" }).last();
   await expect(reminderSheet).toBeVisible();
+  await expectMobileSheetVaulChrome(reminderSheet, "dialog reminder sheet");
   await tapMobileSheetBackdrop(page);
   await expect(reminderSheet).toBeHidden();
   await expect(dialog).toBeVisible();
@@ -570,6 +626,7 @@ test("mobile option sheets use consistent detents and do not leak backdrop event
   await dialog.getByRole("button", { name: /选择日期/ }).first().click();
   const calendarSheet = page.locator(".h5-mobile-sheet-calendar").last();
   await expect(calendarSheet).toBeVisible();
+  await expectMobileSheetVaulChrome(calendarSheet, "dialog calendar sheet");
   await expect(calendarSheet.getByRole("grid")).toBeVisible();
   const calendarGrid = await calendarSheet.evaluate((element) => {
     const sheetRect = element.getBoundingClientRect();

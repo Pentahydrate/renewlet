@@ -46,17 +46,20 @@ export async function installLogoCandidateRoute(page: Page, count = 40) {
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        items: [
-          {
-            id: itemId,
-            autoCandidate: null,
-            candidates: {
-              best: builtIn[0] ?? favicon[0] ?? null,
-              builtIn,
-              favicon,
+        ok: true,
+        data: {
+          items: [
+            {
+              id: itemId,
+              autoCandidate: null,
+              candidates: {
+                best: builtIn[0] ?? favicon[0] ?? null,
+                builtIn,
+                favicon,
+              },
             },
-          },
-        ],
+          ],
+        },
       }),
     });
   });

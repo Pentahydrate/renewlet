@@ -15,7 +15,7 @@ export const settingsLayout = {
   mobileHeaderTitle: "min-w-0 truncate text-2xl font-bold text-foreground",
   mobileHeaderSubtitle: "text-sm leading-5 text-muted-foreground",
   mobileHeaderTrigger:
-    "h-9 w-9 shrink-0 rounded-lg border border-border bg-card/80 text-muted-foreground hover:border-primary/40 hover:bg-secondary/80 hover:text-foreground",
+    "h-10 w-10 shrink-0 rounded-lg border border-border bg-card/80 text-muted-foreground hover:border-primary/40 hover:bg-secondary/80 hover:text-foreground",
   sectionCard: "min-w-0 w-full rounded-xl border border-border bg-card p-4 sm:p-6",
 } as const;
 

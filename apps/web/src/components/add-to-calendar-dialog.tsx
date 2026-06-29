@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { buildRenewalCalendarEvent, type RenewalCalendarEvent } from "@renewlet/shared/calendar-events";
 import { google, office365, outlook, yahoo, type CalendarEvent } from "calendar-link";
-import { CalendarDays, CalendarPlus, Clipboard, Download, ExternalLink, Loader2, RefreshCw, X } from "lucide-react";
-import { Drawer } from "vaul";
+import { CalendarDays, CalendarPlus, Clipboard, Download, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MobileBottomDrawerContent, MobileDrawerRoot } from "@/components/ui/mobile-drawer";
 import { toast } from "@/components/ui/sonner";
 import { useCustomConfig } from "@/contexts/CustomConfigContext";
 import { useCreateSubscriptionCalendarFeed, useDeleteSubscriptionCalendarFeed, useSubscriptionCalendarFeedStatus } from "@/hooks/use-calendar-feed";
@@ -311,36 +311,21 @@ function ResolvedAddToCalendarDialog({ open, onOpenChange, subscription }: Resol
   if (isMobile) {
     return (
       <>
-        <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <MobileDrawerRoot open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
           {open && (
-            <Drawer.Portal>
-              <Drawer.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-              <Drawer.Content className="h5-drawer-panel fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[calc(var(--app-viewport-height)-1rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4">
-                <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted" />
-                <div className="flex items-start justify-between gap-4 border-b border-border px-5 pb-4 pt-4">
-                  <div className="min-w-0">
-                    <Drawer.Title className="flex items-center gap-2 text-base font-semibold text-foreground">
-                      <CalendarPlus className="h-5 w-5 text-primary" />
-                      <span className="min-w-0 break-words">{title}</span>
-                    </Drawer.Title>
-                    <Drawer.Description className="mt-1 text-sm leading-5 text-muted-foreground">
-                      {description}
-                    </Drawer.Description>
-                  </div>
-                  <Drawer.Close asChild>
-                    <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-9 w-9 text-muted-foreground">
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">{t("common.close")}</span>
-                    </Button>
-                  </Drawer.Close>
-                </div>
-                <div className="min-h-0 overflow-y-auto px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                  {content}
-                </div>
-              </Drawer.Content>
-            </Drawer.Portal>
+            <MobileBottomDrawerContent
+              title={title}
+              description={description}
+              closeLabel={t("common.close")}
+              icon={<CalendarPlus className="h-5 w-5 shrink-0 text-primary" />}
+              className="max-h-[calc(var(--app-viewport-height)-1rem)]"
+              headerClassName="border-b border-border pb-4"
+              bodyClassName="min-h-0 flex-1 overflow-y-auto px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            >
+              {content}
+            </MobileBottomDrawerContent>
           )}
-        </Drawer.Root>
+        </MobileDrawerRoot>
         <CalendarFeedRegenerateDialog
           open={confirmRegenerateOpen}
           onOpenChange={setConfirmRegenerateOpen}

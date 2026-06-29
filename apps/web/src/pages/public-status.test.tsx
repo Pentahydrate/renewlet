@@ -1,4 +1,6 @@
 // 公开展示页测试保护无需登录的只读渲染、金额开关和 noindex meta。
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -137,6 +139,13 @@ afterEach(() => {
 });
 
 describe("PublicStatusPage", () => {
+  it("keeps public subscription cards from forcing price rows into a single-column container layout", () => {
+    const source = readFileSync(join(process.cwd(), "src/pages/public-status.tsx"), "utf8");
+
+    expect(source).not.toContain("@container/public-status-card");
+    expect(source).not.toContain("@max-xs/public-status-card");
+  });
+
   it("renders a public read-only status panel without prices by default", () => {
     mocks.usePublicStatus.mockReturnValue({ isPending: false, isError: false, data: baseResponse });
 

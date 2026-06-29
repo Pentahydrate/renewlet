@@ -14,10 +14,10 @@
  * 注意： `NotificationJobResult` 是 cron result | empty object。访问 message/channels 前必须用 `hasCronResult` 收窄。
  */
 import { useCallback, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, BellRing, CheckCircle2, Clock, History, RefreshCw, X, XCircle } from "lucide-react";
-import { Drawer } from "vaul";
+import { AlertTriangle, BellRing, CheckCircle2, Clock, History, RefreshCw, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MobileBottomDrawerContent, MobileDrawerRoot } from "@/components/ui/mobile-drawer";
 import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import { VirtualizedList } from "@/components/ui/virtualized-list";
 import {
@@ -296,46 +296,27 @@ function HistoryDetailDrawer({
   const { t } = useI18n();
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+    <MobileDrawerRoot open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
       {open && job ? (
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-[70] bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-          <Drawer.Content
-            className="h5-drawer-panel h5-notification-history-detail-drawer fixed inset-x-0 bottom-0 z-[70] mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4"
-            data-testid="notification-history-detail-drawer"
-          >
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted" />
-
-            <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
-              <div className="min-w-0">
-                <Drawer.Title className="flex min-w-0 items-center gap-2 text-base font-semibold text-foreground">
-                  <History className="h-5 w-5 shrink-0 text-primary" />
-                  <span className="min-w-0 truncate">{t("notification.historyDetailTitle")}</span>
-                </Drawer.Title>
-                <Drawer.Description className="mt-1 truncate text-left text-xs text-muted-foreground">
-                  {formatSchedule(
-                    job.scheduledLocalDate,
-                    job.scheduledLocalTime,
-                    job.timeZone,
-                    job.scheduledInstantUtc,
-                  )}
-                </Drawer.Description>
-              </div>
-              <Drawer.Close asChild>
-                <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-9 w-9 text-muted-foreground">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">{t("common.close")}</span>
-                </Button>
-              </Drawer.Close>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <HistoryDetail job={job} />
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
+        <MobileBottomDrawerContent
+          title={t("notification.historyDetailTitle")}
+          description={formatSchedule(
+            job.scheduledLocalDate,
+            job.scheduledLocalTime,
+            job.timeZone,
+            job.scheduledInstantUtc,
+          )}
+          descriptionClassName="truncate text-xs"
+          closeLabel={t("common.close")}
+          icon={<History className="h-5 w-5 shrink-0 text-primary" />}
+          className="h5-notification-history-detail-drawer"
+          zIndexClassName="z-[70]"
+          data-testid="notification-history-detail-drawer"
+        >
+          <HistoryDetail job={job} />
+        </MobileBottomDrawerContent>
       ) : null}
-    </Drawer.Root>
+    </MobileDrawerRoot>
   );
 }
 

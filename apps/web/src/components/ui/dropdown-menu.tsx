@@ -11,27 +11,32 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { useDialogPortalContainer } from "@/components/ui/dialog";
 import {
-  getMobileSheetClassName,
-  handleMobileOverlayOutsideEvent,
-  MobileOverlayBackdrop,
-  MobileOverlayPortalHost,
+  MobileOverlaySheet,
   resolveMobileSheetDetent,
   shouldSuppressMobileOverlayTriggerEvent,
-  useControllableOpen,
   useIsMobileOverlay,
+  useMobileOverlayOpenLifecycle,
   type MobileSheetDetent,
   type MobileSheetKind,
 } from "@/components/ui/mobile-overlay";
+import { getApiLocale } from "@/i18n/api-locale";
+import { translate } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type DropdownMenuProps = React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>;
 
 const DropdownMenuOpenContext = React.createContext<{
+  onSheetAnimationEnd: (open: boolean) => void;
   open: boolean;
+  present: boolean;
   setOpen: (open: boolean) => void;
+  sheetOpen: boolean;
 }>({
+  onSheetAnimationEnd: () => {},
   open: false,
+  present: false,
   setOpen: () => {},
+  sheetOpen: false,
 });
 
 function DropdownMenu({
@@ -42,18 +47,27 @@ function DropdownMenu({
   ...props
 }: DropdownMenuProps) {
   const isMobileOverlay = useIsMobileOverlay();
-  const [open, setOpen] = useControllableOpen({
+  const overlayOpen = useMobileOverlayOpenLifecycle({
+    animateClose: isMobileOverlay,
     defaultOpen,
     onOpenChange,
     open: openProp,
   });
 
   return (
-    <DropdownMenuOpenContext.Provider value={{ open, setOpen }}>
+    <DropdownMenuOpenContext.Provider
+      value={{
+        onSheetAnimationEnd: overlayOpen.onSheetAnimationEnd,
+        open: overlayOpen.open,
+        present: overlayOpen.present,
+        setOpen: overlayOpen.setOpen,
+        sheetOpen: overlayOpen.sheetOpen,
+      }}
+    >
       <DropdownMenuPrimitive.Root
         modal={modalProp ?? isMobileOverlay}
-        open={open}
-        onOpenChange={setOpen}
+        open={overlayOpen.open}
+        onOpenChange={overlayOpen.setOpen}
         {...props}
       />
     </DropdownMenuOpenContext.Provider>
@@ -144,58 +158,91 @@ const DropdownMenuContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
     mobileDetent?: MobileSheetDetent;
     mobileKind?: MobileSheetKind;
+    mobileTitle?: React.ReactNode;
+    mobileCloseLabel?: string;
   }
 >(({
   children,
   className,
+  mobileCloseLabel,
   mobileDetent = "auto",
   mobileKind = "list",
+  mobileTitle,
+  "aria-label": ariaLabel,
   onInteractOutside,
   onPointerDownOutside,
   sideOffset = 4,
   ...props
 }, ref) => {
   const dialogPortalContainer = useDialogPortalContainer();
-  const { open, setOpen } = React.useContext(DropdownMenuOpenContext);
+  const isMobileOverlay = useIsMobileOverlay();
+  const {
+    onSheetAnimationEnd,
+    present,
+    setOpen,
+    sheetOpen,
+  } = React.useContext(DropdownMenuOpenContext);
+  const locale = getApiLocale();
   const optionCount = countDropdownOptions(children);
   const resolvedMobileDetent = resolveMobileSheetDetent({
     itemCount: optionCount,
     kind: mobileKind,
     requestedDetent: mobileDetent,
   });
-  const closeCurrentMenu = React.useCallback(() => setOpen(false), [setOpen]);
+  const resolvedMobileTitle = mobileTitle
+    ?? (typeof ariaLabel === "string"
+      ? ariaLabel
+      : translate(locale, "common.options", { count: optionCount }));
+  const resolvedMobileCloseLabel = mobileCloseLabel ?? translate(locale, "common.close");
+
+  if (dialogPortalContainer === null) {
+    return null;
+  }
+
+  const portalContainerProps = dialogPortalContainer === undefined ? {} : { container: dialogPortalContainer };
+
+  const content = (
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        "h5-floating-content z-50 min-w-[8rem] overflow-hidden border bg-popover p-1 text-popover-foreground shadow-md",
+        isMobileOverlay && "h5-mobile-menu-content",
+        !isMobileOverlay &&
+          "rounded-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...(ariaLabel === undefined ? {} : { "aria-label": ariaLabel })}
+      {...(onInteractOutside ? { onInteractOutside } : {})}
+      {...(onPointerDownOutside ? { onPointerDownOutside } : {})}
+      {...props}
+    >
+      {children}
+    </DropdownMenuPrimitive.Content>
+  );
+
+  if (isMobileOverlay) {
+    return (
+      <MobileOverlaySheet
+        open={sheetOpen}
+        present={present}
+        onOpenChange={setOpen}
+        onAnimationEnd={onSheetAnimationEnd}
+        container={dialogPortalContainer}
+        contentRole="menu"
+        detent={resolvedMobileDetent}
+        kind={mobileKind}
+        title={resolvedMobileTitle}
+        closeLabel={resolvedMobileCloseLabel}
+      >
+        {content}
+      </MobileOverlaySheet>
+    );
+  }
 
   return (
-    <DropdownMenuPrimitive.Portal container={dialogPortalContainer ?? undefined}>
-      <MobileOverlayPortalHost>
-        {open ? <MobileOverlayBackdrop onDismiss={closeCurrentMenu} /> : null}
-        <DropdownMenuPrimitive.Content
-          ref={ref}
-          sideOffset={sideOffset}
-          data-mobile-detent={resolvedMobileDetent}
-          data-mobile-kind={mobileKind}
-          onInteractOutside={(event) => {
-            onInteractOutside?.(event);
-            if (!event.defaultPrevented) {
-              handleMobileOverlayOutsideEvent(event, closeCurrentMenu);
-            }
-          }}
-          onPointerDownOutside={(event) => {
-            onPointerDownOutside?.(event);
-            if (!event.defaultPrevented) {
-              handleMobileOverlayOutsideEvent(event, closeCurrentMenu);
-            }
-          }}
-          className={cn(
-            "h5-floating-content h5-mobile-sheet-content h5-mobile-menu-content z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-            getMobileSheetClassName({ detent: resolvedMobileDetent, kind: mobileKind }),
-            className,
-          )}
-          {...props}
-        >
-          {children}
-        </DropdownMenuPrimitive.Content>
-      </MobileOverlayPortalHost>
+    <DropdownMenuPrimitive.Portal {...portalContainerProps}>
+      {content}
     </DropdownMenuPrimitive.Portal>
   );
 });

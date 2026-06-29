@@ -28,7 +28,7 @@ const protectedPages: Array<{ path: string; label: string; assertReady: (page: P
     path: "/",
     label: "dashboard",
     assertReady: async (page) => {
-      await expect(page.getByText("月度支出")).toBeVisible();
+      await expect(page.getByText("月均支出")).toBeVisible();
     },
   },
   {
@@ -43,7 +43,7 @@ const protectedPages: Array<{ path: string; label: string; assertReady: (page: P
     path: "/calendar",
     label: "calendar",
     assertReady: async (page) => {
-      await expect(page.getByRole("heading", { name: "续费日历", level: 1 })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "续费/到期日历", level: 1 })).toBeVisible();
     },
   },
   {
@@ -151,11 +151,11 @@ test("temporary subscription write-edit-read-delete is consistent across pages",
     await expect(subscriptionCard(page, editedName)).toBeVisible();
 
     await page.goto("/");
-    await expect(page.getByText("月度支出")).toBeVisible();
+    await expect(page.getByText("月均支出")).toBeVisible();
     await expect(subscriptionCard(page, editedName)).toBeVisible();
 
     await page.goto("/calendar");
-    await expect(page.getByRole("heading", { name: "续费日历", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "续费/到期日历", level: 1 })).toBeVisible();
     await revealCalendarEntry(page, editedName);
 
     await page.goto("/statistics");

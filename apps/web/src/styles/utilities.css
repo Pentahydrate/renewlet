@@ -215,11 +215,6 @@
     }
   }
 
-  /* 移动端遮罩默认不占布局，只有窄屏才参与层级；桌面 Radix 交互别被它碰瓷。 */
-  .h5-mobile-overlay-backdrop {
-    display: none;
-  }
-
   /* 共享滚动容器统一开启 iOS 惯性滚动，别在每个 sheet/list 里各写一遍祖传咒语。 */
   .h5-mobile-sheet-scroll {
     min-height: 0;
@@ -312,7 +307,6 @@
       z-index: 65;
       display: block;
       background: hsl(0 0% 0% / 0.6);
-      animation: h5-mobile-overlay-in 160ms ease-out;
     }
 
     /* 父 Dialog 必须放开 overflow，否则内部 sheet 的遮罩和圆角会被祖先裁掉。 */
@@ -320,8 +314,8 @@
       overflow: visible;
     }
 
-    /* Radix Popper 的 transform 会制造新定位世界；H5 sheet 必须钉在视觉视口底部，直接重写。 */
-    [data-radix-popper-content-wrapper]:has(> .h5-mobile-sheet-content) {
+    /* Radix 仍负责 listbox/menu 语义；Vaul 接管位移，Popper wrapper 只保留底部定位世界。 */
+    [data-radix-popper-content-wrapper]:has(> [data-vaul-drawer].h5-mobile-sheet-content) {
       position: fixed !important;
       inset: auto 0 0 0 !important;
       z-index: 70 !important;
@@ -331,7 +325,7 @@
       transform: none !important;
     }
 
-    /* 70 是移动端临时层最高业务面：高于遮罩和底部栏，低于后续全局告警才合理。 */
+    /* 70 是移动端临时层最高业务面；transform 留给 Vaul 拖拽，visual viewport 只用 translate 叠加。 */
     .h5-mobile-sheet-content {
       position: fixed !important;
       inset: auto 0 0 0 !important;
@@ -349,9 +343,7 @@
       translate:
         0
         calc(var(--app-visual-viewport-offset-top) + var(--app-viewport-height) - var(--app-layout-viewport-height)) !important;
-      transform: none !important;
       transform-origin: bottom center !important;
-      animation: h5-mobile-sheet-in 180ms ease-out !important;
     }
 
     /* Drawer 也吃 visual viewport 偏移，不然软键盘出现时它会留在旧世界线底部。 */
@@ -385,20 +377,12 @@
       padding-left: 0.5rem;
     }
 
-    /* 这个小横条是移动端 sheet 的抓手，不参与语义；只做 affordance，别绑定交互。 */
-    .h5-mobile-sheet-content::before {
-      display: block;
-      width: 3rem;
-      height: 0.375rem;
-      margin: 0.75rem auto 0.25rem;
-      border-radius: 999px;
-      background: hsl(var(--muted-foreground) / 0.32);
-      content: "";
-    }
-
-    /* 关闭动画必须比打开短，避免 Radix 卸载前还慢悠悠拖住点击链路。 */
-    .h5-mobile-sheet-content[data-state="closed"] {
-      animation: h5-mobile-sheet-out 140ms ease-in !important;
+    .h5-mobile-sheet-handle {
+      width: 3rem !important;
+      height: 0.375rem !important;
+      margin: 0.75rem auto 0.25rem !important;
+      border-radius: 999px !important;
+      background: hsl(var(--muted-foreground) / 0.32) !important;
     }
 
     /* 移动端滚动统一交给内部 viewport，sheet 外框高度不跟列表内容一起抽风。 */
@@ -581,23 +565,6 @@
       min-height: 2.5rem;
       aspect-ratio: 1 / 1;
     }
-  }
-
-  /* overlay 只做淡入，别位移；位移交给 sheet，否则两层动画会互相扯坐标。 */
-  @keyframes h5-mobile-overlay-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  /* sheet 动画使用 transform，避免高度动画触发布局重算，H5 机器会很诚实地卡给你看。 */
-  @keyframes h5-mobile-sheet-in {
-    from { opacity: 0; transform: translate3d(0, 1rem, 0); }
-    to { opacity: 1; transform: translate3d(0, 0, 0); }
-  }
-
-  @keyframes h5-mobile-sheet-out {
-    from { opacity: 1; transform: translate3d(0, 0, 0); }
-    to { opacity: 0; transform: translate3d(0, 1rem, 0); }
   }
 
   @media (min-width: 1024px) {

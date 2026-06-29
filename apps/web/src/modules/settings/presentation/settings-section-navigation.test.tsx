@@ -114,7 +114,7 @@ describe("SettingsScreen section navigation", () => {
     expect(accountSection).not.toBeNull();
     expect(mobileHeader.compareDocumentPosition(accountSection as Element)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     const mobileTrigger = within(mobileHeader).getByRole("button", { name: /打开设置目录/ });
-    expect(mobileTrigger).toHaveClass("h-9", "w-9", "shrink-0", "rounded-lg", "bg-card/80");
+    expect(mobileTrigger).toHaveClass("h-10", "w-10", "shrink-0", "rounded-lg", "border", "border-border", "bg-card/80");
     expect(mobileTrigger).not.toHaveTextContent("目录");
     expect(mobileTrigger).not.toHaveTextContent("时区");
     expect(within(mobileHeader).getByTestId("settings-mobile-page-subtitle")).toHaveTextContent("管理您的账户、显示和通知设置");

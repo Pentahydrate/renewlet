@@ -276,7 +276,7 @@ export function SettingsScreen() {
                   <div className="grid gap-2">
                     <Label htmlFor="locale">{t("settings.language")}</Label>
                     <Select value={settings.locale} onValueChange={handleLocaleChange}>
-                      <SelectTrigger id="locale" className="w-full border-border bg-secondary sm:w-[220px]">
+                      <SelectTrigger id="locale" className="w-full border-border bg-secondary sm:w-[min(14rem,100%)]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -339,7 +339,7 @@ export function SettingsScreen() {
                           enterKeyHint="done"
                           value={monthlyBudgetInput}
                           onRawValueChange={handleMonthlyBudgetInputChange}
-                          className="w-full border-border bg-secondary min-[380px]:w-[200px]"
+                          className="w-full border-border bg-secondary min-[380px]:w-[min(12.5rem,100%)]"
                           placeholder="1500"
                           thousandSeparator
                           aria-invalid={field.invalid}

@@ -1,5 +1,5 @@
 // 移动端订阅 E2E 同时保护标签抽屉、tag 输入和底部操作区；这些交互依赖真实触控布局与浮层栈。
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   createSubscription,
   expectTagInputPopoverLayout,
@@ -10,9 +10,61 @@ import {
 } from "./support/subscriptions";
 import {
   expectActionNearContainerBottom,
+  expectNoHorizontalOverflow,
   expectOverlayLeavesTopScrim,
   getRequiredLocatorBoundingBox,
 } from "./support/layout";
+import { createProductSubscriptionSeed } from "./support/product-api";
+
+type SubscriptionCardLayoutSeed = {
+  name: string;
+  category: string;
+  paymentMethod: string;
+  startDate: string;
+  nextBillingDate: string;
+};
+
+async function createSubscriptionLayoutRecord(
+  page: Page,
+  seed: SubscriptionCardLayoutSeed,
+) {
+  // 直接走产品 API 种记录，让用例只覆盖真实卡片排版；认证态仍来自 setup project。
+  await createProductSubscriptionSeed(page, {
+    ...seed,
+    price: 20,
+    currency: "USD",
+    reminderDays: 7,
+  });
+}
+
+async function captureSubscriptionCardLayout(card: Locator) {
+  return card.evaluate((element) => {
+    const query = (testId: string) => {
+      const target = element.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+      if (!target) {
+        throw new Error(`Missing ${testId}`);
+      }
+      const rect = target.getBoundingClientRect();
+      return {
+        left: Math.round(rect.left * 100) / 100,
+        right: Math.round(rect.right * 100) / 100,
+        top: Math.round(rect.top * 100) / 100,
+      };
+    };
+
+    const cardRect = element.getBoundingClientRect();
+    return {
+      cardRight: Math.round(cardRect.right * 100) / 100,
+      billingDate: query("subscription-card-meta-billing-date"),
+      categoryBadge: query("subscription-card-badge-category"),
+      paymentMethod: query("subscription-card-meta-payment-method"),
+      renewalBadge: query("subscription-card-badge-renewal"),
+      relativeBilling: query("subscription-card-meta-relative-billing"),
+      startDate: query("subscription-card-meta-start-date"),
+      statusBadge: query("subscription-card-badge-status"),
+    };
+  });
+}
 
 test("mobile subscription tag drawer and tag input layout", async ({ page }, testInfo) => {
   const plainName = uniqueE2EName(testInfo, "Mobile Plain");
@@ -40,12 +92,12 @@ test("mobile subscription tag drawer and tag input layout", async ({ page }, tes
   await createSubscription(page, {
     name: plainName,
     price: "8",
-    currencyLabel: "美元 ($)",
+    currencyLabel: "USD",
   });
   await createSubscription(page, {
     name: taggedName,
     price: "12",
-    currencyLabel: "美元 ($)",
+    currencyLabel: "USD",
     tags: manyTags,
   });
 
@@ -104,4 +156,38 @@ test("mobile subscription tag drawer and tag input layout", async ({ page }, tes
   await page.keyboard.press("Escape");
   await editDialog.getByRole("button", { name: "取消" }).click();
   await expect(editDialog).toBeHidden();
+});
+
+test("mobile subscription card keeps date metadata naturally on the first available row", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 720 });
+  await page.goto("/subscriptions");
+  await expect(page.getByRole("heading", { name: "订阅列表" })).toBeVisible();
+
+  const subscriptionName = uniqueE2EName(testInfo, "Netflix Pro");
+  await createSubscriptionLayoutRecord(page, {
+    name: subscriptionName,
+    category: "hosting_domains",
+    paymentMethod: "google_pay",
+    startDate: "2026-02-20",
+    nextBillingDate: "2026-05-31",
+  });
+  await page.reload();
+
+  const card = subscriptionCard(page, subscriptionName);
+  await expect(card).toBeVisible();
+  await expect(card).toBeInViewport();
+  await expectNoHorizontalOverflow(page, "mobile subscription card metadata");
+
+  const layout = await captureSubscriptionCardLayout(card);
+
+  expect(Math.abs(layout.startDate.top - layout.billingDate.top), "start and billing dates should share a row").toBeLessThanOrEqual(4);
+  expect(layout.billingDate.left, "billing date should sit after start date").toBeGreaterThan(layout.startDate.right - 1);
+  expect(layout.paymentMethod.top, "payment method can wrap only after the billing date row").toBeGreaterThanOrEqual(layout.startDate.top - 1);
+  expect(layout.relativeBilling.top, "relative billing can wrap only after the billing date row").toBeGreaterThanOrEqual(layout.startDate.top - 1);
+
+  expect(Math.abs(layout.categoryBadge.top - layout.statusBadge.top), "category and status badges should share a row").toBeLessThanOrEqual(4);
+  expect(Math.abs(layout.statusBadge.top - layout.renewalBadge.top), "status and renewal badges should share a row").toBeLessThanOrEqual(4);
+  expect(layout.categoryBadge.right, "category badge should stay inside card").toBeLessThanOrEqual(layout.cardRight + 1);
+  expect(layout.statusBadge.right, "status badge should stay inside card").toBeLessThanOrEqual(layout.cardRight + 1);
+  expect(layout.renewalBadge.right, "renewal badge should stay inside card").toBeLessThanOrEqual(layout.cardRight + 1);
 });

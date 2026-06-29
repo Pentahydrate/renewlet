@@ -12,7 +12,35 @@ import {
 const VIEWPORT_SYNC_SETTLE_MS = 540;
 
 async function setVisualViewportVars(page: Page, height: number, offsetTop = 0) {
-  // 直接写 CSS 变量模拟 visualViewport 变化，避免测试依赖宿主系统是否真的弹出软键盘。
+  // 先驱动 visualViewport 同步器，再固定本轮测试变量；恢复阶段不能继承上一轮键盘高度。
+  await page.evaluate(({ nextHeight, nextOffsetTop }) => {
+    const writeRootVars = () => {
+      document.documentElement.style.setProperty("--app-layout-viewport-height", "640px");
+      document.documentElement.style.setProperty("--app-visual-viewport-offset-top", `${nextOffsetTop}px`);
+      document.documentElement.style.setProperty("--app-visual-viewport-offset-left", "0px");
+      document.documentElement.style.setProperty("--app-viewport-height", `${nextHeight}px`);
+    };
+
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) {
+      writeRootVars();
+      return;
+    }
+
+    Object.defineProperties(visualViewport, {
+      height: { configurable: true, get: () => nextHeight },
+      offsetLeft: { configurable: true, get: () => 0 },
+      offsetTop: { configurable: true, get: () => nextOffsetTop },
+    });
+    visualViewport.dispatchEvent(new Event("resize"));
+    visualViewport.dispatchEvent(new Event("scroll"));
+    writeRootVars();
+  }, { nextHeight: height, nextOffsetTop: offsetTop });
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  }));
   await page.evaluate(({ nextHeight, nextOffsetTop }) => {
     document.documentElement.style.setProperty("--app-layout-viewport-height", "640px");
     document.documentElement.style.setProperty("--app-visual-viewport-offset-top", `${nextOffsetTop}px`);
@@ -237,6 +265,7 @@ test("mobile currency manager keeps footer visible after keyboard viewport chang
   await search.fill("USD");
   await expect(dialog.getByText("USD", { exact: true })).toBeVisible();
   await search.blur();
+  await setVisualViewportVars(page, 640);
 
   await expect.poll(async () => (await captureDialogMetrics(dialog, {
     footer: "[data-config-manager-footer]",

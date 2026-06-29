@@ -627,6 +627,9 @@ describe("Subscriptions page mobile tag filters", () => {
     expect(screen.queryByRole("button", { name: "Security" })).not.toBeInTheDocument();
     expect(screen.queryByTestId("mobile-selected-tags")).not.toBeInTheDocument();
     const sortTagRow = screen.getByTestId("mobile-sort-tag-row");
+    const mobileSelects = screen.getAllByRole("combobox");
+    expect(mobileSelects[0]).toHaveTextContent("所有状态");
+    expect(mobileSelects[1]).toHaveTextContent("所有续订");
     expect(within(sortTagRow).getByRole("combobox", { name: "排序" })).toHaveTextContent("默认顺序");
     expect(within(sortTagRow).getByRole("button", { name: "标签" })).toBeInTheDocument();
     expect(visibleSubscriptionNames()).toEqual(["Tagged Cloud", "Docs Notes", "Design Suite", "Plain Service"]);

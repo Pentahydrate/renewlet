@@ -53,6 +53,16 @@ installStorage("localStorage");
 installStorage("sessionStorage");
 localStorage.setItem(EXPLICIT_LOCALE_PREFERENCE_KEY, "zh-CN");
 Element.prototype.scrollIntoView = vi.fn();
+// Vaul 依赖浏览器 Pointer Events 的 capture API；jsdom 未实现，测试环境只需要保留同一事件 API 边界。
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = vi.fn();
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = vi.fn();
+}
 
 afterEach(() => {
   cleanup();

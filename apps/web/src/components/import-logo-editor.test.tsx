@@ -103,6 +103,8 @@ describe("ImportLogoEditor", () => {
       "h5-mobile-sheet-content",
       "h5-mobile-sheet-large",
     );
+    expect(sheet).toHaveAttribute("data-vaul-drawer");
+    expect(sheet.querySelector("[data-vaul-handle]")).not.toBeNull();
     expect(sheet.querySelector(".h5-import-logo-panel")).not.toBeNull();
     expect(sheet.querySelector(".h5-import-logo-tabs")).not.toBeNull();
     expect(screen.getByTestId("import-logo-search-results")).toHaveClass(

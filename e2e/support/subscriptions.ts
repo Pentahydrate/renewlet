@@ -70,7 +70,7 @@ export async function fillSubscriptionDialog(
 ) {
   await expectLabelControlGap(dialog.getByLabel("服务名称", { exact: true }), "subscription name");
   await expectLabelControlGap(dialog.getByLabel("价格", { exact: true }), "subscription price");
-  await expectLabelControlGap(dialog.getByLabel("开始日期", { exact: true }), "subscription start date");
+  await expectLabelControlGap(dialog.getByLabel("开始日期（可选）", { exact: true }), "subscription start date");
   await expectLabelControlGap(dialog.getByLabel("到期日期", { exact: true }), "subscription next billing date");
   await expectLabelControlGap(dialog.getByLabel("标签", { exact: true }), "subscription tags");
   await dialog.getByLabel("服务名称", { exact: true }).fill(values.name);
@@ -79,7 +79,8 @@ export async function fillSubscriptionDialog(
   if (values.currencyLabel) {
     await selectCurrency(page, dialog, values.currencyLabel);
   }
-  await chooseStartDate(page, dialog);
+  await chooseSubscriptionDate(page, dialog, "开始日期（可选）", /开始日期.*\d{4}年\d{1,2}月\d{1,2}日/);
+  await chooseSubscriptionDate(page, dialog, "到期日期", /到期日期.*\d{4}年\d{1,2}月\d{1,2}日/);
 
   if (values.tags) {
     await dialog.getByLabel("标签", { exact: true }).fill(values.tags);
@@ -123,9 +124,12 @@ export async function expectEmptyTagCursorStaysInline(page: Page, dialog: Locato
     const containerRect = container.getBoundingClientRect();
     const chipRect = lastChip.getBoundingClientRect();
     const sizerRect = sizer.getBoundingClientRect();
+    const columnGap = Number.parseFloat(window.getComputedStyle(container).columnGap || "0") || 0;
+    const requiredInlineSpace = sizerRect.width + columnGap + 4;
     return {
       freeSpaceAfterLastChip: Math.round(containerRect.right - chipRect.right),
-      cursorFitsCurrentRow: containerRect.right - chipRect.right >= sizerRect.width,
+      cursorFitsCurrentRow: containerRect.right - chipRect.right >= requiredInlineSpace,
+      gapWidth: Math.round(columnGap),
       inputIsBelowLastChip: sizerRect.top - chipRect.top > 12,
       sizerWidth: Math.round(sizerRect.width),
     };
@@ -133,7 +137,7 @@ export async function expectEmptyTagCursorStaysInline(page: Page, dialog: Locato
 
   expect(
     cursorState.inputIsBelowLastChip && cursorState.cursorFitsCurrentRow,
-    `empty tag cursor wrapped with ${cursorState.freeSpaceAfterLastChip}px free for ${cursorState.sizerWidth}px cursor`,
+    `empty tag cursor wrapped with ${cursorState.freeSpaceAfterLastChip}px free for ${cursorState.sizerWidth}px cursor plus ${cursorState.gapWidth}px gap`,
   ).toBe(false);
 }
 
@@ -216,7 +220,7 @@ export async function expectTagSuggestionListScrollable(page: Page) {
 }
 
 function isSubscriptionWriteResponse(response: Response): boolean {
-  return response.url().includes("/api/collections/subscriptions/records") &&
+  return response.url().includes("/api/app/subscriptions") &&
     ["POST", "PATCH"].includes(response.request().method());
 }
 
@@ -224,15 +228,19 @@ async function selectCurrency(page: Page, dialog: Locator, label: string) {
   const currencySelect = dialog.getByRole("combobox", { name: "选择货币" });
   if ((await currencySelect.textContent())?.includes(label)) return;
   await currencySelect.click();
-  await page.getByPlaceholder("搜索货币、代码或符号...").fill(label);
-  await page.getByText(label, { exact: true }).click();
+  const currencySheet = page.getByTestId("searchable-select-sheet").last();
+  await expect(currencySheet).toBeVisible();
+  await currencySheet.getByPlaceholder("搜索货币、代码或符号...").fill(label);
+  await currencySheet.getByText(label, { exact: false }).first().click();
+  // 移动端 SearchableSelect 选择后会保留 Vaul 退出动画；等 sheet 真正卸载后再操作底层表单。
+  await expect(currencySheet).toBeHidden();
+  await expect(currencySelect).toContainText(label);
 }
 
-async function chooseStartDate(page: Page, dialog: Locator) {
-  const startDateButton = dialog.getByRole("button", { name: /选择日期/ }).first();
-  if ((await startDateButton.count()) === 0) return;
-
-  await startDateButton.click();
+async function chooseSubscriptionDate(page: Page, dialog: Locator, label: string, selectedName: RegExp) {
+  const dateButton = dialog.getByLabel(label, { exact: true });
+  await expect(dateButton).toBeVisible();
+  await dateButton.click();
 
   const calendar = page.getByRole("grid").first();
   await expect(calendar).toBeVisible();
@@ -246,7 +254,7 @@ async function chooseStartDate(page: Page, dialog: Locator) {
       : calendar.locator("button:not([disabled])").filter({ hasText: /^\d+$/ }).first();
 
   await selectedDayButton.click();
-  await expect(dialog.getByRole("button", { name: /\d{4}年\d{1,2}月\d{1,2}日/ }).first()).toBeVisible();
+  await expect(dialog.getByRole("button", { name: selectedName }).first()).toBeVisible();
 
   const expandedDateButton = dialog.locator('button[aria-expanded="true"]').first();
   if (await expandedDateButton.count()) {

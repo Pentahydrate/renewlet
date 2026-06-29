@@ -25,6 +25,21 @@ describe("HeaderSkeleton", () => {
   });
 });
 
+describe("DashboardPageSkeleton", () => {
+  it("shares the compact dashboard stat grid contract", () => {
+    render(<DashboardPageSkeleton />);
+
+    const grid = screen.getByTestId("dashboard-skeleton-stat-grid");
+    const monthlySpend = screen.getByTestId("dashboard-skeleton-stat-monthly-spend");
+    const trials = screen.getByTestId("dashboard-skeleton-stat-trials");
+
+    expect(grid).toHaveClass("grid", "gap-3", "sm:gap-5", "sm:grid-cols-2", "lg:grid-cols-4");
+    expect(grid.className).toContain("[grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))]");
+    expect(monthlySpend).toHaveClass("p-4", "lg:p-6", "col-span-full", "sm:col-span-1");
+    expect(trials).toHaveClass("p-4", "lg:p-6", "col-span-full", "sm:col-span-1");
+  });
+});
+
 describe("SettingsPageSkeleton", () => {
   it("shares the real settings layout contract", () => {
     render(<SettingsPageSkeleton />);

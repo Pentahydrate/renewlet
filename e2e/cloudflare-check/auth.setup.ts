@@ -16,7 +16,7 @@ setup("login to deployed Cloudflare app", async ({ page }, testInfo) => {
   try {
     // setup project 只负责获取线上 session；后续 desktop/mobile 共享 storage state，避免重复登录触发限流。
     await loginThroughCloudflareUI(page, "/");
-    await expect(page.getByText("月度支出")).toBeVisible();
+    await expect(page.getByText("月均支出")).toBeVisible();
     await mkdir(dirname(cloudflareAuthStatePath), { recursive: true });
     // 线上 Worker 没有测试专用初始化流程；setup project 只固化临时浏览器登录态给后续项目复用。
     await page.context().storageState({ path: cloudflareAuthStatePath });

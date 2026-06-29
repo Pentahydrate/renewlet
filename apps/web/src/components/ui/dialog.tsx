@@ -12,7 +12,8 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const DialogPortalContainerContext = React.createContext<HTMLElement | null>(null);
+// undefined 是未嵌套 Dialog，null 是 Dialog 内容 ref 首帧未就绪；移动 sheet 要等 ref，避免先挂 body 后丢掉父弹窗层级。
+const DialogPortalContainerContext = React.createContext<HTMLElement | null | undefined>(undefined);
 
 function useDialogPortalContainer() {
   return React.useContext(DialogPortalContainerContext);

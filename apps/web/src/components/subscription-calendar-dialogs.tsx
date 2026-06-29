@@ -9,9 +9,9 @@
 import type { Subscription, SubscriptionStatus } from '@/types/subscription';
 import { STATUS_LABELS } from '@/types/subscription';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, X } from 'lucide-react';
-import { Drawer } from 'vaul';
+import { CalendarDays } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MobileBottomDrawerContent, MobileDrawerRoot } from '@/components/ui/mobile-drawer';
 import { Badge } from '@/components/ui/badge';
 import { TruncatedTooltipText } from '@/components/ui/truncated-tooltip-text';
 import { useCustomConfig } from '@/contexts/CustomConfigContext';
@@ -127,46 +127,30 @@ export function DaySubscriptionsDialog({
   if (isMobile) {
     // 移动端当天列表使用 Drawer，避免小屏上 Dialog 高度和日历网格滚动互相挤压。
     return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+      <MobileDrawerRoot open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
         {open && (
-          <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-            <Drawer.Content className="h5-drawer-panel fixed inset-x-0 bottom-0 z-50 mx-auto flex min-h-[42dvh] w-full max-w-lg flex-col rounded-t-lg border border-border bg-card text-card-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-4">
-              <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted" />
-
-              <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-4">
-                <div>
-                  <Drawer.Title className="flex items-center gap-2 text-base font-semibold text-foreground">
-                    <CalendarDays className="h-5 w-5 text-primary" />
-                    {selectedDaySubs && t("calendar.dayRenewals", { date: selectedDayLabel })}
-                  </Drawer.Title>
-                  <Drawer.Description className="sr-only">
-                    {selectedDaySubs
-                      ? t("calendar.dayListDescription", { date: selectedDayLabel })
-                      : t("calendar.dayListFallbackDescription")}
-                  </Drawer.Description>
-                </div>
-                <Drawer.Close asChild>
-                  <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-9 w-9 text-muted-foreground">
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">{t("common.close")}</span>
-                  </Button>
-                </Drawer.Close>
-              </div>
-
+          <MobileBottomDrawerContent
+            title={selectedDaySubs
+              ? t("calendar.dayRenewals", { date: selectedDayLabel })
+              : t("calendar.dayListFallbackDescription")}
+            description={selectedDaySubs
+              ? t("calendar.dayListDescription", { date: selectedDayLabel })
+              : t("calendar.dayListFallbackDescription")}
+            descriptionMode="sr-only"
+            closeLabel={t("common.close")}
+            icon={<CalendarDays className="h-5 w-5 shrink-0 text-primary" />}
+            className="min-h-[42dvh]"
+          >
               {selectedDaySubs && (
-                <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                  <DaySubscriptionsList
-                    subscriptions={selectedDaySubs.subscriptions}
-                    onSelectSubscription={onSelectSubscription}
-                    today={today}
-                  />
-                </div>
+                <DaySubscriptionsList
+                  subscriptions={selectedDaySubs.subscriptions}
+                  onSelectSubscription={onSelectSubscription}
+                  today={today}
+                />
               )}
-            </Drawer.Content>
-          </Drawer.Portal>
+          </MobileBottomDrawerContent>
         )}
-      </Drawer.Root>
+      </MobileDrawerRoot>
     );
   }
 

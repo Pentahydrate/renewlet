@@ -17,6 +17,7 @@ import { Header } from '@/components/header';
 import { BackToTopFloatButton } from '@/components/back-to-top-float-button';
 import { SubscriptionCard, type SubscriptionCardLookup } from '@/components/subscription-card';
 import { SubscriptionDetailDialog } from '@/components/subscription-detail-dialog';
+import { subscriptionFilterLayout } from '@/components/subscription-filter-layout';
 import { AddSubscriptionDialog } from '@/components/add-subscription-dialog';
 import { EditSubscriptionDialog } from '@/components/edit-subscription-dialog';
 import { SubscriptionDialog } from '@/components/subscription-dialog';
@@ -409,7 +410,7 @@ function SubscriptionGrid({
                   <SelectTrigger className="h-11 min-w-0 border-border bg-secondary" tooltipContent={statusFilterLabel}>
                     <SelectValue placeholder={t("subscription.field.status")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent mobileTitle={t("subscription.field.status")}>
                     <SelectItem value="all">{t("subscriptions.allStatuses")}</SelectItem>
                     {config.statuses.map((status) => (
                       <SelectItem key={status.id} value={status.value}>
@@ -424,7 +425,7 @@ function SubscriptionGrid({
                 <SelectTrigger className="h-11 min-w-0 border-border bg-secondary" tooltipContent={renewalFilterLabel}>
                   <SelectValue placeholder={t("subscriptions.renewalFilter.label")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent mobileTitle={t("subscriptions.renewalFilter.label")}>
                   <SelectItem value="all">{t("subscriptions.renewalFilter.all")}</SelectItem>
                   <SelectItem value="auto">{t("subscriptions.renewalFilter.auto")}</SelectItem>
                   <SelectItem value="manual">{t("subscriptions.renewalFilter.manual")}</SelectItem>
@@ -442,7 +443,7 @@ function SubscriptionGrid({
                     >
                       <SelectValue placeholder={t("subscriptions.sort.label")} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent mobileTitle={t("subscriptions.sort.label")}>
                       <SelectItem value="default">{t("subscriptions.sort.default")}</SelectItem>
                       <SelectItem value="renewal_asc">{t("subscriptions.sort.renewalAsc")}</SelectItem>
                       <SelectItem value="renewal_desc">{t("subscriptions.sort.renewalDesc")}</SelectItem>
@@ -475,8 +476,8 @@ function SubscriptionGrid({
             </>
           ) : (
             <>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="relative flex-1 min-w-[200px]">
+              <div className={subscriptionFilterLayout.desktopRow}>
+                <div className={subscriptionFilterLayout.desktopSearch}>
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     name="subscription-search"
@@ -499,10 +500,10 @@ function SubscriptionGrid({
                 />
 
                 <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SubscriptionStatus | 'all')}>
-                  <SelectTrigger className="w-[140px] border-border bg-secondary" tooltipContent={statusFilterLabel}>
+                  <SelectTrigger className={subscriptionFilterLayout.desktopStatusTrigger} tooltipContent={statusFilterLabel}>
                     <SelectValue placeholder={t("subscription.field.status")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent mobileTitle={t("subscription.field.status")}>
                     <SelectItem value="all">{t("subscriptions.allStatuses")}</SelectItem>
                     {config.statuses.map((status) => (
                       <SelectItem key={status.id} value={status.value}>
@@ -513,10 +514,10 @@ function SubscriptionGrid({
                 </Select>
 
                 <Select value={renewalFilter} onValueChange={(v) => setRenewalFilter(v as SubscriptionRenewalFilter)}>
-                  <SelectTrigger className="w-[150px] border-border bg-secondary" tooltipContent={renewalFilterLabel}>
+                  <SelectTrigger className={subscriptionFilterLayout.desktopRenewalTrigger} tooltipContent={renewalFilterLabel}>
                     <SelectValue placeholder={t("subscriptions.renewalFilter.label")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent mobileTitle={t("subscriptions.renewalFilter.label")}>
                     <SelectItem value="all">{t("subscriptions.renewalFilter.all")}</SelectItem>
                     <SelectItem value="auto">{t("subscriptions.renewalFilter.auto")}</SelectItem>
                     <SelectItem value="manual">{t("subscriptions.renewalFilter.manual")}</SelectItem>
@@ -527,12 +528,12 @@ function SubscriptionGrid({
                 <Select value={sortOption} onValueChange={(v) => setSortOption(v as SubscriptionSortOption)}>
                   <SelectTrigger
                     aria-label={t("subscriptions.sort.label")}
-                    className="w-[190px] border-border bg-secondary"
+                    className={subscriptionFilterLayout.desktopSortTrigger}
                     tooltipContent={sortOptionLabel}
                   >
                     <SelectValue placeholder={t("subscriptions.sort.label")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent mobileTitle={t("subscriptions.sort.label")}>
                     <SelectItem value="default">{t("subscriptions.sort.default")}</SelectItem>
                     <SelectItem value="renewal_asc">{t("subscriptions.sort.renewalAsc")}</SelectItem>
                     <SelectItem value="renewal_desc">{t("subscriptions.sort.renewalDesc")}</SelectItem>

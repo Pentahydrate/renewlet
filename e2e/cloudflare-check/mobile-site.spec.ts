@@ -15,7 +15,7 @@ const mobilePages: Array<{ path: string; label: string; assertReady: (page: Page
     path: "/",
     label: "mobile dashboard",
     assertReady: async (page) => {
-      await expect(page.getByText("月度支出")).toBeVisible();
+      await expect(page.getByText("月均支出")).toBeVisible();
     },
   },
   {
@@ -29,7 +29,7 @@ const mobilePages: Array<{ path: string; label: string; assertReady: (page: Page
     path: "/calendar",
     label: "mobile calendar",
     assertReady: async (page) => {
-      await expect(page.getByRole("heading", { name: "续费日历", level: 1 })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "续费/到期日历", level: 1 })).toBeVisible();
     },
   },
   {
@@ -83,7 +83,7 @@ test("mobile sheets, dialogs, and notification history stay usable", async ({ pa
     const currencyDialog = page.getByRole("dialog", { name: "货币管理" });
     await expect(currencyDialog).toBeVisible();
     await expectNoHorizontalOverflow(page, "mobile currency manager");
-    await page.keyboard.press("Escape");
+    await currencyDialog.getByRole("button", { name: /^(关闭|Close)$/ }).click();
     await expect(currencyDialog).toBeHidden();
 
     await page.getByRole("button", { name: "查看调度与历史" }).click();

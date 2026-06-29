@@ -388,7 +388,7 @@ export function MobileSettingsSectionDrawer({
                 </Drawer.Description>
               </div>
               <Drawer.Close asChild>
-                <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-9 w-9 text-muted-foreground">
+                <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-10 w-10 text-muted-foreground">
                   <X className="h-4 w-4" />
                   <span className="sr-only">{t("common.close")}</span>
                 </Button>

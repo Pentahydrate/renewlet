@@ -99,12 +99,12 @@ function PublicStatusLoading() {
           <Skeleton className="h-8 w-36" />
           <Skeleton className="mt-2 h-4 w-64 max-w-full" />
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]">
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-32 rounded-xl" />
           ))}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))]">
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-44 rounded-xl" />
           ))}
@@ -132,7 +132,7 @@ function PublicStatusThemeMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           aria-label={t("header.toggleTheme")}
-          className="h-9 w-9 shrink-0 border border-border bg-card/80 text-muted-foreground hover:bg-card-hover hover:text-foreground focus-visible:ring-ring"
+          className="h-10 w-10 shrink-0 border border-border bg-card/80 text-muted-foreground hover:bg-card-hover hover:text-foreground focus-visible:ring-ring sm:h-9 sm:w-9"
           size="icon"
           variant="ghost"
         >
@@ -251,7 +251,7 @@ function PublicStatusMoneySummary({ data }: { data: PublicStatusResponse }) {
     : t("publicStatus.moneySubtitle", { currency });
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]">
       <StatCard
         title={t("publicStatus.monthlyTotal")}
         value={formatCurrency(monthlyTotal, currency)}
@@ -291,7 +291,7 @@ function PublicStatusCountSummary({ data }: { data: PublicStatusResponse }) {
   const stats = publicStatusStats(data);
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr))]">
       <StatCard
         title={t("publicStatus.visibleCount")}
         value={formatNumber(stats.visible)}
@@ -452,7 +452,7 @@ export default function PublicStatusPage() {
             <p className="text-sm text-muted-foreground">{t("publicStatus.emptyDescription")}</p>
           </div>
         ) : (
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("publicStatus.listLabel")}>
+          <section className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr))]" aria-label={t("publicStatus.listLabel")}>
             {data.subscriptions.map((subscription, index) => (
               <div
                 key={`${subscription.name}-${subscription.startDate ?? "unknown"}-${subscription.nextBillingDate}-${index}`}

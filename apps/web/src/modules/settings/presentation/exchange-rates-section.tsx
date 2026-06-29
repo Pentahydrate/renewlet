@@ -127,7 +127,7 @@ export function ExchangeRatesSection({
                         placeholder={t("settings.currencyPlaceholder")}
                         searchPlaceholder={t("settings.currencySearch")}
                         emptyMessage={t("settings.currencyEmpty")}
-                        className="w-full border-border bg-secondary sm:w-[200px]"
+                        className="w-full border-border bg-secondary sm:w-[min(12.5rem,100%)]"
                         aria-label={t("settings.defaultCurrency")}
                       />
                     </div>
@@ -147,7 +147,7 @@ export function ExchangeRatesSection({
                       >
                         <SelectTrigger
                           id="exchangeRateProvider"
-                          className="w-full border-border bg-secondary sm:w-[200px]"
+                          className="w-full border-border bg-secondary sm:w-[min(12.5rem,100%)]"
                           aria-label={t("settings.exchangeRateProvider")}
                         >
                           <SelectValue />

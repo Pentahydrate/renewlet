@@ -601,7 +601,7 @@ describe("Statistics page", () => {
       }
       expect(januaryLedgerHeader).toHaveClass("grid", "border-b", "border-border/60", "bg-secondary/15");
       expect(within(januaryLedger).getByText("¥91")).toHaveClass("text-xl", "sm:text-2xl", "tabular-nums");
-      expect(januaryDetails).toHaveClass("grid-cols-[max-content_minmax(0,1fr)_auto]", "gap-x-3");
+      expect(januaryDetails).toHaveClass("grid", "max-h-72", "min-w-0", "overflow-y-auto");
       expect(within(januaryDetails).getAllByRole("listitem")).toHaveLength(7);
       expect(januaryDetails).toHaveTextContent("Service 1");
       expect(januaryDetails).toHaveTextContent(longName);
@@ -613,11 +613,14 @@ describe("Statistics page", () => {
       if (!longNameRow) {
         throw new Error("Expected long trend detail name to be rendered inside a list item.");
       }
-      expect(longNameRow).toHaveClass("col-span-3", "grid-cols-subgrid");
+      expect(longNameRow).toHaveClass("border-b", "border-border/60");
       const longNameAction = within(longNameRow as HTMLElement).getByRole("button", { name: `查看 ${longName} 的详情` });
       expect(longNameAction).toHaveClass(
-        "col-span-3",
-        "grid-cols-subgrid",
+        "grid",
+        "w-full",
+        "min-w-0",
+        "grid-cols-[max-content_minmax(0,1fr)_auto]",
+        "@max-sm/statistics-trend:grid-cols-[minmax(0,1fr)_auto]",
         "hover:bg-secondary/25",
         "focus-visible:ring-2",
         "cursor-pointer",
@@ -627,7 +630,7 @@ describe("Statistics page", () => {
       if (!detailBadgeCell) {
         throw new Error("Expected trend detail date badge to live inside a shared alignment grid.");
       }
-      expect(detailBadgeCell).toHaveClass("min-w-0", "justify-self-start");
+      expect(detailBadgeCell).toHaveClass("min-w-0", "justify-self-start", "@max-sm/statistics-trend:col-span-2");
       expect(detailDateBadge).toHaveClass("inline-flex", "w-[6em]", "max-w-full", "h-6", "truncate", "rounded-full");
       expect(detailDateBadge).not.toHaveClass("w-max");
       expect(detailDateBadge).not.toHaveClass("w-full");

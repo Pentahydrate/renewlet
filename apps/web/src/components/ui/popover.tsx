@@ -7,29 +7,33 @@
  */
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { X } from "lucide-react";
 
 import { useDialogPortalContainer } from "@/components/ui/dialog";
 import {
-  getMobileSheetClassName,
-  handleMobileOverlayOutsideEvent,
-  MobileOverlayBackdrop,
-  MobileOverlayPortalHost,
+  MobileOverlaySheet,
   resolveMobileSheetDetent,
   shouldSuppressMobileOverlayTriggerEvent,
-  useControllableOpen,
   useIsMobileOverlay,
+  useMobileOverlayOpenLifecycle,
   type MobileSheetDetent,
   type MobileSheetKind,
 } from "@/components/ui/mobile-overlay";
+import { getApiLocale } from "@/i18n/api-locale";
+import { translate } from "@/i18n/messages";
 import { cn } from "@/lib/utils";
 
 const PopoverOpenContext = React.createContext<{
+  onSheetAnimationEnd: (open: boolean) => void;
   open: boolean;
+  present: boolean;
   setOpen: (open: boolean) => void;
+  sheetOpen: boolean;
 }>({
+  onSheetAnimationEnd: () => {},
   open: false,
+  present: false,
   setOpen: () => {},
+  sheetOpen: false,
 });
 
 function Popover({
@@ -40,18 +44,27 @@ function Popover({
   ...props
 }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>) {
   const isMobileOverlay = useIsMobileOverlay();
-  const [open, setOpen] = useControllableOpen({
+  const overlayOpen = useMobileOverlayOpenLifecycle({
+    animateClose: isMobileOverlay,
     defaultOpen,
     onOpenChange,
     open: openProp,
   });
 
   return (
-    <PopoverOpenContext.Provider value={{ open, setOpen }}>
+    <PopoverOpenContext.Provider
+      value={{
+        onSheetAnimationEnd: overlayOpen.onSheetAnimationEnd,
+        open: overlayOpen.open,
+        present: overlayOpen.present,
+        setOpen: overlayOpen.setOpen,
+        sheetOpen: overlayOpen.sheetOpen,
+      }}
+    >
       <PopoverPrimitive.Root
         modal={modalProp ?? isMobileOverlay}
-        open={open}
-        onOpenChange={setOpen}
+        open={overlayOpen.open}
+        onOpenChange={overlayOpen.setOpen}
         {...props}
       />
     </PopoverOpenContext.Provider>
@@ -89,6 +102,7 @@ const PopoverContent = React.forwardRef<
     mobileCloseLabel?: string;
     mobileDescription?: React.ReactNode;
     mobileDetent?: MobileSheetDetent;
+    mobileHeaderLayout?: "flush" | "padded";
     mobileKind?: MobileSheetKind;
     mobilePresentation?: "sheet" | "anchored";
     mobileTitle?: React.ReactNode;
@@ -99,73 +113,87 @@ const PopoverContent = React.forwardRef<
   align = "center",
   sideOffset = 4,
   portalContainer,
-  mobileCloseLabel = "关闭",
+  mobileCloseLabel,
   mobileDescription,
   mobileDetent = "auto",
+  mobileHeaderLayout = "padded",
   mobileKind = "panel",
   mobilePresentation = "sheet",
   mobileTitle,
   children,
+  "aria-label": ariaLabel,
   onInteractOutside,
   onPointerDownOutside,
   ...props
 }, ref) => {
   const dialogPortalContainer = useDialogPortalContainer();
   const container = portalContainer ?? dialogPortalContainer ?? undefined;
-  const { open, setOpen } = React.useContext(PopoverOpenContext);
-  const useMobileSheet = mobilePresentation === "sheet";
+  const portalContainerProps = container === undefined ? {} : { container };
+  const {
+    onSheetAnimationEnd,
+    present,
+    setOpen,
+    sheetOpen,
+  } = React.useContext(PopoverOpenContext);
+  const isMobileOverlay = useIsMobileOverlay();
+  const useMobileSheet = isMobileOverlay && mobilePresentation === "sheet";
+  const locale = getApiLocale();
   const resolvedMobileDetent = resolveMobileSheetDetent({
     kind: mobileKind,
     requestedDetent: mobileDetent,
   });
-  const closeCurrentPopover = React.useCallback(() => setOpen(false), [setOpen]);
+  const resolvedMobileTitle = mobileTitle ?? (typeof ariaLabel === "string" ? ariaLabel : translate(locale, "common.selectPlaceholder"));
+  const resolvedMobileCloseLabel = mobileCloseLabel ?? translate(locale, "common.close");
+  const titleMode = mobileTitle ? "visible" : "sr-only";
+
+  if (portalContainer === undefined && dialogPortalContainer === null) {
+    return null;
+  }
+
+  const content = (
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "h5-floating-content z-50 w-72 overflow-hidden border bg-popover p-4 text-popover-foreground shadow-md outline-none",
+        !useMobileSheet &&
+          "rounded-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...(ariaLabel === undefined ? {} : { "aria-label": ariaLabel })}
+      {...(onInteractOutside ? { onInteractOutside } : {})}
+      {...(onPointerDownOutside ? { onPointerDownOutside } : {})}
+      {...props}
+    >
+      {children}
+    </PopoverPrimitive.Content>
+  );
+
+  if (useMobileSheet) {
+    return (
+      <MobileOverlaySheet
+        open={sheetOpen}
+        present={present}
+        onOpenChange={setOpen}
+        onAnimationEnd={onSheetAnimationEnd}
+        container={container}
+        detent={resolvedMobileDetent}
+        kind={mobileKind}
+        title={resolvedMobileTitle}
+        titleMode={titleMode}
+        titleLayout={mobileHeaderLayout}
+        description={mobileDescription}
+        closeLabel={resolvedMobileCloseLabel}
+      >
+        {content}
+      </MobileOverlaySheet>
+    );
+  }
 
   return (
-    <PopoverPrimitive.Portal container={container}>
-      <MobileOverlayPortalHost>
-        {open && useMobileSheet ? <MobileOverlayBackdrop onDismiss={closeCurrentPopover} /> : null}
-        <PopoverPrimitive.Content
-          ref={ref}
-          align={align}
-          sideOffset={sideOffset}
-          data-mobile-detent={resolvedMobileDetent}
-          data-mobile-kind={mobileKind}
-          onInteractOutside={(event) => {
-            onInteractOutside?.(event);
-            if (!event.defaultPrevented) {
-              handleMobileOverlayOutsideEvent(event, closeCurrentPopover);
-            }
-          }}
-          onPointerDownOutside={(event) => {
-            onPointerDownOutside?.(event);
-            if (!event.defaultPrevented) {
-              handleMobileOverlayOutsideEvent(event, closeCurrentPopover);
-            }
-          }}
-          className={cn(
-            "h5-floating-content z-50 w-72 overflow-hidden rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-            useMobileSheet && getMobileSheetClassName({ detent: resolvedMobileDetent, kind: mobileKind }),
-            className,
-          )}
-          {...props}
-        >
-          {mobileTitle && useMobileSheet ? (
-            <div className="-mx-4 -mt-4 mb-4 flex items-start justify-between gap-3 border-b border-border px-4 py-3 md:hidden">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{mobileTitle}</p>
-                {mobileDescription ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{mobileDescription}</p>
-                ) : null}
-              </div>
-              <PopoverPrimitive.Close className="-mr-2 -mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
-                <X className="h-4 w-4" />
-                <span className="sr-only">{mobileCloseLabel}</span>
-              </PopoverPrimitive.Close>
-            </div>
-          ) : null}
-          {children}
-        </PopoverPrimitive.Content>
-      </MobileOverlayPortalHost>
+    <PopoverPrimitive.Portal {...portalContainerProps}>
+      {content}
     </PopoverPrimitive.Portal>
   );
 });

@@ -211,6 +211,10 @@ describe("LogoPicker", () => {
   it("keeps typed Logo search state inside the shared mobile sheet until selection", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
+    mockMatchMedia({
+      "(max-width: 767px)": true,
+      [desktopTooltipQuery]: false,
+    });
     mocks.apiFetch.mockImplementation((url: string) => {
       if (url === "/api/app/media/candidates") {
         const linearCandidate = {
@@ -242,6 +246,8 @@ describe("LogoPicker", () => {
     await user.click(screen.getByRole("button", { name: "搜索" }));
     const sheet = screen.getByTestId("logo-search-sheet");
     expect(sheet).toHaveClass("media-candidate-popover", "h5-logo-sheet", "h5-logo-search-sheet", "h5-mobile-sheet-content", "h5-mobile-sheet-large");
+    expect(sheet).toHaveAttribute("data-vaul-drawer");
+    expect(sheet.querySelector("[data-vaul-handle]")).not.toBeNull();
     expect(sheet).toHaveAttribute("aria-label", "搜索 Logo");
     const resultsViewport = screen.getByTestId("logo-search-results");
     expect(resultsViewport).toHaveClass("media-candidate-scroll-viewport", "h5-logo-sheet-results", "h5-logo-search-results");
@@ -357,6 +363,10 @@ describe("LogoPicker", () => {
   it("selects an uploaded custom Logo from the uploaded Logo picker", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
+    mockMatchMedia({
+      "(max-width: 767px)": true,
+      [desktopTooltipQuery]: false,
+    });
     mocks.uploadedLogosState.current = {
       assets: [
         {

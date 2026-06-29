@@ -4,9 +4,9 @@ export const adminEmail = "admin-e2e@example.com";
 export const adminPassword = "password123";
 export const adminStorageState = "e2e/.auth/admin.json";
 
-/** 捕获 PocketBase 默认登录响应；Cloudflare 巡检使用独立 auth setup，不复用这个判定。 */
-export function isAuthWithPasswordResponse(response: Response): boolean {
-  return response.url().includes("/api/collections/users/auth-with-password") &&
+/** 捕获 Renewlet 产品登录响应；Cloudflare 巡检使用独立 auth setup，不复用这个判定。 */
+export function isProductLoginResponse(response: Response): boolean {
+  return response.url().includes("/api/app/auth/login") &&
     response.request().method() === "POST";
 }
 

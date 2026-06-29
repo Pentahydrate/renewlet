@@ -216,6 +216,22 @@ describe("Dashboard page loading state", () => {
     expect(screen.getByText("汇率加载中...")).toBeInTheDocument();
   });
 
+  it("uses compact mobile-first summary cards without changing the desktop columns", () => {
+    render(<Dashboard />);
+
+    const grid = screen.getByTestId("dashboard-stat-grid");
+    const monthlySpend = screen.getByTestId("dashboard-stat-monthly-spend");
+    const activeSubscriptions = screen.getByTestId("dashboard-stat-active-subscriptions");
+    const trials = screen.getByTestId("dashboard-stat-trials");
+
+    expect(grid).toHaveClass("grid", "gap-3", "sm:gap-5", "sm:grid-cols-2", "lg:grid-cols-4");
+    expect(grid.className).toContain("[grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr))]");
+    expect(monthlySpend).toHaveClass("p-4", "lg:p-6", "col-span-full", "sm:col-span-1");
+    expect(activeSubscriptions).toHaveClass("p-4", "lg:p-6");
+    expect(trials).toHaveClass("p-4", "lg:p-6", "col-span-full", "sm:col-span-1");
+    expect(monthlySpend).not.toHaveClass("p-6");
+  });
+
   it("opens subscription details from a recent subscription card", async () => {
     const user = userEvent.setup();
 
