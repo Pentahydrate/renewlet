@@ -21,7 +21,7 @@ export const locales: Record<Locale, { label: string; ariaLabel: string }> = {
 }
 
 export const links = {
-  demo: 'https://renewlet-demo.olyq.org/',
+  demo: 'https://demo.renewlet.cc/',
   github: 'https://github.com/zhiyingzzhou/renewlet',
   docs: 'https://github.com/zhiyingzzhou/renewlet#readme',
   docsZh: 'https://github.com/zhiyingzzhou/renewlet/blob/main/README.zh-CN.md',

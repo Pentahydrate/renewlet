@@ -15,13 +15,13 @@ describe('resolveWebsiteDeployment', () => {
   it('uses root asset paths for a GitHub Pages custom domain', () => {
     // 自定义域部署时资产从根路径读取，不能继续带 GitHub Pages 仓库名前缀。
     const deployment = resolveWebsiteDeployment({
-      RENEWLET_WEBSITE_BASE_URL: 'https://renewlet.olyq.org',
+      RENEWLET_WEBSITE_BASE_URL: 'https://renewlet.cc',
       RENEWLET_WEBSITE_BASE_PATH: '',
     })
 
     expect(deployment).toEqual({
       basePath: '',
-      baseUrl: 'https://renewlet.olyq.org',
+      baseUrl: 'https://renewlet.cc',
       viteBase: '/',
     })
   })
@@ -53,11 +53,11 @@ describe('resolveWebsiteDeployment', () => {
 
   it('upgrades public GitHub Pages HTTP metadata to HTTPS', () => {
     const deployment = resolveWebsiteDeployment({
-      RENEWLET_WEBSITE_BASE_URL: 'http://renewlet.olyq.org',
+      RENEWLET_WEBSITE_BASE_URL: 'http://renewlet.cc',
       RENEWLET_WEBSITE_BASE_PATH: '',
     })
 
-    expect(deployment.baseUrl).toBe('https://renewlet.olyq.org')
+    expect(deployment.baseUrl).toBe('https://renewlet.cc')
   })
 
   it('keeps local preview metadata on HTTP', () => {
@@ -72,24 +72,24 @@ describe('resolveWebsiteDeployment', () => {
 
 describe('website metadata rendering', () => {
   const customDomainDeployment = resolveWebsiteDeployment({
-    RENEWLET_WEBSITE_BASE_URL: 'https://renewlet.olyq.org',
+    RENEWLET_WEBSITE_BASE_URL: 'https://renewlet.cc',
     RENEWLET_WEBSITE_BASE_PATH: '',
   })
 
   it('joins absolute website URLs under the configured Pages URL', () => {
-    expect(websiteUrl(customDomainDeployment)).toBe('https://renewlet.olyq.org/')
-    expect(websiteUrl(customDomainDeployment, 'en/')).toBe('https://renewlet.olyq.org/en/')
+    expect(websiteUrl(customDomainDeployment)).toBe('https://renewlet.cc/')
+    expect(websiteUrl(customDomainDeployment, 'en/')).toBe('https://renewlet.cc/en/')
   })
 
   it('renders robots.txt from the configured Pages URL', () => {
-    expect(renderRobotsTxt(customDomainDeployment)).toContain('Sitemap: https://renewlet.olyq.org/sitemap.xml')
+    expect(renderRobotsTxt(customDomainDeployment)).toContain('Sitemap: https://renewlet.cc/sitemap.xml')
   })
 
   it('renders sitemap URLs from the configured Pages URL', () => {
     const sitemap = renderSitemapXml(customDomainDeployment)
 
-    expect(sitemap).toContain('<loc>https://renewlet.olyq.org/</loc>')
-    expect(sitemap).toContain('<loc>https://renewlet.olyq.org/en/</loc>')
+    expect(sitemap).toContain('<loc>https://renewlet.cc/</loc>')
+    expect(sitemap).toContain('<loc>https://renewlet.cc/en/</loc>')
     expect(sitemap).toContain('<lastmod>2026-06-19</lastmod>')
     expect(sitemap).not.toContain('zhiyingzzhou.github.io/renewlet')
   })
@@ -107,11 +107,11 @@ describe('website metadata rendering', () => {
 
     expect(replaceWebsiteMetadataPlaceholders(html, customDomainDeployment, { softwareVersion: '0.1.9' })).toBe(
       [
-        'https://renewlet.olyq.org/',
-        'https://renewlet.olyq.org/en/',
-        'https://renewlet.olyq.org/assets/renewlet/logo.svg',
-        'https://renewlet.olyq.org/assets/renewlet/images/dashboard-zh.png',
-        'https://renewlet.olyq.org/assets/renewlet/images/dashboard-en.png',
+        'https://renewlet.cc/',
+        'https://renewlet.cc/en/',
+        'https://renewlet.cc/assets/renewlet/logo.svg',
+        'https://renewlet.cc/assets/renewlet/images/dashboard-zh.png',
+        'https://renewlet.cc/assets/renewlet/images/dashboard-en.png',
         '0.1.9',
       ].join('\n'),
     )
