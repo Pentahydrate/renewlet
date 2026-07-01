@@ -179,6 +179,43 @@ export interface SubscriptionSchedulerStateRow {
   auto_renew_count: number;
   repeat_reminder_count: number;
   last_auto_renew_local_date: string;
+  next_auto_renew_check_at_utc: string | null;
+  next_daily_notification_due_at_utc: string | null;
+  next_repeat_notification_due_at_utc: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 订阅列表热路径投影；只保存筛选/排序/搜索需要的轻字段，完整 DTO 仍回表读取 subscriptions。 */
+export interface SubscriptionListIndexRow {
+  subscription_id: string;
+  user_id: string;
+  name: string;
+  website: string | null;
+  notes: string | null;
+  search_text_lower: string;
+  category: string;
+  billing_cycle: string;
+  currency: string;
+  payment_method: string | null;
+  status: string;
+  pinned: number;
+  public_hidden: number;
+  next_billing_date: string;
+  trial_end_date: string | null;
+  one_time_term_count: number | null;
+  auto_renew: number;
+  reminder_days: number;
+  repeat_reminder_enabled: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 用户订阅聚合统计；Public API/status 和无筛选 total 不再实时 COUNT 全表。 */
+export interface SubscriptionUserStatsRow {
+  user_id: string;
+  total_count: number;
+  status_counts_json: string;
   created_at: string;
   updated_at: string;
 }
@@ -248,6 +285,7 @@ export interface CloudBackupTargetRow {
   last_status: "idle" | "success" | "failed";
   last_error: string | null;
   locked_until: string | null;
+  next_run_at_utc: string | null;
   created_at: string;
   updated_at: string;
 }
